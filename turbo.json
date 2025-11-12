@@ -1,0 +1,39 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "globalDependencies": [
+    "**/.env.*local"
+  ],
+  "tasks": {
+    "build": { 
+      "dependsOn": ["^build"],
+      "outputs": [
+        "dist/**",
+        "build/**",
+        "apps/backend/api/openapi.json",
+        "apps/backend/bin/**",
+        "apps/frontend/dist/**"
+      ]
+    },
+    "lint": {},
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "start": {
+      "cache": false
+    },
+    "generate-api": { 
+      "dependsOn": ["backend#build"], 
+      "outputs": ["apps/frontend/src/api/generated-orval/**"],
+      "inputs": ["apps/backend/api/openapi.json", "apps/frontend/orval.config.ts"]
+    },
+    "frontend#build": {
+      "dependsOn": ["^build", "generate-api"], 
+      "outputs": ["dist/**"] 
+    },
+    "backend#build": {
+        "dependsOn": ["^build"],
+        "outputs": ["api/openapi.json", "bin/**"] 
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "backend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "go generate ./ent/... && go build -o bin/server ./main.go && entoas generate --config ent/entc.json --target api/openapi.json",
+    "start": "./bin/server",
+    "dev": "go generate ./ent/... && go run ./main.go"
+  }
+}

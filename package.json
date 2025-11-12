@@ -1,0 +1,25 @@
+{
+  "name": "moris",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "packageManager": "pnpm@10.21.0",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "generate-api": "turbo run generate-api",
+    "start-db": "podman compose up -d db",
+    "stop-db": "podman compose down db"
+  },
+  "devDependencies": {
+    "turbo": "^2.6.x",
+    "pnpm": "^10.x.x",
+    "typescript": "^5.x.x",
+    "prettier": "^3.x.x",
+    "eslint": "^9.x.x",
+    "dotenv": "^17.x.x"
+  }
+}
