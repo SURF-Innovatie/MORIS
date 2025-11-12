@@ -3,14 +3,28 @@
 package ent
 
 import (
+	"time"
+
+	"github.com/SURF-Innovatie/MORIS/ent/event"
 	"github.com/SURF-Innovatie/MORIS/ent/schema"
 	"github.com/SURF-Innovatie/MORIS/ent/user"
+	"github.com/google/uuid"
 )
 
 // The init function reads all schema descriptors with runtime code
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	eventFields := schema.Event{}.Fields()
+	_ = eventFields
+	// eventDescOccurredAt is the schema descriptor for occurred_at field.
+	eventDescOccurredAt := eventFields[6].Descriptor()
+	// event.DefaultOccurredAt holds the default value on creation for the occurred_at field.
+	event.DefaultOccurredAt = eventDescOccurredAt.Default.(func() time.Time)
+	// eventDescID is the schema descriptor for id field.
+	eventDescID := eventFields[0].Descriptor()
+	// event.DefaultID holds the default value on creation for the id field.
+	event.DefaultID = eventDescID.Default.(func() uuid.UUID)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescName is the schema descriptor for name field.

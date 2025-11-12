@@ -8,6 +8,34 @@ import (
 )
 
 var (
+	// EventsColumns holds the columns for the "events" table.
+	EventsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "project_id", Type: field.TypeUUID},
+		{Name: "version", Type: field.TypeInt},
+		{Name: "type", Type: field.TypeString},
+		{Name: "data", Type: field.TypeBytes},
+		{Name: "metadata", Type: field.TypeBytes, Nullable: true},
+		{Name: "occurred_at", Type: field.TypeTime},
+	}
+	// EventsTable holds the schema information for the "events" table.
+	EventsTable = &schema.Table{
+		Name:       "events",
+		Columns:    EventsColumns,
+		PrimaryKey: []*schema.Column{EventsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "event_project_id_version",
+				Unique:  true,
+				Columns: []*schema.Column{EventsColumns[1], EventsColumns[2]},
+			},
+			{
+				Name:    "event_project_id_occurred_at",
+				Unique:  false,
+				Columns: []*schema.Column{EventsColumns[1], EventsColumns[6]},
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -22,6 +50,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		EventsTable,
 		UsersTable,
 	}
 )
