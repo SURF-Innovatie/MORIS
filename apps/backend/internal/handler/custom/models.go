@@ -1,7 +1,5 @@
 package custom
 
-import "github.com/SURF-Innovatie/MORIS/internal/auth"
-
 // LoginRequest swagger:model LoginRequest
 // Represents the request body for user login.
 type LoginRequest struct {
@@ -28,10 +26,7 @@ type TotalUsersResponse struct {
 	TotalUsers int `json:"total_users" example:"123"`
 }
 
-// BackendErrorDoc swagger:model BackendError
-// Provides a clean schema name for backend error responses.
-type BackendErrorDoc auth.BackendError
-
-// AuthenticatedUserDoc swagger:model AuthenticatedUser
-// Provides a clean schema name for authenticated user payloads.
-type AuthenticatedUserDoc auth.AuthenticatedUser
+// Note: BackendError and AuthenticatedUser types are defined in the
+// `internal/auth` package, and annotated with `swagger:model`. We don't need
+// wrapper types here anymore; referencing the canonical `auth` types in
+// handler comments will prevent duplicate schema definitions in the OpenAPI spec.

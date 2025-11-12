@@ -13,7 +13,9 @@ type contextKey string
 
 const userContextKey contextKey = "user" // Key to store user info in context
 
+// AuthenticatedUser swagger:model AuthenticatedUser
 // AuthenticatedUser represents the user's information after authentication
+// used by Swagger for API documentation
 type AuthenticatedUser struct {
 	ID    int      `json:"id" example:"1"`
 	Email string   `json:"email" example:"admin@example.com"`
@@ -21,7 +23,9 @@ type AuthenticatedUser struct {
 	// Add other relevant user data
 }
 
+// BackendError swagger:model BackendError
 // BackendError is a standardized error response structure, referenced by Swagger
+// used by Swagger for API documentation
 type BackendError struct {
 	Code    int         `json:"code" example:"400"`
 	Status  string      `json:"status" example:"Bad Request"`

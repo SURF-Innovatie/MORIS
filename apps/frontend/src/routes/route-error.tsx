@@ -1,5 +1,5 @@
 import { isRouteErrorResponse, useRouteError } from 'react-router-dom';
-import { DangerTriangle } from '@mynaui/icons-react';
+import { AlertTriangle } from 'lucide-react';
 
 import { Button } from '../components/ui/button';
 
@@ -15,8 +15,8 @@ const RouteError = () => {
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
-      <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-destructive/15 text-destructive">
-        <DangerTriangle className="h-7 w-7" aria-hidden />
+  <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-destructive/15 text-destructive">
+  <AlertTriangle className="h-7 w-7" aria-hidden />
       </span>
       <div className="space-y-2">
         <h1 className="font-display text-3xl text-foreground">{title}</h1>

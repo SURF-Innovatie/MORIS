@@ -1,4 +1,4 @@
-import { ArrowUpRight, ChartColumn, Users as UsersIcon } from '@mynaui/icons-react';
+import { ArrowUpRight, BarChart, Users as UsersIcon } from 'lucide-react';
 
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -15,7 +15,7 @@ const highlightMetrics = [
     title: 'Engagement rate',
     value: '64%',
     change: '+8 pts',
-    icon: ChartColumn,
+    icon: BarChart,
   },
   {
     title: 'Weekly growth',
@@ -28,12 +28,12 @@ const highlightMetrics = [
 const DashboardRoute = () => {
   return (
     <div className="flex flex-col gap-12">
-      <section className="glass-panel overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-primary/15 via-background to-accent/10 px-10 py-12 shadow-mynaui-md">
+  <section className="glass-panel overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-primary/15 via-background to-accent/10 px-10 py-12 shadow-lg">
         <Badge className="mb-6 w-fit" variant="success">
           Beta workspace
         </Badge>
-        <h1 className="max-w-2xl font-display text-4xl tracking-tight text-foreground sm:text-5xl">
-          MynaUI foundations wired up for your MORIS frontend.
+          <h1 className="max-w-2xl font-display text-4xl tracking-tight text-foreground sm:text-5xl">
+          shadcn UI foundations wired up for your MORIS frontend.
         </h1>
         <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
           Vite, React Router v7, TanStack Query, and Orval are ready to go. Build fast, stay consistent,

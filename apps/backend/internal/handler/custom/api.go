@@ -35,7 +35,7 @@ func MountCustomHandlers(r chi.Router, client *ent.Client) {
 // @Tags Utilities
 // @Produce json
 // @Success 200 {object} custom.StatusResponse "API status is OK"
-// @Failure 500 {object} custom.BackendErrorDoc "Internal server error"
+// @Failure 500 {object} auth.BackendError "Internal server error"
 // @Router /status [get]
 func getStatusHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -56,9 +56,9 @@ func getStatusHandler() http.HandlerFunc {
 // @Produce json
 // @Param credentials body custom.LoginRequest true "User credentials"
 // @Success 200 {object} custom.LoginResponse "Login successful"
-// @Failure 400 {object} custom.BackendErrorDoc "Invalid input"
-// @Failure 401 {object} custom.BackendErrorDoc "Invalid credentials"
-// @Failure 500 {object} custom.BackendErrorDoc "Internal server error"
+// @Failure 400 {object} auth.BackendError "Invalid input"
+// @Failure 401 {object} auth.BackendError "Invalid credentials"
+// @Failure 500 {object} auth.BackendError "Internal server error"
 // @Router /login [post]
 func loginHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -76,9 +76,9 @@ func loginHandler() http.HandlerFunc {
 // @Tags User
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {object} custom.AuthenticatedUserDoc "User profile"
-// @Failure 401 {object} custom.BackendErrorDoc "Unauthorized"
-// @Failure 500 {object} custom.BackendErrorDoc "Internal server error"
+// @Success 200 {object} auth.AuthenticatedUser "User profile"
+// @Failure 401 {object} auth.BackendError "Unauthorized"
+// @Failure 500 {object} auth.BackendError "Internal server error"
 // @Router /profile [get]
 func getProfileHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -99,8 +99,8 @@ func getProfileHandler() http.HandlerFunc {
 // @Security BearerAuth
 // @Produce json
 // @Success 200 {object} custom.TotalUsersResponse "Total user count"
-// @Failure 401 {object} custom.BackendErrorDoc "Unauthorized"
-// @Failure 500 {object} custom.BackendErrorDoc "Internal server error"
+// @Failure 401 {object} auth.BackendError "Unauthorized"
+// @Failure 500 {object} auth.BackendError "Internal server error"
 // @Router /users/count [get]
 func getTotalUserCountHandler(client *ent.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -122,9 +122,9 @@ func getTotalUserCountHandler(client *ent.Client) http.HandlerFunc {
 // @Security BearerAuth
 // @Produce json
 // @Success 200 {string} string "Admin-only user list!"
-// @Failure 401 {object} custom.BackendErrorDoc "Unauthorized"
-// @Failure 403 {object} custom.BackendErrorDoc "Forbidden"
-// @Failure 500 {object} custom.BackendErrorDoc "Internal server error"
+// @Failure 401 {object} auth.BackendError "Unauthorized"
+// @Failure 403 {object} auth.BackendError "Forbidden"
+// @Failure 500 {object} auth.BackendError "Internal server error"
 // @Router /admin/users/list [get]
 func getAdminUserListHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

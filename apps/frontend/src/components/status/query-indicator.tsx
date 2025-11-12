@@ -1,5 +1,5 @@
 import { useIsFetching, useIsMutating } from '@tanstack/react-query';
-import { Spinner } from '@mynaui/icons-react';
+import { Loader2 as Spinner } from 'lucide-react';
 
 import { cn } from '../../lib/utils';
 
@@ -15,7 +15,7 @@ const QueryIndicator = () => {
   return (
     <div
       className={cn(
-        'fixed bottom-6 right-6 flex items-center gap-3 rounded-xl border border-white/10 bg-background/90 px-4 py-3 text-sm text-muted-foreground shadow-mynaui-sm backdrop-blur',
+  'fixed bottom-6 right-6 flex items-center gap-3 rounded-xl border border-white/10 bg-background/90 px-4 py-3 text-sm text-muted-foreground shadow-sm backdrop-blur',
       )}
     >
       <Spinner className="h-4 w-4 animate-spin text-primary" aria-hidden />

@@ -1,18 +1,14 @@
 import { QueryClient } from '@tanstack/react-query';
 import { LoaderFunctionArgs } from 'react-router-dom';
-import { Spinner, Users as UsersIcon } from '@mynaui/icons-react';
+import { Loader2 as Spinner, Users as UsersIcon } from 'lucide-react';
 
-import {
-  getListUserQueryOptions,
-  useListUser,
-  type ListUserQueryResult,
-} from '../api/generated-orval/entSchemaAPI';
+import { getGetAdminUsersListQueryOptions, useGetAdminUsersList } from '../api/generated-orval/moris';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 
 export const loader = (queryClient: QueryClient) => async (_args: LoaderFunctionArgs) => {
-  const options = getListUserQueryOptions(undefined);
+  const options = getGetAdminUsersListQueryOptions();
   await queryClient.ensureQueryData(options);
   return null;
 };
@@ -24,14 +20,24 @@ const UsersRoute = () => {
     refetch,
     isFetching,
     isPending,
-  } = useListUser(undefined, {
+  } = useGetAdminUsersList({
     query: {
       retry: 0,
       staleTime: 1000 * 60,
     },
   });
 
-  const users = (data ?? []) as ListUserQueryResult;
+  // The backend returns a JSON string representation of the list. Parse if present.
+  let users: Array<{ id: number; name: string; email?: string }> = [];
+  if (data) {
+    try {
+      const parsed = JSON.parse(data);
+      users = parsed?.users ?? [];
+    } catch (err) {
+      // If parsing fails, fall back to an empty array
+      users = [];
+    }
+  }
 
   return (
     <section className="flex flex-col gap-8">
@@ -47,11 +53,11 @@ const UsersRoute = () => {
             User directory
           </h2>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            This screen uses Orval generated hooks (`useListUser`) to retrieve data via Axios and expose it
+            This screen uses Orval generated hooks (`useGetAdminUsersList`) to retrieve data via Axios and expose it
             through TanStack Query. Trigger a refetch to see optimistic updates in action.
           </p>
         </div>
-        <Button variant="secondary" onClick={() => refetch()} disabled={isFetching}>
+          <Button variant="secondary" onClick={() => refetch()} disabled={isFetching}>
           <Spinner className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} aria-hidden />
           Refresh
         </Button>
