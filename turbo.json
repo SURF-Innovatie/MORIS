@@ -1,15 +1,13 @@
 {
   "$schema": "https://turborepo.com/schema.json",
-  "globalDependencies": [
-    "**/.env.*local"
-  ],
+  "globalDependencies": ["**/.env.*local"],
   "tasks": {
-    "build": { 
-      "dependsOn": ["^build"],
+    "build": {
+      "dependsOn": ["^build", "generate-api"],
       "outputs": [
         "dist/**",
         "build/**",
-        "apps/backend/api/openapi.json",
+        "apps/backend/ent/api/openapi.json",
         "apps/backend/bin/**",
         "apps/frontend/dist/**"
       ]
@@ -22,18 +20,47 @@
     "start": {
       "cache": false
     },
-    "generate-api": { 
-      "dependsOn": ["backend#build"], 
+    "generate-api": {
+      "dependsOn": ["backend#ent-gen"],
       "outputs": ["apps/frontend/src/api/generated-orval/**"],
-      "inputs": ["apps/backend/api/openapi.json", "apps/frontend/orval.config.ts"]
+      "inputs": [
+        "apps/backend/ent/api/openapi.json",
+        "apps/frontend/orval.config.ts"
+      ]
     },
-    "frontend#build": {
-      "dependsOn": ["^build", "generate-api"], 
-      "outputs": ["dist/**"] 
+    "backend#swag-init": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "apps/backend/cmd/dev/main.go",
+        "apps/backend/internal/handler/custom/**",
+        "apps/backend/internal/auth/**"
+      ],
+      "outputs": [
+        "apps/backend/api/swag-docs/swagger.json",
+        "apps/backend/api/swag-docs/swagger.yaml",
+        "apps/backend/api/swag-docs/docs.go"
+      ]
+    },
+    "backend#ent-gen": {
+      "dependsOn": ["^build", "backend#swag-init"],
+      "inputs": [
+        "apps/backend/ent/**",
+        "apps/backend/api/swag-docs/swagger.json"
+      ],
+  "outputs": ["apps/backend/ent/api/openapi.json"]
     },
     "backend#build": {
-        "dependsOn": ["^build"],
-        "outputs": ["api/openapi.json", "bin/**"] 
+      "dependsOn": ["backend#ent-gen"],
+      "outputs": ["bin/**", "apps/backend/ent/api/openapi.json"]
+    },
+    "backend#dev": {
+      "dependsOn": ["backend#ent-gen"],
+      "cache": false,
+      "persistent": true
+    },
+    "frontend#build": {
+      "dependsOn": ["^build", "generate-api"],
+      "outputs": ["dist/**"]
     }
   }
 }

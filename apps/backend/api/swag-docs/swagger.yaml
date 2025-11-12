@@ -1,0 +1,208 @@
+basePath: /api
+definitions:
+  internal_handler_custom.AuthenticatedUserDoc:
+    properties:
+      email:
+        example: admin@example.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      roles:
+        example:
+        - '["admin"'
+        - ' "user"]'
+        items:
+          type: string
+        type: array
+    type: object
+  internal_handler_custom.BackendErrorDoc:
+    properties:
+      code:
+        example: 400
+        type: integer
+      errors:
+        description: Can be map[string]string or []string or null
+      message:
+        description: Custom message
+        example: Detailed error description
+        type: string
+      status:
+        example: Bad Request
+        type: string
+    type: object
+  internal_handler_custom.LoginRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: secretpassword
+        type: string
+    type: object
+  internal_handler_custom.LoginResponse:
+    properties:
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+  internal_handler_custom.StatusResponse:
+    properties:
+      status:
+        example: ok
+        type: string
+      timestamp:
+        example: "2025-11-12T10:00:00Z"
+        type: string
+    type: object
+  internal_handler_custom.TotalUsersResponse:
+    properties:
+      total_users:
+        example: 123
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: MORIS
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: MORIS
+  version: "1.0"
+paths:
+  /admin/users/list:
+    get:
+      description: Returns a list of users (admin access only).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Admin-only user list!
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+      security:
+      - BearerAuth: []
+      summary: Admin-Only User List
+      tags:
+      - Admin
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns an access token.
+      parameters:
+      - description: User credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler_custom.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            $ref: '#/definitions/internal_handler_custom.LoginResponse'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+      summary: User Login
+      tags:
+      - Authentication
+  /profile:
+    get:
+      description: Returns the profile of the authenticated user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User profile
+          schema:
+            $ref: '#/definitions/internal_handler_custom.AuthenticatedUserDoc'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+      security:
+      - BearerAuth: []
+      summary: Get User Profile
+      tags:
+      - User
+  /status:
+    get:
+      description: Returns the current status of the API.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: API status is OK
+          schema:
+            $ref: '#/definitions/internal_handler_custom.StatusResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+      summary: Get API Status
+      tags:
+      - Utilities
+  /users/count:
+    get:
+      description: Returns the total number of users in the system.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Total user count
+          schema:
+            $ref: '#/definitions/internal_handler_custom.TotalUsersResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+      security:
+      - BearerAuth: []
+      summary: Get Total User Count
+      tags:
+      - User
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" then a space and your JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

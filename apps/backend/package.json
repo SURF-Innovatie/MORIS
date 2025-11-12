@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "go generate ./ent/... && go build -o bin/server ./main.go && entoas generate --config ent/entc.json --target api/openapi.json",
+    "build": "go build -o bin/server ./cmd/dev/main.go",
     "start": "./bin/server",
-    "dev": "go generate ./ent/... && go run ./main.go"
+    "dev": "go run ./cmd/dev/main.go",
+    "ent-gen": "go generate ./ent/...",
+    "swag-init": "swag init -g cmd/dev/main.go --output api/swag-docs --parseDependency --parseInternal",
+    "test": "go test ./..."
   }
 }

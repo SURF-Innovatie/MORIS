@@ -3,7 +3,7 @@ import { defineConfig } from 'orval';
 
 export default defineConfig({
   backendApi: {
-    input: '../../apps/backend/api/openapi.json',
+    input: './.orval/openapi.json',
     output: {
       mode: 'split',
       target: './src/api/generated-orval/',

@@ -8,25 +8,35 @@
     "build": "tsc -b && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "generate-api": "orval"
+    "generate-api": "node ./scripts/prepare-openapi.mjs && orval"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.7",
+  "@tanstack/react-query-devtools": "^5.90.2",
     "axios": "^1.13.2",
+    "@mynaui/icons-react": "^0.3.9",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+  "@radix-ui/react-slot": "^1.1.2",
+    "tailwind-merge": "^2.5.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.5"
   },
   "devDependencies": {
+    "autoprefixer": "^10.4.20",
     "@types/react": "^19.2.3",
     "@types/react-dom": "^19.2.3",
+  "@types/node": "^22.10.5",
     "@typescript-eslint/eslint-plugin": "^8.46.4",
     "@typescript-eslint/parser": "^8.46.4",
     "@vitejs/plugin-react-swc": "^4.2.2",
+    "postcss": "^8.4.49",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "orval": "^7.16.0",
+    "tailwindcss": "^3.4.17",
     "typescript": "^5.9.3",
     "vite": "^7.2.2"
   }
