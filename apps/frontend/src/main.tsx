@@ -6,6 +6,10 @@ import { RouterProvider } from 'react-router-dom';
 
 import './index.css';
 import { createAppRouter } from './router';
+import { AuthProvider } from './contexts/AuthContext';
+import { BackendStatusProvider } from './contexts/BackendStatusContext';
+import { Toaster } from './components/ui/toaster';
+import { BackendOfflineAlert } from './components/status/BackendOfflineAlert';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,8 +31,14 @@ if (!rootElement) {
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-      <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
+      <BackendStatusProvider>
+        <AuthProvider>
+          <RouterProvider router={router} />
+          <Toaster />
+          <BackendOfflineAlert />
+          <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
+        </AuthProvider>
+      </BackendStatusProvider>
     </QueryClientProvider>
   </React.StrictMode>,
 );

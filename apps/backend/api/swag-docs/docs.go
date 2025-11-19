@@ -49,19 +49,19 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/custom.BackendErrorDoc"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/custom.BackendErrorDoc"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/custom.BackendErrorDoc"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     }
                 }
@@ -87,7 +87,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/custom.LoginRequest"
+                            "$ref": "#/definitions/internal_handler_custom.LoginRequest"
                         }
                     }
                 ],
@@ -95,25 +95,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Login successful",
                         "schema": {
-                            "$ref": "#/definitions/custom.LoginResponse"
+                            "$ref": "#/definitions/internal_handler_custom.LoginResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid input",
                         "schema": {
-                            "$ref": "#/definitions/custom.BackendErrorDoc"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     },
                     "401": {
                         "description": "Invalid credentials",
                         "schema": {
-                            "$ref": "#/definitions/custom.BackendErrorDoc"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/custom.BackendErrorDoc"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     }
                 }
@@ -138,19 +138,65 @@ const docTemplate = `{
                     "200": {
                         "description": "User profile",
                         "schema": {
-                            "$ref": "#/definitions/custom.AuthenticatedUserDoc"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/custom.BackendErrorDoc"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/custom.BackendErrorDoc"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                        }
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "description": "Registers a new user account.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "User Registration",
+                "parameters": [
+                    {
+                        "description": "User registration details",
+                        "name": "credentials",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler_custom.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Registration successful",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler_custom.RegisterResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     }
                 }
@@ -170,13 +216,13 @@ const docTemplate = `{
                     "200": {
                         "description": "API status is OK",
                         "schema": {
-                            "$ref": "#/definitions/custom.StatusResponse"
+                            "$ref": "#/definitions/internal_handler_custom.StatusResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/custom.BackendErrorDoc"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     }
                 }
@@ -201,19 +247,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Total user count",
                         "schema": {
-                            "$ref": "#/definitions/custom.TotalUsersResponse"
+                            "$ref": "#/definitions/internal_handler_custom.TotalUsersResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/custom.BackendErrorDoc"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/custom.BackendErrorDoc"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     }
                 }
@@ -221,7 +267,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "custom.AuthenticatedUserDoc": {
+        "github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser": {
             "type": "object",
             "properties": {
                 "email": {
@@ -238,13 +284,13 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "example": [
-                        "[\"admin\"",
-                        " \"user\"]"
+                        "admin",
+                        "user"
                     ]
                 }
             }
         },
-        "custom.BackendErrorDoc": {
+        "github_com_SURF-Innovatie_MORIS_internal_auth.BackendError": {
             "type": "object",
             "properties": {
                 "code": {
@@ -265,7 +311,7 @@ const docTemplate = `{
                 }
             }
         },
-        "custom.LoginRequest": {
+        "internal_handler_custom.LoginRequest": {
             "type": "object",
             "properties": {
                 "email": {
@@ -278,16 +324,72 @@ const docTemplate = `{
                 }
             }
         },
-        "custom.LoginResponse": {
+        "internal_handler_custom.LoginResponse": {
             "type": "object",
             "properties": {
                 "token": {
                     "type": "string",
                     "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                },
+                "user": {
+                    "type": "object",
+                    "properties": {
+                        "email": {
+                            "type": "string",
+                            "example": "user@example.com"
+                        },
+                        "id": {
+                            "type": "integer",
+                            "example": 1
+                        },
+                        "roles": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "example": [
+                                "user"
+                            ]
+                        }
+                    }
                 }
             }
         },
-        "custom.StatusResponse": {
+        "internal_handler_custom.RegisterRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "secretpassword"
+                }
+            }
+        },
+        "internal_handler_custom.RegisterResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "name": {
+                    "type": "string",
+                    "example": "John Doe"
+                }
+            }
+        },
+        "internal_handler_custom.StatusResponse": {
             "type": "object",
             "properties": {
                 "status": {
@@ -300,7 +402,7 @@ const docTemplate = `{
                 }
             }
         },
-        "custom.TotalUsersResponse": {
+        "internal_handler_custom.TotalUsersResponse": {
             "type": "object",
             "properties": {
                 "total_users": {

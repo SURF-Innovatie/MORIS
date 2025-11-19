@@ -1,5 +1,21 @@
 package custom
 
+// RegisterRequest swagger:model RegisterRequest
+// Represents the request body for user registration.
+type RegisterRequest struct {
+	Name     string `json:"name" example:"John Doe"`
+	Email    string `json:"email" example:"user@example.com"`
+	Password string `json:"password" example:"secretpassword"`
+}
+
+// RegisterResponse swagger:model RegisterResponse
+// Represents the response body for successful registration.
+type RegisterResponse struct {
+	ID    int    `json:"id" example:"1"`
+	Email string `json:"email" example:"user@example.com"`
+	Name  string `json:"name" example:"John Doe"`
+}
+
 // LoginRequest swagger:model LoginRequest
 // Represents the request body for user login.
 type LoginRequest struct {
@@ -11,6 +27,11 @@ type LoginRequest struct {
 // Represents the response body for successful login.
 type LoginResponse struct {
 	Token string `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
+	User  struct {
+		ID    int      `json:"id" example:"1"`
+		Email string   `json:"email" example:"user@example.com"`
+		Roles []string `json:"roles" example:"user"`
+	} `json:"user"`
 }
 
 // StatusResponse swagger:model StatusResponse

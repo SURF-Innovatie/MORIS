@@ -8,6 +8,7 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
+	"github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/handler/custom"
 	projecthandler "github.com/SURF-Innovatie/MORIS/internal/handler/project"
 	"github.com/SURF-Innovatie/MORIS/internal/platform/eventstore"
@@ -64,9 +65,13 @@ func main() {
 
 	// Create services
 	userSvc := user.NewService(client)
+	authSvc := auth.NewService(client)
+	
+	// Set auth service for middleware
+	auth.SetAuthService(authSvc)
 
 	// Create HTTP handler/controller
-	customHandler := custom.NewHandler(userSvc)
+	customHandler := custom.NewHandler(userSvc, authSvc)
 
 	esStore := eventstore.NewEntStore(client)
 	projSvc := project.NewService(esStore)

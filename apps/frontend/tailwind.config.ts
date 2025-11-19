@@ -75,15 +75,15 @@ export default {
   			xl: 'var(--radius-xl)',
   			full: '9999px'
   		},
-  		fontFamily: {
-  			sans: [
-  				'Satoshi"',
-                    ...defaultTheme.fontFamily.sans
-                ],
-  			display: [
-  				'Clash Display"',
-                    ...defaultTheme.fontFamily.sans
-                ]
+		fontFamily: {
+		  sans: [
+				'Inter',
+					...defaultTheme.fontFamily.sans
+				],
+			display: [
+				'Inter',
+					...defaultTheme.fontFamily.sans
+				]
   		}
   	}
   },

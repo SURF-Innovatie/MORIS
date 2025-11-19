@@ -10,25 +10,33 @@ export interface BackendError {
   timestamp?: string;
 }
 
-export const customInstance = async <T>(
-  config: AxiosRequestConfig,
-  options?: AxiosRequestConfig,
-): Promise<T> => {
-  const source = Axios.CancelToken.source();
-  const promise = AXIOS_INSTANCE({ ...config, ...options, cancelToken: source.token }).then(
-    (res) => res.data,
-  );
-  // @ts-ignore
-  promise.cancel = () => {
-    source.cancel('Query was cancelled');
-  };
-  return promise;
-};
+// Request interceptor to add JWT token
+AXIOS_INSTANCE.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
 
+// Response interceptor for error handling
 AXIOS_INSTANCE.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response) {
+      // Check if 401 and clear token
+      if (error.response.status === 401) {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+        // Optionally redirect to login or dispatch an event
+        window.dispatchEvent(new CustomEvent('auth:logout'));
+      }
+
       const backendError = error.response.data as Partial<BackendError>;
       const enrichedError: BackendError = {
         code: backendError.code || 'UNKNOWN_ERROR',
@@ -47,5 +55,20 @@ AXIOS_INSTANCE.interceptors.response.use(
     return Promise.reject(networkError);
   },
 );
+
+export const customInstance = async <T>(
+  config: AxiosRequestConfig,
+  options?: AxiosRequestConfig,
+): Promise<T> => {
+  const source = Axios.CancelToken.source();
+  const promise = AXIOS_INSTANCE({ ...config, ...options, cancelToken: source.token }).then(
+    (res) => res.data,
+  );
+  // @ts-ignore
+  promise.cancel = () => {
+    source.cancel('Query was cancelled');
+  };
+  return promise;
+};
 
 export default customInstance;
