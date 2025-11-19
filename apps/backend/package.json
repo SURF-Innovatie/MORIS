@@ -5,7 +5,7 @@
   "scripts": {
     "build": "go build -o bin/server ./cmd/dev/main.go",
     "start": "./bin/server",
-    "dev": "go run ./cmd/dev/main.go",
+    "dev": "wgo run ./cmd/dev/main.go",
     "ent-gen": "go generate ./ent/...",
     "swag-init": "swag init -g cmd/dev/main.go --output api/swag-docs --parseDependency --parseInternal",
     "test": "go test ./..."

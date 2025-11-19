@@ -14,6 +14,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/platform/eventstore"
 	"github.com/SURF-Innovatie/MORIS/internal/project"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
+	logger "github.com/chi-middleware/logrus-logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	_ "github.com/lib/pq"
@@ -66,7 +67,7 @@ func main() {
 	// Create services
 	userSvc := user.NewService(client)
 	authSvc := auth.NewService(client)
-	
+
 	// Set auth service for middleware
 	auth.SetAuthService(authSvc)
 
@@ -79,7 +80,8 @@ func main() {
 
 	// Router
 	r := chi.NewRouter()
-	r.Use(middleware.Logger)
+	log := logrus.New()
+	r.Use(logger.Logger("router", log))
 	r.Use(middleware.Recoverer)
 
 	r.Route("/api", func(r chi.Router) {

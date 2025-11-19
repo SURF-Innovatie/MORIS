@@ -46,6 +46,7 @@ require (
 
 require (
 	entgo.io/ent v0.14.5
+	github.com/chi-middleware/logrus-logger v0.3.0
 	github.com/stretchr/testify v1.11.1 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 )
