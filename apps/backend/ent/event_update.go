@@ -6,12 +6,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/SURF-Innovatie/MORIS/ent/descriptionchangedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/enddatechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/event"
+	"github.com/SURF-Innovatie/MORIS/ent/organisationchangedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/personremovedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/predicate"
+	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/startdatechangedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/titlechangedevent"
 	"github.com/google/uuid"
 )
 
@@ -77,27 +86,223 @@ func (_u *EventUpdate) SetNillableType(v *string) *EventUpdate {
 	return _u
 }
 
-// SetData sets the "data" field.
-func (_u *EventUpdate) SetData(v []byte) *EventUpdate {
-	_u.mutation.SetData(v)
+// SetOccurredAt sets the "occurred_at" field.
+func (_u *EventUpdate) SetOccurredAt(v time.Time) *EventUpdate {
+	_u.mutation.SetOccurredAt(v)
 	return _u
 }
 
-// SetMetadata sets the "metadata" field.
-func (_u *EventUpdate) SetMetadata(v []byte) *EventUpdate {
-	_u.mutation.SetMetadata(v)
+// SetNillableOccurredAt sets the "occurred_at" field if the given value is not nil.
+func (_u *EventUpdate) SetNillableOccurredAt(v *time.Time) *EventUpdate {
+	if v != nil {
+		_u.SetOccurredAt(*v)
+	}
 	return _u
 }
 
-// ClearMetadata clears the value of the "metadata" field.
-func (_u *EventUpdate) ClearMetadata() *EventUpdate {
-	_u.mutation.ClearMetadata()
+// SetProjectStartedID sets the "project_started" edge to the ProjectStartedEvent entity by ID.
+func (_u *EventUpdate) SetProjectStartedID(id uuid.UUID) *EventUpdate {
+	_u.mutation.SetProjectStartedID(id)
 	return _u
+}
+
+// SetNillableProjectStartedID sets the "project_started" edge to the ProjectStartedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdate) SetNillableProjectStartedID(id *uuid.UUID) *EventUpdate {
+	if id != nil {
+		_u = _u.SetProjectStartedID(*id)
+	}
+	return _u
+}
+
+// SetProjectStarted sets the "project_started" edge to the ProjectStartedEvent entity.
+func (_u *EventUpdate) SetProjectStarted(v *ProjectStartedEvent) *EventUpdate {
+	return _u.SetProjectStartedID(v.ID)
+}
+
+// SetTitleChangedID sets the "title_changed" edge to the TitleChangedEvent entity by ID.
+func (_u *EventUpdate) SetTitleChangedID(id uuid.UUID) *EventUpdate {
+	_u.mutation.SetTitleChangedID(id)
+	return _u
+}
+
+// SetNillableTitleChangedID sets the "title_changed" edge to the TitleChangedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdate) SetNillableTitleChangedID(id *uuid.UUID) *EventUpdate {
+	if id != nil {
+		_u = _u.SetTitleChangedID(*id)
+	}
+	return _u
+}
+
+// SetTitleChanged sets the "title_changed" edge to the TitleChangedEvent entity.
+func (_u *EventUpdate) SetTitleChanged(v *TitleChangedEvent) *EventUpdate {
+	return _u.SetTitleChangedID(v.ID)
+}
+
+// SetDescriptionChangedID sets the "description_changed" edge to the DescriptionChangedEvent entity by ID.
+func (_u *EventUpdate) SetDescriptionChangedID(id uuid.UUID) *EventUpdate {
+	_u.mutation.SetDescriptionChangedID(id)
+	return _u
+}
+
+// SetNillableDescriptionChangedID sets the "description_changed" edge to the DescriptionChangedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdate) SetNillableDescriptionChangedID(id *uuid.UUID) *EventUpdate {
+	if id != nil {
+		_u = _u.SetDescriptionChangedID(*id)
+	}
+	return _u
+}
+
+// SetDescriptionChanged sets the "description_changed" edge to the DescriptionChangedEvent entity.
+func (_u *EventUpdate) SetDescriptionChanged(v *DescriptionChangedEvent) *EventUpdate {
+	return _u.SetDescriptionChangedID(v.ID)
+}
+
+// SetStartDateChangedID sets the "start_date_changed" edge to the StartDateChangedEvent entity by ID.
+func (_u *EventUpdate) SetStartDateChangedID(id uuid.UUID) *EventUpdate {
+	_u.mutation.SetStartDateChangedID(id)
+	return _u
+}
+
+// SetNillableStartDateChangedID sets the "start_date_changed" edge to the StartDateChangedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdate) SetNillableStartDateChangedID(id *uuid.UUID) *EventUpdate {
+	if id != nil {
+		_u = _u.SetStartDateChangedID(*id)
+	}
+	return _u
+}
+
+// SetStartDateChanged sets the "start_date_changed" edge to the StartDateChangedEvent entity.
+func (_u *EventUpdate) SetStartDateChanged(v *StartDateChangedEvent) *EventUpdate {
+	return _u.SetStartDateChangedID(v.ID)
+}
+
+// SetEndDateChangedID sets the "end_date_changed" edge to the EndDateChangedEvent entity by ID.
+func (_u *EventUpdate) SetEndDateChangedID(id uuid.UUID) *EventUpdate {
+	_u.mutation.SetEndDateChangedID(id)
+	return _u
+}
+
+// SetNillableEndDateChangedID sets the "end_date_changed" edge to the EndDateChangedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdate) SetNillableEndDateChangedID(id *uuid.UUID) *EventUpdate {
+	if id != nil {
+		_u = _u.SetEndDateChangedID(*id)
+	}
+	return _u
+}
+
+// SetEndDateChanged sets the "end_date_changed" edge to the EndDateChangedEvent entity.
+func (_u *EventUpdate) SetEndDateChanged(v *EndDateChangedEvent) *EventUpdate {
+	return _u.SetEndDateChangedID(v.ID)
+}
+
+// SetOrganisationChangedID sets the "organisation_changed" edge to the OrganisationChangedEvent entity by ID.
+func (_u *EventUpdate) SetOrganisationChangedID(id uuid.UUID) *EventUpdate {
+	_u.mutation.SetOrganisationChangedID(id)
+	return _u
+}
+
+// SetNillableOrganisationChangedID sets the "organisation_changed" edge to the OrganisationChangedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdate) SetNillableOrganisationChangedID(id *uuid.UUID) *EventUpdate {
+	if id != nil {
+		_u = _u.SetOrganisationChangedID(*id)
+	}
+	return _u
+}
+
+// SetOrganisationChanged sets the "organisation_changed" edge to the OrganisationChangedEvent entity.
+func (_u *EventUpdate) SetOrganisationChanged(v *OrganisationChangedEvent) *EventUpdate {
+	return _u.SetOrganisationChangedID(v.ID)
+}
+
+// SetPersonAddedID sets the "person_added" edge to the PersonAddedEvent entity by ID.
+func (_u *EventUpdate) SetPersonAddedID(id int) *EventUpdate {
+	_u.mutation.SetPersonAddedID(id)
+	return _u
+}
+
+// SetNillablePersonAddedID sets the "person_added" edge to the PersonAddedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdate) SetNillablePersonAddedID(id *int) *EventUpdate {
+	if id != nil {
+		_u = _u.SetPersonAddedID(*id)
+	}
+	return _u
+}
+
+// SetPersonAdded sets the "person_added" edge to the PersonAddedEvent entity.
+func (_u *EventUpdate) SetPersonAdded(v *PersonAddedEvent) *EventUpdate {
+	return _u.SetPersonAddedID(v.ID)
+}
+
+// SetPersonRemovedID sets the "person_removed" edge to the PersonRemovedEvent entity by ID.
+func (_u *EventUpdate) SetPersonRemovedID(id uuid.UUID) *EventUpdate {
+	_u.mutation.SetPersonRemovedID(id)
+	return _u
+}
+
+// SetNillablePersonRemovedID sets the "person_removed" edge to the PersonRemovedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdate) SetNillablePersonRemovedID(id *uuid.UUID) *EventUpdate {
+	if id != nil {
+		_u = _u.SetPersonRemovedID(*id)
+	}
+	return _u
+}
+
+// SetPersonRemoved sets the "person_removed" edge to the PersonRemovedEvent entity.
+func (_u *EventUpdate) SetPersonRemoved(v *PersonRemovedEvent) *EventUpdate {
+	return _u.SetPersonRemovedID(v.ID)
 }
 
 // Mutation returns the EventMutation object of the builder.
 func (_u *EventUpdate) Mutation() *EventMutation {
 	return _u.mutation
+}
+
+// ClearProjectStarted clears the "project_started" edge to the ProjectStartedEvent entity.
+func (_u *EventUpdate) ClearProjectStarted() *EventUpdate {
+	_u.mutation.ClearProjectStarted()
+	return _u
+}
+
+// ClearTitleChanged clears the "title_changed" edge to the TitleChangedEvent entity.
+func (_u *EventUpdate) ClearTitleChanged() *EventUpdate {
+	_u.mutation.ClearTitleChanged()
+	return _u
+}
+
+// ClearDescriptionChanged clears the "description_changed" edge to the DescriptionChangedEvent entity.
+func (_u *EventUpdate) ClearDescriptionChanged() *EventUpdate {
+	_u.mutation.ClearDescriptionChanged()
+	return _u
+}
+
+// ClearStartDateChanged clears the "start_date_changed" edge to the StartDateChangedEvent entity.
+func (_u *EventUpdate) ClearStartDateChanged() *EventUpdate {
+	_u.mutation.ClearStartDateChanged()
+	return _u
+}
+
+// ClearEndDateChanged clears the "end_date_changed" edge to the EndDateChangedEvent entity.
+func (_u *EventUpdate) ClearEndDateChanged() *EventUpdate {
+	_u.mutation.ClearEndDateChanged()
+	return _u
+}
+
+// ClearOrganisationChanged clears the "organisation_changed" edge to the OrganisationChangedEvent entity.
+func (_u *EventUpdate) ClearOrganisationChanged() *EventUpdate {
+	_u.mutation.ClearOrganisationChanged()
+	return _u
+}
+
+// ClearPersonAdded clears the "person_added" edge to the PersonAddedEvent entity.
+func (_u *EventUpdate) ClearPersonAdded() *EventUpdate {
+	_u.mutation.ClearPersonAdded()
+	return _u
+}
+
+// ClearPersonRemoved clears the "person_removed" edge to the PersonRemovedEvent entity.
+func (_u *EventUpdate) ClearPersonRemoved() *EventUpdate {
+	_u.mutation.ClearPersonRemoved()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -148,14 +353,240 @@ func (_u *EventUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.GetType(); ok {
 		_spec.SetField(event.FieldType, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.Data(); ok {
-		_spec.SetField(event.FieldData, field.TypeBytes, value)
+	if value, ok := _u.mutation.OccurredAt(); ok {
+		_spec.SetField(event.FieldOccurredAt, field.TypeTime, value)
 	}
-	if value, ok := _u.mutation.Metadata(); ok {
-		_spec.SetField(event.FieldMetadata, field.TypeBytes, value)
+	if _u.mutation.ProjectStartedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.ProjectStartedTable,
+			Columns: []string{event.ProjectStartedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(projectstartedevent.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if _u.mutation.MetadataCleared() {
-		_spec.ClearField(event.FieldMetadata, field.TypeBytes)
+	if nodes := _u.mutation.ProjectStartedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.ProjectStartedTable,
+			Columns: []string{event.ProjectStartedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(projectstartedevent.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.TitleChangedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.TitleChangedTable,
+			Columns: []string{event.TitleChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(titlechangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TitleChangedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.TitleChangedTable,
+			Columns: []string{event.TitleChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(titlechangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.DescriptionChangedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.DescriptionChangedTable,
+			Columns: []string{event.DescriptionChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(descriptionchangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.DescriptionChangedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.DescriptionChangedTable,
+			Columns: []string{event.DescriptionChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(descriptionchangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.StartDateChangedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.StartDateChangedTable,
+			Columns: []string{event.StartDateChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(startdatechangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.StartDateChangedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.StartDateChangedTable,
+			Columns: []string{event.StartDateChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(startdatechangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.EndDateChangedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.EndDateChangedTable,
+			Columns: []string{event.EndDateChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(enddatechangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.EndDateChangedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.EndDateChangedTable,
+			Columns: []string{event.EndDateChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(enddatechangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.OrganisationChangedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.OrganisationChangedTable,
+			Columns: []string{event.OrganisationChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organisationchangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.OrganisationChangedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.OrganisationChangedTable,
+			Columns: []string{event.OrganisationChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organisationchangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.PersonAddedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.PersonAddedTable,
+			Columns: []string{event.PersonAddedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(personaddedevent.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PersonAddedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.PersonAddedTable,
+			Columns: []string{event.PersonAddedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(personaddedevent.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.PersonRemovedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.PersonRemovedTable,
+			Columns: []string{event.PersonRemovedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PersonRemovedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.PersonRemovedTable,
+			Columns: []string{event.PersonRemovedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -226,27 +657,223 @@ func (_u *EventUpdateOne) SetNillableType(v *string) *EventUpdateOne {
 	return _u
 }
 
-// SetData sets the "data" field.
-func (_u *EventUpdateOne) SetData(v []byte) *EventUpdateOne {
-	_u.mutation.SetData(v)
+// SetOccurredAt sets the "occurred_at" field.
+func (_u *EventUpdateOne) SetOccurredAt(v time.Time) *EventUpdateOne {
+	_u.mutation.SetOccurredAt(v)
 	return _u
 }
 
-// SetMetadata sets the "metadata" field.
-func (_u *EventUpdateOne) SetMetadata(v []byte) *EventUpdateOne {
-	_u.mutation.SetMetadata(v)
+// SetNillableOccurredAt sets the "occurred_at" field if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableOccurredAt(v *time.Time) *EventUpdateOne {
+	if v != nil {
+		_u.SetOccurredAt(*v)
+	}
 	return _u
 }
 
-// ClearMetadata clears the value of the "metadata" field.
-func (_u *EventUpdateOne) ClearMetadata() *EventUpdateOne {
-	_u.mutation.ClearMetadata()
+// SetProjectStartedID sets the "project_started" edge to the ProjectStartedEvent entity by ID.
+func (_u *EventUpdateOne) SetProjectStartedID(id uuid.UUID) *EventUpdateOne {
+	_u.mutation.SetProjectStartedID(id)
 	return _u
+}
+
+// SetNillableProjectStartedID sets the "project_started" edge to the ProjectStartedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableProjectStartedID(id *uuid.UUID) *EventUpdateOne {
+	if id != nil {
+		_u = _u.SetProjectStartedID(*id)
+	}
+	return _u
+}
+
+// SetProjectStarted sets the "project_started" edge to the ProjectStartedEvent entity.
+func (_u *EventUpdateOne) SetProjectStarted(v *ProjectStartedEvent) *EventUpdateOne {
+	return _u.SetProjectStartedID(v.ID)
+}
+
+// SetTitleChangedID sets the "title_changed" edge to the TitleChangedEvent entity by ID.
+func (_u *EventUpdateOne) SetTitleChangedID(id uuid.UUID) *EventUpdateOne {
+	_u.mutation.SetTitleChangedID(id)
+	return _u
+}
+
+// SetNillableTitleChangedID sets the "title_changed" edge to the TitleChangedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableTitleChangedID(id *uuid.UUID) *EventUpdateOne {
+	if id != nil {
+		_u = _u.SetTitleChangedID(*id)
+	}
+	return _u
+}
+
+// SetTitleChanged sets the "title_changed" edge to the TitleChangedEvent entity.
+func (_u *EventUpdateOne) SetTitleChanged(v *TitleChangedEvent) *EventUpdateOne {
+	return _u.SetTitleChangedID(v.ID)
+}
+
+// SetDescriptionChangedID sets the "description_changed" edge to the DescriptionChangedEvent entity by ID.
+func (_u *EventUpdateOne) SetDescriptionChangedID(id uuid.UUID) *EventUpdateOne {
+	_u.mutation.SetDescriptionChangedID(id)
+	return _u
+}
+
+// SetNillableDescriptionChangedID sets the "description_changed" edge to the DescriptionChangedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableDescriptionChangedID(id *uuid.UUID) *EventUpdateOne {
+	if id != nil {
+		_u = _u.SetDescriptionChangedID(*id)
+	}
+	return _u
+}
+
+// SetDescriptionChanged sets the "description_changed" edge to the DescriptionChangedEvent entity.
+func (_u *EventUpdateOne) SetDescriptionChanged(v *DescriptionChangedEvent) *EventUpdateOne {
+	return _u.SetDescriptionChangedID(v.ID)
+}
+
+// SetStartDateChangedID sets the "start_date_changed" edge to the StartDateChangedEvent entity by ID.
+func (_u *EventUpdateOne) SetStartDateChangedID(id uuid.UUID) *EventUpdateOne {
+	_u.mutation.SetStartDateChangedID(id)
+	return _u
+}
+
+// SetNillableStartDateChangedID sets the "start_date_changed" edge to the StartDateChangedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableStartDateChangedID(id *uuid.UUID) *EventUpdateOne {
+	if id != nil {
+		_u = _u.SetStartDateChangedID(*id)
+	}
+	return _u
+}
+
+// SetStartDateChanged sets the "start_date_changed" edge to the StartDateChangedEvent entity.
+func (_u *EventUpdateOne) SetStartDateChanged(v *StartDateChangedEvent) *EventUpdateOne {
+	return _u.SetStartDateChangedID(v.ID)
+}
+
+// SetEndDateChangedID sets the "end_date_changed" edge to the EndDateChangedEvent entity by ID.
+func (_u *EventUpdateOne) SetEndDateChangedID(id uuid.UUID) *EventUpdateOne {
+	_u.mutation.SetEndDateChangedID(id)
+	return _u
+}
+
+// SetNillableEndDateChangedID sets the "end_date_changed" edge to the EndDateChangedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableEndDateChangedID(id *uuid.UUID) *EventUpdateOne {
+	if id != nil {
+		_u = _u.SetEndDateChangedID(*id)
+	}
+	return _u
+}
+
+// SetEndDateChanged sets the "end_date_changed" edge to the EndDateChangedEvent entity.
+func (_u *EventUpdateOne) SetEndDateChanged(v *EndDateChangedEvent) *EventUpdateOne {
+	return _u.SetEndDateChangedID(v.ID)
+}
+
+// SetOrganisationChangedID sets the "organisation_changed" edge to the OrganisationChangedEvent entity by ID.
+func (_u *EventUpdateOne) SetOrganisationChangedID(id uuid.UUID) *EventUpdateOne {
+	_u.mutation.SetOrganisationChangedID(id)
+	return _u
+}
+
+// SetNillableOrganisationChangedID sets the "organisation_changed" edge to the OrganisationChangedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableOrganisationChangedID(id *uuid.UUID) *EventUpdateOne {
+	if id != nil {
+		_u = _u.SetOrganisationChangedID(*id)
+	}
+	return _u
+}
+
+// SetOrganisationChanged sets the "organisation_changed" edge to the OrganisationChangedEvent entity.
+func (_u *EventUpdateOne) SetOrganisationChanged(v *OrganisationChangedEvent) *EventUpdateOne {
+	return _u.SetOrganisationChangedID(v.ID)
+}
+
+// SetPersonAddedID sets the "person_added" edge to the PersonAddedEvent entity by ID.
+func (_u *EventUpdateOne) SetPersonAddedID(id int) *EventUpdateOne {
+	_u.mutation.SetPersonAddedID(id)
+	return _u
+}
+
+// SetNillablePersonAddedID sets the "person_added" edge to the PersonAddedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdateOne) SetNillablePersonAddedID(id *int) *EventUpdateOne {
+	if id != nil {
+		_u = _u.SetPersonAddedID(*id)
+	}
+	return _u
+}
+
+// SetPersonAdded sets the "person_added" edge to the PersonAddedEvent entity.
+func (_u *EventUpdateOne) SetPersonAdded(v *PersonAddedEvent) *EventUpdateOne {
+	return _u.SetPersonAddedID(v.ID)
+}
+
+// SetPersonRemovedID sets the "person_removed" edge to the PersonRemovedEvent entity by ID.
+func (_u *EventUpdateOne) SetPersonRemovedID(id uuid.UUID) *EventUpdateOne {
+	_u.mutation.SetPersonRemovedID(id)
+	return _u
+}
+
+// SetNillablePersonRemovedID sets the "person_removed" edge to the PersonRemovedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdateOne) SetNillablePersonRemovedID(id *uuid.UUID) *EventUpdateOne {
+	if id != nil {
+		_u = _u.SetPersonRemovedID(*id)
+	}
+	return _u
+}
+
+// SetPersonRemoved sets the "person_removed" edge to the PersonRemovedEvent entity.
+func (_u *EventUpdateOne) SetPersonRemoved(v *PersonRemovedEvent) *EventUpdateOne {
+	return _u.SetPersonRemovedID(v.ID)
 }
 
 // Mutation returns the EventMutation object of the builder.
 func (_u *EventUpdateOne) Mutation() *EventMutation {
 	return _u.mutation
+}
+
+// ClearProjectStarted clears the "project_started" edge to the ProjectStartedEvent entity.
+func (_u *EventUpdateOne) ClearProjectStarted() *EventUpdateOne {
+	_u.mutation.ClearProjectStarted()
+	return _u
+}
+
+// ClearTitleChanged clears the "title_changed" edge to the TitleChangedEvent entity.
+func (_u *EventUpdateOne) ClearTitleChanged() *EventUpdateOne {
+	_u.mutation.ClearTitleChanged()
+	return _u
+}
+
+// ClearDescriptionChanged clears the "description_changed" edge to the DescriptionChangedEvent entity.
+func (_u *EventUpdateOne) ClearDescriptionChanged() *EventUpdateOne {
+	_u.mutation.ClearDescriptionChanged()
+	return _u
+}
+
+// ClearStartDateChanged clears the "start_date_changed" edge to the StartDateChangedEvent entity.
+func (_u *EventUpdateOne) ClearStartDateChanged() *EventUpdateOne {
+	_u.mutation.ClearStartDateChanged()
+	return _u
+}
+
+// ClearEndDateChanged clears the "end_date_changed" edge to the EndDateChangedEvent entity.
+func (_u *EventUpdateOne) ClearEndDateChanged() *EventUpdateOne {
+	_u.mutation.ClearEndDateChanged()
+	return _u
+}
+
+// ClearOrganisationChanged clears the "organisation_changed" edge to the OrganisationChangedEvent entity.
+func (_u *EventUpdateOne) ClearOrganisationChanged() *EventUpdateOne {
+	_u.mutation.ClearOrganisationChanged()
+	return _u
+}
+
+// ClearPersonAdded clears the "person_added" edge to the PersonAddedEvent entity.
+func (_u *EventUpdateOne) ClearPersonAdded() *EventUpdateOne {
+	_u.mutation.ClearPersonAdded()
+	return _u
+}
+
+// ClearPersonRemoved clears the "person_removed" edge to the PersonRemovedEvent entity.
+func (_u *EventUpdateOne) ClearPersonRemoved() *EventUpdateOne {
+	_u.mutation.ClearPersonRemoved()
+	return _u
 }
 
 // Where appends a list predicates to the EventUpdate builder.
@@ -327,14 +954,240 @@ func (_u *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error)
 	if value, ok := _u.mutation.GetType(); ok {
 		_spec.SetField(event.FieldType, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.Data(); ok {
-		_spec.SetField(event.FieldData, field.TypeBytes, value)
+	if value, ok := _u.mutation.OccurredAt(); ok {
+		_spec.SetField(event.FieldOccurredAt, field.TypeTime, value)
 	}
-	if value, ok := _u.mutation.Metadata(); ok {
-		_spec.SetField(event.FieldMetadata, field.TypeBytes, value)
+	if _u.mutation.ProjectStartedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.ProjectStartedTable,
+			Columns: []string{event.ProjectStartedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(projectstartedevent.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if _u.mutation.MetadataCleared() {
-		_spec.ClearField(event.FieldMetadata, field.TypeBytes)
+	if nodes := _u.mutation.ProjectStartedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.ProjectStartedTable,
+			Columns: []string{event.ProjectStartedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(projectstartedevent.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.TitleChangedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.TitleChangedTable,
+			Columns: []string{event.TitleChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(titlechangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TitleChangedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.TitleChangedTable,
+			Columns: []string{event.TitleChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(titlechangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.DescriptionChangedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.DescriptionChangedTable,
+			Columns: []string{event.DescriptionChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(descriptionchangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.DescriptionChangedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.DescriptionChangedTable,
+			Columns: []string{event.DescriptionChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(descriptionchangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.StartDateChangedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.StartDateChangedTable,
+			Columns: []string{event.StartDateChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(startdatechangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.StartDateChangedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.StartDateChangedTable,
+			Columns: []string{event.StartDateChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(startdatechangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.EndDateChangedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.EndDateChangedTable,
+			Columns: []string{event.EndDateChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(enddatechangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.EndDateChangedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.EndDateChangedTable,
+			Columns: []string{event.EndDateChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(enddatechangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.OrganisationChangedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.OrganisationChangedTable,
+			Columns: []string{event.OrganisationChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organisationchangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.OrganisationChangedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.OrganisationChangedTable,
+			Columns: []string{event.OrganisationChangedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organisationchangedevent.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.PersonAddedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.PersonAddedTable,
+			Columns: []string{event.PersonAddedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(personaddedevent.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PersonAddedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.PersonAddedTable,
+			Columns: []string{event.PersonAddedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(personaddedevent.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.PersonRemovedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.PersonRemovedTable,
+			Columns: []string{event.PersonRemovedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PersonRemovedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.PersonRemovedTable,
+			Columns: []string{event.PersonRemovedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Event{config: _u.config}
 	_spec.Assign = _node.assignValues

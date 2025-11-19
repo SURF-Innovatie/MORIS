@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -11,18 +12,34 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/SURF-Innovatie/MORIS/ent/descriptionchangedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/enddatechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/event"
+	"github.com/SURF-Innovatie/MORIS/ent/organisationchangedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/personremovedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/predicate"
+	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/startdatechangedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/titlechangedevent"
 	"github.com/google/uuid"
 )
 
 // EventQuery is the builder for querying Event entities.
 type EventQuery struct {
 	config
-	ctx        *QueryContext
-	order      []event.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Event
+	ctx                     *QueryContext
+	order                   []event.OrderOption
+	inters                  []Interceptor
+	predicates              []predicate.Event
+	withProjectStarted      *ProjectStartedEventQuery
+	withTitleChanged        *TitleChangedEventQuery
+	withDescriptionChanged  *DescriptionChangedEventQuery
+	withStartDateChanged    *StartDateChangedEventQuery
+	withEndDateChanged      *EndDateChangedEventQuery
+	withOrganisationChanged *OrganisationChangedEventQuery
+	withPersonAdded         *PersonAddedEventQuery
+	withPersonRemoved       *PersonRemovedEventQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -57,6 +74,182 @@ func (_q *EventQuery) Unique(unique bool) *EventQuery {
 func (_q *EventQuery) Order(o ...event.OrderOption) *EventQuery {
 	_q.order = append(_q.order, o...)
 	return _q
+}
+
+// QueryProjectStarted chains the current query on the "project_started" edge.
+func (_q *EventQuery) QueryProjectStarted() *ProjectStartedEventQuery {
+	query := (&ProjectStartedEventClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(event.Table, event.FieldID, selector),
+			sqlgraph.To(projectstartedevent.Table, projectstartedevent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, event.ProjectStartedTable, event.ProjectStartedColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTitleChanged chains the current query on the "title_changed" edge.
+func (_q *EventQuery) QueryTitleChanged() *TitleChangedEventQuery {
+	query := (&TitleChangedEventClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(event.Table, event.FieldID, selector),
+			sqlgraph.To(titlechangedevent.Table, titlechangedevent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, event.TitleChangedTable, event.TitleChangedColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryDescriptionChanged chains the current query on the "description_changed" edge.
+func (_q *EventQuery) QueryDescriptionChanged() *DescriptionChangedEventQuery {
+	query := (&DescriptionChangedEventClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(event.Table, event.FieldID, selector),
+			sqlgraph.To(descriptionchangedevent.Table, descriptionchangedevent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, event.DescriptionChangedTable, event.DescriptionChangedColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryStartDateChanged chains the current query on the "start_date_changed" edge.
+func (_q *EventQuery) QueryStartDateChanged() *StartDateChangedEventQuery {
+	query := (&StartDateChangedEventClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(event.Table, event.FieldID, selector),
+			sqlgraph.To(startdatechangedevent.Table, startdatechangedevent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, event.StartDateChangedTable, event.StartDateChangedColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryEndDateChanged chains the current query on the "end_date_changed" edge.
+func (_q *EventQuery) QueryEndDateChanged() *EndDateChangedEventQuery {
+	query := (&EndDateChangedEventClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(event.Table, event.FieldID, selector),
+			sqlgraph.To(enddatechangedevent.Table, enddatechangedevent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, event.EndDateChangedTable, event.EndDateChangedColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryOrganisationChanged chains the current query on the "organisation_changed" edge.
+func (_q *EventQuery) QueryOrganisationChanged() *OrganisationChangedEventQuery {
+	query := (&OrganisationChangedEventClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(event.Table, event.FieldID, selector),
+			sqlgraph.To(organisationchangedevent.Table, organisationchangedevent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, event.OrganisationChangedTable, event.OrganisationChangedColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryPersonAdded chains the current query on the "person_added" edge.
+func (_q *EventQuery) QueryPersonAdded() *PersonAddedEventQuery {
+	query := (&PersonAddedEventClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(event.Table, event.FieldID, selector),
+			sqlgraph.To(personaddedevent.Table, personaddedevent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, event.PersonAddedTable, event.PersonAddedColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryPersonRemoved chains the current query on the "person_removed" edge.
+func (_q *EventQuery) QueryPersonRemoved() *PersonRemovedEventQuery {
+	query := (&PersonRemovedEventClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(event.Table, event.FieldID, selector),
+			sqlgraph.To(personremovedevent.Table, personremovedevent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, event.PersonRemovedTable, event.PersonRemovedColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Event entity from the query.
@@ -246,15 +439,111 @@ func (_q *EventQuery) Clone() *EventQuery {
 		return nil
 	}
 	return &EventQuery{
-		config:     _q.config,
-		ctx:        _q.ctx.Clone(),
-		order:      append([]event.OrderOption{}, _q.order...),
-		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.Event{}, _q.predicates...),
+		config:                  _q.config,
+		ctx:                     _q.ctx.Clone(),
+		order:                   append([]event.OrderOption{}, _q.order...),
+		inters:                  append([]Interceptor{}, _q.inters...),
+		predicates:              append([]predicate.Event{}, _q.predicates...),
+		withProjectStarted:      _q.withProjectStarted.Clone(),
+		withTitleChanged:        _q.withTitleChanged.Clone(),
+		withDescriptionChanged:  _q.withDescriptionChanged.Clone(),
+		withStartDateChanged:    _q.withStartDateChanged.Clone(),
+		withEndDateChanged:      _q.withEndDateChanged.Clone(),
+		withOrganisationChanged: _q.withOrganisationChanged.Clone(),
+		withPersonAdded:         _q.withPersonAdded.Clone(),
+		withPersonRemoved:       _q.withPersonRemoved.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
+}
+
+// WithProjectStarted tells the query-builder to eager-load the nodes that are connected to
+// the "project_started" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *EventQuery) WithProjectStarted(opts ...func(*ProjectStartedEventQuery)) *EventQuery {
+	query := (&ProjectStartedEventClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withProjectStarted = query
+	return _q
+}
+
+// WithTitleChanged tells the query-builder to eager-load the nodes that are connected to
+// the "title_changed" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *EventQuery) WithTitleChanged(opts ...func(*TitleChangedEventQuery)) *EventQuery {
+	query := (&TitleChangedEventClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withTitleChanged = query
+	return _q
+}
+
+// WithDescriptionChanged tells the query-builder to eager-load the nodes that are connected to
+// the "description_changed" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *EventQuery) WithDescriptionChanged(opts ...func(*DescriptionChangedEventQuery)) *EventQuery {
+	query := (&DescriptionChangedEventClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withDescriptionChanged = query
+	return _q
+}
+
+// WithStartDateChanged tells the query-builder to eager-load the nodes that are connected to
+// the "start_date_changed" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *EventQuery) WithStartDateChanged(opts ...func(*StartDateChangedEventQuery)) *EventQuery {
+	query := (&StartDateChangedEventClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withStartDateChanged = query
+	return _q
+}
+
+// WithEndDateChanged tells the query-builder to eager-load the nodes that are connected to
+// the "end_date_changed" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *EventQuery) WithEndDateChanged(opts ...func(*EndDateChangedEventQuery)) *EventQuery {
+	query := (&EndDateChangedEventClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withEndDateChanged = query
+	return _q
+}
+
+// WithOrganisationChanged tells the query-builder to eager-load the nodes that are connected to
+// the "organisation_changed" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *EventQuery) WithOrganisationChanged(opts ...func(*OrganisationChangedEventQuery)) *EventQuery {
+	query := (&OrganisationChangedEventClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withOrganisationChanged = query
+	return _q
+}
+
+// WithPersonAdded tells the query-builder to eager-load the nodes that are connected to
+// the "person_added" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *EventQuery) WithPersonAdded(opts ...func(*PersonAddedEventQuery)) *EventQuery {
+	query := (&PersonAddedEventClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withPersonAdded = query
+	return _q
+}
+
+// WithPersonRemoved tells the query-builder to eager-load the nodes that are connected to
+// the "person_removed" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *EventQuery) WithPersonRemoved(opts ...func(*PersonRemovedEventQuery)) *EventQuery {
+	query := (&PersonRemovedEventClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withPersonRemoved = query
+	return _q
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -333,8 +622,18 @@ func (_q *EventQuery) prepareQuery(ctx context.Context) error {
 
 func (_q *EventQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Event, error) {
 	var (
-		nodes = []*Event{}
-		_spec = _q.querySpec()
+		nodes       = []*Event{}
+		_spec       = _q.querySpec()
+		loadedTypes = [8]bool{
+			_q.withProjectStarted != nil,
+			_q.withTitleChanged != nil,
+			_q.withDescriptionChanged != nil,
+			_q.withStartDateChanged != nil,
+			_q.withEndDateChanged != nil,
+			_q.withOrganisationChanged != nil,
+			_q.withPersonAdded != nil,
+			_q.withPersonRemoved != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Event).scanValues(nil, columns)
@@ -342,6 +641,7 @@ func (_q *EventQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Event,
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Event{config: _q.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -353,7 +653,280 @@ func (_q *EventQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Event,
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := _q.withProjectStarted; query != nil {
+		if err := _q.loadProjectStarted(ctx, query, nodes, nil,
+			func(n *Event, e *ProjectStartedEvent) { n.Edges.ProjectStarted = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withTitleChanged; query != nil {
+		if err := _q.loadTitleChanged(ctx, query, nodes, nil,
+			func(n *Event, e *TitleChangedEvent) { n.Edges.TitleChanged = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withDescriptionChanged; query != nil {
+		if err := _q.loadDescriptionChanged(ctx, query, nodes, nil,
+			func(n *Event, e *DescriptionChangedEvent) { n.Edges.DescriptionChanged = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withStartDateChanged; query != nil {
+		if err := _q.loadStartDateChanged(ctx, query, nodes, nil,
+			func(n *Event, e *StartDateChangedEvent) { n.Edges.StartDateChanged = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withEndDateChanged; query != nil {
+		if err := _q.loadEndDateChanged(ctx, query, nodes, nil,
+			func(n *Event, e *EndDateChangedEvent) { n.Edges.EndDateChanged = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withOrganisationChanged; query != nil {
+		if err := _q.loadOrganisationChanged(ctx, query, nodes, nil,
+			func(n *Event, e *OrganisationChangedEvent) { n.Edges.OrganisationChanged = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withPersonAdded; query != nil {
+		if err := _q.loadPersonAdded(ctx, query, nodes, nil,
+			func(n *Event, e *PersonAddedEvent) { n.Edges.PersonAdded = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withPersonRemoved; query != nil {
+		if err := _q.loadPersonRemoved(ctx, query, nodes, nil,
+			func(n *Event, e *PersonRemovedEvent) { n.Edges.PersonRemoved = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (_q *EventQuery) loadProjectStarted(ctx context.Context, query *ProjectStartedEventQuery, nodes []*Event, init func(*Event), assign func(*Event, *ProjectStartedEvent)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Event)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	query.withFKs = true
+	query.Where(predicate.ProjectStartedEvent(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(event.ProjectStartedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.event_project_started
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "event_project_started" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "event_project_started" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *EventQuery) loadTitleChanged(ctx context.Context, query *TitleChangedEventQuery, nodes []*Event, init func(*Event), assign func(*Event, *TitleChangedEvent)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Event)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	query.withFKs = true
+	query.Where(predicate.TitleChangedEvent(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(event.TitleChangedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.event_title_changed
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "event_title_changed" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "event_title_changed" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *EventQuery) loadDescriptionChanged(ctx context.Context, query *DescriptionChangedEventQuery, nodes []*Event, init func(*Event), assign func(*Event, *DescriptionChangedEvent)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Event)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	query.withFKs = true
+	query.Where(predicate.DescriptionChangedEvent(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(event.DescriptionChangedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.event_description_changed
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "event_description_changed" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "event_description_changed" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *EventQuery) loadStartDateChanged(ctx context.Context, query *StartDateChangedEventQuery, nodes []*Event, init func(*Event), assign func(*Event, *StartDateChangedEvent)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Event)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	query.withFKs = true
+	query.Where(predicate.StartDateChangedEvent(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(event.StartDateChangedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.event_start_date_changed
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "event_start_date_changed" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "event_start_date_changed" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *EventQuery) loadEndDateChanged(ctx context.Context, query *EndDateChangedEventQuery, nodes []*Event, init func(*Event), assign func(*Event, *EndDateChangedEvent)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Event)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	query.withFKs = true
+	query.Where(predicate.EndDateChangedEvent(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(event.EndDateChangedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.event_end_date_changed
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "event_end_date_changed" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "event_end_date_changed" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *EventQuery) loadOrganisationChanged(ctx context.Context, query *OrganisationChangedEventQuery, nodes []*Event, init func(*Event), assign func(*Event, *OrganisationChangedEvent)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Event)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	query.withFKs = true
+	query.Where(predicate.OrganisationChangedEvent(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(event.OrganisationChangedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.event_organisation_changed
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "event_organisation_changed" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "event_organisation_changed" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *EventQuery) loadPersonAdded(ctx context.Context, query *PersonAddedEventQuery, nodes []*Event, init func(*Event), assign func(*Event, *PersonAddedEvent)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Event)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	query.withFKs = true
+	query.Where(predicate.PersonAddedEvent(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(event.PersonAddedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.event_person_added
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "event_person_added" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "event_person_added" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *EventQuery) loadPersonRemoved(ctx context.Context, query *PersonRemovedEventQuery, nodes []*Event, init func(*Event), assign func(*Event, *PersonRemovedEvent)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Event)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	query.withFKs = true
+	query.Where(predicate.PersonRemovedEvent(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(event.PersonRemovedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.event_person_removed
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "event_person_removed" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "event_person_removed" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
 }
 
 func (_q *EventQuery) sqlCount(ctx context.Context) (int, error) {

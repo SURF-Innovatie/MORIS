@@ -9,6 +9,30 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 )
 
+// The DescriptionChangedEventFunc type is an adapter to allow the use of ordinary
+// function as DescriptionChangedEvent mutator.
+type DescriptionChangedEventFunc func(context.Context, *ent.DescriptionChangedEventMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f DescriptionChangedEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.DescriptionChangedEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DescriptionChangedEventMutation", m)
+}
+
+// The EndDateChangedEventFunc type is an adapter to allow the use of ordinary
+// function as EndDateChangedEvent mutator.
+type EndDateChangedEventFunc func(context.Context, *ent.EndDateChangedEventMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f EndDateChangedEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.EndDateChangedEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EndDateChangedEventMutation", m)
+}
+
 // The EventFunc type is an adapter to allow the use of ordinary
 // function as Event mutator.
 type EventFunc func(context.Context, *ent.EventMutation) (ent.Value, error)
@@ -19,6 +43,78 @@ func (f EventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EventMutation", m)
+}
+
+// The OrganisationChangedEventFunc type is an adapter to allow the use of ordinary
+// function as OrganisationChangedEvent mutator.
+type OrganisationChangedEventFunc func(context.Context, *ent.OrganisationChangedEventMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f OrganisationChangedEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.OrganisationChangedEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.OrganisationChangedEventMutation", m)
+}
+
+// The PersonAddedEventFunc type is an adapter to allow the use of ordinary
+// function as PersonAddedEvent mutator.
+type PersonAddedEventFunc func(context.Context, *ent.PersonAddedEventMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PersonAddedEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PersonAddedEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PersonAddedEventMutation", m)
+}
+
+// The PersonRemovedEventFunc type is an adapter to allow the use of ordinary
+// function as PersonRemovedEvent mutator.
+type PersonRemovedEventFunc func(context.Context, *ent.PersonRemovedEventMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PersonRemovedEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PersonRemovedEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PersonRemovedEventMutation", m)
+}
+
+// The ProjectStartedEventFunc type is an adapter to allow the use of ordinary
+// function as ProjectStartedEvent mutator.
+type ProjectStartedEventFunc func(context.Context, *ent.ProjectStartedEventMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ProjectStartedEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ProjectStartedEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ProjectStartedEventMutation", m)
+}
+
+// The StartDateChangedEventFunc type is an adapter to allow the use of ordinary
+// function as StartDateChangedEvent mutator.
+type StartDateChangedEventFunc func(context.Context, *ent.StartDateChangedEventMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f StartDateChangedEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.StartDateChangedEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.StartDateChangedEventMutation", m)
+}
+
+// The TitleChangedEventFunc type is an adapter to allow the use of ordinary
+// function as TitleChangedEvent mutator.
+type TitleChangedEventFunc func(context.Context, *ent.TitleChangedEventMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TitleChangedEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TitleChangedEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TitleChangedEventMutation", m)
 }
 
 // The UserFunc type is an adapter to allow the use of ordinary

@@ -12,8 +12,24 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// DescriptionChangedEvent is the client for interacting with the DescriptionChangedEvent builders.
+	DescriptionChangedEvent *DescriptionChangedEventClient
+	// EndDateChangedEvent is the client for interacting with the EndDateChangedEvent builders.
+	EndDateChangedEvent *EndDateChangedEventClient
 	// Event is the client for interacting with the Event builders.
 	Event *EventClient
+	// OrganisationChangedEvent is the client for interacting with the OrganisationChangedEvent builders.
+	OrganisationChangedEvent *OrganisationChangedEventClient
+	// PersonAddedEvent is the client for interacting with the PersonAddedEvent builders.
+	PersonAddedEvent *PersonAddedEventClient
+	// PersonRemovedEvent is the client for interacting with the PersonRemovedEvent builders.
+	PersonRemovedEvent *PersonRemovedEventClient
+	// ProjectStartedEvent is the client for interacting with the ProjectStartedEvent builders.
+	ProjectStartedEvent *ProjectStartedEventClient
+	// StartDateChangedEvent is the client for interacting with the StartDateChangedEvent builders.
+	StartDateChangedEvent *StartDateChangedEventClient
+	// TitleChangedEvent is the client for interacting with the TitleChangedEvent builders.
+	TitleChangedEvent *TitleChangedEventClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -147,7 +163,15 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.DescriptionChangedEvent = NewDescriptionChangedEventClient(tx.config)
+	tx.EndDateChangedEvent = NewEndDateChangedEventClient(tx.config)
 	tx.Event = NewEventClient(tx.config)
+	tx.OrganisationChangedEvent = NewOrganisationChangedEventClient(tx.config)
+	tx.PersonAddedEvent = NewPersonAddedEventClient(tx.config)
+	tx.PersonRemovedEvent = NewPersonRemovedEventClient(tx.config)
+	tx.ProjectStartedEvent = NewProjectStartedEventClient(tx.config)
+	tx.StartDateChangedEvent = NewStartDateChangedEventClient(tx.config)
+	tx.TitleChangedEvent = NewTitleChangedEventClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 
@@ -158,7 +182,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Event.QueryXXX(), the query will be executed
+// applies a query, for example: DescriptionChangedEvent.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

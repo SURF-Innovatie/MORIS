@@ -4,28 +4,36 @@ import (
 	"time"
 
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
 )
 
-type Event struct{ ent.Schema }
+type Event struct {
+	ent.Schema
+}
 
 func (Event) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", uuid.UUID{}).Default(uuid.New),
+		field.UUID("id", uuid.UUID{}).
+			Default(uuid.New),
 		field.UUID("project_id", uuid.UUID{}),
 		field.Int("version"),
 		field.String("type"),
-		field.Bytes("data"),
-		field.Bytes("metadata").Optional().Nillable(),
-		field.Time("occurred_at").Default(time.Now).Immutable(),
+		field.Time("occurred_at").
+			Default(time.Now),
 	}
 }
 
-func (Event) Indexes() []ent.Index {
-	return []ent.Index{
-		index.Fields("project_id", "version").Unique(),
-		index.Fields("project_id", "occurred_at"),
+func (Event) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.To("project_started", ProjectStartedEvent.Type).Unique(),
+		edge.To("title_changed", TitleChangedEvent.Type).Unique(),
+		edge.To("description_changed", DescriptionChangedEvent.Type).Unique(),
+		edge.To("start_date_changed", StartDateChangedEvent.Type).Unique(),
+		edge.To("end_date_changed", EndDateChangedEvent.Type).Unique(),
+		edge.To("organisation_changed", OrganisationChangedEvent.Type).Unique(),
+		edge.To("person_added", PersonAddedEvent.Type).Unique(),
+		edge.To("person_removed", PersonRemovedEvent.Type).Unique(),
 	}
 }

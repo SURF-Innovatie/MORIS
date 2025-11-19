@@ -49,7 +49,7 @@ func Apply(p *entities.Project, e events.Event) {
 
 	case events.PersonRemoved:
 		p.People = filterPeople(p.People, func(pe *entities.Person) bool {
-			return pe.Name != ev.Person.Name
+			return pe.Id != ev.PersonId
 		})
 
 	default:

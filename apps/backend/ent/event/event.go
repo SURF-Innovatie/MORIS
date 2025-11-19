@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -20,14 +21,82 @@ const (
 	FieldVersion = "version"
 	// FieldType holds the string denoting the type field in the database.
 	FieldType = "type"
-	// FieldData holds the string denoting the data field in the database.
-	FieldData = "data"
-	// FieldMetadata holds the string denoting the metadata field in the database.
-	FieldMetadata = "metadata"
 	// FieldOccurredAt holds the string denoting the occurred_at field in the database.
 	FieldOccurredAt = "occurred_at"
+	// EdgeProjectStarted holds the string denoting the project_started edge name in mutations.
+	EdgeProjectStarted = "project_started"
+	// EdgeTitleChanged holds the string denoting the title_changed edge name in mutations.
+	EdgeTitleChanged = "title_changed"
+	// EdgeDescriptionChanged holds the string denoting the description_changed edge name in mutations.
+	EdgeDescriptionChanged = "description_changed"
+	// EdgeStartDateChanged holds the string denoting the start_date_changed edge name in mutations.
+	EdgeStartDateChanged = "start_date_changed"
+	// EdgeEndDateChanged holds the string denoting the end_date_changed edge name in mutations.
+	EdgeEndDateChanged = "end_date_changed"
+	// EdgeOrganisationChanged holds the string denoting the organisation_changed edge name in mutations.
+	EdgeOrganisationChanged = "organisation_changed"
+	// EdgePersonAdded holds the string denoting the person_added edge name in mutations.
+	EdgePersonAdded = "person_added"
+	// EdgePersonRemoved holds the string denoting the person_removed edge name in mutations.
+	EdgePersonRemoved = "person_removed"
 	// Table holds the table name of the event in the database.
 	Table = "events"
+	// ProjectStartedTable is the table that holds the project_started relation/edge.
+	ProjectStartedTable = "project_started_events"
+	// ProjectStartedInverseTable is the table name for the ProjectStartedEvent entity.
+	// It exists in this package in order to avoid circular dependency with the "projectstartedevent" package.
+	ProjectStartedInverseTable = "project_started_events"
+	// ProjectStartedColumn is the table column denoting the project_started relation/edge.
+	ProjectStartedColumn = "event_project_started"
+	// TitleChangedTable is the table that holds the title_changed relation/edge.
+	TitleChangedTable = "title_changed_events"
+	// TitleChangedInverseTable is the table name for the TitleChangedEvent entity.
+	// It exists in this package in order to avoid circular dependency with the "titlechangedevent" package.
+	TitleChangedInverseTable = "title_changed_events"
+	// TitleChangedColumn is the table column denoting the title_changed relation/edge.
+	TitleChangedColumn = "event_title_changed"
+	// DescriptionChangedTable is the table that holds the description_changed relation/edge.
+	DescriptionChangedTable = "description_changed_events"
+	// DescriptionChangedInverseTable is the table name for the DescriptionChangedEvent entity.
+	// It exists in this package in order to avoid circular dependency with the "descriptionchangedevent" package.
+	DescriptionChangedInverseTable = "description_changed_events"
+	// DescriptionChangedColumn is the table column denoting the description_changed relation/edge.
+	DescriptionChangedColumn = "event_description_changed"
+	// StartDateChangedTable is the table that holds the start_date_changed relation/edge.
+	StartDateChangedTable = "start_date_changed_events"
+	// StartDateChangedInverseTable is the table name for the StartDateChangedEvent entity.
+	// It exists in this package in order to avoid circular dependency with the "startdatechangedevent" package.
+	StartDateChangedInverseTable = "start_date_changed_events"
+	// StartDateChangedColumn is the table column denoting the start_date_changed relation/edge.
+	StartDateChangedColumn = "event_start_date_changed"
+	// EndDateChangedTable is the table that holds the end_date_changed relation/edge.
+	EndDateChangedTable = "end_date_changed_events"
+	// EndDateChangedInverseTable is the table name for the EndDateChangedEvent entity.
+	// It exists in this package in order to avoid circular dependency with the "enddatechangedevent" package.
+	EndDateChangedInverseTable = "end_date_changed_events"
+	// EndDateChangedColumn is the table column denoting the end_date_changed relation/edge.
+	EndDateChangedColumn = "event_end_date_changed"
+	// OrganisationChangedTable is the table that holds the organisation_changed relation/edge.
+	OrganisationChangedTable = "organisation_changed_events"
+	// OrganisationChangedInverseTable is the table name for the OrganisationChangedEvent entity.
+	// It exists in this package in order to avoid circular dependency with the "organisationchangedevent" package.
+	OrganisationChangedInverseTable = "organisation_changed_events"
+	// OrganisationChangedColumn is the table column denoting the organisation_changed relation/edge.
+	OrganisationChangedColumn = "event_organisation_changed"
+	// PersonAddedTable is the table that holds the person_added relation/edge.
+	PersonAddedTable = "person_added_events"
+	// PersonAddedInverseTable is the table name for the PersonAddedEvent entity.
+	// It exists in this package in order to avoid circular dependency with the "personaddedevent" package.
+	PersonAddedInverseTable = "person_added_events"
+	// PersonAddedColumn is the table column denoting the person_added relation/edge.
+	PersonAddedColumn = "event_person_added"
+	// PersonRemovedTable is the table that holds the person_removed relation/edge.
+	PersonRemovedTable = "person_removed_events"
+	// PersonRemovedInverseTable is the table name for the PersonRemovedEvent entity.
+	// It exists in this package in order to avoid circular dependency with the "personremovedevent" package.
+	PersonRemovedInverseTable = "person_removed_events"
+	// PersonRemovedColumn is the table column denoting the person_removed relation/edge.
+	PersonRemovedColumn = "event_person_removed"
 )
 
 // Columns holds all SQL columns for event fields.
@@ -36,8 +105,6 @@ var Columns = []string{
 	FieldProjectID,
 	FieldVersion,
 	FieldType,
-	FieldData,
-	FieldMetadata,
 	FieldOccurredAt,
 }
 
@@ -84,4 +151,116 @@ func ByType(opts ...sql.OrderTermOption) OrderOption {
 // ByOccurredAt orders the results by the occurred_at field.
 func ByOccurredAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldOccurredAt, opts...).ToFunc()
+}
+
+// ByProjectStartedField orders the results by project_started field.
+func ByProjectStartedField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newProjectStartedStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByTitleChangedField orders the results by title_changed field.
+func ByTitleChangedField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTitleChangedStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByDescriptionChangedField orders the results by description_changed field.
+func ByDescriptionChangedField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newDescriptionChangedStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByStartDateChangedField orders the results by start_date_changed field.
+func ByStartDateChangedField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newStartDateChangedStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByEndDateChangedField orders the results by end_date_changed field.
+func ByEndDateChangedField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newEndDateChangedStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByOrganisationChangedField orders the results by organisation_changed field.
+func ByOrganisationChangedField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newOrganisationChangedStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByPersonAddedField orders the results by person_added field.
+func ByPersonAddedField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPersonAddedStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByPersonRemovedField orders the results by person_removed field.
+func ByPersonRemovedField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPersonRemovedStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newProjectStartedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ProjectStartedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, ProjectStartedTable, ProjectStartedColumn),
+	)
+}
+func newTitleChangedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TitleChangedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, TitleChangedTable, TitleChangedColumn),
+	)
+}
+func newDescriptionChangedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(DescriptionChangedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, DescriptionChangedTable, DescriptionChangedColumn),
+	)
+}
+func newStartDateChangedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(StartDateChangedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, StartDateChangedTable, StartDateChangedColumn),
+	)
+}
+func newEndDateChangedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(EndDateChangedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, EndDateChangedTable, EndDateChangedColumn),
+	)
+}
+func newOrganisationChangedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(OrganisationChangedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, OrganisationChangedTable, OrganisationChangedColumn),
+	)
+}
+func newPersonAddedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PersonAddedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, PersonAddedTable, PersonAddedColumn),
+	)
+}
+func newPersonRemovedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PersonRemovedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, PersonRemovedTable, PersonRemovedColumn),
+	)
 }

@@ -2,8 +2,7 @@ package eventstore
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	en "github.com/SURF-Innovatie/MORIS/ent/event"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 )
 
@@ -31,7 +31,7 @@ func (s *EntStore) Append(
 		return nil
 	}
 
-	// Check current version.
+	// Check current version
 	last, err := s.cli.Event.
 		Query().
 		Where(en.ProjectIDEQ(projectID)).
@@ -61,27 +61,226 @@ func (s *EntStore) Append(
 	for _, e := range list {
 		version++
 
-		typ, payload, err := marshal(e)
-		if err != nil {
-			_ = tx.Rollback()
-			return err
-		}
+		switch v := e.(type) {
 
-		if _, err := tx.Event.Create().
-			SetID(uuid.New()).
-			SetProjectID(projectID).
-			SetVersion(version).
-			SetType(typ).
-			SetData(payload).
-			SetOccurredAt(now).
-			Save(ctx); err != nil {
-			_ = tx.Rollback()
-
-			// translate unique violation to concurrency error
-			if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
-				return ErrConcurrency
+		case events.ProjectStarted:
+			// 1) create base Event row
+			evRow, err := tx.Event.
+				Create().
+				SetID(uuid.New()).
+				SetProjectID(projectID).
+				SetVersion(version).
+				SetType(events.ProjectStartedType).
+				SetOccurredAt(now).
+				Save(ctx)
+			if err != nil {
+				_ = tx.Rollback()
+				if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+					return ErrConcurrency
+				}
+				return err
 			}
-			return err
+
+			// 2) create concrete payload row, linking back to Event
+			if _, err := tx.ProjectStartedEvent.
+				Create().
+				SetEvent(evRow). // or SetEventID(evRow.ID)
+				SetTitle(v.Title).
+				SetDescription(v.Description).
+				SetStartDate(v.StartDate).
+				SetEndDate(v.EndDate).
+				SetOrganisationName(v.Organisation.Name).
+				Save(ctx); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+
+		case events.TitleChanged:
+			evRow, err := tx.Event.
+				Create().
+				SetID(uuid.New()).
+				SetProjectID(projectID).
+				SetVersion(version).
+				SetType(events.TitleChangedType).
+				SetOccurredAt(now).
+				Save(ctx)
+			if err != nil {
+				_ = tx.Rollback()
+				if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+					return ErrConcurrency
+				}
+				return err
+			}
+
+			if _, err := tx.TitleChangedEvent.
+				Create().
+				SetEvent(evRow).
+				SetTitle(v.Title).
+				Save(ctx); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+
+		case events.DescriptionChanged:
+			evRow, err := tx.Event.
+				Create().
+				SetID(uuid.New()).
+				SetProjectID(projectID).
+				SetVersion(version).
+				SetType(events.DescriptionChangedType).
+				SetOccurredAt(now).
+				Save(ctx)
+			if err != nil {
+				_ = tx.Rollback()
+				if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+					return ErrConcurrency
+				}
+				return err
+			}
+
+			if _, err := tx.DescriptionChangedEvent.
+				Create().
+				SetEvent(evRow).
+				SetDescription(v.Description).
+				Save(ctx); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+
+		case events.StartDateChanged:
+			evRow, err := tx.Event.
+				Create().
+				SetID(uuid.New()).
+				SetProjectID(projectID).
+				SetVersion(version).
+				SetType(events.StartDateChangedType).
+				SetOccurredAt(now).
+				Save(ctx)
+			if err != nil {
+				_ = tx.Rollback()
+				if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+					return ErrConcurrency
+				}
+				return err
+			}
+
+			if _, err := tx.StartDateChangedEvent.
+				Create().
+				SetEvent(evRow).
+				SetStartDate(v.StartDate).
+				Save(ctx); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+
+		case events.EndDateChanged:
+			evRow, err := tx.Event.
+				Create().
+				SetID(uuid.New()).
+				SetProjectID(projectID).
+				SetVersion(version).
+				SetType(events.EndDateChangedType).
+				SetOccurredAt(now).
+				Save(ctx)
+			if err != nil {
+				_ = tx.Rollback()
+				if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+					return ErrConcurrency
+				}
+				return err
+			}
+
+			if _, err := tx.EndDateChangedEvent.
+				Create().
+				SetEvent(evRow).
+				SetEndDate(v.EndDate).
+				Save(ctx); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+
+		case events.OrganisationChanged:
+			evRow, err := tx.Event.
+				Create().
+				SetID(uuid.New()).
+				SetProjectID(projectID).
+				SetVersion(version).
+				SetType(events.OrganisationChangedType).
+				SetOccurredAt(now).
+				Save(ctx)
+			if err != nil {
+				_ = tx.Rollback()
+				if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+					return ErrConcurrency
+				}
+				return err
+			}
+
+			if _, err := tx.OrganisationChangedEvent.
+				Create().
+				SetEvent(evRow).
+				SetOrganisationName(v.Organisation.Name).
+				Save(ctx); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+
+		case events.PersonAdded:
+			evRow, err := tx.Event.
+				Create().
+				SetID(uuid.New()).
+				SetProjectID(projectID).
+				SetVersion(version).
+				SetType(events.PersonAddedType).
+				SetOccurredAt(now).
+				Save(ctx)
+			if err != nil {
+				_ = tx.Rollback()
+				if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+					return ErrConcurrency
+				}
+				return err
+			}
+
+			if _, err := tx.PersonAddedEvent.
+				Create().
+				SetEvent(evRow).
+				SetPersonID(v.Person.Id).
+				SetPersonName(v.Person.Name).
+				Save(ctx); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+
+		case events.PersonRemoved:
+			evRow, err := tx.Event.
+				Create().
+				SetID(uuid.New()).
+				SetProjectID(projectID).
+				SetVersion(version).
+				SetType(events.PersonRemovedType).
+				SetOccurredAt(now).
+				Save(ctx)
+			if err != nil {
+				_ = tx.Rollback()
+				if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+					return ErrConcurrency
+				}
+				return err
+			}
+
+			if _, err := tx.PersonRemovedEvent.
+				Create().
+				SetEvent(evRow).
+				SetID(v.PersonId).
+				Save(ctx); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+
+		default:
+			_ = tx.Rollback()
+			return fmt.Errorf("unknown event type %T", e)
 		}
 	}
 
@@ -96,18 +295,125 @@ func (s *EntStore) Load(
 		Query().
 		Where(en.ProjectIDEQ(projectID)).
 		Order(ent.Asc(en.FieldVersion)).
+		WithProjectStarted().
+		WithTitleChanged().
+		WithDescriptionChanged().
+		WithStartDateChanged().
+		WithEndDateChanged().
+		WithOrganisationChanged().
+		WithPersonAdded().
+		WithPersonRemoved().
 		All(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	out := make([]events.Event, 0, len(rows))
+
 	for _, r := range rows {
-		ev, err := unmarshal(r.Type, r.Data, projectID, r.OccurredAt)
-		if err != nil {
-			return nil, 0, err
+		base := events.Base{
+			ProjectID: projectID,
+			At:        r.OccurredAt,
 		}
-		out = append(out, ev)
+
+		switch r.Type {
+		case events.ProjectStartedType:
+			payload := r.Edges.ProjectStarted
+			if payload == nil {
+				return nil, 0, fmt.Errorf("missing ProjectStarted edge for event %s", r.ID)
+			}
+			out = append(out, events.ProjectStarted{
+				Base:        base,
+				Title:       payload.Title,
+				Description: payload.Description,
+				StartDate:   payload.StartDate,
+				EndDate:     payload.EndDate,
+				Organisation: entities.Organisation{
+					Id:   uuid.Nil, // or real ID if you store it
+					Name: payload.OrganisationName,
+				},
+				People: nil, // driven by PersonAdded events
+			})
+
+		case events.TitleChangedType:
+			payload := r.Edges.TitleChanged
+			if payload == nil {
+				return nil, 0, fmt.Errorf("missing TitleChanged edge for event %s", r.ID)
+			}
+			out = append(out, events.TitleChanged{
+				Base:  base,
+				Title: payload.Title,
+			})
+
+		case events.DescriptionChangedType:
+			payload := r.Edges.DescriptionChanged
+			if payload == nil {
+				return nil, 0, fmt.Errorf("missing DescriptionChanged edge for event %s", r.ID)
+			}
+			out = append(out, events.DescriptionChanged{
+				Base:        base,
+				Description: payload.Description,
+			})
+
+		case events.StartDateChangedType:
+			payload := r.Edges.StartDateChanged
+			if payload == nil {
+				return nil, 0, fmt.Errorf("missing StartDateChanged edge for event %s", r.ID)
+			}
+			out = append(out, events.StartDateChanged{
+				Base:      base,
+				StartDate: payload.StartDate,
+			})
+
+		case events.EndDateChangedType:
+			payload := r.Edges.EndDateChanged
+			if payload == nil {
+				return nil, 0, fmt.Errorf("missing EndDateChanged edge for event %s", r.ID)
+			}
+			out = append(out, events.EndDateChanged{
+				Base:    base,
+				EndDate: payload.EndDate,
+			})
+
+		case events.OrganisationChangedType:
+			payload := r.Edges.OrganisationChanged
+			if payload == nil {
+				return nil, 0, fmt.Errorf("missing OrganisationChanged edge for event %s", r.ID)
+			}
+			out = append(out, events.OrganisationChanged{
+				Base: base,
+				Organisation: entities.Organisation{
+					Id:   uuid.Nil,
+					Name: payload.OrganisationName,
+				},
+			})
+
+		case events.PersonAddedType:
+			payload := r.Edges.PersonAdded
+			if payload == nil {
+				return nil, 0, fmt.Errorf("missing PersonAdded edge for event %s", r.ID)
+			}
+			out = append(out, events.PersonAdded{
+				Base: base,
+				Person: entities.Person{
+					Id:   payload.PersonID,
+					Name: payload.PersonName,
+				},
+			})
+
+		case events.PersonRemovedType:
+			payload := r.Edges.PersonRemoved
+			if payload == nil {
+				return nil, 0, fmt.Errorf("missing PersonRemoved edge for event %s", r.ID)
+			}
+			out = append(out, events.PersonRemoved{
+				Base:     base,
+				PersonId: payload.ID,
+			})
+
+		default:
+			// unknown type: ignore or log, depending on your policy
+		}
 	}
 
 	curVersion := 0
@@ -115,117 +421,4 @@ func (s *EntStore) Load(
 		curVersion = rows[n-1].Version
 	}
 	return out, curVersion, nil
-}
-
-// ── JSON codec bound to your events package ───────────────────────────────────
-
-func marshal(e events.Event) (string, []byte, error) {
-	switch v := e.(type) {
-	case events.ProjectStarted:
-		b, err := json.Marshal(v)
-		return events.ProjectStartedType, b, err
-	case events.TitleChanged:
-		b, err := json.Marshal(v)
-		return events.TitleChangedType, b, err
-	case events.DescriptionChanged:
-		b, err := json.Marshal(v)
-		return events.DescriptionChangedType, b, err
-	case events.StartDateChanged:
-		b, err := json.Marshal(v)
-		return events.StartDateChangedType, b, err
-	case events.EndDateChanged:
-		b, err := json.Marshal(v)
-		return events.EndDateChangedType, b, err
-	case events.OrganisationChanged:
-		b, err := json.Marshal(v)
-		return events.OrganisationChangedType, b, err
-	case events.PersonAdded:
-		b, err := json.Marshal(v)
-		return events.PersonAddedType, b, err
-	case events.PersonRemoved:
-		b, err := json.Marshal(v)
-		return events.PersonRemovedType, b, err
-	default:
-		return "", nil, errors.New("unknown event type")
-	}
-}
-
-func unmarshal(typ string, data []byte, projectID uuid.UUID, at time.Time) (events.Event, error) {
-	base := events.Base{ProjectID: projectID, At: at}
-	switch typ {
-	case events.ProjectStartedType:
-		var v events.ProjectStarted
-		if err := json.Unmarshal(data, &v); err != nil {
-			return nil, err
-		}
-		if v.ProjectID == uuid.Nil {
-			v.Base = base
-		}
-		return v, nil
-	case events.TitleChangedType:
-		var v events.TitleChanged
-		if err := json.Unmarshal(data, &v); err != nil {
-			return nil, err
-		}
-		if v.ProjectID == uuid.Nil {
-			v.Base = base
-		}
-		return v, nil
-	case events.DescriptionChangedType:
-		var v events.DescriptionChanged
-		if err := json.Unmarshal(data, &v); err != nil {
-			return nil, err
-		}
-		if v.ProjectID == uuid.Nil {
-			v.Base = base
-		}
-		return v, nil
-	case events.StartDateChangedType:
-		var v events.StartDateChanged
-		if err := json.Unmarshal(data, &v); err != nil {
-			return nil, err
-		}
-		if v.ProjectID == uuid.Nil {
-			v.Base = base
-		}
-		return v, nil
-	case events.EndDateChangedType:
-		var v events.EndDateChanged
-		if err := json.Unmarshal(data, &v); err != nil {
-			return nil, err
-		}
-		if v.ProjectID == uuid.Nil {
-			v.Base = base
-		}
-		return v, nil
-	case events.OrganisationChangedType:
-		var v events.OrganisationChanged
-		if err := json.Unmarshal(data, &v); err != nil {
-			return nil, err
-		}
-		if v.ProjectID == uuid.Nil {
-			v.Base = base
-		}
-		return v, nil
-	case events.PersonAddedType:
-		var v events.PersonAdded
-		if err := json.Unmarshal(data, &v); err != nil {
-			return nil, err
-		}
-		if v.ProjectID == uuid.Nil {
-			v.Base = base
-		}
-		return v, nil
-	case events.PersonRemovedType:
-		var v events.PersonRemoved
-		if err := json.Unmarshal(data, &v); err != nil {
-			return nil, err
-		}
-		if v.ProjectID == uuid.Nil {
-			v.Base = base
-		}
-		return v, nil
-	default:
-		return nil, errors.New("unknown event type: " + typ)
-	}
 }

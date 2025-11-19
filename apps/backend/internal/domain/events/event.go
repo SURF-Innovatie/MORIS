@@ -6,14 +6,10 @@ import (
 	"github.com/google/uuid"
 )
 
-// Event is a sealed interface for all domain events.
 type Event interface {
 	isEvent()
-	// AggregateID identifies the Project this event belongs to.
 	AggregateID() uuid.UUID
-	// OccurredAt is when the change happened (UTC).
 	OccurredAt() time.Time
-	// Type is a stable string for routing/serialization.
 	Type() string
 }
 
@@ -28,7 +24,6 @@ const (
 	PersonRemovedType       = "project.person_removed"
 )
 
-// Base carries common metadata. Embed in all events.
 type Base struct {
 	ProjectID uuid.UUID `json:"projectId"`
 	At        time.Time `json:"at"`

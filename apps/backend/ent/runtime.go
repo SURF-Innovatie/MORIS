@@ -5,8 +5,16 @@ package ent
 import (
 	"time"
 
+	"github.com/SURF-Innovatie/MORIS/ent/descriptionchangedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/enddatechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/event"
+	"github.com/SURF-Innovatie/MORIS/ent/organisationchangedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/personremovedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/schema"
+	"github.com/SURF-Innovatie/MORIS/ent/startdatechangedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/titlechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/google/uuid"
 )
@@ -15,16 +23,64 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	descriptionchangedeventFields := schema.DescriptionChangedEvent{}.Fields()
+	_ = descriptionchangedeventFields
+	// descriptionchangedeventDescID is the schema descriptor for id field.
+	descriptionchangedeventDescID := descriptionchangedeventFields[0].Descriptor()
+	// descriptionchangedevent.DefaultID holds the default value on creation for the id field.
+	descriptionchangedevent.DefaultID = descriptionchangedeventDescID.Default.(func() uuid.UUID)
+	enddatechangedeventFields := schema.EndDateChangedEvent{}.Fields()
+	_ = enddatechangedeventFields
+	// enddatechangedeventDescID is the schema descriptor for id field.
+	enddatechangedeventDescID := enddatechangedeventFields[0].Descriptor()
+	// enddatechangedevent.DefaultID holds the default value on creation for the id field.
+	enddatechangedevent.DefaultID = enddatechangedeventDescID.Default.(func() uuid.UUID)
 	eventFields := schema.Event{}.Fields()
 	_ = eventFields
 	// eventDescOccurredAt is the schema descriptor for occurred_at field.
-	eventDescOccurredAt := eventFields[6].Descriptor()
+	eventDescOccurredAt := eventFields[4].Descriptor()
 	// event.DefaultOccurredAt holds the default value on creation for the occurred_at field.
 	event.DefaultOccurredAt = eventDescOccurredAt.Default.(func() time.Time)
 	// eventDescID is the schema descriptor for id field.
 	eventDescID := eventFields[0].Descriptor()
 	// event.DefaultID holds the default value on creation for the id field.
 	event.DefaultID = eventDescID.Default.(func() uuid.UUID)
+	organisationchangedeventFields := schema.OrganisationChangedEvent{}.Fields()
+	_ = organisationchangedeventFields
+	// organisationchangedeventDescID is the schema descriptor for id field.
+	organisationchangedeventDescID := organisationchangedeventFields[0].Descriptor()
+	// organisationchangedevent.DefaultID holds the default value on creation for the id field.
+	organisationchangedevent.DefaultID = organisationchangedeventDescID.Default.(func() uuid.UUID)
+	personaddedeventFields := schema.PersonAddedEvent{}.Fields()
+	_ = personaddedeventFields
+	// personaddedeventDescPersonID is the schema descriptor for person_id field.
+	personaddedeventDescPersonID := personaddedeventFields[0].Descriptor()
+	// personaddedevent.DefaultPersonID holds the default value on creation for the person_id field.
+	personaddedevent.DefaultPersonID = personaddedeventDescPersonID.Default.(func() uuid.UUID)
+	personremovedeventFields := schema.PersonRemovedEvent{}.Fields()
+	_ = personremovedeventFields
+	// personremovedeventDescID is the schema descriptor for id field.
+	personremovedeventDescID := personremovedeventFields[0].Descriptor()
+	// personremovedevent.DefaultID holds the default value on creation for the id field.
+	personremovedevent.DefaultID = personremovedeventDescID.Default.(func() uuid.UUID)
+	projectstartedeventFields := schema.ProjectStartedEvent{}.Fields()
+	_ = projectstartedeventFields
+	// projectstartedeventDescID is the schema descriptor for id field.
+	projectstartedeventDescID := projectstartedeventFields[0].Descriptor()
+	// projectstartedevent.DefaultID holds the default value on creation for the id field.
+	projectstartedevent.DefaultID = projectstartedeventDescID.Default.(func() uuid.UUID)
+	startdatechangedeventFields := schema.StartDateChangedEvent{}.Fields()
+	_ = startdatechangedeventFields
+	// startdatechangedeventDescID is the schema descriptor for id field.
+	startdatechangedeventDescID := startdatechangedeventFields[0].Descriptor()
+	// startdatechangedevent.DefaultID holds the default value on creation for the id field.
+	startdatechangedevent.DefaultID = startdatechangedeventDescID.Default.(func() uuid.UUID)
+	titlechangedeventFields := schema.TitleChangedEvent{}.Fields()
+	_ = titlechangedeventFields
+	// titlechangedeventDescID is the schema descriptor for id field.
+	titlechangedeventDescID := titlechangedeventFields[0].Descriptor()
+	// titlechangedevent.DefaultID holds the default value on creation for the id field.
+	titlechangedevent.DefaultID = titlechangedeventDescID.Default.(func() uuid.UUID)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescName is the schema descriptor for name field.

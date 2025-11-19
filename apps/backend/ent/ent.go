@@ -12,7 +12,15 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/SURF-Innovatie/MORIS/ent/descriptionchangedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/enddatechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/event"
+	"github.com/SURF-Innovatie/MORIS/ent/organisationchangedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/personremovedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/startdatechangedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/titlechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/user"
 )
 
@@ -74,8 +82,16 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			event.Table: event.ValidColumn,
-			user.Table:  user.ValidColumn,
+			descriptionchangedevent.Table:  descriptionchangedevent.ValidColumn,
+			enddatechangedevent.Table:      enddatechangedevent.ValidColumn,
+			event.Table:                    event.ValidColumn,
+			organisationchangedevent.Table: organisationchangedevent.ValidColumn,
+			personaddedevent.Table:         personaddedevent.ValidColumn,
+			personremovedevent.Table:       personremovedevent.ValidColumn,
+			projectstartedevent.Table:      projectstartedevent.ValidColumn,
+			startdatechangedevent.Table:    startdatechangedevent.ValidColumn,
+			titlechangedevent.Table:        titlechangedevent.ValidColumn,
+			user.Table:                     user.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

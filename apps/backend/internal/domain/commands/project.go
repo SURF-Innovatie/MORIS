@@ -123,7 +123,7 @@ func RemovePerson(id uuid.UUID, cur *entities.Project, p entities.Person) (event
 		return nil, errors.New(fmt.Sprintf("person %s not found for project %s", p.Id, cur.Id))
 	}
 
-	return events.PersonRemoved{Base: base(id), Person: p}, nil
+	return events.PersonRemoved{Base: base(id), PersonId: p.Id}, nil
 }
 
 func base(id uuid.UUID) events.Base {

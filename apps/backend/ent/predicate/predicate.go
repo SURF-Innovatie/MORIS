@@ -6,8 +6,32 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// DescriptionChangedEvent is the predicate function for descriptionchangedevent builders.
+type DescriptionChangedEvent func(*sql.Selector)
+
+// EndDateChangedEvent is the predicate function for enddatechangedevent builders.
+type EndDateChangedEvent func(*sql.Selector)
+
 // Event is the predicate function for event builders.
 type Event func(*sql.Selector)
+
+// OrganisationChangedEvent is the predicate function for organisationchangedevent builders.
+type OrganisationChangedEvent func(*sql.Selector)
+
+// PersonAddedEvent is the predicate function for personaddedevent builders.
+type PersonAddedEvent func(*sql.Selector)
+
+// PersonRemovedEvent is the predicate function for personremovedevent builders.
+type PersonRemovedEvent func(*sql.Selector)
+
+// ProjectStartedEvent is the predicate function for projectstartedevent builders.
+type ProjectStartedEvent func(*sql.Selector)
+
+// StartDateChangedEvent is the predicate function for startdatechangedevent builders.
+type StartDateChangedEvent func(*sql.Selector)
+
+// TitleChangedEvent is the predicate function for titlechangedevent builders.
+type TitleChangedEvent func(*sql.Selector)
 
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/SURF-Innovatie/MORIS/ent/predicate"
 	"github.com/google/uuid"
 )
@@ -68,16 +69,6 @@ func Version(v int) predicate.Event {
 // Type applies equality check predicate on the "type" field. It's identical to TypeEQ.
 func Type(v string) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldType, v))
-}
-
-// Data applies equality check predicate on the "data" field. It's identical to DataEQ.
-func Data(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldEQ(FieldData, v))
-}
-
-// Metadata applies equality check predicate on the "metadata" field. It's identical to MetadataEQ.
-func Metadata(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldEQ(FieldMetadata, v))
 }
 
 // OccurredAt applies equality check predicate on the "occurred_at" field. It's identical to OccurredAtEQ.
@@ -230,96 +221,6 @@ func TypeContainsFold(v string) predicate.Event {
 	return predicate.Event(sql.FieldContainsFold(FieldType, v))
 }
 
-// DataEQ applies the EQ predicate on the "data" field.
-func DataEQ(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldEQ(FieldData, v))
-}
-
-// DataNEQ applies the NEQ predicate on the "data" field.
-func DataNEQ(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldNEQ(FieldData, v))
-}
-
-// DataIn applies the In predicate on the "data" field.
-func DataIn(vs ...[]byte) predicate.Event {
-	return predicate.Event(sql.FieldIn(FieldData, vs...))
-}
-
-// DataNotIn applies the NotIn predicate on the "data" field.
-func DataNotIn(vs ...[]byte) predicate.Event {
-	return predicate.Event(sql.FieldNotIn(FieldData, vs...))
-}
-
-// DataGT applies the GT predicate on the "data" field.
-func DataGT(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldGT(FieldData, v))
-}
-
-// DataGTE applies the GTE predicate on the "data" field.
-func DataGTE(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldGTE(FieldData, v))
-}
-
-// DataLT applies the LT predicate on the "data" field.
-func DataLT(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldLT(FieldData, v))
-}
-
-// DataLTE applies the LTE predicate on the "data" field.
-func DataLTE(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldLTE(FieldData, v))
-}
-
-// MetadataEQ applies the EQ predicate on the "metadata" field.
-func MetadataEQ(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldEQ(FieldMetadata, v))
-}
-
-// MetadataNEQ applies the NEQ predicate on the "metadata" field.
-func MetadataNEQ(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldNEQ(FieldMetadata, v))
-}
-
-// MetadataIn applies the In predicate on the "metadata" field.
-func MetadataIn(vs ...[]byte) predicate.Event {
-	return predicate.Event(sql.FieldIn(FieldMetadata, vs...))
-}
-
-// MetadataNotIn applies the NotIn predicate on the "metadata" field.
-func MetadataNotIn(vs ...[]byte) predicate.Event {
-	return predicate.Event(sql.FieldNotIn(FieldMetadata, vs...))
-}
-
-// MetadataGT applies the GT predicate on the "metadata" field.
-func MetadataGT(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldGT(FieldMetadata, v))
-}
-
-// MetadataGTE applies the GTE predicate on the "metadata" field.
-func MetadataGTE(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldGTE(FieldMetadata, v))
-}
-
-// MetadataLT applies the LT predicate on the "metadata" field.
-func MetadataLT(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldLT(FieldMetadata, v))
-}
-
-// MetadataLTE applies the LTE predicate on the "metadata" field.
-func MetadataLTE(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldLTE(FieldMetadata, v))
-}
-
-// MetadataIsNil applies the IsNil predicate on the "metadata" field.
-func MetadataIsNil() predicate.Event {
-	return predicate.Event(sql.FieldIsNull(FieldMetadata))
-}
-
-// MetadataNotNil applies the NotNil predicate on the "metadata" field.
-func MetadataNotNil() predicate.Event {
-	return predicate.Event(sql.FieldNotNull(FieldMetadata))
-}
-
 // OccurredAtEQ applies the EQ predicate on the "occurred_at" field.
 func OccurredAtEQ(v time.Time) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldOccurredAt, v))
@@ -358,6 +259,190 @@ func OccurredAtLT(v time.Time) predicate.Event {
 // OccurredAtLTE applies the LTE predicate on the "occurred_at" field.
 func OccurredAtLTE(v time.Time) predicate.Event {
 	return predicate.Event(sql.FieldLTE(FieldOccurredAt, v))
+}
+
+// HasProjectStarted applies the HasEdge predicate on the "project_started" edge.
+func HasProjectStarted() predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, ProjectStartedTable, ProjectStartedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasProjectStartedWith applies the HasEdge predicate on the "project_started" edge with a given conditions (other predicates).
+func HasProjectStartedWith(preds ...predicate.ProjectStartedEvent) predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := newProjectStartedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasTitleChanged applies the HasEdge predicate on the "title_changed" edge.
+func HasTitleChanged() predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, TitleChangedTable, TitleChangedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTitleChangedWith applies the HasEdge predicate on the "title_changed" edge with a given conditions (other predicates).
+func HasTitleChangedWith(preds ...predicate.TitleChangedEvent) predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := newTitleChangedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasDescriptionChanged applies the HasEdge predicate on the "description_changed" edge.
+func HasDescriptionChanged() predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, DescriptionChangedTable, DescriptionChangedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasDescriptionChangedWith applies the HasEdge predicate on the "description_changed" edge with a given conditions (other predicates).
+func HasDescriptionChangedWith(preds ...predicate.DescriptionChangedEvent) predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := newDescriptionChangedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasStartDateChanged applies the HasEdge predicate on the "start_date_changed" edge.
+func HasStartDateChanged() predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, StartDateChangedTable, StartDateChangedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasStartDateChangedWith applies the HasEdge predicate on the "start_date_changed" edge with a given conditions (other predicates).
+func HasStartDateChangedWith(preds ...predicate.StartDateChangedEvent) predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := newStartDateChangedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasEndDateChanged applies the HasEdge predicate on the "end_date_changed" edge.
+func HasEndDateChanged() predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, EndDateChangedTable, EndDateChangedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasEndDateChangedWith applies the HasEdge predicate on the "end_date_changed" edge with a given conditions (other predicates).
+func HasEndDateChangedWith(preds ...predicate.EndDateChangedEvent) predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := newEndDateChangedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasOrganisationChanged applies the HasEdge predicate on the "organisation_changed" edge.
+func HasOrganisationChanged() predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, OrganisationChangedTable, OrganisationChangedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasOrganisationChangedWith applies the HasEdge predicate on the "organisation_changed" edge with a given conditions (other predicates).
+func HasOrganisationChangedWith(preds ...predicate.OrganisationChangedEvent) predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := newOrganisationChangedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasPersonAdded applies the HasEdge predicate on the "person_added" edge.
+func HasPersonAdded() predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, PersonAddedTable, PersonAddedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPersonAddedWith applies the HasEdge predicate on the "person_added" edge with a given conditions (other predicates).
+func HasPersonAddedWith(preds ...predicate.PersonAddedEvent) predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := newPersonAddedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasPersonRemoved applies the HasEdge predicate on the "person_removed" edge.
+func HasPersonRemoved() predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, PersonRemovedTable, PersonRemovedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPersonRemovedWith applies the HasEdge predicate on the "person_removed" edge with a given conditions (other predicates).
+func HasPersonRemovedWith(preds ...predicate.PersonRemovedEvent) predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := newPersonRemovedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

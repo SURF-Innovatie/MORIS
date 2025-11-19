@@ -9,7 +9,15 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/SURF-Innovatie/MORIS/ent/descriptionchangedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/enddatechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/event"
+	"github.com/SURF-Innovatie/MORIS/ent/organisationchangedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/personremovedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/startdatechangedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/titlechangedevent"
 	"github.com/google/uuid"
 )
 
@@ -24,13 +32,123 @@ type Event struct {
 	Version int `json:"version,omitempty"`
 	// Type holds the value of the "type" field.
 	Type string `json:"type,omitempty"`
-	// Data holds the value of the "data" field.
-	Data []byte `json:"data,omitempty"`
-	// Metadata holds the value of the "metadata" field.
-	Metadata *[]byte `json:"metadata,omitempty"`
 	// OccurredAt holds the value of the "occurred_at" field.
-	OccurredAt   time.Time `json:"occurred_at,omitempty"`
+	OccurredAt time.Time `json:"occurred_at,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the EventQuery when eager-loading is set.
+	Edges        EventEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// EventEdges holds the relations/edges for other nodes in the graph.
+type EventEdges struct {
+	// ProjectStarted holds the value of the project_started edge.
+	ProjectStarted *ProjectStartedEvent `json:"project_started,omitempty"`
+	// TitleChanged holds the value of the title_changed edge.
+	TitleChanged *TitleChangedEvent `json:"title_changed,omitempty"`
+	// DescriptionChanged holds the value of the description_changed edge.
+	DescriptionChanged *DescriptionChangedEvent `json:"description_changed,omitempty"`
+	// StartDateChanged holds the value of the start_date_changed edge.
+	StartDateChanged *StartDateChangedEvent `json:"start_date_changed,omitempty"`
+	// EndDateChanged holds the value of the end_date_changed edge.
+	EndDateChanged *EndDateChangedEvent `json:"end_date_changed,omitempty"`
+	// OrganisationChanged holds the value of the organisation_changed edge.
+	OrganisationChanged *OrganisationChangedEvent `json:"organisation_changed,omitempty"`
+	// PersonAdded holds the value of the person_added edge.
+	PersonAdded *PersonAddedEvent `json:"person_added,omitempty"`
+	// PersonRemoved holds the value of the person_removed edge.
+	PersonRemoved *PersonRemovedEvent `json:"person_removed,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [8]bool
+}
+
+// ProjectStartedOrErr returns the ProjectStarted value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) ProjectStartedOrErr() (*ProjectStartedEvent, error) {
+	if e.ProjectStarted != nil {
+		return e.ProjectStarted, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: projectstartedevent.Label}
+	}
+	return nil, &NotLoadedError{edge: "project_started"}
+}
+
+// TitleChangedOrErr returns the TitleChanged value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) TitleChangedOrErr() (*TitleChangedEvent, error) {
+	if e.TitleChanged != nil {
+		return e.TitleChanged, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: titlechangedevent.Label}
+	}
+	return nil, &NotLoadedError{edge: "title_changed"}
+}
+
+// DescriptionChangedOrErr returns the DescriptionChanged value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) DescriptionChangedOrErr() (*DescriptionChangedEvent, error) {
+	if e.DescriptionChanged != nil {
+		return e.DescriptionChanged, nil
+	} else if e.loadedTypes[2] {
+		return nil, &NotFoundError{label: descriptionchangedevent.Label}
+	}
+	return nil, &NotLoadedError{edge: "description_changed"}
+}
+
+// StartDateChangedOrErr returns the StartDateChanged value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) StartDateChangedOrErr() (*StartDateChangedEvent, error) {
+	if e.StartDateChanged != nil {
+		return e.StartDateChanged, nil
+	} else if e.loadedTypes[3] {
+		return nil, &NotFoundError{label: startdatechangedevent.Label}
+	}
+	return nil, &NotLoadedError{edge: "start_date_changed"}
+}
+
+// EndDateChangedOrErr returns the EndDateChanged value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) EndDateChangedOrErr() (*EndDateChangedEvent, error) {
+	if e.EndDateChanged != nil {
+		return e.EndDateChanged, nil
+	} else if e.loadedTypes[4] {
+		return nil, &NotFoundError{label: enddatechangedevent.Label}
+	}
+	return nil, &NotLoadedError{edge: "end_date_changed"}
+}
+
+// OrganisationChangedOrErr returns the OrganisationChanged value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) OrganisationChangedOrErr() (*OrganisationChangedEvent, error) {
+	if e.OrganisationChanged != nil {
+		return e.OrganisationChanged, nil
+	} else if e.loadedTypes[5] {
+		return nil, &NotFoundError{label: organisationchangedevent.Label}
+	}
+	return nil, &NotLoadedError{edge: "organisation_changed"}
+}
+
+// PersonAddedOrErr returns the PersonAdded value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) PersonAddedOrErr() (*PersonAddedEvent, error) {
+	if e.PersonAdded != nil {
+		return e.PersonAdded, nil
+	} else if e.loadedTypes[6] {
+		return nil, &NotFoundError{label: personaddedevent.Label}
+	}
+	return nil, &NotLoadedError{edge: "person_added"}
+}
+
+// PersonRemovedOrErr returns the PersonRemoved value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) PersonRemovedOrErr() (*PersonRemovedEvent, error) {
+	if e.PersonRemoved != nil {
+		return e.PersonRemoved, nil
+	} else if e.loadedTypes[7] {
+		return nil, &NotFoundError{label: personremovedevent.Label}
+	}
+	return nil, &NotLoadedError{edge: "person_removed"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -38,8 +156,6 @@ func (*Event) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case event.FieldData, event.FieldMetadata:
-			values[i] = new([]byte)
 		case event.FieldVersion:
 			values[i] = new(sql.NullInt64)
 		case event.FieldType:
@@ -87,18 +203,6 @@ func (_m *Event) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Type = value.String
 			}
-		case event.FieldData:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field data", values[i])
-			} else if value != nil {
-				_m.Data = *value
-			}
-		case event.FieldMetadata:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field metadata", values[i])
-			} else if value != nil {
-				_m.Metadata = value
-			}
 		case event.FieldOccurredAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field occurred_at", values[i])
@@ -116,6 +220,46 @@ func (_m *Event) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *Event) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryProjectStarted queries the "project_started" edge of the Event entity.
+func (_m *Event) QueryProjectStarted() *ProjectStartedEventQuery {
+	return NewEventClient(_m.config).QueryProjectStarted(_m)
+}
+
+// QueryTitleChanged queries the "title_changed" edge of the Event entity.
+func (_m *Event) QueryTitleChanged() *TitleChangedEventQuery {
+	return NewEventClient(_m.config).QueryTitleChanged(_m)
+}
+
+// QueryDescriptionChanged queries the "description_changed" edge of the Event entity.
+func (_m *Event) QueryDescriptionChanged() *DescriptionChangedEventQuery {
+	return NewEventClient(_m.config).QueryDescriptionChanged(_m)
+}
+
+// QueryStartDateChanged queries the "start_date_changed" edge of the Event entity.
+func (_m *Event) QueryStartDateChanged() *StartDateChangedEventQuery {
+	return NewEventClient(_m.config).QueryStartDateChanged(_m)
+}
+
+// QueryEndDateChanged queries the "end_date_changed" edge of the Event entity.
+func (_m *Event) QueryEndDateChanged() *EndDateChangedEventQuery {
+	return NewEventClient(_m.config).QueryEndDateChanged(_m)
+}
+
+// QueryOrganisationChanged queries the "organisation_changed" edge of the Event entity.
+func (_m *Event) QueryOrganisationChanged() *OrganisationChangedEventQuery {
+	return NewEventClient(_m.config).QueryOrganisationChanged(_m)
+}
+
+// QueryPersonAdded queries the "person_added" edge of the Event entity.
+func (_m *Event) QueryPersonAdded() *PersonAddedEventQuery {
+	return NewEventClient(_m.config).QueryPersonAdded(_m)
+}
+
+// QueryPersonRemoved queries the "person_removed" edge of the Event entity.
+func (_m *Event) QueryPersonRemoved() *PersonRemovedEventQuery {
+	return NewEventClient(_m.config).QueryPersonRemoved(_m)
 }
 
 // Update returns a builder for updating this Event.
@@ -149,14 +293,6 @@ func (_m *Event) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("type=")
 	builder.WriteString(_m.Type)
-	builder.WriteString(", ")
-	builder.WriteString("data=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Data))
-	builder.WriteString(", ")
-	if v := _m.Metadata; v != nil {
-		builder.WriteString("metadata=")
-		builder.WriteString(fmt.Sprintf("%v", *v))
-	}
 	builder.WriteString(", ")
 	builder.WriteString("occurred_at=")
 	builder.WriteString(_m.OccurredAt.Format(time.ANSIC))

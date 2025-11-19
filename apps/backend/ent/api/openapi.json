@@ -7,6 +7,47 @@
   },
   "components": {
     "schemas": {
+      "DescriptionChangedEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": {
+            "type": "string"
+          },
+          "event": {
+            "$ref": "#/components/schemas/Event"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "event"
+        ]
+      },
+      "EndDateChangedEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "event": {
+            "$ref": "#/components/schemas/Event"
+          }
+        },
+        "required": [
+          "id",
+          "end_date",
+          "event"
+        ]
+      },
       "Event": {
         "type": "object",
         "properties": {
@@ -24,17 +65,33 @@
           "type": {
             "type": "string"
           },
-          "data": {
-            "type": "string",
-            "format": "byte"
-          },
-          "metadata": {
-            "type": "string",
-            "format": "byte"
-          },
           "occurred_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "project_started": {
+            "$ref": "#/components/schemas/ProjectStartedEvent"
+          },
+          "title_changed": {
+            "$ref": "#/components/schemas/TitleChangedEvent"
+          },
+          "description_changed": {
+            "$ref": "#/components/schemas/DescriptionChangedEvent"
+          },
+          "start_date_changed": {
+            "$ref": "#/components/schemas/StartDateChangedEvent"
+          },
+          "end_date_changed": {
+            "$ref": "#/components/schemas/EndDateChangedEvent"
+          },
+          "organisation_changed": {
+            "$ref": "#/components/schemas/OrganisationChangedEvent"
+          },
+          "person_added": {
+            "$ref": "#/components/schemas/PersonAddedEvent"
+          },
+          "person_removed": {
+            "$ref": "#/components/schemas/PersonRemovedEvent"
           }
         },
         "required": [
@@ -42,8 +99,150 @@
           "project_id",
           "version",
           "type",
-          "data",
           "occurred_at"
+        ]
+      },
+      "OrganisationChangedEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "organisation_id": {
+            "type": "string"
+          },
+          "organisation_name": {
+            "type": "string"
+          },
+          "event": {
+            "$ref": "#/components/schemas/Event"
+          }
+        },
+        "required": [
+          "id",
+          "organisation_id",
+          "organisation_name",
+          "event"
+        ]
+      },
+      "PersonAddedEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "person_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "person_name": {
+            "type": "string"
+          },
+          "event": {
+            "$ref": "#/components/schemas/Event"
+          }
+        },
+        "required": [
+          "id",
+          "person_id",
+          "person_name",
+          "event"
+        ]
+      },
+      "PersonRemovedEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "event": {
+            "$ref": "#/components/schemas/Event"
+          }
+        },
+        "required": [
+          "id",
+          "event"
+        ]
+      },
+      "ProjectStartedEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "organisation_name": {
+            "type": "string"
+          },
+          "event": {
+            "$ref": "#/components/schemas/Event"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "start_date",
+          "end_date",
+          "organisation_name",
+          "event"
+        ]
+      },
+      "StartDateChangedEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "event": {
+            "$ref": "#/components/schemas/Event"
+          }
+        },
+        "required": [
+          "id",
+          "start_date",
+          "event"
+        ]
+      },
+      "TitleChangedEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "event": {
+            "$ref": "#/components/schemas/Event"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "event"
         ]
       },
       "User": {
