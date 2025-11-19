@@ -21,7 +21,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const router = createAppRouter(queryClient);
+const router = createAppRouter();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

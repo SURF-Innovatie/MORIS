@@ -14,7 +14,7 @@ export const useLogin = () => {
       // Store token and user info
       if (data.token && data.user) {
         login(data.token, data.user);
-        // Navigate to dashboard or home
+        // Navigate to dashboard
         navigate('/dashboard');
       }
     },

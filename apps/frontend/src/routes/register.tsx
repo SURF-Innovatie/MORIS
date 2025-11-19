@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useRegister } from '../hooks/useRegister';
+import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
@@ -11,8 +12,16 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { mutate: register, isPending } = useRegister();
+  const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +33,7 @@ export default function RegisterPage() {
             title: 'Registration Successful',
             description: 'You can now log in with your credentials',
           });
-          navigate('/login');
+          navigate('/');
         },
         onError: (error: any) => {
           toast({
@@ -36,6 +45,14 @@ export default function RegisterPage() {
       },
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -99,7 +116,7 @@ export default function RegisterPage() {
 
         <div className="text-center text-sm">
           <span className="text-gray-600">Already have an account? </span>
-          <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
+          <Link to="/" className="font-medium text-blue-600 hover:text-blue-500">
             Sign in
           </Link>
         </div>

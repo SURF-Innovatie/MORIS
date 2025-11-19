@@ -16,7 +16,6 @@ func (User) Fields() []ent.Field {
 		field.String("name").NotEmpty(),
 		field.String("email").Unique(),
 		field.String("password").NotEmpty().Sensitive(), // Sensitive prevents it from being logged
-		field.JSON("roles", []string{}).Default([]string{"user"}),
 	}
 }
 

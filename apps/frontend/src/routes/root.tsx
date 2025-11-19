@@ -1,20 +1,33 @@
-import { NavLink, Outlet } from 'react-router-dom';
-import { Grid, Users, Star, Zap } from 'lucide-react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Grid, Star, Zap, LogOut } from 'lucide-react';
 
 import { Button } from '../components/ui/button';
 import QueryIndicator from '../components/status/query-indicator';
+import { useAuth } from '../hooks/useAuth';
+import { useLogout } from '../hooks/useLogout';
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Overview', icon: Grid },
-  { to: '/users', label: 'Users', icon: Users },
+  { to: '/dashboard', label: 'Dashboard', icon: Grid },
 ];
 
 const RootLayout = () => {
+  const { user } = useAuth();
+  const { mutate: logout } = useLogout();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout(undefined, {
+      onSuccess: () => {
+        navigate('/', { replace: true });
+      },
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 py-10">
         <header className="flex items-center justify-between gap-6">
-          <NavLink to="/" className="flex items-center gap-3 text-lg font-semibold">
+          <NavLink to="/dashboard" className="flex items-center gap-3 text-lg font-semibold">
               <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <Star className="h-7 w-7" aria-hidden />
             </span>
@@ -26,12 +39,19 @@ const RootLayout = () => {
             </div>
           </NavLink>
           <div className="flex items-center gap-3">
+            {user && (
+              <span className="text-sm text-muted-foreground">
+                {user.name}
+              </span>
+            )}
             <Button variant="ghost" size="sm" asChild>
         <a href="https://ui.shadcn.com/components" target="_blank" rel="noreferrer">
           <Zap className="mr-1 h-4 w-4" aria-hidden /> Browse components
               </a>
             </Button>
-            <Button size="sm">Deploy</Button>
+            <Button size="sm" variant="destructive" onClick={handleLogout}>
+              <LogOut className="mr-1 h-4 w-4" aria-hidden /> Logout
+            </Button>
           </div>
         </header>
 
@@ -40,7 +60,7 @@ const RootLayout = () => {
             <NavLink
               key={to}
               to={to}
-              end={to === '/'}
+              end={to === '/dashboard'}
               className={({ isActive }) =>
                 [
                   'flex items-center gap-2 rounded-xl px-4 py-2 transition-colors duration-200',

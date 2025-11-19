@@ -361,20 +361,13 @@
           },
           "password": {
             "type": "string"
-          },
-          "roles": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
           }
         },
         "required": [
           "id",
           "name",
           "email",
-          "password",
-          "roles"
+          "password"
         ]
       },
       "github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser": {

@@ -1,29 +1,44 @@
 import type { RouteObject } from 'react-router-dom';
-import { QueryClient } from '@tanstack/react-query';
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 
 import RootLayout from './routes/root';
 import DashboardRoute from './routes/dashboard';
-import UsersRoute, { loader as usersLoader } from './routes/users';
+import LoginRoute from './routes/login';
+import RegisterRoute from './routes/register';
 import RouteError from './routes/route-error';
+import ProtectedRoute from './routes/protected-route';
 
-export function createAppRouter(queryClient: QueryClient) {
+export function createAppRouter() {
   const routes: RouteObject[] = [
     {
       path: '/',
-      element: <RootLayout />,
+      element: <LoginRoute />,
+      errorElement: <RouteError />,
+    },
+    {
+      path: '/register',
+      element: <RegisterRoute />,
+      errorElement: <RouteError />,
+    },
+    {
+      path: '/dashboard',
+      element: <ProtectedRoute />,
       errorElement: <RouteError />,
       children: [
         {
-          index: true,
-          element: <DashboardRoute />,
-        },
-        {
-          path: 'users',
-          loader: usersLoader(queryClient),
-          element: <UsersRoute />,
+          element: <RootLayout />,
+          children: [
+            {
+              index: true,
+              element: <DashboardRoute />,
+            },
+          ],
         },
       ],
+    },
+    {
+      path: '*',
+      element: <Navigate to="/" replace />,
     },
   ];
 

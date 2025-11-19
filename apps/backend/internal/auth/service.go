@@ -41,7 +41,6 @@ func (s *service) Register(ctx context.Context, name, email, password string) (*
 		SetName(name).
 		SetEmail(email).
 		SetPassword(string(hashedPassword)).
-		SetRoles([]string{"user"}).
 		Save(ctx)
 
 	if err != nil {
@@ -81,7 +80,6 @@ func (s *service) Login(ctx context.Context, email, password string) (string, *A
 	authUser := &AuthenticatedUser{
 		ID:    usr.ID,
 		Email: usr.Email,
-		Roles: usr.Roles,
 	}
 
 	return token, authUser, nil
@@ -97,7 +95,6 @@ func (s *service) generateJWT(usr *ent.User) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": usr.ID,
 		"email":   usr.Email,
-		"roles":   usr.Roles,
 		"exp":     time.Now().Add(time.Hour * 24 * 7).Unix(), // 7 days expiry
 		"iat":     time.Now().Unix(),
 	}

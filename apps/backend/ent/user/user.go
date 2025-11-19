@@ -17,8 +17,6 @@ const (
 	FieldEmail = "email"
 	// FieldPassword holds the string denoting the password field in the database.
 	FieldPassword = "password"
-	// FieldRoles holds the string denoting the roles field in the database.
-	FieldRoles = "roles"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 )
@@ -29,7 +27,6 @@ var Columns = []string{
 	FieldName,
 	FieldEmail,
 	FieldPassword,
-	FieldRoles,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -47,8 +44,6 @@ var (
 	NameValidator func(string) error
 	// PasswordValidator is a validator for the "password" field. It is called by the builders before save.
 	PasswordValidator func(string) error
-	// DefaultRoles holds the default value on creation for the "roles" field.
-	DefaultRoles []string
 )
 
 // OrderOption defines the ordering options for the User queries.
