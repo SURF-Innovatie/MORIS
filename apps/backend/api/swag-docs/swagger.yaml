@@ -1,4 +1,163 @@
 basePath: /api
+definitions:
+  github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser:
+    properties:
+      email:
+        example: admin@example.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      roles:
+        example:
+        - admin
+        - user
+        items:
+          type: string
+        type: array
+    type: object
+  github_com_SURF-Innovatie_MORIS_internal_auth.BackendError:
+    properties:
+      code:
+        example: 400
+        type: integer
+      errors:
+        description: Can be map[string]string or []string or null
+      message:
+        description: Custom message
+        example: Detailed error description
+        type: string
+      status:
+        example: Bad Request
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_internal_domain_entities.Organisation:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_internal_domain_entities.Person:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project:
+    properties:
+      description:
+        type: string
+      endDate:
+        type: string
+      id:
+        type: string
+      organisation:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Organisation'
+      people:
+        items:
+          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Person'
+        type: array
+      startDate:
+        type: string
+      title:
+        type: string
+      version:
+        type: integer
+    type: object
+  internal_handler_custom.LoginRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: secretpassword
+        type: string
+    type: object
+  internal_handler_custom.LoginResponse:
+    properties:
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      user:
+        properties:
+          email:
+            example: user@example.com
+            type: string
+          id:
+            example: 1
+            type: integer
+          roles:
+            example:
+            - user
+            items:
+              type: string
+            type: array
+        type: object
+    type: object
+  internal_handler_custom.RegisterRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      name:
+        example: John Doe
+        type: string
+      password:
+        example: secretpassword
+        type: string
+    type: object
+  internal_handler_custom.RegisterResponse:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: John Doe
+        type: string
+    type: object
+  internal_handler_custom.StatusResponse:
+    properties:
+      status:
+        example: ok
+        type: string
+      timestamp:
+        example: "2025-11-12T10:00:00Z"
+        type: string
+    type: object
+  internal_handler_custom.TotalUsersResponse:
+    properties:
+      total_users:
+        example: 123
+        type: integer
+    type: object
+  internal_handler_project.StartRequest:
+    properties:
+      description:
+        example: This is a new project
+        type: string
+      endDate:
+        example: "2025-12-31T23:59:59Z"
+        type: string
+      organisation:
+        example: SURF
+        type: string
+      startDate:
+        example: "2025-01-01T00:00:00Z"
+        type: string
+      title:
+        example: New Project
+        type: string
+    type: object
+  internal_handler_project.personRequest:
+    properties:
+      name:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -12,7 +171,316 @@ info:
   termsOfService: http://swagger.io/terms/
   title: MORIS
   version: "1.0"
-paths: {}
+paths:
+  /admin/users/list:
+    get:
+      consumes:
+      - application/json
+      description: Returns a list of all users - requires admin role
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Admin user list
+          schema:
+            type: string
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+        "403":
+          description: Insufficient permissions
+          schema:
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+      security:
+      - BearerAuth: []
+      summary: Get all users (Admin only)
+      tags:
+      - admin
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Returns the health status of the API
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler_custom.StatusResponse'
+      summary: Health check
+      tags:
+      - status
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns a JWT token
+      parameters:
+      - description: User login credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler_custom.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler_custom.LoginResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+      summary: Login user
+      tags:
+      - auth
+  /profile:
+    get:
+      consumes:
+      - application/json
+      description: Returns the authenticated user's profile information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+      security:
+      - BearerAuth: []
+      summary: Get user profile
+      tags:
+      - auth
+  /projects:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all projects
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project'
+            type: array
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Get all projects
+      tags:
+      - projects
+    post:
+      consumes:
+      - application/json
+      description: Creates and starts a new project with the provided details
+      parameters:
+      - description: Project details
+        in: body
+        name: project
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler_project.StartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project'
+        "400":
+          description: invalid body or date format
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Start a new project
+      tags:
+      - projects
+  /projects/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a single project by its unique identifier
+      parameters:
+      - description: Project ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project'
+        "400":
+          description: invalid project id
+          schema:
+            type: string
+        "404":
+          description: project not found
+          schema:
+            type: string
+      summary: Get a project by ID
+      tags:
+      - projects
+  /projects/{id}/people:
+    post:
+      consumes:
+      - application/json
+      description: Adds a new person to the specified project
+      parameters:
+      - description: Project ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Person details
+        in: body
+        name: person
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler_project.personRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project'
+        "400":
+          description: invalid project id or body
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Add a person to a project
+      tags:
+      - projects
+  /projects/{id}/people/{personId}:
+    delete:
+      consumes:
+      - application/json
+      description: Removes a person from the specified project
+      parameters:
+      - description: Project ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Person ID (UUID)
+        in: path
+        name: personId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project'
+        "400":
+          description: invalid project id or person id
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Remove a person from a project
+      tags:
+      - projects
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user account with the provided credentials
+      parameters:
+      - description: User registration details
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler_custom.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_handler_custom.RegisterResponse'
+        "400":
+          description: Invalid request body or missing fields
+          schema:
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+      summary: Register a new user
+      tags:
+      - auth
+  /status:
+    get:
+      consumes:
+      - application/json
+      description: Returns the current status of the API
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler_custom.StatusResponse'
+      summary: Check API status
+      tags:
+      - status
+  /users/count:
+    get:
+      consumes:
+      - application/json
+      description: Returns the total number of registered users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler_custom.TotalUsersResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+      security:
+      - BearerAuth: []
+      summary: Get total user count
+      tags:
+      - users
 securityDefinitions:
   BearerAuth:
     description: Type "Bearer" then a space and your JWT token.

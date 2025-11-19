@@ -21,7 +21,14 @@ func NewHandler(userService user.Service, authService auth.Service) *Handler {
 	}
 }
 
-// Status (GET /status)
+// Status godoc
+// @Summary Check API status
+// @Description Returns the current status of the API
+// @Tags status
+// @Accept json
+// @Produce json
+// @Success 200 {object} StatusResponse
+// @Router /status [get]
 func (h *Handler) Status(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	resp := StatusResponse{
@@ -31,7 +38,14 @@ func (h *Handler) Status(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(resp)
 }
 
-// Health (GET /health)
+// Health godoc
+// @Summary Health check
+// @Description Returns the health status of the API
+// @Tags status
+// @Accept json
+// @Produce json
+// @Success 200 {object} StatusResponse
+// @Router /health [get]
 func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	resp := StatusResponse{
@@ -41,7 +55,17 @@ func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(resp)
 }
 
-// Register (POST /register)
+// Register godoc
+// @Summary Register a new user
+// @Description Creates a new user account with the provided credentials
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param user body RegisterRequest true "User registration details"
+// @Success 201 {object} RegisterResponse
+// @Failure 400 {object} auth.BackendError "Invalid request body or missing fields"
+// @Failure 500 {object} auth.BackendError "Internal server error"
+// @Router /register [post]
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -89,7 +113,17 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(resp)
 }
 
-// Login (POST /login)
+// Login godoc
+// @Summary Login user
+// @Description Authenticates a user and returns a JWT token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param credentials body LoginRequest true "User login credentials"
+// @Success 200 {object} LoginResponse
+// @Failure 400 {object} auth.BackendError "Invalid request body"
+// @Failure 401 {object} auth.BackendError "Invalid credentials"
+// @Router /login [post]
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -125,7 +159,16 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(resp)
 }
 
-// Profile (GET /profile)
+// Profile godoc
+// @Summary Get user profile
+// @Description Returns the authenticated user's profile information
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} auth.AuthenticatedUser
+// @Failure 401 {object} auth.BackendError "User not authenticated"
+// @Router /profile [get]
 func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 	userObj, ok := auth.GetUserFromContext(r.Context())
 	if !ok || userObj == nil {
@@ -142,7 +185,17 @@ func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(userObj)
 }
 
-// TotalUserCount (GET /users/count)
+// TotalUserCount godoc
+// @Summary Get total user count
+// @Description Returns the total number of registered users
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} TotalUsersResponse
+// @Failure 401 {object} auth.BackendError "User not authenticated"
+// @Failure 500 {object} auth.BackendError "Internal server error"
+// @Router /users/count [get]
 func (h *Handler) TotalUserCount(w http.ResponseWriter, r *http.Request) {
 	count, err := h.userService.TotalUserCount(r.Context())
 	if err != nil {
@@ -160,7 +213,17 @@ func (h *Handler) TotalUserCount(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(resp)
 }
 
-// AdminUserList (GET /admin/users/list)
+// AdminUserList godoc
+// @Summary Get all users (Admin only)
+// @Description Returns a list of all users - requires admin role
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {string} string "Admin user list"
+// @Failure 401 {object} auth.BackendError "User not authenticated"
+// @Failure 403 {object} auth.BackendError "Insufficient permissions"
+// @Router /admin/users/list [get]
 func (h *Handler) AdminUserList(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte(`{"message": "Admin-only user list!", "users": [{"id":1,"name":"Admin User"}]}`))

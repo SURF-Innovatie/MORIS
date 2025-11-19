@@ -1,71 +1,276 @@
-import { ArrowUpRight, BarChart, Users as UsersIcon } from 'lucide-react';
+import { useState } from 'react';
+import { 
+  Bell, 
+  Inbox, 
+  LayoutGrid, 
+  Table as TableIcon, 
+  Users as UsersIcon,
+  Calendar,
+  Building2,
+  ExternalLink,
+  CheckCircle2
+} from 'lucide-react';
 
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
+import { useGetProjects } from '../api/generated-orval/moris';
 
-const highlightMetrics = [
+const FAKE_NOTIFICATIONS = [
   {
-    title: 'Active members',
-    value: '248',
-    change: '+18% vs last week',
-    icon: UsersIcon,
+    id: '1',
+    type: 'project',
+    title: 'New project assignment',
+    description: 'You have been added to "Website Redesign 2024"',
+    timestamp: '2 hours ago',
+    read: false,
   },
   {
-    title: 'Engagement rate',
-    value: '64%',
-    change: '+8 pts',
-    icon: BarChart,
+    id: '2',
+    type: 'message',
+    title: 'Team message from Sarah Chen',
+    description: 'Can you review the latest design mockups?',
+    timestamp: '5 hours ago',
+    read: false,
   },
   {
-    title: 'Weekly growth',
-    value: '12.3%',
-    change: 'Steady climb',
-    icon: ArrowUpRight,
+    id: '3',
+    type: 'update',
+    title: 'Project milestone completed',
+    description: 'Mobile App Development reached 75% completion',
+    timestamp: '1 day ago',
+    read: true,
+  },
+  {
+    id: '4',
+    type: 'project',
+    title: 'Project deadline approaching',
+    description: 'API Integration project is due in 3 days',
+    timestamp: '1 day ago',
+    read: true,
   },
 ];
 
 const DashboardRoute = () => {
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const { data: projects, isLoading, error } = useGetProjects();
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
   return (
-    <div className="flex flex-col gap-12">
-  <section className="glass-panel overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-primary/15 via-background to-accent/10 px-10 py-12 shadow-lg">
-        <Badge className="mb-6 w-fit" variant="success">
-          Beta workspace
-        </Badge>
-          <h1 className="max-w-2xl font-display text-4xl tracking-tight text-foreground sm:text-5xl">
-          shadcn UI foundations wired up for your MORIS frontend.
-        </h1>
-        <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-          Vite, React Router v7, TanStack Query, and Orval are ready to go. Build fast, stay consistent,
-          and ship beautiful interfaces without hunting for boilerplate.
-        </p>
-        <div className="mt-8 flex flex-wrap items-center gap-4">
-          <Button size="lg">Create your first flow</Button>
-          <Button size="lg" variant="secondary" asChild>
-            <a href="https://orval.dev" target="_blank" rel="noreferrer">
-              Explore Orval docs
-            </a>
+    <div className="flex flex-col gap-8">
+      {/* Notifications Inbox Section */}
+      <section>
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Inbox className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-2xl font-semibold tracking-tight">Inbox</h2>
+            <Badge variant="default" className="ml-2">
+              {FAKE_NOTIFICATIONS.filter(n => !n.read).length}
+            </Badge>
+          </div>
+          <Button variant="ghost" size="sm">
+            <CheckCircle2 className="mr-2 h-4 w-4" />
+            Mark all as read
           </Button>
         </div>
+
+        <Card>
+          <CardContent className="p-0">
+            {FAKE_NOTIFICATIONS.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Bell className="mb-4 h-12 w-12 text-muted-foreground/50" />
+                <p className="text-sm text-muted-foreground">No new notifications</p>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {FAKE_NOTIFICATIONS.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={`flex items-start gap-4 p-4 transition-colors hover:bg-muted/50 ${
+                      !notification.read ? 'bg-primary/5' : ''
+                    }`}
+                  >
+                    <div className="mt-1">
+                      {!notification.read && (
+                        <div className="h-2 w-2 rounded-full bg-primary" />
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <p className="font-medium leading-none">{notification.title}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {notification.description}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {notification.timestamp}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </section>
 
-      <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {highlightMetrics.map(({ title, value, change, icon: Icon }) => (
-          <Card key={title}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>{title}</CardTitle>
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/15 text-primary">
-                  <Icon className="h-5 w-5" aria-hidden />
-                </span>
-              </div>
-              <CardDescription>{change}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-semibold text-foreground">{value}</p>
+      {/* Projects Section */}
+      <section>
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-2xl font-semibold tracking-tight">Projects</h2>
+            {projects && (
+              <Badge variant="outline" className="ml-2">
+                {projects.length}
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={viewMode === 'cards' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('cards')}
+            >
+              <LayoutGrid className="mr-2 h-4 w-4" />
+              Cards
+            </Button>
+            <Button
+              variant={viewMode === 'table' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('table')}
+            >
+              <TableIcon className="mr-2 h-4 w-4" />
+              Table
+            </Button>
+          </div>
+        </div>
+
+        {isLoading && (
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <p className="text-sm text-muted-foreground">Loading projects...</p>
             </CardContent>
           </Card>
-        ))}
+        )}
+
+        {error && (
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <p className="text-sm text-destructive">Failed to load projects</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {projects && projects.length === 0 && (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <Building2 className="mb-4 h-12 w-12 text-muted-foreground/50" />
+              <p className="text-sm text-muted-foreground">No projects found</p>
+              <Button className="mt-4" size="sm">
+                Create your first project
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {projects && projects.length > 0 && viewMode === 'cards' && (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {projects.map((project) => (
+              <Card key={project.id} className="transition-all hover:shadow-lg">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="line-clamp-1">{project.title || 'Untitled Project'}</CardTitle>
+                      <CardDescription className="mt-2 line-clamp-2">
+                        {project.description || 'No description available'}
+                      </CardDescription>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {project.organisation && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">
+                        {project.organisation.name}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">
+                      {formatDate(project.startDate)} - {formatDate(project.endDate)}
+                    </span>
+                  </div>
+                  {project.people && project.people.length > 0 && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <UsersIcon className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">
+                        {project.people.length} {project.people.length === 1 ? 'member' : 'members'}
+                      </span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {projects && projects.length > 0 && viewMode === 'table' && (
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[250px]">Title</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Organisation</TableHead>
+                    <TableHead>Start Date</TableHead>
+                    <TableHead>End Date</TableHead>
+                    <TableHead className="text-right">Members</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {projects.map((project) => (
+                    <TableRow key={project.id}>
+                      <TableCell className="font-medium">
+                        {project.title || 'Untitled Project'}
+                      </TableCell>
+                      <TableCell className="max-w-[300px] truncate">
+                        {project.description || 'No description'}
+                      </TableCell>
+                      <TableCell>
+                        {project.organisation?.name || 'N/A'}
+                      </TableCell>
+                      <TableCell>{formatDate(project.startDate)}</TableCell>
+                      <TableCell>{formatDate(project.endDate)}</TableCell>
+                      <TableCell className="text-right">
+                        {project.people?.length || 0}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
       </section>
     </div>
   );

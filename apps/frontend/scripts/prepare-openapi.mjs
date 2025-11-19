@@ -13,17 +13,151 @@ const responseRenameMap = {
   '500': 'Http500',
 };
 
-const schemaRenameOverrides = {
-  AuthenticatedUserDoc: 'AuthenticatedUser',
-  BackendErrorDoc: 'BackendError',
-};
-
-const sourceSpecPath = path.resolve(__dirname, '../../backend/ent/api/openapi.json');
+const sourceSpecPath = path.resolve(__dirname, '../../backend/api/swag-docs/swagger.json');
 const outputDir = path.resolve(__dirname, '../.orval');
 const outputSpecPath = path.join(outputDir, 'openapi.json');
 const generatedDir = path.resolve(__dirname, '../src/api/generated-orval');
 
 const refRenameMap = {};
+
+function convertSwagger2ToOpenAPI3(swagger) {
+  const openapi = {
+    openapi: '3.0.3',
+    info: swagger.info,
+    servers: [
+      {
+        url: `http://${swagger.host}${swagger.basePath || ''}`,
+        description: 'Development server',
+      },
+    ],
+    paths: {},
+    components: {
+      schemas: swagger.definitions || {},
+      securitySchemes: {},
+    },
+  };
+
+  // Convert security definitions
+  if (swagger.securityDefinitions) {
+    for (const [name, def] of Object.entries(swagger.securityDefinitions)) {
+      if (def.type === 'apiKey') {
+        openapi.components.securitySchemes[name] = {
+          type: 'apiKey',
+          in: def.in,
+          name: def.name,
+          description: def.description,
+        };
+      }
+    }
+  }
+
+  // Convert paths
+  if (swagger.paths) {
+    for (const [path, pathItem] of Object.entries(swagger.paths)) {
+      openapi.paths[path] = {};
+      for (const [method, operation] of Object.entries(pathItem)) {
+        if (['get', 'post', 'put', 'delete', 'patch', 'options', 'head'].includes(method)) {
+          const newOperation = {
+            summary: operation.summary,
+            description: operation.description,
+            operationId: operation.operationId,
+            tags: operation.tags,
+            security: operation.security,
+            responses: {},
+          };
+
+          // Convert parameters
+          if (operation.parameters) {
+            const pathParams = [];
+            const queryParams = [];
+            const headerParams = [];
+            let bodyParam = null;
+
+            for (const param of operation.parameters) {
+              if (param.in === 'body') {
+                bodyParam = param;
+              } else if (param.in === 'path') {
+                pathParams.push({
+                  name: param.name,
+                  in: 'path',
+                  required: param.required !== false,
+                  description: param.description,
+                  schema: param.type ? { type: param.type, format: param.format } : param.schema || { type: 'string' },
+                });
+              } else if (param.in === 'query') {
+                queryParams.push({
+                  name: param.name,
+                  in: 'query',
+                  required: param.required === true,
+                  description: param.description,
+                  schema: param.type ? { type: param.type, format: param.format } : param.schema || { type: 'string' },
+                });
+              } else if (param.in === 'header') {
+                headerParams.push({
+                  name: param.name,
+                  in: 'header',
+                  required: param.required === true,
+                  description: param.description,
+                  schema: param.type ? { type: param.type } : param.schema || { type: 'string' },
+                });
+              }
+            }
+
+            const allParams = [...pathParams, ...queryParams, ...headerParams];
+            if (allParams.length > 0) {
+              newOperation.parameters = allParams;
+            }
+
+            if (bodyParam) {
+              newOperation.requestBody = {
+                required: bodyParam.required !== false,
+                content: {
+                  'application/json': {
+                    schema: bodyParam.schema,
+                  },
+                },
+              };
+            }
+          }
+
+          // Convert responses
+          for (const [code, response] of Object.entries(operation.responses || {})) {
+            newOperation.responses[code] = {
+              description: response.description || code === '200' ? 'Success' : 'Error',
+            };
+            if (response.schema) {
+              newOperation.responses[code].content = {
+                'application/json': {
+                  schema: response.schema,
+                },
+              };
+            }
+          }
+
+          openapi.paths[path][method] = newOperation;
+        }
+      }
+    }
+  }
+
+  // Update all $ref paths from #/definitions/ to #/components/schemas/
+  const updateRefs = (obj) => {
+    if (Array.isArray(obj)) {
+      obj.forEach(updateRefs);
+    } else if (obj && typeof obj === 'object') {
+      for (const [key, value] of Object.entries(obj)) {
+        if (key === '$ref' && typeof value === 'string') {
+          obj[key] = value.replace('#/definitions/', '#/components/schemas/');
+        } else {
+          updateRefs(value);
+        }
+      }
+    }
+  };
+
+  updateRefs(openapi);
+  return openapi;
+}
 
 function renameResponses(responses) {
   if (!responses) return responses;
@@ -42,8 +176,9 @@ function renameSchemas(schemas) {
 
   const result = {};
   for (const [key, value] of Object.entries(schemas)) {
+    // Take the last token after the last dot and capitalize it
     const base = key.includes('.') ? key.slice(key.lastIndexOf('.') + 1) : key;
-    const nextKey = schemaRenameOverrides[base] ?? base;
+    const nextKey = base.charAt(0).toUpperCase() + base.slice(1);
 
     if (result[nextKey]) {
       // Preserve the existing entry if a duplicate sanitized name appears.
@@ -78,7 +213,12 @@ function updateRefs(node) {
 
 try {
   const raw = await readFile(sourceSpecPath, 'utf-8');
-  const spec = JSON.parse(raw);
+  let spec = JSON.parse(raw);
+
+  // Convert Swagger 2.0 to OpenAPI 3.0 if needed
+  if (spec.swagger === '2.0') {
+    spec = convertSwagger2ToOpenAPI3(spec);
+  }
 
   spec.components = spec.components ?? {};
   spec.components.responses = renameResponses(spec.components.responses);

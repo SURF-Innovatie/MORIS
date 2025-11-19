@@ -20,7 +20,17 @@ func NewHandler(svc project.Service) *Handler {
 	return &Handler{svc: svc}
 }
 
-// GET /projects/{id}
+// GetProject godoc
+// @Summary Get a project by ID
+// @Description Retrieves a single project by its unique identifier
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Param id path string true "Project ID (UUID)"
+// @Success 200 {object} entities.Project
+// @Failure 400 {string} string "invalid project id"
+// @Failure 404 {string} string "project not found"
+// @Router /projects/{id} [get]
 func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
@@ -37,6 +47,17 @@ func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(proj)
 }
 
+// StartProject godoc
+// @Summary Start a new project
+// @Description Creates and starts a new project with the provided details
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Param project body StartRequest true "Project details"
+// @Success 200 {object} entities.Project
+// @Failure 400 {string} string "invalid body or date format"
+// @Failure 500 {string} string "internal server error"
+// @Router /projects [post]
 func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
 	req := StartRequest{}
 
@@ -75,6 +96,15 @@ func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(proj)
 }
 
+// GetAllProjects godoc
+// @Summary Get all projects
+// @Description Retrieves a list of all projects
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Success 200 {array} entities.Project
+// @Failure 500 {string} string "internal server error"
+// @Router /projects [get]
 func (h *Handler) GetAllProjects(w http.ResponseWriter, r *http.Request) {
 	proj, err := h.svc.GetAllProjects(r.Context())
 	if err != nil {
@@ -89,7 +119,18 @@ type personRequest struct {
 	Name string `json:"name"`
 }
 
-// AddPerson POST /projects/{id}/person/add
+// AddPerson godoc
+// @Summary Add a person to a project
+// @Description Adds a new person to the specified project
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Param id path string true "Project ID (UUID)"
+// @Param person body personRequest true "Person details"
+// @Success 200 {object} entities.Project
+// @Failure 400 {string} string "invalid project id or body"
+// @Failure 500 {string} string "internal server error"
+// @Router /projects/{id}/people [post]
 func (h *Handler) AddPerson(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
@@ -115,7 +156,18 @@ func (h *Handler) AddPerson(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(proj)
 }
 
-// RemovePerson DELETE /projects/{id}/person/{personId}
+// RemovePerson godoc
+// @Summary Remove a person from a project
+// @Description Removes a person from the specified project
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Param id path string true "Project ID (UUID)"
+// @Param personId path string true "Person ID (UUID)"
+// @Success 200 {object} entities.Project
+// @Failure 400 {string} string "invalid project id or person id"
+// @Failure 500 {string} string "internal server error"
+// @Router /projects/{id}/people/{personId} [delete]
 func (h *Handler) RemovePerson(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)

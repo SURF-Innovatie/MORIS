@@ -19,6 +19,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
+	_ "github.com/SURF-Innovatie/MORIS/api/swag-docs"
 )
 
 // @title MORIS
@@ -89,10 +91,19 @@ func main() {
 		projecthandler.MountProjectRoutes(r, projHandler)
 	})
 
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		logrus.Fatal("$PORT must be set")
 	}
 	logrus.Infof("Go Backend Server starting on http://localhost:%s", port)
+	// Serve the generated swagger JSON and assets and the Swagger UI at /swagger/
+	r.Get("/swagger/swagger.json", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "api/swag-docs/swagger.json")
+	})
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:"+port+"/swagger/swagger.json"), // the url pointing to API definition
+	))
+
 	logrus.Fatal(http.ListenAndServe(":"+port, r))
 }
