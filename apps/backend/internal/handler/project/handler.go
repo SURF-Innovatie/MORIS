@@ -36,6 +36,16 @@ func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(proj)
 }
 
+func (h *Handler) GetAllProjects(w http.ResponseWriter, r *http.Request) {
+	proj, err := h.svc.GetAllProjects(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(proj)
+}
+
 type personRequest struct {
 	Name string `json:"name"`
 }

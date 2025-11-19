@@ -74,7 +74,7 @@ func main() {
 	customHandler := custom.NewHandler(userSvc, authSvc)
 
 	esStore := eventstore.NewEntStore(client)
-	projSvc := project.NewService(esStore)
+	projSvc := project.NewService(esStore, client)
 	projHandler := projecthandler.NewHandler(projSvc)
 
 	// Router

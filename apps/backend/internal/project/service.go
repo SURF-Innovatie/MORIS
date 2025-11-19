@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/SURF-Innovatie/MORIS/ent"
+	en "github.com/SURF-Innovatie/MORIS/ent/event"
 	"github.com/google/uuid"
 
 	"github.com/SURF-Innovatie/MORIS/internal/domain/commands"
@@ -17,16 +19,18 @@ var ErrNotFound = errors.New("project not found")
 
 type Service interface {
 	GetProject(ctx context.Context, id uuid.UUID) (*entities.Project, error)
+	GetAllProjects(ctx context.Context) ([]entities.Project, error)
 	AddPerson(ctx context.Context, projectID uuid.UUID, person *entities.Person) (*entities.Project, error)
 	RemovePerson(ctx context.Context, projectID uuid.UUID, person *entities.Person) (*entities.Project, error)
 }
 
 type service struct {
-	es eventstore.Store
+	cli *ent.Client
+	es  eventstore.Store
 }
 
-func NewService(es eventstore.Store) Service {
-	return &service{es: es}
+func NewService(es eventstore.Store, cli *ent.Client) Service {
+	return &service{es: es, cli: cli}
 }
 
 func (s *service) GetProject(ctx context.Context, id uuid.UUID) (*entities.Project, error) {
@@ -41,6 +45,33 @@ func (s *service) GetProject(ctx context.Context, id uuid.UUID) (*entities.Proje
 	proj := projection.Reduce(id, evts)
 	proj.Version = version
 	return proj, nil
+}
+
+func (s *service) GetAllProjects(ctx context.Context) ([]entities.Project, error) {
+	var ids []uuid.UUID
+	if err := s.cli.Event.
+		Query().
+		Unique(true).
+		Select(en.FieldProjectID).
+		Scan(ctx, &ids); err != nil {
+		return nil, err
+	}
+
+	projects := make([]entities.Project, 0, len(ids))
+	for _, id := range ids {
+		evts, version, err := s.es.Load(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		if len(evts) == 0 {
+			return nil, ErrNotFound
+		}
+		proj := projection.Reduce(id, evts)
+		proj.Version = version
+		projects = append(projects, *proj)
+	}
+
+	return projects, nil
 }
 
 func (s *service) AddPerson(
