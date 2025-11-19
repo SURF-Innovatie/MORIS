@@ -1,8 +1,10 @@
 package events
 
+import "github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+
 type PersonRemoved struct {
 	Base
-	Name string `json:"name"`
+	Person entities.Person `json:"person"`
 }
 
 func (PersonRemoved) isEvent()     {}

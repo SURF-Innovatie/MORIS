@@ -44,12 +44,12 @@ func Apply(p *entities.Project, e events.Event) {
 
 	case events.PersonAdded:
 		if !hasPerson(p.People, ev.Person.Name) {
-			p.People = append(p.People, &entities.Person{Name: ev.Person.Name})
+			p.People = append(p.People, &ev.Person)
 		}
 
 	case events.PersonRemoved:
 		p.People = filterPeople(p.People, func(pe *entities.Person) bool {
-			return pe.Name != ev.Name
+			return pe.Name != ev.Person.Name
 		})
 
 	default:
