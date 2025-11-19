@@ -4,17 +4,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SURF-Innovatie/MORIS/internal/platform/eventstore"
 	"github.com/google/uuid"
 
 	"github.com/SURF-Innovatie/MORIS/internal/domain/commands"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/domaintest"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
 )
 
 func Test_ProjectLifecycle(t *testing.T) {
 	// Arrange
-	stream := domaintest.NewStream()
+	stream := eventstore.NewStream()
 	id := uuid.New()
 
 	start := time.Date(2025, 1, 2, 0, 0, 0, 0, time.UTC)

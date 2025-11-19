@@ -9,6 +9,10 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	"github.com/SURF-Innovatie/MORIS/internal/handler/custom"
+	projecthandler "github.com/SURF-Innovatie/MORIS/internal/handler/project"
+	"github.com/SURF-Innovatie/MORIS/internal/platform/eventstore"
+	"github.com/SURF-Innovatie/MORIS/internal/project"
+	"github.com/SURF-Innovatie/MORIS/internal/user"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	_ "github.com/lib/pq"
@@ -36,7 +40,6 @@ import (
 // @description Type "Bearer" then a space and your JWT token.
 
 func main() {
-	// --- Database Connection ---
 	dbHost := os.Getenv("DB_HOST")
 	dbUser := os.Getenv("DB_USER")
 	dbPassword := os.Getenv("DB_PASSWORD")
@@ -52,28 +55,36 @@ func main() {
 	}
 	defer client.Close()
 
-	// Run migration
-	logrus.Println("Running Ent database migrations...")
 	if err := client.Schema.Create(
 		context.Background(),
 		migrate.WithGlobalUniqueID(true),
 	); err != nil {
 		logrus.Fatalf("failed running Ent database migrations: %v", err)
 	}
-	logrus.Info("Ent database migrations completed.")
-	logrus.Infof("Connected to database at %s:%s/%s", dbHost, dbPort, dbName)
 
+	// Create services
+	userSvc := user.NewService(client)
+
+	// Create HTTP handler/controller
+	customHandler := custom.NewHandler(userSvc)
+
+	esStore := eventstore.NewEntStore(client)
+	projSvc := project.NewService(esStore)
+	projHandler := projecthandler.NewHandler(projSvc)
+
+	// Router
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
 	r.Route("/api", func(r chi.Router) {
-		custom.MountCustomHandlers(r, client)
+		custom.MountCustomHandlers(r, customHandler)
+		projecthandler.MountProjectRoutes(r, projHandler)
 	})
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		logrus.Fatal("$PORT must be set")
 	}
 	logrus.Infof("Go Backend Server starting on http://localhost:%s", port)
 	logrus.Fatal(http.ListenAndServe(":"+port, r))

@@ -29,7 +29,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.BackendErrorDoc"
+                  "$ref": "#/components/schemas/custom.BackendErrorDoc"
                 }
               }
             }
@@ -39,7 +39,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.BackendErrorDoc"
+                  "$ref": "#/components/schemas/custom.BackendErrorDoc"
                 }
               }
             }
@@ -49,7 +49,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.BackendErrorDoc"
+                  "$ref": "#/components/schemas/custom.BackendErrorDoc"
                 }
               }
             }
@@ -74,7 +74,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/internal_handler_custom.LoginRequest"
+                "$ref": "#/components/schemas/custom.LoginRequest"
               }
             }
           },
@@ -86,7 +86,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.LoginResponse"
+                  "$ref": "#/components/schemas/custom.LoginResponse"
                 }
               }
             }
@@ -96,7 +96,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.BackendErrorDoc"
+                  "$ref": "#/components/schemas/custom.BackendErrorDoc"
                 }
               }
             }
@@ -106,7 +106,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.BackendErrorDoc"
+                  "$ref": "#/components/schemas/custom.BackendErrorDoc"
                 }
               }
             }
@@ -116,7 +116,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.BackendErrorDoc"
+                  "$ref": "#/components/schemas/custom.BackendErrorDoc"
                 }
               }
             }
@@ -137,7 +137,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.AuthenticatedUserDoc"
+                  "$ref": "#/components/schemas/custom.AuthenticatedUserDoc"
                 }
               }
             }
@@ -147,7 +147,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.BackendErrorDoc"
+                  "$ref": "#/components/schemas/custom.BackendErrorDoc"
                 }
               }
             }
@@ -157,7 +157,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.BackendErrorDoc"
+                  "$ref": "#/components/schemas/custom.BackendErrorDoc"
                 }
               }
             }
@@ -186,7 +186,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.StatusResponse"
+                  "$ref": "#/components/schemas/custom.StatusResponse"
                 }
               }
             }
@@ -196,7 +196,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.BackendErrorDoc"
+                  "$ref": "#/components/schemas/custom.BackendErrorDoc"
                 }
               }
             }
@@ -217,7 +217,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.TotalUsersResponse"
+                  "$ref": "#/components/schemas/custom.TotalUsersResponse"
                 }
               }
             }
@@ -227,7 +227,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.BackendErrorDoc"
+                  "$ref": "#/components/schemas/custom.BackendErrorDoc"
                 }
               }
             }
@@ -237,7 +237,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.BackendErrorDoc"
+                  "$ref": "#/components/schemas/custom.BackendErrorDoc"
                 }
               }
             }
@@ -256,6 +256,45 @@
   },
   "components": {
     "schemas": {
+      "Event": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "project_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "type": {
+            "type": "string"
+          },
+          "data": {
+            "type": "string",
+            "format": "byte"
+          },
+          "metadata": {
+            "type": "string",
+            "format": "byte"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "version",
+          "type",
+          "data",
+          "occurred_at"
+        ]
+      },
       "User": {
         "type": "object",
         "properties": {
@@ -275,7 +314,7 @@
           "email"
         ]
       },
-      "internal_handler_custom.AuthenticatedUserDoc": {
+      "custom.AuthenticatedUserDoc": {
         "type": "object",
         "properties": {
           "email": {
@@ -298,7 +337,7 @@
           }
         }
       },
-      "internal_handler_custom.BackendErrorDoc": {
+      "custom.BackendErrorDoc": {
         "type": "object",
         "properties": {
           "code": {
@@ -319,7 +358,7 @@
           }
         }
       },
-      "internal_handler_custom.LoginRequest": {
+      "custom.LoginRequest": {
         "type": "object",
         "properties": {
           "email": {
@@ -332,7 +371,7 @@
           }
         }
       },
-      "internal_handler_custom.LoginResponse": {
+      "custom.LoginResponse": {
         "type": "object",
         "properties": {
           "token": {
@@ -341,7 +380,7 @@
           }
         }
       },
-      "internal_handler_custom.StatusResponse": {
+      "custom.StatusResponse": {
         "type": "object",
         "properties": {
           "status": {
@@ -354,7 +393,7 @@
           }
         }
       },
-      "internal_handler_custom.TotalUsersResponse": {
+      "custom.TotalUsersResponse": {
         "type": "object",
         "properties": {
           "total_users": {

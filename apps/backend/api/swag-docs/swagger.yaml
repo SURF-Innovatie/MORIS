@@ -1,6 +1,6 @@
 basePath: /api
 definitions:
-  internal_handler_custom.AuthenticatedUserDoc:
+  custom.AuthenticatedUserDoc:
     properties:
       email:
         example: admin@example.com
@@ -16,7 +16,7 @@ definitions:
           type: string
         type: array
     type: object
-  internal_handler_custom.BackendErrorDoc:
+  custom.BackendErrorDoc:
     properties:
       code:
         example: 400
@@ -31,7 +31,7 @@ definitions:
         example: Bad Request
         type: string
     type: object
-  internal_handler_custom.LoginRequest:
+  custom.LoginRequest:
     properties:
       email:
         example: user@example.com
@@ -40,13 +40,13 @@ definitions:
         example: secretpassword
         type: string
     type: object
-  internal_handler_custom.LoginResponse:
+  custom.LoginResponse:
     properties:
       token:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
     type: object
-  internal_handler_custom.StatusResponse:
+  custom.StatusResponse:
     properties:
       status:
         example: ok
@@ -55,7 +55,7 @@ definitions:
         example: "2025-11-12T10:00:00Z"
         type: string
     type: object
-  internal_handler_custom.TotalUsersResponse:
+  custom.TotalUsersResponse:
     properties:
       total_users:
         example: 123
@@ -88,15 +88,15 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+            $ref: '#/definitions/custom.BackendErrorDoc'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+            $ref: '#/definitions/custom.BackendErrorDoc'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+            $ref: '#/definitions/custom.BackendErrorDoc'
       security:
       - BearerAuth: []
       summary: Admin-Only User List
@@ -113,26 +113,26 @@ paths:
         name: credentials
         required: true
         schema:
-          $ref: '#/definitions/internal_handler_custom.LoginRequest'
+          $ref: '#/definitions/custom.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Login successful
           schema:
-            $ref: '#/definitions/internal_handler_custom.LoginResponse'
+            $ref: '#/definitions/custom.LoginResponse'
         "400":
           description: Invalid input
           schema:
-            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+            $ref: '#/definitions/custom.BackendErrorDoc'
         "401":
           description: Invalid credentials
           schema:
-            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+            $ref: '#/definitions/custom.BackendErrorDoc'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+            $ref: '#/definitions/custom.BackendErrorDoc'
       summary: User Login
       tags:
       - Authentication
@@ -145,15 +145,15 @@ paths:
         "200":
           description: User profile
           schema:
-            $ref: '#/definitions/internal_handler_custom.AuthenticatedUserDoc'
+            $ref: '#/definitions/custom.AuthenticatedUserDoc'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+            $ref: '#/definitions/custom.BackendErrorDoc'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+            $ref: '#/definitions/custom.BackendErrorDoc'
       security:
       - BearerAuth: []
       summary: Get User Profile
@@ -168,11 +168,11 @@ paths:
         "200":
           description: API status is OK
           schema:
-            $ref: '#/definitions/internal_handler_custom.StatusResponse'
+            $ref: '#/definitions/custom.StatusResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+            $ref: '#/definitions/custom.BackendErrorDoc'
       summary: Get API Status
       tags:
       - Utilities
@@ -185,15 +185,15 @@ paths:
         "200":
           description: Total user count
           schema:
-            $ref: '#/definitions/internal_handler_custom.TotalUsersResponse'
+            $ref: '#/definitions/custom.TotalUsersResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+            $ref: '#/definitions/custom.BackendErrorDoc'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/internal_handler_custom.BackendErrorDoc'
+            $ref: '#/definitions/custom.BackendErrorDoc'
       security:
       - BearerAuth: []
       summary: Get Total User Count

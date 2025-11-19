@@ -107,7 +107,7 @@ func AddPerson(id uuid.UUID, cur *entities.Project, p entities.Person) (events.E
 }
 
 // RemovePerson emits PersonRemoved when present.
-func RemovePerson(id uuid.UUID, cur *entities.Project, name string) (events.Event, error) {
+func RemovePerson(id uuid.UUID, cur *entities.Project, person *entities.Person) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}

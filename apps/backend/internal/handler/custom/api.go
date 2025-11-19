@@ -12,19 +12,19 @@ import (
 )
 
 // MountCustomHandlers mounts all custom API endpoints
-func MountCustomHandlers(r chi.Router, client *ent.Client) {
-	r.Get("/status", getStatusHandler())
-	r.Post("/login", loginHandler())
+func MountCustomHandlers(r chi.Router, h *Handler) {
+	r.Get("/status", h.Status)
+	r.Post("/login", h.Login)
 
 	r.Group(func(r chi.Router) {
-		r.Use(auth.AuthMiddleware) // Apply authentication middleware to this group
+		r.Use(auth.AuthMiddleware)
 
-		r.Get("/profile", getProfileHandler())
-		r.Get("/users/count", getTotalUserCountHandler(client))
+		r.Get("/profile", h.Profile)
+		r.Get("/users/count", h.TotalUserCount)
 
 		r.Group(func(r chi.Router) {
 			r.Use(auth.RequireRoleMiddleware("admin"))
-			r.Get("/admin/users/list", getAdminUserListHandler())
+			r.Get("/admin/users/list", h.AdminUserList)
 		})
 	})
 }

@@ -21,12 +21,16 @@ type EntStore struct {
 func NewEntStore(cli *ent.Client) *EntStore { return &EntStore{cli: cli} }
 
 // Append appends events with optimistic concurrency on (project_id, version).
-// expectedVersion is the current stream version before appending.
-// Pass 0 for a new stream (first appended event will be version 1).
-func (s *EntStore) Append(ctx context.Context, projectID uuid.UUID, expectedVersion int, list []events.Event) error {
+func (s *EntStore) Append(
+	ctx context.Context,
+	projectID uuid.UUID,
+	expectedVersion int,
+	list ...events.Event,
+) error {
 	if len(list) == 0 {
 		return nil
 	}
+
 	// Check current version.
 	last, err := s.cli.Event.
 		Query().
@@ -36,11 +40,11 @@ func (s *EntStore) Append(ctx context.Context, projectID uuid.UUID, expectedVers
 	switch {
 	case err == nil:
 		if last.Version != expectedVersion {
-			return errors.New("concurrency conflict")
+			return ErrConcurrency
 		}
 	case ent.IsNotFound(err):
 		if expectedVersion != 0 {
-			return errors.New("concurrency conflict")
+			return ErrConcurrency
 		}
 	default:
 		return err
@@ -50,15 +54,19 @@ func (s *EntStore) Append(ctx context.Context, projectID uuid.UUID, expectedVers
 	if err != nil {
 		return err
 	}
+
 	version := expectedVersion
 	now := time.Now().UTC()
+
 	for _, e := range list {
 		version++
+
 		typ, payload, err := marshal(e)
 		if err != nil {
 			_ = tx.Rollback()
 			return err
 		}
+
 		if _, err := tx.Event.Create().
 			SetID(uuid.New()).
 			SetProjectID(projectID).
@@ -68,17 +76,22 @@ func (s *EntStore) Append(ctx context.Context, projectID uuid.UUID, expectedVers
 			SetOccurredAt(now).
 			Save(ctx); err != nil {
 			_ = tx.Rollback()
+
 			// translate unique violation to concurrency error
 			if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
-				return errors.New("concurrency conflict")
+				return ErrConcurrency
 			}
 			return err
 		}
 	}
+
 	return tx.Commit()
 }
 
-func (s *EntStore) Load(ctx context.Context, projectID uuid.UUID) ([]events.Event, int, error) {
+func (s *EntStore) Load(
+	ctx context.Context,
+	projectID uuid.UUID,
+) ([]events.Event, int, error) {
 	rows, err := s.cli.Event.
 		Query().
 		Where(en.ProjectIDEQ(projectID)).
@@ -87,6 +100,7 @@ func (s *EntStore) Load(ctx context.Context, projectID uuid.UUID) ([]events.Even
 	if err != nil {
 		return nil, 0, err
 	}
+
 	out := make([]events.Event, 0, len(rows))
 	for _, r := range rows {
 		ev, err := unmarshal(r.Type, r.Data, projectID, r.OccurredAt)
@@ -95,6 +109,7 @@ func (s *EntStore) Load(ctx context.Context, projectID uuid.UUID) ([]events.Even
 		}
 		out = append(out, ev)
 	}
+
 	curVersion := 0
 	if n := len(rows); n > 0 {
 		curVersion = rows[n-1].Version
@@ -182,6 +197,7 @@ func unmarshal(typ string, data []byte, projectID uuid.UUID, at time.Time) (even
 		if v.ProjectID == uuid.Nil {
 			v.Base = base
 		}
+		return v, nil
 	case events.OrganisationChangedType:
 		var v events.OrganisationChanged
 		if err := json.Unmarshal(data, &v); err != nil {

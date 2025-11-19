@@ -49,19 +49,19 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.BackendErrorDoc"
+                            "$ref": "#/definitions/custom.BackendErrorDoc"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.BackendErrorDoc"
+                            "$ref": "#/definitions/custom.BackendErrorDoc"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.BackendErrorDoc"
+                            "$ref": "#/definitions/custom.BackendErrorDoc"
                         }
                     }
                 }
@@ -87,7 +87,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.LoginRequest"
+                            "$ref": "#/definitions/custom.LoginRequest"
                         }
                     }
                 ],
@@ -95,25 +95,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Login successful",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.LoginResponse"
+                            "$ref": "#/definitions/custom.LoginResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid input",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.BackendErrorDoc"
+                            "$ref": "#/definitions/custom.BackendErrorDoc"
                         }
                     },
                     "401": {
                         "description": "Invalid credentials",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.BackendErrorDoc"
+                            "$ref": "#/definitions/custom.BackendErrorDoc"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.BackendErrorDoc"
+                            "$ref": "#/definitions/custom.BackendErrorDoc"
                         }
                     }
                 }
@@ -138,19 +138,19 @@ const docTemplate = `{
                     "200": {
                         "description": "User profile",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.AuthenticatedUserDoc"
+                            "$ref": "#/definitions/custom.AuthenticatedUserDoc"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.BackendErrorDoc"
+                            "$ref": "#/definitions/custom.BackendErrorDoc"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.BackendErrorDoc"
+                            "$ref": "#/definitions/custom.BackendErrorDoc"
                         }
                     }
                 }
@@ -170,13 +170,13 @@ const docTemplate = `{
                     "200": {
                         "description": "API status is OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.StatusResponse"
+                            "$ref": "#/definitions/custom.StatusResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.BackendErrorDoc"
+                            "$ref": "#/definitions/custom.BackendErrorDoc"
                         }
                     }
                 }
@@ -201,19 +201,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Total user count",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.TotalUsersResponse"
+                            "$ref": "#/definitions/custom.TotalUsersResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.BackendErrorDoc"
+                            "$ref": "#/definitions/custom.BackendErrorDoc"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.BackendErrorDoc"
+                            "$ref": "#/definitions/custom.BackendErrorDoc"
                         }
                     }
                 }
@@ -221,7 +221,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "internal_handler_custom.AuthenticatedUserDoc": {
+        "custom.AuthenticatedUserDoc": {
             "type": "object",
             "properties": {
                 "email": {
@@ -244,7 +244,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handler_custom.BackendErrorDoc": {
+        "custom.BackendErrorDoc": {
             "type": "object",
             "properties": {
                 "code": {
@@ -265,7 +265,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handler_custom.LoginRequest": {
+        "custom.LoginRequest": {
             "type": "object",
             "properties": {
                 "email": {
@@ -278,7 +278,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handler_custom.LoginResponse": {
+        "custom.LoginResponse": {
             "type": "object",
             "properties": {
                 "token": {
@@ -287,7 +287,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handler_custom.StatusResponse": {
+        "custom.StatusResponse": {
             "type": "object",
             "properties": {
                 "status": {
@@ -300,7 +300,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handler_custom.TotalUsersResponse": {
+        "custom.TotalUsersResponse": {
             "type": "object",
             "properties": {
                 "total_users": {
