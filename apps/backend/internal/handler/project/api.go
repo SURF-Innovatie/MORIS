@@ -1,4 +1,4 @@
-package projecthandler
+package project
 
 import "github.com/go-chi/chi/v5"
 

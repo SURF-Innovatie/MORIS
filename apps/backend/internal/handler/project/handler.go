@@ -1,4 +1,4 @@
-package projecthandler
+package project
 
 import (
 	"encoding/json"
@@ -38,13 +38,7 @@ func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		Title        string `json:"title"`
-		Description  string `json:"description"`
-		Organisation string `json:"organisation"`
-		StartDate    string `json:"startDate"`
-		EndDate      string `json:"endDate"`
-	}
+	req := StartRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid body", http.StatusBadRequest)

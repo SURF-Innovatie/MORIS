@@ -5,13 +5,13 @@ import (
 	"errors"
 	"time"
 
-	"github.com/SURF-Innovatie/MORIS/ent"
-	en "github.com/SURF-Innovatie/MORIS/ent/event"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
 
+	"github.com/SURF-Innovatie/MORIS/ent"
+	en "github.com/SURF-Innovatie/MORIS/ent/event"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/commands"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
 	"github.com/SURF-Innovatie/MORIS/internal/platform/eventstore"
 )
@@ -24,7 +24,7 @@ type Service interface {
 	GetAllProjects(ctx context.Context) ([]entities.Project, error)
 	StartProject(ctx context.Context, params StartProjectParams) (*entities.Project, error)
 	AddPerson(ctx context.Context, projectID uuid.UUID, person *entities.Person) (*entities.Project, error)
-	RemovePerson(ctx context.Context, projectID uuid.UUID, person uuid.UUID) (*entities.Project, error)
+	RemovePerson(ctx context.Context, projectID uuid.UUID, personID uuid.UUID) (*entities.Project, error)
 }
 
 type service struct {
@@ -62,6 +62,7 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 	if params.Title == "" {
 		return nil, errors.New("title is required")
 	}
+
 	projectID := uuid.New()
 	now := time.Now().UTC()
 
@@ -109,8 +110,9 @@ func (s *service) GetAllProjects(ctx context.Context) ([]entities.Project, error
 			return nil, err
 		}
 		if len(evts) == 0 {
-			return nil, ErrNotFound
+			continue
 		}
+
 		proj := projection.Reduce(id, evts)
 		proj.Version = version
 		projects = append(projects, *proj)
@@ -139,22 +141,18 @@ func (s *service) AddPerson(
 		return nil, errors.New("person is nil")
 	}
 
-	// Domain command decides if an event is needed and enforces rules.
 	evt, err := commands.AddPerson(projectID, proj, *person)
 	if err != nil {
 		return nil, err
 	}
 	if evt == nil {
-		// No change (e.g. person already present).
 		return proj, nil
 	}
 
 	if err := s.es.Append(ctx, projectID, version, evt); err != nil {
-		// Here you could special-case eventstore.ErrConcurrency if you want.
 		return nil, err
 	}
 
-	// Update in-memory projection with the new event
 	projection.Apply(proj, evt)
 	proj.Version = version + 1
 
@@ -164,7 +162,7 @@ func (s *service) AddPerson(
 func (s *service) RemovePerson(
 	ctx context.Context,
 	projectID uuid.UUID,
-	personId uuid.UUID,
+	personID uuid.UUID,
 ) (*entities.Project, error) {
 	evts, version, err := s.es.Load(ctx, projectID)
 	if err != nil {
@@ -178,9 +176,8 @@ func (s *service) RemovePerson(
 	proj.Version = version
 
 	var person *entities.Person
-
 	for _, p := range proj.People {
-		if p.Id == personId {
+		if p != nil && p.Id == personID {
 			person = p
 			break
 		}
