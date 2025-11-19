@@ -245,8 +245,7 @@ func (s *EntStore) Append(
 			if _, err := tx.PersonAddedEvent.
 				Create().
 				SetEvent(evRow).
-				SetPersonID(v.Person.Id).
-				SetPersonName(v.Person.Name).
+				SetPersonID(v.PersonId).
 				Save(ctx); err != nil {
 				_ = tx.Rollback()
 				return err
@@ -394,11 +393,8 @@ func (s *EntStore) Load(
 				return nil, 0, fmt.Errorf("missing PersonAdded edge for event %s", r.ID)
 			}
 			out = append(out, events.PersonAdded{
-				Base: base,
-				Person: entities.Person{
-					Id:   payload.PersonID,
-					Name: payload.PersonName,
-				},
+				Base:     base,
+				PersonId: payload.PersonID,
 			})
 
 		case events.PersonRemovedType:

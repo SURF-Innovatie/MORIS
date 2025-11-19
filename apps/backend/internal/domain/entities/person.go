@@ -3,8 +3,11 @@ package entities
 import "github.com/google/uuid"
 
 type Person struct {
-	Id   uuid.UUID
-	Name string
+	Id         uuid.UUID
+	Name       string
+	GivenName  *string
+	FamilyName *string
+	Email      *string
 }
 
 // NewPerson creates a new person with a UUID

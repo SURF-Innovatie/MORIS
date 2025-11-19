@@ -9,6 +9,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/enddatechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/event"
 	"github.com/SURF-Innovatie/MORIS/ent/organisationchangedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/person"
 	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/personremovedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
@@ -51,6 +52,12 @@ func init() {
 	organisationchangedeventDescID := organisationchangedeventFields[0].Descriptor()
 	// organisationchangedevent.DefaultID holds the default value on creation for the id field.
 	organisationchangedevent.DefaultID = organisationchangedeventDescID.Default.(func() uuid.UUID)
+	personFields := schema.Person{}.Fields()
+	_ = personFields
+	// personDescID is the schema descriptor for id field.
+	personDescID := personFields[0].Descriptor()
+	// person.DefaultID holds the default value on creation for the id field.
+	person.DefaultID = personDescID.Default.(func() uuid.UUID)
 	personaddedeventFields := schema.PersonAddedEvent{}.Fields()
 	_ = personaddedeventFields
 	// personaddedeventDescPersonID is the schema descriptor for person_id field.

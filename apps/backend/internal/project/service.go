@@ -23,7 +23,7 @@ type Service interface {
 	GetProject(ctx context.Context, id uuid.UUID) (*entities.Project, error)
 	GetAllProjects(ctx context.Context) ([]entities.Project, error)
 	StartProject(ctx context.Context, params StartProjectParams) (*entities.Project, error)
-	AddPerson(ctx context.Context, projectID uuid.UUID, person *entities.Person) (*entities.Project, error)
+	AddPerson(ctx context.Context, projectID uuid.UUID, personID uuid.UUID) (*entities.Project, error)
 	RemovePerson(ctx context.Context, projectID uuid.UUID, personID uuid.UUID) (*entities.Project, error)
 }
 
@@ -124,7 +124,7 @@ func (s *service) GetAllProjects(ctx context.Context) ([]entities.Project, error
 func (s *service) AddPerson(
 	ctx context.Context,
 	projectID uuid.UUID,
-	person *entities.Person,
+	personId uuid.UUID,
 ) (*entities.Project, error) {
 	evts, version, err := s.es.Load(ctx, projectID)
 	if err != nil {
@@ -137,11 +137,7 @@ func (s *service) AddPerson(
 	proj := projection.Reduce(projectID, evts)
 	proj.Version = version
 
-	if person == nil {
-		return nil, errors.New("person is nil")
-	}
-
-	evt, err := commands.AddPerson(projectID, proj, *person)
+	evt, err := commands.AddPerson(projectID, proj, personId)
 	if err != nil {
 		return nil, err
 	}
@@ -175,19 +171,15 @@ func (s *service) RemovePerson(
 	proj := projection.Reduce(projectID, evts)
 	proj.Version = version
 
-	var person *entities.Person
+	var personId uuid.UUID
 	for _, p := range proj.People {
-		if p != nil && p.Id == personID {
-			person = p
+		if p == personID {
+			personId = p
 			break
 		}
 	}
 
-	if person == nil {
-		return nil, ErrNotFound
-	}
-
-	evt, err := commands.RemovePerson(projectID, proj, *person)
+	evt, err := commands.RemovePerson(projectID, proj, personId)
 	if err != nil {
 		return nil, err
 	}

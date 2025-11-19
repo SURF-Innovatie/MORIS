@@ -20,6 +20,8 @@ type Tx struct {
 	Event *EventClient
 	// OrganisationChangedEvent is the client for interacting with the OrganisationChangedEvent builders.
 	OrganisationChangedEvent *OrganisationChangedEventClient
+	// Person is the client for interacting with the Person builders.
+	Person *PersonClient
 	// PersonAddedEvent is the client for interacting with the PersonAddedEvent builders.
 	PersonAddedEvent *PersonAddedEventClient
 	// PersonRemovedEvent is the client for interacting with the PersonRemovedEvent builders.
@@ -167,6 +169,7 @@ func (tx *Tx) init() {
 	tx.EndDateChangedEvent = NewEndDateChangedEventClient(tx.config)
 	tx.Event = NewEventClient(tx.config)
 	tx.OrganisationChangedEvent = NewOrganisationChangedEventClient(tx.config)
+	tx.Person = NewPersonClient(tx.config)
 	tx.PersonAddedEvent = NewPersonAddedEventClient(tx.config)
 	tx.PersonRemovedEvent = NewPersonRemovedEventClient(tx.config)
 	tx.ProjectStartedEvent = NewProjectStartedEventClient(tx.config)

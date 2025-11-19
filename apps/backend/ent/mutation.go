@@ -15,6 +15,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/enddatechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/event"
 	"github.com/SURF-Innovatie/MORIS/ent/organisationchangedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/person"
 	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/personremovedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/predicate"
@@ -38,6 +39,7 @@ const (
 	TypeEndDateChangedEvent      = "EndDateChangedEvent"
 	TypeEvent                    = "Event"
 	TypeOrganisationChangedEvent = "OrganisationChangedEvent"
+	TypePerson                   = "Person"
 	TypePersonAddedEvent         = "PersonAddedEvent"
 	TypePersonRemovedEvent       = "PersonRemovedEvent"
 	TypeProjectStartedEvent      = "ProjectStartedEvent"
@@ -2307,6 +2309,560 @@ func (m *OrganisationChangedEventMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown OrganisationChangedEvent edge %s", name)
 }
 
+// PersonMutation represents an operation that mutates the Person nodes in the graph.
+type PersonMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *uuid.UUID
+	name          *string
+	given_name    *string
+	family_name   *string
+	email         *string
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*Person, error)
+	predicates    []predicate.Person
+}
+
+var _ ent.Mutation = (*PersonMutation)(nil)
+
+// personOption allows management of the mutation configuration using functional options.
+type personOption func(*PersonMutation)
+
+// newPersonMutation creates new mutation for the Person entity.
+func newPersonMutation(c config, op Op, opts ...personOption) *PersonMutation {
+	m := &PersonMutation{
+		config:        c,
+		op:            op,
+		typ:           TypePerson,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withPersonID sets the ID field of the mutation.
+func withPersonID(id uuid.UUID) personOption {
+	return func(m *PersonMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Person
+		)
+		m.oldValue = func(ctx context.Context) (*Person, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Person.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withPerson sets the old Person of the mutation.
+func withPerson(node *Person) personOption {
+	return func(m *PersonMutation) {
+		m.oldValue = func(context.Context) (*Person, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m PersonMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m PersonMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Person entities.
+func (m *PersonMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *PersonMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *PersonMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Person.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetName sets the "name" field.
+func (m *PersonMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *PersonMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Person entity.
+// If the Person object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PersonMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *PersonMutation) ResetName() {
+	m.name = nil
+}
+
+// SetGivenName sets the "given_name" field.
+func (m *PersonMutation) SetGivenName(s string) {
+	m.given_name = &s
+}
+
+// GivenName returns the value of the "given_name" field in the mutation.
+func (m *PersonMutation) GivenName() (r string, exists bool) {
+	v := m.given_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGivenName returns the old "given_name" field's value of the Person entity.
+// If the Person object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PersonMutation) OldGivenName(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGivenName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGivenName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGivenName: %w", err)
+	}
+	return oldValue.GivenName, nil
+}
+
+// ClearGivenName clears the value of the "given_name" field.
+func (m *PersonMutation) ClearGivenName() {
+	m.given_name = nil
+	m.clearedFields[person.FieldGivenName] = struct{}{}
+}
+
+// GivenNameCleared returns if the "given_name" field was cleared in this mutation.
+func (m *PersonMutation) GivenNameCleared() bool {
+	_, ok := m.clearedFields[person.FieldGivenName]
+	return ok
+}
+
+// ResetGivenName resets all changes to the "given_name" field.
+func (m *PersonMutation) ResetGivenName() {
+	m.given_name = nil
+	delete(m.clearedFields, person.FieldGivenName)
+}
+
+// SetFamilyName sets the "family_name" field.
+func (m *PersonMutation) SetFamilyName(s string) {
+	m.family_name = &s
+}
+
+// FamilyName returns the value of the "family_name" field in the mutation.
+func (m *PersonMutation) FamilyName() (r string, exists bool) {
+	v := m.family_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFamilyName returns the old "family_name" field's value of the Person entity.
+// If the Person object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PersonMutation) OldFamilyName(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFamilyName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFamilyName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFamilyName: %w", err)
+	}
+	return oldValue.FamilyName, nil
+}
+
+// ClearFamilyName clears the value of the "family_name" field.
+func (m *PersonMutation) ClearFamilyName() {
+	m.family_name = nil
+	m.clearedFields[person.FieldFamilyName] = struct{}{}
+}
+
+// FamilyNameCleared returns if the "family_name" field was cleared in this mutation.
+func (m *PersonMutation) FamilyNameCleared() bool {
+	_, ok := m.clearedFields[person.FieldFamilyName]
+	return ok
+}
+
+// ResetFamilyName resets all changes to the "family_name" field.
+func (m *PersonMutation) ResetFamilyName() {
+	m.family_name = nil
+	delete(m.clearedFields, person.FieldFamilyName)
+}
+
+// SetEmail sets the "email" field.
+func (m *PersonMutation) SetEmail(s string) {
+	m.email = &s
+}
+
+// Email returns the value of the "email" field in the mutation.
+func (m *PersonMutation) Email() (r string, exists bool) {
+	v := m.email
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEmail returns the old "email" field's value of the Person entity.
+// If the Person object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PersonMutation) OldEmail(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEmail is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEmail requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEmail: %w", err)
+	}
+	return oldValue.Email, nil
+}
+
+// ClearEmail clears the value of the "email" field.
+func (m *PersonMutation) ClearEmail() {
+	m.email = nil
+	m.clearedFields[person.FieldEmail] = struct{}{}
+}
+
+// EmailCleared returns if the "email" field was cleared in this mutation.
+func (m *PersonMutation) EmailCleared() bool {
+	_, ok := m.clearedFields[person.FieldEmail]
+	return ok
+}
+
+// ResetEmail resets all changes to the "email" field.
+func (m *PersonMutation) ResetEmail() {
+	m.email = nil
+	delete(m.clearedFields, person.FieldEmail)
+}
+
+// Where appends a list predicates to the PersonMutation builder.
+func (m *PersonMutation) Where(ps ...predicate.Person) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the PersonMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *PersonMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Person, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *PersonMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *PersonMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Person).
+func (m *PersonMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *PersonMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.name != nil {
+		fields = append(fields, person.FieldName)
+	}
+	if m.given_name != nil {
+		fields = append(fields, person.FieldGivenName)
+	}
+	if m.family_name != nil {
+		fields = append(fields, person.FieldFamilyName)
+	}
+	if m.email != nil {
+		fields = append(fields, person.FieldEmail)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *PersonMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case person.FieldName:
+		return m.Name()
+	case person.FieldGivenName:
+		return m.GivenName()
+	case person.FieldFamilyName:
+		return m.FamilyName()
+	case person.FieldEmail:
+		return m.Email()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *PersonMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case person.FieldName:
+		return m.OldName(ctx)
+	case person.FieldGivenName:
+		return m.OldGivenName(ctx)
+	case person.FieldFamilyName:
+		return m.OldFamilyName(ctx)
+	case person.FieldEmail:
+		return m.OldEmail(ctx)
+	}
+	return nil, fmt.Errorf("unknown Person field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *PersonMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case person.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case person.FieldGivenName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGivenName(v)
+		return nil
+	case person.FieldFamilyName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFamilyName(v)
+		return nil
+	case person.FieldEmail:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEmail(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Person field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *PersonMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *PersonMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *PersonMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Person numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *PersonMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(person.FieldGivenName) {
+		fields = append(fields, person.FieldGivenName)
+	}
+	if m.FieldCleared(person.FieldFamilyName) {
+		fields = append(fields, person.FieldFamilyName)
+	}
+	if m.FieldCleared(person.FieldEmail) {
+		fields = append(fields, person.FieldEmail)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *PersonMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *PersonMutation) ClearField(name string) error {
+	switch name {
+	case person.FieldGivenName:
+		m.ClearGivenName()
+		return nil
+	case person.FieldFamilyName:
+		m.ClearFamilyName()
+		return nil
+	case person.FieldEmail:
+		m.ClearEmail()
+		return nil
+	}
+	return fmt.Errorf("unknown Person nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *PersonMutation) ResetField(name string) error {
+	switch name {
+	case person.FieldName:
+		m.ResetName()
+		return nil
+	case person.FieldGivenName:
+		m.ResetGivenName()
+		return nil
+	case person.FieldFamilyName:
+		m.ResetFamilyName()
+		return nil
+	case person.FieldEmail:
+		m.ResetEmail()
+		return nil
+	}
+	return fmt.Errorf("unknown Person field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *PersonMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *PersonMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *PersonMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *PersonMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *PersonMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *PersonMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *PersonMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Person unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *PersonMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Person edge %s", name)
+}
+
 // PersonAddedEventMutation represents an operation that mutates the PersonAddedEvent nodes in the graph.
 type PersonAddedEventMutation struct {
 	config
@@ -2314,7 +2870,6 @@ type PersonAddedEventMutation struct {
 	typ           string
 	id            *int
 	person_id     *uuid.UUID
-	person_name   *string
 	clearedFields map[string]struct{}
 	event         *uuid.UUID
 	clearedevent  bool
@@ -2457,42 +3012,6 @@ func (m *PersonAddedEventMutation) ResetPersonID() {
 	m.person_id = nil
 }
 
-// SetPersonName sets the "person_name" field.
-func (m *PersonAddedEventMutation) SetPersonName(s string) {
-	m.person_name = &s
-}
-
-// PersonName returns the value of the "person_name" field in the mutation.
-func (m *PersonAddedEventMutation) PersonName() (r string, exists bool) {
-	v := m.person_name
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldPersonName returns the old "person_name" field's value of the PersonAddedEvent entity.
-// If the PersonAddedEvent object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PersonAddedEventMutation) OldPersonName(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldPersonName is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldPersonName requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldPersonName: %w", err)
-	}
-	return oldValue.PersonName, nil
-}
-
-// ResetPersonName resets all changes to the "person_name" field.
-func (m *PersonAddedEventMutation) ResetPersonName() {
-	m.person_name = nil
-}
-
 // SetEventID sets the "event" edge to the Event entity by id.
 func (m *PersonAddedEventMutation) SetEventID(id uuid.UUID) {
 	m.event = &id
@@ -2566,12 +3085,9 @@ func (m *PersonAddedEventMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PersonAddedEventMutation) Fields() []string {
-	fields := make([]string, 0, 2)
+	fields := make([]string, 0, 1)
 	if m.person_id != nil {
 		fields = append(fields, personaddedevent.FieldPersonID)
-	}
-	if m.person_name != nil {
-		fields = append(fields, personaddedevent.FieldPersonName)
 	}
 	return fields
 }
@@ -2583,8 +3099,6 @@ func (m *PersonAddedEventMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case personaddedevent.FieldPersonID:
 		return m.PersonID()
-	case personaddedevent.FieldPersonName:
-		return m.PersonName()
 	}
 	return nil, false
 }
@@ -2596,8 +3110,6 @@ func (m *PersonAddedEventMutation) OldField(ctx context.Context, name string) (e
 	switch name {
 	case personaddedevent.FieldPersonID:
 		return m.OldPersonID(ctx)
-	case personaddedevent.FieldPersonName:
-		return m.OldPersonName(ctx)
 	}
 	return nil, fmt.Errorf("unknown PersonAddedEvent field %s", name)
 }
@@ -2613,13 +3125,6 @@ func (m *PersonAddedEventMutation) SetField(name string, value ent.Value) error 
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetPersonID(v)
-		return nil
-	case personaddedevent.FieldPersonName:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetPersonName(v)
 		return nil
 	}
 	return fmt.Errorf("unknown PersonAddedEvent field %s", name)
@@ -2672,9 +3177,6 @@ func (m *PersonAddedEventMutation) ResetField(name string) error {
 	switch name {
 	case personaddedevent.FieldPersonID:
 		m.ResetPersonID()
-		return nil
-	case personaddedevent.FieldPersonName:
-		m.ResetPersonName()
 		return nil
 	}
 	return fmt.Errorf("unknown PersonAddedEvent field %s", name)

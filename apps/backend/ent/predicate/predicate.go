@@ -18,6 +18,9 @@ type Event func(*sql.Selector)
 // OrganisationChangedEvent is the predicate function for organisationchangedevent builders.
 type OrganisationChangedEvent func(*sql.Selector)
 
+// Person is the predicate function for person builders.
+type Person func(*sql.Selector)
+
 // PersonAddedEvent is the predicate function for personaddedevent builders.
 type PersonAddedEvent func(*sql.Selector)
 

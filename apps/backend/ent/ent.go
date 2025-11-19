@@ -16,6 +16,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/enddatechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/event"
 	"github.com/SURF-Innovatie/MORIS/ent/organisationchangedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/person"
 	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/personremovedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
@@ -86,6 +87,7 @@ func checkColumn(t, c string) error {
 			enddatechangedevent.Table:      enddatechangedevent.ValidColumn,
 			event.Table:                    event.ValidColumn,
 			organisationchangedevent.Table: organisationchangedevent.ValidColumn,
+			person.Table:                   person.ValidColumn,
 			personaddedevent.Table:         personaddedevent.ValidColumn,
 			personremovedevent.Table:       personremovedevent.ValidColumn,
 			projectstartedevent.Table:      projectstartedevent.ValidColumn,

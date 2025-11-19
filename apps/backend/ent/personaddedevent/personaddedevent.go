@@ -15,8 +15,6 @@ const (
 	FieldID = "id"
 	// FieldPersonID holds the string denoting the person_id field in the database.
 	FieldPersonID = "person_id"
-	// FieldPersonName holds the string denoting the person_name field in the database.
-	FieldPersonName = "person_name"
 	// EdgeEvent holds the string denoting the event edge name in mutations.
 	EdgeEvent = "event"
 	// Table holds the table name of the personaddedevent in the database.
@@ -34,7 +32,6 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldPersonID,
-	FieldPersonName,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "person_added_events"
@@ -74,11 +71,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByPersonID orders the results by the person_id field.
 func ByPersonID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPersonID, opts...).ToFunc()
-}
-
-// ByPersonName orders the results by the person_name field.
-func ByPersonName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldPersonName, opts...).ToFunc()
 }
 
 // ByEventField orders the results by event field.

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
@@ -139,15 +138,10 @@ func (h *Handler) AddPerson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req personRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Name == "" {
-		http.Error(w, "invalid body", http.StatusBadRequest)
-		return
-	}
+	personIDstr := chi.URLParam(r, "personId")
+	personID, err := uuid.Parse(personIDstr)
 
-	person := entities.NewPerson(req.Name)
-
-	proj, err := h.svc.AddPerson(r.Context(), id, person)
+	proj, err := h.svc.AddPerson(r.Context(), id, personID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

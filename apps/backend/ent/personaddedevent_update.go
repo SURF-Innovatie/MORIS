@@ -43,20 +43,6 @@ func (_u *PersonAddedEventUpdate) SetNillablePersonID(v *uuid.UUID) *PersonAdded
 	return _u
 }
 
-// SetPersonName sets the "person_name" field.
-func (_u *PersonAddedEventUpdate) SetPersonName(v string) *PersonAddedEventUpdate {
-	_u.mutation.SetPersonName(v)
-	return _u
-}
-
-// SetNillablePersonName sets the "person_name" field if the given value is not nil.
-func (_u *PersonAddedEventUpdate) SetNillablePersonName(v *string) *PersonAddedEventUpdate {
-	if v != nil {
-		_u.SetPersonName(*v)
-	}
-	return _u
-}
-
 // SetEventID sets the "event" edge to the Event entity by ID.
 func (_u *PersonAddedEventUpdate) SetEventID(id uuid.UUID) *PersonAddedEventUpdate {
 	_u.mutation.SetEventID(id)
@@ -129,9 +115,6 @@ func (_u *PersonAddedEventUpdate) sqlSave(ctx context.Context) (_node int, err e
 	if value, ok := _u.mutation.PersonID(); ok {
 		_spec.SetField(personaddedevent.FieldPersonID, field.TypeUUID, value)
 	}
-	if value, ok := _u.mutation.PersonName(); ok {
-		_spec.SetField(personaddedevent.FieldPersonName, field.TypeString, value)
-	}
 	if _u.mutation.EventCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
@@ -191,20 +174,6 @@ func (_u *PersonAddedEventUpdateOne) SetPersonID(v uuid.UUID) *PersonAddedEventU
 func (_u *PersonAddedEventUpdateOne) SetNillablePersonID(v *uuid.UUID) *PersonAddedEventUpdateOne {
 	if v != nil {
 		_u.SetPersonID(*v)
-	}
-	return _u
-}
-
-// SetPersonName sets the "person_name" field.
-func (_u *PersonAddedEventUpdateOne) SetPersonName(v string) *PersonAddedEventUpdateOne {
-	_u.mutation.SetPersonName(v)
-	return _u
-}
-
-// SetNillablePersonName sets the "person_name" field if the given value is not nil.
-func (_u *PersonAddedEventUpdateOne) SetNillablePersonName(v *string) *PersonAddedEventUpdateOne {
-	if v != nil {
-		_u.SetPersonName(*v)
 	}
 	return _u
 }
@@ -310,9 +279,6 @@ func (_u *PersonAddedEventUpdateOne) sqlSave(ctx context.Context) (_node *Person
 	}
 	if value, ok := _u.mutation.PersonID(); ok {
 		_spec.SetField(personaddedevent.FieldPersonID, field.TypeUUID, value)
-	}
-	if value, ok := _u.mutation.PersonName(); ok {
-		_spec.SetField(personaddedevent.FieldPersonName, field.TypeString, value)
 	}
 	if _u.mutation.EventCleared() {
 		edge := &sqlgraph.EdgeSpec{

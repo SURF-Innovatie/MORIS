@@ -57,6 +57,18 @@ func (f OrganisationChangedEventFunc) Mutate(ctx context.Context, m ent.Mutation
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.OrganisationChangedEventMutation", m)
 }
 
+// The PersonFunc type is an adapter to allow the use of ordinary
+// function as Person mutator.
+type PersonFunc func(context.Context, *ent.PersonMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PersonFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PersonMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PersonMutation", m)
+}
+
 // The PersonAddedEventFunc type is an adapter to allow the use of ordinary
 // function as PersonAddedEvent mutator.
 type PersonAddedEventFunc func(context.Context, *ent.PersonAddedEventMutation) (ent.Value, error)

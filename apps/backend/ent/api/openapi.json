@@ -126,6 +126,31 @@
           "event"
         ]
       },
+      "Person": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "given_name": {
+            "type": "string"
+          },
+          "family_name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
       "PersonAddedEvent": {
         "type": "object",
         "properties": {
@@ -136,9 +161,6 @@
             "type": "string",
             "format": "uuid"
           },
-          "person_name": {
-            "type": "string"
-          },
           "event": {
             "$ref": "#/components/schemas/Event"
           }
@@ -146,7 +168,6 @@
         "required": [
           "id",
           "person_id",
-          "person_name",
           "event"
         ]
       },

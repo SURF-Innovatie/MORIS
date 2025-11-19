@@ -15,7 +15,6 @@ func (PersonAddedEvent) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("person_id", uuid.UUID{}).
 			Default(uuid.New),
-		field.String("person_name"),
 	}
 }
 

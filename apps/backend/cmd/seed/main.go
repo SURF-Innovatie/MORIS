@@ -125,6 +125,27 @@ func main() {
 		},
 	}
 
+	personIDs := make(map[string]uuid.UUID)
+
+	for _, sp := range projects {
+		for _, name := range sp.People {
+			if _, exists := personIDs[name]; exists {
+				continue
+			}
+
+			row, err := client.Person.
+				Create().
+				SetName(name).
+				Save(ctx)
+			if err != nil {
+				logrus.Fatalf("failed creating person %q: %v", name, err)
+			}
+
+			personIDs[name] = row.ID
+			logrus.Infof("Created person %s (%s)", name, row.ID)
+		}
+	}
+
 	logrus.Info("Seeding projects...")
 
 	for _, sp := range projects {
@@ -143,7 +164,6 @@ func main() {
 				Id:   uuid.New(),
 				Name: sp.Organisation,
 			},
-			People: []entities.Person{},
 		}
 
 		if err := es.Append(ctx, projectID, 0, startEvent); err != nil {
@@ -152,15 +172,17 @@ func main() {
 
 		version := 1
 		for _, name := range sp.People {
+			personID, ok := personIDs[name]
+			if !ok {
+				logrus.Fatalf("no person ID found for %q", name)
+			}
+
 			pevt := events.PersonAdded{
 				Base: events.Base{
 					ProjectID: projectID,
 					At:        time.Now().UTC(),
 				},
-				Person: entities.Person{
-					Id:   uuid.New(),
-					Name: name,
-				},
+				PersonId: personID,
 			}
 
 			if err := es.Append(ctx, projectID, version, pevt); err != nil {

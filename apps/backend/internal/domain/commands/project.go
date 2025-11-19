@@ -16,7 +16,7 @@ func StartProject(
 	id uuid.UUID,
 	title, description string,
 	start, end time.Time,
-	people []entities.Person,
+	people []uuid.UUID,
 	org entities.Organisation,
 ) (events.Event, error) {
 	if id == uuid.Nil {
@@ -95,35 +95,35 @@ func SetOrganisation(id uuid.UUID, cur *entities.Project, org entities.Organisat
 }
 
 // AddPerson emits PersonAdded when not present.
-func AddPerson(id uuid.UUID, cur *entities.Project, p entities.Person) (events.Event, error) {
+func AddPerson(id uuid.UUID, cur *entities.Project, personId uuid.UUID) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
 	for _, x := range cur.People {
-		if x != nil && x.Name == p.Name {
-			return nil, errors.New(fmt.Sprintf("person %s already exists in project %s", p.Id, cur.Id))
+		if x == personId {
+			return nil, errors.New(fmt.Sprintf("person %s already exists in project %s", personId, cur.Id))
 		}
 	}
-	return events.PersonAdded{Base: base(id), Person: p}, nil
+	return events.PersonAdded{Base: base(id), PersonId: personId}, nil
 }
 
 // RemovePerson emits PersonRemoved when present.
-func RemovePerson(id uuid.UUID, cur *entities.Project, p entities.Person) (events.Event, error) {
+func RemovePerson(id uuid.UUID, cur *entities.Project, personId uuid.UUID) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
 
 	exist := false
 	for _, x := range cur.People {
-		if x != nil && x.Name == p.Name {
+		if x == personId {
 			exist = true
 		}
 	}
 	if !exist {
-		return nil, errors.New(fmt.Sprintf("person %s not found for project %s", p.Id, cur.Id))
+		return nil, errors.New(fmt.Sprintf("person %s not found for project %s", personId, cur.Id))
 	}
 
-	return events.PersonRemoved{Base: base(id), PersonId: p.Id}, nil
+	return events.PersonRemoved{Base: base(id), PersonId: personId}, nil
 }
 
 func base(id uuid.UUID) events.Base {

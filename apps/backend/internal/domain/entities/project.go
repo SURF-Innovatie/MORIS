@@ -13,6 +13,6 @@ type Project struct {
 	EndDate      time.Time
 	Title        string
 	Description  string
-	People       []*Person
+	People       []uuid.UUID
 	Organisation Organisation
 }

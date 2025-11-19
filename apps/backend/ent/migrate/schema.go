@@ -83,11 +83,24 @@ var (
 			},
 		},
 	}
+	// PersonsColumns holds the columns for the "persons" table.
+	PersonsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "name", Type: field.TypeString},
+		{Name: "given_name", Type: field.TypeString, Nullable: true},
+		{Name: "family_name", Type: field.TypeString, Nullable: true},
+		{Name: "email", Type: field.TypeString, Nullable: true},
+	}
+	// PersonsTable holds the schema information for the "persons" table.
+	PersonsTable = &schema.Table{
+		Name:       "persons",
+		Columns:    PersonsColumns,
+		PrimaryKey: []*schema.Column{PersonsColumns[0]},
+	}
 	// PersonAddedEventsColumns holds the columns for the "person_added_events" table.
 	PersonAddedEventsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "person_id", Type: field.TypeUUID},
-		{Name: "person_name", Type: field.TypeString},
 		{Name: "event_person_added", Type: field.TypeUUID, Unique: true},
 	}
 	// PersonAddedEventsTable holds the schema information for the "person_added_events" table.
@@ -98,7 +111,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "person_added_events_events_person_added",
-				Columns:    []*schema.Column{PersonAddedEventsColumns[3]},
+				Columns:    []*schema.Column{PersonAddedEventsColumns[2]},
 				RefColumns: []*schema.Column{EventsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -206,6 +219,7 @@ var (
 		EndDateChangedEventsTable,
 		EventsTable,
 		OrganisationChangedEventsTable,
+		PersonsTable,
 		PersonAddedEventsTable,
 		PersonRemovedEventsTable,
 		ProjectStartedEventsTable,

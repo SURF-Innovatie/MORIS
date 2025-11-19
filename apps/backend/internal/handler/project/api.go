@@ -7,7 +7,7 @@ func MountProjectRoutes(r chi.Router, h *Handler) {
 		r.Get("/", h.GetAllProjects)
 		r.Post("/", h.StartProject)
 		r.Get("/{id}", h.GetProject)
-		r.Post("/{id}/people", h.AddPerson)
+		r.Post("/{id}/people/{personId}", h.AddPerson)
 		r.Delete("/{id}/people/{personId}", h.RemovePerson)
 	})
 }

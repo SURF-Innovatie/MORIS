@@ -25,7 +25,7 @@ func Apply(p *entities.Project, e events.Event) {
 		p.StartDate = ev.StartDate
 		p.EndDate = ev.EndDate
 		p.Organisation = ev.Organisation
-		p.People = toPersonPtrSlice(ev.People)
+		p.People = ev.People
 
 	case events.TitleChanged:
 		p.Title = ev.Title
@@ -43,13 +43,13 @@ func Apply(p *entities.Project, e events.Event) {
 		p.Organisation = ev.Organisation
 
 	case events.PersonAdded:
-		if !hasPerson(p.People, ev.Person.Name) {
-			p.People = append(p.People, &ev.Person)
+		if !hasPerson(p.People, ev.PersonId) {
+			p.People = append(p.People, ev.PersonId)
 		}
 
 	case events.PersonRemoved:
-		p.People = filterPeople(p.People, func(pe *entities.Person) bool {
-			return pe.Id != ev.PersonId
+		p.People = filterPeople(p.People, func(id uuid.UUID) bool {
+			return id != ev.PersonId
 		})
 
 	default:
@@ -57,34 +57,22 @@ func Apply(p *entities.Project, e events.Event) {
 	}
 }
 
-func toPersonPtrSlice(in []entities.Person) []*entities.Person {
-	if len(in) == 0 {
-		return nil
-	}
-	out := make([]*entities.Person, 0, len(in))
-	for i := range in {
-		pe := in[i] // take address of loop variable copy
-		out = append(out, &pe)
-	}
-	return out
-}
-
-func hasPerson(list []*entities.Person, name string) bool {
+func hasPerson(list []uuid.UUID, id uuid.UUID) bool {
 	for _, p := range list {
-		if p != nil && p.Name == name {
+		if p == id {
 			return true
 		}
 	}
 	return false
 }
 
-func filterPeople(list []*entities.Person, keep func(*entities.Person) bool) []*entities.Person {
+func filterPeople(list []uuid.UUID, keep func(uuid.UUID) bool) []uuid.UUID {
 	if len(list) == 0 {
 		return nil
 	}
 	out := list[:0]
 	for _, p := range list {
-		if p != nil && keep(p) {
+		if keep(p) {
 			out = append(out, p)
 		}
 	}

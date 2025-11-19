@@ -10,7 +10,9 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	"github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/handler/custom"
+	personhandler "github.com/SURF-Innovatie/MORIS/internal/handler/person"
 	projecthandler "github.com/SURF-Innovatie/MORIS/internal/handler/project"
+	"github.com/SURF-Innovatie/MORIS/internal/person"
 	"github.com/SURF-Innovatie/MORIS/internal/platform/eventstore"
 	"github.com/SURF-Innovatie/MORIS/internal/project"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
@@ -70,6 +72,9 @@ func main() {
 	userSvc := user.NewService(client)
 	authSvc := auth.NewService(client)
 
+	personSvc := person.NewService(client)
+	personHandler := personhandler.NewHandler(personSvc)
+
 	// Set auth service for middleware
 	auth.SetAuthService(authSvc)
 
@@ -89,6 +94,7 @@ func main() {
 	r.Route("/api", func(r chi.Router) {
 		custom.MountCustomHandlers(r, customHandler)
 		projecthandler.MountProjectRoutes(r, projHandler)
+		personhandler.MountPersonRoutes(r, personHandler)
 	})
 
 

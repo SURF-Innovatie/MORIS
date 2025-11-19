@@ -20,8 +20,6 @@ type PersonAddedEvent struct {
 	ID int `json:"id,omitempty"`
 	// PersonID holds the value of the "person_id" field.
 	PersonID uuid.UUID `json:"person_id,omitempty"`
-	// PersonName holds the value of the "person_name" field.
-	PersonName string `json:"person_name,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the PersonAddedEventQuery when eager-loading is set.
 	Edges              PersonAddedEventEdges `json:"edges"`
@@ -56,8 +54,6 @@ func (*PersonAddedEvent) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case personaddedevent.FieldID:
 			values[i] = new(sql.NullInt64)
-		case personaddedevent.FieldPersonName:
-			values[i] = new(sql.NullString)
 		case personaddedevent.FieldPersonID:
 			values[i] = new(uuid.UUID)
 		case personaddedevent.ForeignKeys[0]: // event_person_added
@@ -88,12 +84,6 @@ func (_m *PersonAddedEvent) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field person_id", values[i])
 			} else if value != nil {
 				_m.PersonID = *value
-			}
-		case personaddedevent.FieldPersonName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field person_name", values[i])
-			} else if value.Valid {
-				_m.PersonName = value.String
 			}
 		case personaddedevent.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -145,9 +135,6 @@ func (_m *PersonAddedEvent) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("person_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.PersonID))
-	builder.WriteString(", ")
-	builder.WriteString("person_name=")
-	builder.WriteString(_m.PersonName)
 	builder.WriteByte(')')
 	return builder.String()
 }

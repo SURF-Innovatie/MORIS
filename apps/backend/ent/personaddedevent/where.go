@@ -59,11 +59,6 @@ func PersonID(v uuid.UUID) predicate.PersonAddedEvent {
 	return predicate.PersonAddedEvent(sql.FieldEQ(FieldPersonID, v))
 }
 
-// PersonName applies equality check predicate on the "person_name" field. It's identical to PersonNameEQ.
-func PersonName(v string) predicate.PersonAddedEvent {
-	return predicate.PersonAddedEvent(sql.FieldEQ(FieldPersonName, v))
-}
-
 // PersonIDEQ applies the EQ predicate on the "person_id" field.
 func PersonIDEQ(v uuid.UUID) predicate.PersonAddedEvent {
 	return predicate.PersonAddedEvent(sql.FieldEQ(FieldPersonID, v))
@@ -102,71 +97,6 @@ func PersonIDLT(v uuid.UUID) predicate.PersonAddedEvent {
 // PersonIDLTE applies the LTE predicate on the "person_id" field.
 func PersonIDLTE(v uuid.UUID) predicate.PersonAddedEvent {
 	return predicate.PersonAddedEvent(sql.FieldLTE(FieldPersonID, v))
-}
-
-// PersonNameEQ applies the EQ predicate on the "person_name" field.
-func PersonNameEQ(v string) predicate.PersonAddedEvent {
-	return predicate.PersonAddedEvent(sql.FieldEQ(FieldPersonName, v))
-}
-
-// PersonNameNEQ applies the NEQ predicate on the "person_name" field.
-func PersonNameNEQ(v string) predicate.PersonAddedEvent {
-	return predicate.PersonAddedEvent(sql.FieldNEQ(FieldPersonName, v))
-}
-
-// PersonNameIn applies the In predicate on the "person_name" field.
-func PersonNameIn(vs ...string) predicate.PersonAddedEvent {
-	return predicate.PersonAddedEvent(sql.FieldIn(FieldPersonName, vs...))
-}
-
-// PersonNameNotIn applies the NotIn predicate on the "person_name" field.
-func PersonNameNotIn(vs ...string) predicate.PersonAddedEvent {
-	return predicate.PersonAddedEvent(sql.FieldNotIn(FieldPersonName, vs...))
-}
-
-// PersonNameGT applies the GT predicate on the "person_name" field.
-func PersonNameGT(v string) predicate.PersonAddedEvent {
-	return predicate.PersonAddedEvent(sql.FieldGT(FieldPersonName, v))
-}
-
-// PersonNameGTE applies the GTE predicate on the "person_name" field.
-func PersonNameGTE(v string) predicate.PersonAddedEvent {
-	return predicate.PersonAddedEvent(sql.FieldGTE(FieldPersonName, v))
-}
-
-// PersonNameLT applies the LT predicate on the "person_name" field.
-func PersonNameLT(v string) predicate.PersonAddedEvent {
-	return predicate.PersonAddedEvent(sql.FieldLT(FieldPersonName, v))
-}
-
-// PersonNameLTE applies the LTE predicate on the "person_name" field.
-func PersonNameLTE(v string) predicate.PersonAddedEvent {
-	return predicate.PersonAddedEvent(sql.FieldLTE(FieldPersonName, v))
-}
-
-// PersonNameContains applies the Contains predicate on the "person_name" field.
-func PersonNameContains(v string) predicate.PersonAddedEvent {
-	return predicate.PersonAddedEvent(sql.FieldContains(FieldPersonName, v))
-}
-
-// PersonNameHasPrefix applies the HasPrefix predicate on the "person_name" field.
-func PersonNameHasPrefix(v string) predicate.PersonAddedEvent {
-	return predicate.PersonAddedEvent(sql.FieldHasPrefix(FieldPersonName, v))
-}
-
-// PersonNameHasSuffix applies the HasSuffix predicate on the "person_name" field.
-func PersonNameHasSuffix(v string) predicate.PersonAddedEvent {
-	return predicate.PersonAddedEvent(sql.FieldHasSuffix(FieldPersonName, v))
-}
-
-// PersonNameEqualFold applies the EqualFold predicate on the "person_name" field.
-func PersonNameEqualFold(v string) predicate.PersonAddedEvent {
-	return predicate.PersonAddedEvent(sql.FieldEqualFold(FieldPersonName, v))
-}
-
-// PersonNameContainsFold applies the ContainsFold predicate on the "person_name" field.
-func PersonNameContainsFold(v string) predicate.PersonAddedEvent {
-	return predicate.PersonAddedEvent(sql.FieldContainsFold(FieldPersonName, v))
 }
 
 // HasEvent applies the HasEdge predicate on the "event" edge.

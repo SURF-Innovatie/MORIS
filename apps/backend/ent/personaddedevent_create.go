@@ -35,12 +35,6 @@ func (_c *PersonAddedEventCreate) SetNillablePersonID(v *uuid.UUID) *PersonAdded
 	return _c
 }
 
-// SetPersonName sets the "person_name" field.
-func (_c *PersonAddedEventCreate) SetPersonName(v string) *PersonAddedEventCreate {
-	_c.mutation.SetPersonName(v)
-	return _c
-}
-
 // SetEventID sets the "event" edge to the Event entity by ID.
 func (_c *PersonAddedEventCreate) SetEventID(id uuid.UUID) *PersonAddedEventCreate {
 	_c.mutation.SetEventID(id)
@@ -98,9 +92,6 @@ func (_c *PersonAddedEventCreate) check() error {
 	if _, ok := _c.mutation.PersonID(); !ok {
 		return &ValidationError{Name: "person_id", err: errors.New(`ent: missing required field "PersonAddedEvent.person_id"`)}
 	}
-	if _, ok := _c.mutation.PersonName(); !ok {
-		return &ValidationError{Name: "person_name", err: errors.New(`ent: missing required field "PersonAddedEvent.person_name"`)}
-	}
 	if len(_c.mutation.EventIDs()) == 0 {
 		return &ValidationError{Name: "event", err: errors.New(`ent: missing required edge "PersonAddedEvent.event"`)}
 	}
@@ -133,10 +124,6 @@ func (_c *PersonAddedEventCreate) createSpec() (*PersonAddedEvent, *sqlgraph.Cre
 	if value, ok := _c.mutation.PersonID(); ok {
 		_spec.SetField(personaddedevent.FieldPersonID, field.TypeUUID, value)
 		_node.PersonID = value
-	}
-	if value, ok := _c.mutation.PersonName(); ok {
-		_spec.SetField(personaddedevent.FieldPersonName, field.TypeString, value)
-		_node.PersonName = value
 	}
 	if nodes := _c.mutation.EventIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
