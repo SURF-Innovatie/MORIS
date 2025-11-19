@@ -2,6 +2,7 @@ package commands
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -100,7 +101,7 @@ func AddPerson(id uuid.UUID, cur *entities.Project, p entities.Person) (events.E
 	}
 	for _, x := range cur.People {
 		if x != nil && x.Name == p.Name {
-			return nil, nil
+			return nil, errors.New(fmt.Sprintf("person %s already exists in project %s", p.Id, cur.Id))
 		}
 	}
 	return events.PersonAdded{Base: base(id), Person: p}, nil
@@ -111,11 +112,17 @@ func RemovePerson(id uuid.UUID, cur *entities.Project, p entities.Person) (event
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
+
+	exist := false
 	for _, x := range cur.People {
 		if x != nil && x.Name == p.Name {
-			return nil, nil
+			exist = true
 		}
 	}
+	if !exist {
+		return nil, errors.New(fmt.Sprintf("person %s not found for project %s", p.Id, cur.Id))
+	}
+
 	return events.PersonRemoved{Base: base(id), Person: p}, nil
 }
 
