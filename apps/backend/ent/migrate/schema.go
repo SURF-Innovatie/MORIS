@@ -136,6 +136,28 @@ var (
 			},
 		},
 	}
+	// ProjectNotificationsColumns holds the columns for the "project_notifications" table.
+	ProjectNotificationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "project_id", Type: field.TypeUUID},
+		{Name: "message", Type: field.TypeString},
+		{Name: "sent_at", Type: field.TypeTime},
+		{Name: "project_notification_user", Type: field.TypeUUID, Nullable: true},
+	}
+	// ProjectNotificationsTable holds the schema information for the "project_notifications" table.
+	ProjectNotificationsTable = &schema.Table{
+		Name:       "project_notifications",
+		Columns:    ProjectNotificationsColumns,
+		PrimaryKey: []*schema.Column{ProjectNotificationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "project_notifications_users_user",
+				Columns:    []*schema.Column{ProjectNotificationsColumns[4]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// ProjectStartedEventsColumns holds the columns for the "project_started_events" table.
 	ProjectStartedEventsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -202,7 +224,7 @@ var (
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "email", Type: field.TypeString, Unique: true},
 		{Name: "password", Type: field.TypeString},
@@ -222,6 +244,7 @@ var (
 		PersonsTable,
 		PersonAddedEventsTable,
 		PersonRemovedEventsTable,
+		ProjectNotificationsTable,
 		ProjectStartedEventsTable,
 		StartDateChangedEventsTable,
 		TitleChangedEventsTable,
@@ -235,6 +258,7 @@ func init() {
 	OrganisationChangedEventsTable.ForeignKeys[0].RefTable = EventsTable
 	PersonAddedEventsTable.ForeignKeys[0].RefTable = EventsTable
 	PersonRemovedEventsTable.ForeignKeys[0].RefTable = EventsTable
+	ProjectNotificationsTable.ForeignKeys[0].RefTable = UsersTable
 	ProjectStartedEventsTable.ForeignKeys[0].RefTable = EventsTable
 	StartDateChangedEventsTable.ForeignKeys[0].RefTable = EventsTable
 	TitleChangedEventsTable.ForeignKeys[0].RefTable = EventsTable

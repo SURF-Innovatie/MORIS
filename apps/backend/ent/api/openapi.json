@@ -5,6 +5,542 @@
     "description": "MORIS",
     "version": "1.0"
   },
+  "paths": {
+    "/admin/users/list": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Get all users (Admin only)",
+        "description": "Returns a list of all users - requires admin role",
+        "responses": {
+          "200": {
+            "description": "Admin user list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "status"
+        ],
+        "summary": "Health check",
+        "description": "Returns the health status of the API",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/internal_handler_custom.StatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login user",
+        "description": "Authenticates a user and returns a JWT token",
+        "requestBody": {
+          "description": "User login credentials",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/internal_handler_custom.LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/internal_handler_custom.LoginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profile": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Get user profile",
+        "description": "Returns the authenticated user's profile information",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/projects": {
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Get all projects",
+        "description": "Retrieves a list of all projects",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Start a new project",
+        "description": "Creates and starts a new project with the provided details",
+        "requestBody": {
+          "description": "Project details",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/internal_handler_project.StartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid body or date format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{id}": {
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Get a project by ID",
+        "description": "Retrieves a single project by its unique identifier",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Project ID (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid project id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "project not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{id}/people": {
+      "post": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Add a person to a project",
+        "description": "Adds a new person to the specified project",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Project ID (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Person details",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/internal_handler_project.personRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid project id or body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{id}/people/{personId}": {
+      "delete": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Remove a person from a project",
+        "description": "Removes a person from the specified project",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Project ID (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "personId",
+            "in": "path",
+            "description": "Person ID (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid project id or person id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/register": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Register a new user",
+        "description": "Creates a new user account with the provided credentials",
+        "requestBody": {
+          "description": "User registration details",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/internal_handler_custom.RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/internal_handler_custom.RegisterResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body or missing fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/status": {
+      "get": {
+        "tags": [
+          "status"
+        ],
+        "summary": "Check API status",
+        "description": "Returns the current status of the API",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/internal_handler_custom.StatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/count": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Get total user count",
+        "description": "Returns the total number of registered users",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/internal_handler_custom.TotalUsersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    }
+  },
   "components": {
     "schemas": {
       "DescriptionChangedEvent": {
@@ -187,6 +723,35 @@
           "event"
         ]
       },
+      "ProjectNotification": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "project_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "message": {
+            "type": "string"
+          },
+          "sent_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "message",
+          "sent_at"
+        ]
+      },
       "ProjectStartedEvent": {
         "type": "object",
         "properties": {
@@ -270,7 +835,8 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "integer"
+            "type": "string",
+            "format": "uuid"
           },
           "name": {
             "type": "string"
@@ -288,6 +854,237 @@
           "email",
           "password"
         ]
+      },
+      "github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          },
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "admin",
+              "user"
+            ]
+          }
+        }
+      },
+      "github_com_SURF-Innovatie_MORIS_internal_auth.BackendError": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 400
+          },
+          "errors": {
+            "description": "Can be map[string]string or []string or null"
+          },
+          "message": {
+            "description": "Custom message",
+            "type": "string",
+            "example": "Detailed error description"
+          },
+          "status": {
+            "type": "string",
+            "example": "Bad Request"
+          }
+        }
+      },
+      "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Organisation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Person": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "organisation": {
+            "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Organisation"
+          },
+          "people": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Person"
+            }
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          }
+        }
+      },
+      "internal_handler_custom.LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "secretpassword"
+          }
+        }
+      },
+      "internal_handler_custom.LoginResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "email": {
+                "type": "string",
+                "example": "user@example.com"
+              },
+              "id": {
+                "type": "integer",
+                "example": 1
+              },
+              "roles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "user"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "internal_handler_custom.RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "name": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "password": {
+            "type": "string",
+            "example": "secretpassword"
+          }
+        }
+      },
+      "internal_handler_custom.RegisterResponse": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "John Doe"
+          }
+        }
+      },
+      "internal_handler_custom.StatusResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok"
+          },
+          "timestamp": {
+            "type": "string",
+            "example": "2025-11-12T10:00:00Z"
+          }
+        }
+      },
+      "internal_handler_custom.TotalUsersResponse": {
+        "type": "object",
+        "properties": {
+          "total_users": {
+            "type": "integer",
+            "example": 123
+          }
+        }
+      },
+      "internal_handler_project.StartRequest": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "example": "This is a new project"
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2025-12-31T23:59:59Z"
+          },
+          "organisation": {
+            "type": "string",
+            "example": "SURF"
+          },
+          "startDate": {
+            "type": "string",
+            "example": "2025-01-01T00:00:00Z"
+          },
+          "title": {
+            "type": "string",
+            "example": "New Project"
+          }
+        }
+      },
+      "internal_handler_project.personRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
       }
     },
     "responses": {

@@ -12,6 +12,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/person"
 	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/personremovedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/projectnotification"
 	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/schema"
 	"github.com/SURF-Innovatie/MORIS/ent/startdatechangedevent"
@@ -70,6 +71,16 @@ func init() {
 	personremovedeventDescID := personremovedeventFields[0].Descriptor()
 	// personremovedevent.DefaultID holds the default value on creation for the id field.
 	personremovedevent.DefaultID = personremovedeventDescID.Default.(func() uuid.UUID)
+	projectnotificationFields := schema.ProjectNotification{}.Fields()
+	_ = projectnotificationFields
+	// projectnotificationDescSentAt is the schema descriptor for sent_at field.
+	projectnotificationDescSentAt := projectnotificationFields[3].Descriptor()
+	// projectnotification.DefaultSentAt holds the default value on creation for the sent_at field.
+	projectnotification.DefaultSentAt = projectnotificationDescSentAt.Default.(func() time.Time)
+	// projectnotificationDescID is the schema descriptor for id field.
+	projectnotificationDescID := projectnotificationFields[0].Descriptor()
+	// projectnotification.DefaultID holds the default value on creation for the id field.
+	projectnotification.DefaultID = projectnotificationDescID.Default.(func() uuid.UUID)
 	projectstartedeventFields := schema.ProjectStartedEvent{}.Fields()
 	_ = projectstartedeventFields
 	// projectstartedeventDescID is the schema descriptor for id field.
@@ -91,11 +102,11 @@ func init() {
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescName is the schema descriptor for name field.
-	userDescName := userFields[0].Descriptor()
+	userDescName := userFields[1].Descriptor()
 	// user.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	user.NameValidator = userDescName.Validators[0].(func(string) error)
 	// userDescPassword is the schema descriptor for password field.
-	userDescPassword := userFields[2].Descriptor()
+	userDescPassword := userFields[3].Descriptor()
 	// user.PasswordValidator is a validator for the "password" field. It is called by the builders before save.
 	user.PasswordValidator = userDescPassword.Validators[0].(func(string) error)
 }
