@@ -3,6 +3,7 @@ package project
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	organisationent "github.com/SURF-Innovatie/MORIS/ent/organisation"
@@ -10,6 +11,8 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/api/organisationdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/persondto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/projectdto"
+	"github.com/SURF-Innovatie/MORIS/internal/auth"
+	notification "github.com/SURF-Innovatie/MORIS/internal/projectnotification"
 	"github.com/google/uuid"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
@@ -33,8 +36,9 @@ type Service interface {
 }
 
 type service struct {
-	cli *ent.Client
-	es  eventstore.Store
+	cli      *ent.Client
+	es       eventstore.Store
+	notifier notification.Service
 }
 
 type StartProjectParams struct {
@@ -45,8 +49,8 @@ type StartProjectParams struct {
 	EndDate        time.Time
 }
 
-func NewService(es eventstore.Store, cli *ent.Client) Service {
-	return &service{es: es, cli: cli}
+func NewService(es eventstore.Store, cli *ent.Client, notifier notification.Service) Service {
+	return &service{es: es, cli: cli, notifier: notifier}
 }
 
 func (s *service) GetProject(ctx context.Context, id uuid.UUID) (*projectdto.Response, error) {
@@ -93,6 +97,11 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 		return nil, err
 	}
 
+	user, err := currentUser(ctx, s.cli)
+	if err == nil {
+		_ = s.notifier.NotifyForEvents(ctx, user, projectID, startEvent)
+	}
+
 	proj := projection.Reduce(projectID, []events.Event{startEvent})
 	proj.Version = 1
 
@@ -102,6 +111,16 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 	}
 
 	return resp, nil
+}
+
+// TODO, instead of a helper function there should be a currentUserService
+func currentUser(ctx context.Context, cli *ent.Client) (*ent.User, error) {
+	authUser, ok := auth.GetUserFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("no authenticated user in context")
+	}
+
+	return cli.User.Get(ctx, authUser.ID)
 }
 
 func (s *service) GetAllProjects(ctx context.Context) ([]*projectdto.Response, error) {

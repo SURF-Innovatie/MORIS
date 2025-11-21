@@ -18,6 +18,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/person"
 	"github.com/SURF-Innovatie/MORIS/internal/platform/eventstore"
 	"github.com/SURF-Innovatie/MORIS/internal/project"
+	notification "github.com/SURF-Innovatie/MORIS/internal/projectnotification"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
 	logger "github.com/chi-middleware/logrus-logger"
 	"github.com/go-chi/chi/v5"
@@ -80,6 +81,8 @@ func main() {
 	organisationSvc := organisation.NewService(client)
 	organisationHandler := organisationhandler.NewHandler(organisationSvc)
 
+	notifierSvc := notification.NewService(client)
+
 	// Set auth service for middleware
 	auth.SetAuthService(authSvc)
 
@@ -87,7 +90,7 @@ func main() {
 	customHandler := custom.NewHandler(userSvc, authSvc)
 
 	esStore := eventstore.NewEntStore(client)
-	projSvc := project.NewService(esStore, client)
+	projSvc := project.NewService(esStore, client, notifierSvc)
 	projHandler := projecthandler.NewHandler(projSvc)
 
 	// Router
