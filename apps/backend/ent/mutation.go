@@ -14,6 +14,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/descriptionchangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/enddatechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/event"
+	"github.com/SURF-Innovatie/MORIS/ent/organisation"
 	"github.com/SURF-Innovatie/MORIS/ent/organisationchangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/person"
 	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
@@ -39,6 +40,7 @@ const (
 	TypeDescriptionChangedEvent  = "DescriptionChangedEvent"
 	TypeEndDateChangedEvent      = "EndDateChangedEvent"
 	TypeEvent                    = "Event"
+	TypeOrganisation             = "Organisation"
 	TypeOrganisationChangedEvent = "OrganisationChangedEvent"
 	TypePerson                   = "Person"
 	TypePersonAddedEvent         = "PersonAddedEvent"
@@ -1858,20 +1860,351 @@ func (m *EventMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Event edge %s", name)
 }
 
+// OrganisationMutation represents an operation that mutates the Organisation nodes in the graph.
+type OrganisationMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *uuid.UUID
+	name          *string
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*Organisation, error)
+	predicates    []predicate.Organisation
+}
+
+var _ ent.Mutation = (*OrganisationMutation)(nil)
+
+// organisationOption allows management of the mutation configuration using functional options.
+type organisationOption func(*OrganisationMutation)
+
+// newOrganisationMutation creates new mutation for the Organisation entity.
+func newOrganisationMutation(c config, op Op, opts ...organisationOption) *OrganisationMutation {
+	m := &OrganisationMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeOrganisation,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withOrganisationID sets the ID field of the mutation.
+func withOrganisationID(id uuid.UUID) organisationOption {
+	return func(m *OrganisationMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Organisation
+		)
+		m.oldValue = func(ctx context.Context) (*Organisation, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Organisation.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withOrganisation sets the old Organisation of the mutation.
+func withOrganisation(node *Organisation) organisationOption {
+	return func(m *OrganisationMutation) {
+		m.oldValue = func(context.Context) (*Organisation, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m OrganisationMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m OrganisationMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Organisation entities.
+func (m *OrganisationMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *OrganisationMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *OrganisationMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Organisation.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetName sets the "name" field.
+func (m *OrganisationMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *OrganisationMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Organisation entity.
+// If the Organisation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrganisationMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *OrganisationMutation) ResetName() {
+	m.name = nil
+}
+
+// Where appends a list predicates to the OrganisationMutation builder.
+func (m *OrganisationMutation) Where(ps ...predicate.Organisation) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the OrganisationMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *OrganisationMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Organisation, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *OrganisationMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *OrganisationMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Organisation).
+func (m *OrganisationMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *OrganisationMutation) Fields() []string {
+	fields := make([]string, 0, 1)
+	if m.name != nil {
+		fields = append(fields, organisation.FieldName)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *OrganisationMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case organisation.FieldName:
+		return m.Name()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *OrganisationMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case organisation.FieldName:
+		return m.OldName(ctx)
+	}
+	return nil, fmt.Errorf("unknown Organisation field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *OrganisationMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case organisation.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Organisation field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *OrganisationMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *OrganisationMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *OrganisationMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Organisation numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *OrganisationMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *OrganisationMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *OrganisationMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Organisation nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *OrganisationMutation) ResetField(name string) error {
+	switch name {
+	case organisation.FieldName:
+		m.ResetName()
+		return nil
+	}
+	return fmt.Errorf("unknown Organisation field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *OrganisationMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *OrganisationMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *OrganisationMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *OrganisationMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *OrganisationMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *OrganisationMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *OrganisationMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Organisation unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *OrganisationMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Organisation edge %s", name)
+}
+
 // OrganisationChangedEventMutation represents an operation that mutates the OrganisationChangedEvent nodes in the graph.
 type OrganisationChangedEventMutation struct {
 	config
-	op                Op
-	typ               string
-	id                *uuid.UUID
-	organisation_id   *string
-	organisation_name *string
-	clearedFields     map[string]struct{}
-	event             *uuid.UUID
-	clearedevent      bool
-	done              bool
-	oldValue          func(context.Context) (*OrganisationChangedEvent, error)
-	predicates        []predicate.OrganisationChangedEvent
+	op              Op
+	typ             string
+	id              *uuid.UUID
+	organisation_id *uuid.UUID
+	clearedFields   map[string]struct{}
+	event           *uuid.UUID
+	clearedevent    bool
+	done            bool
+	oldValue        func(context.Context) (*OrganisationChangedEvent, error)
+	predicates      []predicate.OrganisationChangedEvent
 }
 
 var _ ent.Mutation = (*OrganisationChangedEventMutation)(nil)
@@ -1979,12 +2312,12 @@ func (m *OrganisationChangedEventMutation) IDs(ctx context.Context) ([]uuid.UUID
 }
 
 // SetOrganisationID sets the "organisation_id" field.
-func (m *OrganisationChangedEventMutation) SetOrganisationID(s string) {
-	m.organisation_id = &s
+func (m *OrganisationChangedEventMutation) SetOrganisationID(u uuid.UUID) {
+	m.organisation_id = &u
 }
 
 // OrganisationID returns the value of the "organisation_id" field in the mutation.
-func (m *OrganisationChangedEventMutation) OrganisationID() (r string, exists bool) {
+func (m *OrganisationChangedEventMutation) OrganisationID() (r uuid.UUID, exists bool) {
 	v := m.organisation_id
 	if v == nil {
 		return
@@ -1995,7 +2328,7 @@ func (m *OrganisationChangedEventMutation) OrganisationID() (r string, exists bo
 // OldOrganisationID returns the old "organisation_id" field's value of the OrganisationChangedEvent entity.
 // If the OrganisationChangedEvent object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *OrganisationChangedEventMutation) OldOrganisationID(ctx context.Context) (v string, err error) {
+func (m *OrganisationChangedEventMutation) OldOrganisationID(ctx context.Context) (v uuid.UUID, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldOrganisationID is only allowed on UpdateOne operations")
 	}
@@ -2012,42 +2345,6 @@ func (m *OrganisationChangedEventMutation) OldOrganisationID(ctx context.Context
 // ResetOrganisationID resets all changes to the "organisation_id" field.
 func (m *OrganisationChangedEventMutation) ResetOrganisationID() {
 	m.organisation_id = nil
-}
-
-// SetOrganisationName sets the "organisation_name" field.
-func (m *OrganisationChangedEventMutation) SetOrganisationName(s string) {
-	m.organisation_name = &s
-}
-
-// OrganisationName returns the value of the "organisation_name" field in the mutation.
-func (m *OrganisationChangedEventMutation) OrganisationName() (r string, exists bool) {
-	v := m.organisation_name
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldOrganisationName returns the old "organisation_name" field's value of the OrganisationChangedEvent entity.
-// If the OrganisationChangedEvent object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *OrganisationChangedEventMutation) OldOrganisationName(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldOrganisationName is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldOrganisationName requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldOrganisationName: %w", err)
-	}
-	return oldValue.OrganisationName, nil
-}
-
-// ResetOrganisationName resets all changes to the "organisation_name" field.
-func (m *OrganisationChangedEventMutation) ResetOrganisationName() {
-	m.organisation_name = nil
 }
 
 // SetEventID sets the "event" edge to the Event entity by id.
@@ -2123,12 +2420,9 @@ func (m *OrganisationChangedEventMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *OrganisationChangedEventMutation) Fields() []string {
-	fields := make([]string, 0, 2)
+	fields := make([]string, 0, 1)
 	if m.organisation_id != nil {
 		fields = append(fields, organisationchangedevent.FieldOrganisationID)
-	}
-	if m.organisation_name != nil {
-		fields = append(fields, organisationchangedevent.FieldOrganisationName)
 	}
 	return fields
 }
@@ -2140,8 +2434,6 @@ func (m *OrganisationChangedEventMutation) Field(name string) (ent.Value, bool) 
 	switch name {
 	case organisationchangedevent.FieldOrganisationID:
 		return m.OrganisationID()
-	case organisationchangedevent.FieldOrganisationName:
-		return m.OrganisationName()
 	}
 	return nil, false
 }
@@ -2153,8 +2445,6 @@ func (m *OrganisationChangedEventMutation) OldField(ctx context.Context, name st
 	switch name {
 	case organisationchangedevent.FieldOrganisationID:
 		return m.OldOrganisationID(ctx)
-	case organisationchangedevent.FieldOrganisationName:
-		return m.OldOrganisationName(ctx)
 	}
 	return nil, fmt.Errorf("unknown OrganisationChangedEvent field %s", name)
 }
@@ -2165,18 +2455,11 @@ func (m *OrganisationChangedEventMutation) OldField(ctx context.Context, name st
 func (m *OrganisationChangedEventMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case organisationchangedevent.FieldOrganisationID:
-		v, ok := value.(string)
+		v, ok := value.(uuid.UUID)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetOrganisationID(v)
-		return nil
-	case organisationchangedevent.FieldOrganisationName:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetOrganisationName(v)
 		return nil
 	}
 	return fmt.Errorf("unknown OrganisationChangedEvent field %s", name)
@@ -2229,9 +2512,6 @@ func (m *OrganisationChangedEventMutation) ResetField(name string) error {
 	switch name {
 	case organisationchangedevent.FieldOrganisationID:
 		m.ResetOrganisationID()
-		return nil
-	case organisationchangedevent.FieldOrganisationName:
-		m.ResetOrganisationName()
 		return nil
 	}
 	return fmt.Errorf("unknown OrganisationChangedEvent field %s", name)
@@ -4105,20 +4385,20 @@ func (m *ProjectNotificationMutation) ResetEdge(name string) error {
 // ProjectStartedEventMutation represents an operation that mutates the ProjectStartedEvent nodes in the graph.
 type ProjectStartedEventMutation struct {
 	config
-	op                Op
-	typ               string
-	id                *uuid.UUID
-	title             *string
-	description       *string
-	start_date        *time.Time
-	end_date          *time.Time
-	organisation_name *string
-	clearedFields     map[string]struct{}
-	event             *uuid.UUID
-	clearedevent      bool
-	done              bool
-	oldValue          func(context.Context) (*ProjectStartedEvent, error)
-	predicates        []predicate.ProjectStartedEvent
+	op              Op
+	typ             string
+	id              *uuid.UUID
+	title           *string
+	description     *string
+	start_date      *time.Time
+	end_date        *time.Time
+	organisation_id *uuid.UUID
+	clearedFields   map[string]struct{}
+	event           *uuid.UUID
+	clearedevent    bool
+	done            bool
+	oldValue        func(context.Context) (*ProjectStartedEvent, error)
+	predicates      []predicate.ProjectStartedEvent
 }
 
 var _ ent.Mutation = (*ProjectStartedEventMutation)(nil)
@@ -4369,40 +4649,40 @@ func (m *ProjectStartedEventMutation) ResetEndDate() {
 	m.end_date = nil
 }
 
-// SetOrganisationName sets the "organisation_name" field.
-func (m *ProjectStartedEventMutation) SetOrganisationName(s string) {
-	m.organisation_name = &s
+// SetOrganisationID sets the "organisation_id" field.
+func (m *ProjectStartedEventMutation) SetOrganisationID(u uuid.UUID) {
+	m.organisation_id = &u
 }
 
-// OrganisationName returns the value of the "organisation_name" field in the mutation.
-func (m *ProjectStartedEventMutation) OrganisationName() (r string, exists bool) {
-	v := m.organisation_name
+// OrganisationID returns the value of the "organisation_id" field in the mutation.
+func (m *ProjectStartedEventMutation) OrganisationID() (r uuid.UUID, exists bool) {
+	v := m.organisation_id
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldOrganisationName returns the old "organisation_name" field's value of the ProjectStartedEvent entity.
+// OldOrganisationID returns the old "organisation_id" field's value of the ProjectStartedEvent entity.
 // If the ProjectStartedEvent object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ProjectStartedEventMutation) OldOrganisationName(ctx context.Context) (v string, err error) {
+func (m *ProjectStartedEventMutation) OldOrganisationID(ctx context.Context) (v uuid.UUID, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldOrganisationName is only allowed on UpdateOne operations")
+		return v, errors.New("OldOrganisationID is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldOrganisationName requires an ID field in the mutation")
+		return v, errors.New("OldOrganisationID requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldOrganisationName: %w", err)
+		return v, fmt.Errorf("querying old value for OldOrganisationID: %w", err)
 	}
-	return oldValue.OrganisationName, nil
+	return oldValue.OrganisationID, nil
 }
 
-// ResetOrganisationName resets all changes to the "organisation_name" field.
-func (m *ProjectStartedEventMutation) ResetOrganisationName() {
-	m.organisation_name = nil
+// ResetOrganisationID resets all changes to the "organisation_id" field.
+func (m *ProjectStartedEventMutation) ResetOrganisationID() {
+	m.organisation_id = nil
 }
 
 // SetEventID sets the "event" edge to the Event entity by id.
@@ -4491,8 +4771,8 @@ func (m *ProjectStartedEventMutation) Fields() []string {
 	if m.end_date != nil {
 		fields = append(fields, projectstartedevent.FieldEndDate)
 	}
-	if m.organisation_name != nil {
-		fields = append(fields, projectstartedevent.FieldOrganisationName)
+	if m.organisation_id != nil {
+		fields = append(fields, projectstartedevent.FieldOrganisationID)
 	}
 	return fields
 }
@@ -4510,8 +4790,8 @@ func (m *ProjectStartedEventMutation) Field(name string) (ent.Value, bool) {
 		return m.StartDate()
 	case projectstartedevent.FieldEndDate:
 		return m.EndDate()
-	case projectstartedevent.FieldOrganisationName:
-		return m.OrganisationName()
+	case projectstartedevent.FieldOrganisationID:
+		return m.OrganisationID()
 	}
 	return nil, false
 }
@@ -4529,8 +4809,8 @@ func (m *ProjectStartedEventMutation) OldField(ctx context.Context, name string)
 		return m.OldStartDate(ctx)
 	case projectstartedevent.FieldEndDate:
 		return m.OldEndDate(ctx)
-	case projectstartedevent.FieldOrganisationName:
-		return m.OldOrganisationName(ctx)
+	case projectstartedevent.FieldOrganisationID:
+		return m.OldOrganisationID(ctx)
 	}
 	return nil, fmt.Errorf("unknown ProjectStartedEvent field %s", name)
 }
@@ -4568,12 +4848,12 @@ func (m *ProjectStartedEventMutation) SetField(name string, value ent.Value) err
 		}
 		m.SetEndDate(v)
 		return nil
-	case projectstartedevent.FieldOrganisationName:
-		v, ok := value.(string)
+	case projectstartedevent.FieldOrganisationID:
+		v, ok := value.(uuid.UUID)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetOrganisationName(v)
+		m.SetOrganisationID(v)
 		return nil
 	}
 	return fmt.Errorf("unknown ProjectStartedEvent field %s", name)
@@ -4636,8 +4916,8 @@ func (m *ProjectStartedEventMutation) ResetField(name string) error {
 	case projectstartedevent.FieldEndDate:
 		m.ResetEndDate()
 		return nil
-	case projectstartedevent.FieldOrganisationName:
-		m.ResetOrganisationName()
+	case projectstartedevent.FieldOrganisationID:
+		m.ResetOrganisationID()
 		return nil
 	}
 	return fmt.Errorf("unknown ProjectStartedEvent field %s", name)

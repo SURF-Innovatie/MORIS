@@ -30,29 +30,15 @@ func (_u *OrganisationChangedEventUpdate) Where(ps ...predicate.OrganisationChan
 }
 
 // SetOrganisationID sets the "organisation_id" field.
-func (_u *OrganisationChangedEventUpdate) SetOrganisationID(v string) *OrganisationChangedEventUpdate {
+func (_u *OrganisationChangedEventUpdate) SetOrganisationID(v uuid.UUID) *OrganisationChangedEventUpdate {
 	_u.mutation.SetOrganisationID(v)
 	return _u
 }
 
 // SetNillableOrganisationID sets the "organisation_id" field if the given value is not nil.
-func (_u *OrganisationChangedEventUpdate) SetNillableOrganisationID(v *string) *OrganisationChangedEventUpdate {
+func (_u *OrganisationChangedEventUpdate) SetNillableOrganisationID(v *uuid.UUID) *OrganisationChangedEventUpdate {
 	if v != nil {
 		_u.SetOrganisationID(*v)
-	}
-	return _u
-}
-
-// SetOrganisationName sets the "organisation_name" field.
-func (_u *OrganisationChangedEventUpdate) SetOrganisationName(v string) *OrganisationChangedEventUpdate {
-	_u.mutation.SetOrganisationName(v)
-	return _u
-}
-
-// SetNillableOrganisationName sets the "organisation_name" field if the given value is not nil.
-func (_u *OrganisationChangedEventUpdate) SetNillableOrganisationName(v *string) *OrganisationChangedEventUpdate {
-	if v != nil {
-		_u.SetOrganisationName(*v)
 	}
 	return _u
 }
@@ -127,10 +113,7 @@ func (_u *OrganisationChangedEventUpdate) sqlSave(ctx context.Context) (_node in
 		}
 	}
 	if value, ok := _u.mutation.OrganisationID(); ok {
-		_spec.SetField(organisationchangedevent.FieldOrganisationID, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.OrganisationName(); ok {
-		_spec.SetField(organisationchangedevent.FieldOrganisationName, field.TypeString, value)
+		_spec.SetField(organisationchangedevent.FieldOrganisationID, field.TypeUUID, value)
 	}
 	if _u.mutation.EventCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -182,29 +165,15 @@ type OrganisationChangedEventUpdateOne struct {
 }
 
 // SetOrganisationID sets the "organisation_id" field.
-func (_u *OrganisationChangedEventUpdateOne) SetOrganisationID(v string) *OrganisationChangedEventUpdateOne {
+func (_u *OrganisationChangedEventUpdateOne) SetOrganisationID(v uuid.UUID) *OrganisationChangedEventUpdateOne {
 	_u.mutation.SetOrganisationID(v)
 	return _u
 }
 
 // SetNillableOrganisationID sets the "organisation_id" field if the given value is not nil.
-func (_u *OrganisationChangedEventUpdateOne) SetNillableOrganisationID(v *string) *OrganisationChangedEventUpdateOne {
+func (_u *OrganisationChangedEventUpdateOne) SetNillableOrganisationID(v *uuid.UUID) *OrganisationChangedEventUpdateOne {
 	if v != nil {
 		_u.SetOrganisationID(*v)
-	}
-	return _u
-}
-
-// SetOrganisationName sets the "organisation_name" field.
-func (_u *OrganisationChangedEventUpdateOne) SetOrganisationName(v string) *OrganisationChangedEventUpdateOne {
-	_u.mutation.SetOrganisationName(v)
-	return _u
-}
-
-// SetNillableOrganisationName sets the "organisation_name" field if the given value is not nil.
-func (_u *OrganisationChangedEventUpdateOne) SetNillableOrganisationName(v *string) *OrganisationChangedEventUpdateOne {
-	if v != nil {
-		_u.SetOrganisationName(*v)
 	}
 	return _u
 }
@@ -309,10 +278,7 @@ func (_u *OrganisationChangedEventUpdateOne) sqlSave(ctx context.Context) (_node
 		}
 	}
 	if value, ok := _u.mutation.OrganisationID(); ok {
-		_spec.SetField(organisationchangedevent.FieldOrganisationID, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.OrganisationName(); ok {
-		_spec.SetField(organisationchangedevent.FieldOrganisationName, field.TypeString, value)
+		_spec.SetField(organisationchangedevent.FieldOrganisationID, field.TypeUUID, value)
 	}
 	if _u.mutation.EventCleared() {
 		edge := &sqlgraph.EdgeSpec{

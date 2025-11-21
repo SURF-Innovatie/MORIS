@@ -22,14 +22,8 @@ type OrganisationChangedEventCreate struct {
 }
 
 // SetOrganisationID sets the "organisation_id" field.
-func (_c *OrganisationChangedEventCreate) SetOrganisationID(v string) *OrganisationChangedEventCreate {
+func (_c *OrganisationChangedEventCreate) SetOrganisationID(v uuid.UUID) *OrganisationChangedEventCreate {
 	_c.mutation.SetOrganisationID(v)
-	return _c
-}
-
-// SetOrganisationName sets the "organisation_name" field.
-func (_c *OrganisationChangedEventCreate) SetOrganisationName(v string) *OrganisationChangedEventCreate {
-	_c.mutation.SetOrganisationName(v)
 	return _c
 }
 
@@ -104,9 +98,6 @@ func (_c *OrganisationChangedEventCreate) check() error {
 	if _, ok := _c.mutation.OrganisationID(); !ok {
 		return &ValidationError{Name: "organisation_id", err: errors.New(`ent: missing required field "OrganisationChangedEvent.organisation_id"`)}
 	}
-	if _, ok := _c.mutation.OrganisationName(); !ok {
-		return &ValidationError{Name: "organisation_name", err: errors.New(`ent: missing required field "OrganisationChangedEvent.organisation_name"`)}
-	}
 	if len(_c.mutation.EventIDs()) == 0 {
 		return &ValidationError{Name: "event", err: errors.New(`ent: missing required edge "OrganisationChangedEvent.event"`)}
 	}
@@ -146,12 +137,8 @@ func (_c *OrganisationChangedEventCreate) createSpec() (*OrganisationChangedEven
 		_spec.ID.Value = &id
 	}
 	if value, ok := _c.mutation.OrganisationID(); ok {
-		_spec.SetField(organisationchangedevent.FieldOrganisationID, field.TypeString, value)
+		_spec.SetField(organisationchangedevent.FieldOrganisationID, field.TypeUUID, value)
 		_node.OrganisationID = value
-	}
-	if value, ok := _c.mutation.OrganisationName(); ok {
-		_spec.SetField(organisationchangedevent.FieldOrganisationName, field.TypeString, value)
-		_node.OrganisationName = value
 	}
 	if nodes := _c.mutation.EventIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

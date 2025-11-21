@@ -14,5 +14,5 @@ type Project struct {
 	Title        string
 	Description  string
 	People       []uuid.UUID
-	Organisation Organisation
+	Organisation uuid.UUID
 }

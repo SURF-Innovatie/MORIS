@@ -27,8 +27,8 @@ type ProjectStartedEvent struct {
 	StartDate time.Time `json:"start_date,omitempty"`
 	// EndDate holds the value of the "end_date" field.
 	EndDate time.Time `json:"end_date,omitempty"`
-	// OrganisationName holds the value of the "organisation_name" field.
-	OrganisationName string `json:"organisation_name,omitempty"`
+	// OrganisationID holds the value of the "organisation_id" field.
+	OrganisationID uuid.UUID `json:"organisation_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ProjectStartedEventQuery when eager-loading is set.
 	Edges                 ProjectStartedEventEdges `json:"edges"`
@@ -61,11 +61,11 @@ func (*ProjectStartedEvent) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case projectstartedevent.FieldTitle, projectstartedevent.FieldDescription, projectstartedevent.FieldOrganisationName:
+		case projectstartedevent.FieldTitle, projectstartedevent.FieldDescription:
 			values[i] = new(sql.NullString)
 		case projectstartedevent.FieldStartDate, projectstartedevent.FieldEndDate:
 			values[i] = new(sql.NullTime)
-		case projectstartedevent.FieldID:
+		case projectstartedevent.FieldID, projectstartedevent.FieldOrganisationID:
 			values[i] = new(uuid.UUID)
 		case projectstartedevent.ForeignKeys[0]: // event_project_started
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
@@ -114,11 +114,11 @@ func (_m *ProjectStartedEvent) assignValues(columns []string, values []any) erro
 			} else if value.Valid {
 				_m.EndDate = value.Time
 			}
-		case projectstartedevent.FieldOrganisationName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field organisation_name", values[i])
-			} else if value.Valid {
-				_m.OrganisationName = value.String
+		case projectstartedevent.FieldOrganisationID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field organisation_id", values[i])
+			} else if value != nil {
+				_m.OrganisationID = *value
 			}
 		case projectstartedevent.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -180,8 +180,8 @@ func (_m *ProjectStartedEvent) String() string {
 	builder.WriteString("end_date=")
 	builder.WriteString(_m.EndDate.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("organisation_name=")
-	builder.WriteString(_m.OrganisationName)
+	builder.WriteString("organisation_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.OrganisationID))
 	builder.WriteByte(')')
 	return builder.String()
 }

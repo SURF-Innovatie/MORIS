@@ -21,8 +21,8 @@ const (
 	FieldStartDate = "start_date"
 	// FieldEndDate holds the string denoting the end_date field in the database.
 	FieldEndDate = "end_date"
-	// FieldOrganisationName holds the string denoting the organisation_name field in the database.
-	FieldOrganisationName = "organisation_name"
+	// FieldOrganisationID holds the string denoting the organisation_id field in the database.
+	FieldOrganisationID = "organisation_id"
 	// EdgeEvent holds the string denoting the event edge name in mutations.
 	EdgeEvent = "event"
 	// Table holds the table name of the projectstartedevent in the database.
@@ -43,7 +43,7 @@ var Columns = []string{
 	FieldDescription,
 	FieldStartDate,
 	FieldEndDate,
-	FieldOrganisationName,
+	FieldOrganisationID,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "project_started_events"
@@ -100,9 +100,9 @@ func ByEndDate(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEndDate, opts...).ToFunc()
 }
 
-// ByOrganisationName orders the results by the organisation_name field.
-func ByOrganisationName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldOrganisationName, opts...).ToFunc()
+// ByOrganisationID orders the results by the organisation_id field.
+func ByOrganisationID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOrganisationID, opts...).ToFunc()
 }
 
 // ByEventField orders the results by event field.

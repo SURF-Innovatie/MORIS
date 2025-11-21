@@ -46,9 +46,9 @@ func (_c *ProjectStartedEventCreate) SetEndDate(v time.Time) *ProjectStartedEven
 	return _c
 }
 
-// SetOrganisationName sets the "organisation_name" field.
-func (_c *ProjectStartedEventCreate) SetOrganisationName(v string) *ProjectStartedEventCreate {
-	_c.mutation.SetOrganisationName(v)
+// SetOrganisationID sets the "organisation_id" field.
+func (_c *ProjectStartedEventCreate) SetOrganisationID(v uuid.UUID) *ProjectStartedEventCreate {
+	_c.mutation.SetOrganisationID(v)
 	return _c
 }
 
@@ -132,8 +132,8 @@ func (_c *ProjectStartedEventCreate) check() error {
 	if _, ok := _c.mutation.EndDate(); !ok {
 		return &ValidationError{Name: "end_date", err: errors.New(`ent: missing required field "ProjectStartedEvent.end_date"`)}
 	}
-	if _, ok := _c.mutation.OrganisationName(); !ok {
-		return &ValidationError{Name: "organisation_name", err: errors.New(`ent: missing required field "ProjectStartedEvent.organisation_name"`)}
+	if _, ok := _c.mutation.OrganisationID(); !ok {
+		return &ValidationError{Name: "organisation_id", err: errors.New(`ent: missing required field "ProjectStartedEvent.organisation_id"`)}
 	}
 	if len(_c.mutation.EventIDs()) == 0 {
 		return &ValidationError{Name: "event", err: errors.New(`ent: missing required edge "ProjectStartedEvent.event"`)}
@@ -189,9 +189,9 @@ func (_c *ProjectStartedEventCreate) createSpec() (*ProjectStartedEvent, *sqlgra
 		_spec.SetField(projectstartedevent.FieldEndDate, field.TypeTime, value)
 		_node.EndDate = value
 	}
-	if value, ok := _c.mutation.OrganisationName(); ok {
-		_spec.SetField(projectstartedevent.FieldOrganisationName, field.TypeString, value)
-		_node.OrganisationName = value
+	if value, ok := _c.mutation.OrganisationID(); ok {
+		_spec.SetField(projectstartedevent.FieldOrganisationID, field.TypeUUID, value)
+		_node.OrganisationID = value
 	}
 	if nodes := _c.mutation.EventIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

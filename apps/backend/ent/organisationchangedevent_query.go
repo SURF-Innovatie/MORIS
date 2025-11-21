@@ -300,7 +300,7 @@ func (_q *OrganisationChangedEventQuery) WithEvent(opts ...func(*EventQuery)) *O
 // Example:
 //
 //	var v []struct {
-//		OrganisationID string `json:"organisation_id,omitempty"`
+//		OrganisationID uuid.UUID `json:"organisation_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -323,7 +323,7 @@ func (_q *OrganisationChangedEventQuery) GroupBy(field string, fields ...string)
 // Example:
 //
 //	var v []struct {
-//		OrganisationID string `json:"organisation_id,omitempty"`
+//		OrganisationID uuid.UUID `json:"organisation_id,omitempty"`
 //	}
 //
 //	client.OrganisationChangedEvent.Query().

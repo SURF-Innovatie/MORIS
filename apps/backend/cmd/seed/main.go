@@ -11,7 +11,6 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/platform/eventstore"
 	_ "github.com/lib/pq"
@@ -139,6 +138,7 @@ func main() {
 	}
 
 	personIDs := make(map[string]uuid.UUID)
+	organisationIDs := make(map[string]uuid.UUID)
 
 	for _, sp := range projects {
 		for _, name := range sp.People {
@@ -157,6 +157,23 @@ func main() {
 			personIDs[name] = row.ID
 			logrus.Infof("Created person %s (%s)", name, row.ID)
 		}
+
+		org := sp.Organisation
+
+		if _, exists := organisationIDs[org]; exists {
+			continue
+		}
+
+		row, err := client.Organisation.
+			Create().
+			SetName(org).
+			Save(ctx)
+		if err != nil {
+			logrus.Fatalf("failed creating organisation %q: %v", org, err)
+		}
+
+		organisationIDs[org] = row.ID
+		logrus.Infof("Created organisation %s (%s)", org, row.ID)
 	}
 
 	logrus.Info("Seeding projects...")
@@ -169,14 +186,11 @@ func main() {
 				ProjectID: projectID,
 				At:        time.Now().UTC(),
 			},
-			Title:       sp.Title,
-			Description: sp.Description,
-			StartDate:   sp.Start,
-			EndDate:     sp.End,
-			Organisation: entities.Organisation{
-				Id:   uuid.New(),
-				Name: sp.Organisation,
-			},
+			Title:          sp.Title,
+			Description:    sp.Description,
+			StartDate:      sp.Start,
+			EndDate:        sp.End,
+			OrganisationID: organisationIDs[sp.Organisation],
 		}
 
 		if err := es.Append(ctx, projectID, 0, startEvent); err != nil {

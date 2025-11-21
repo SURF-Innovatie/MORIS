@@ -19,6 +19,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/descriptionchangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/enddatechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/event"
+	"github.com/SURF-Innovatie/MORIS/ent/organisation"
 	"github.com/SURF-Innovatie/MORIS/ent/organisationchangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/person"
 	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
@@ -41,6 +42,8 @@ type Client struct {
 	EndDateChangedEvent *EndDateChangedEventClient
 	// Event is the client for interacting with the Event builders.
 	Event *EventClient
+	// Organisation is the client for interacting with the Organisation builders.
+	Organisation *OrganisationClient
 	// OrganisationChangedEvent is the client for interacting with the OrganisationChangedEvent builders.
 	OrganisationChangedEvent *OrganisationChangedEventClient
 	// Person is the client for interacting with the Person builders.
@@ -73,6 +76,7 @@ func (c *Client) init() {
 	c.DescriptionChangedEvent = NewDescriptionChangedEventClient(c.config)
 	c.EndDateChangedEvent = NewEndDateChangedEventClient(c.config)
 	c.Event = NewEventClient(c.config)
+	c.Organisation = NewOrganisationClient(c.config)
 	c.OrganisationChangedEvent = NewOrganisationChangedEventClient(c.config)
 	c.Person = NewPersonClient(c.config)
 	c.PersonAddedEvent = NewPersonAddedEventClient(c.config)
@@ -177,6 +181,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		DescriptionChangedEvent:  NewDescriptionChangedEventClient(cfg),
 		EndDateChangedEvent:      NewEndDateChangedEventClient(cfg),
 		Event:                    NewEventClient(cfg),
+		Organisation:             NewOrganisationClient(cfg),
 		OrganisationChangedEvent: NewOrganisationChangedEventClient(cfg),
 		Person:                   NewPersonClient(cfg),
 		PersonAddedEvent:         NewPersonAddedEventClient(cfg),
@@ -208,6 +213,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		DescriptionChangedEvent:  NewDescriptionChangedEventClient(cfg),
 		EndDateChangedEvent:      NewEndDateChangedEventClient(cfg),
 		Event:                    NewEventClient(cfg),
+		Organisation:             NewOrganisationClient(cfg),
 		OrganisationChangedEvent: NewOrganisationChangedEventClient(cfg),
 		Person:                   NewPersonClient(cfg),
 		PersonAddedEvent:         NewPersonAddedEventClient(cfg),
@@ -246,7 +252,7 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.DescriptionChangedEvent, c.EndDateChangedEvent, c.Event,
+		c.DescriptionChangedEvent, c.EndDateChangedEvent, c.Event, c.Organisation,
 		c.OrganisationChangedEvent, c.Person, c.PersonAddedEvent, c.PersonRemovedEvent,
 		c.ProjectNotification, c.ProjectStartedEvent, c.StartDateChangedEvent,
 		c.TitleChangedEvent, c.User,
@@ -259,7 +265,7 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.DescriptionChangedEvent, c.EndDateChangedEvent, c.Event,
+		c.DescriptionChangedEvent, c.EndDateChangedEvent, c.Event, c.Organisation,
 		c.OrganisationChangedEvent, c.Person, c.PersonAddedEvent, c.PersonRemovedEvent,
 		c.ProjectNotification, c.ProjectStartedEvent, c.StartDateChangedEvent,
 		c.TitleChangedEvent, c.User,
@@ -277,6 +283,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.EndDateChangedEvent.mutate(ctx, m)
 	case *EventMutation:
 		return c.Event.mutate(ctx, m)
+	case *OrganisationMutation:
+		return c.Organisation.mutate(ctx, m)
 	case *OrganisationChangedEventMutation:
 		return c.OrganisationChangedEvent.mutate(ctx, m)
 	case *PersonMutation:
@@ -856,6 +864,139 @@ func (c *EventClient) mutate(ctx context.Context, m *EventMutation) (Value, erro
 		return (&EventDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Event mutation op: %q", m.Op())
+	}
+}
+
+// OrganisationClient is a client for the Organisation schema.
+type OrganisationClient struct {
+	config
+}
+
+// NewOrganisationClient returns a client for the Organisation from the given config.
+func NewOrganisationClient(c config) *OrganisationClient {
+	return &OrganisationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `organisation.Hooks(f(g(h())))`.
+func (c *OrganisationClient) Use(hooks ...Hook) {
+	c.hooks.Organisation = append(c.hooks.Organisation, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `organisation.Intercept(f(g(h())))`.
+func (c *OrganisationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Organisation = append(c.inters.Organisation, interceptors...)
+}
+
+// Create returns a builder for creating a Organisation entity.
+func (c *OrganisationClient) Create() *OrganisationCreate {
+	mutation := newOrganisationMutation(c.config, OpCreate)
+	return &OrganisationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Organisation entities.
+func (c *OrganisationClient) CreateBulk(builders ...*OrganisationCreate) *OrganisationCreateBulk {
+	return &OrganisationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *OrganisationClient) MapCreateBulk(slice any, setFunc func(*OrganisationCreate, int)) *OrganisationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &OrganisationCreateBulk{err: fmt.Errorf("calling to OrganisationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*OrganisationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &OrganisationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Organisation.
+func (c *OrganisationClient) Update() *OrganisationUpdate {
+	mutation := newOrganisationMutation(c.config, OpUpdate)
+	return &OrganisationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *OrganisationClient) UpdateOne(_m *Organisation) *OrganisationUpdateOne {
+	mutation := newOrganisationMutation(c.config, OpUpdateOne, withOrganisation(_m))
+	return &OrganisationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *OrganisationClient) UpdateOneID(id uuid.UUID) *OrganisationUpdateOne {
+	mutation := newOrganisationMutation(c.config, OpUpdateOne, withOrganisationID(id))
+	return &OrganisationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Organisation.
+func (c *OrganisationClient) Delete() *OrganisationDelete {
+	mutation := newOrganisationMutation(c.config, OpDelete)
+	return &OrganisationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *OrganisationClient) DeleteOne(_m *Organisation) *OrganisationDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *OrganisationClient) DeleteOneID(id uuid.UUID) *OrganisationDeleteOne {
+	builder := c.Delete().Where(organisation.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &OrganisationDeleteOne{builder}
+}
+
+// Query returns a query builder for Organisation.
+func (c *OrganisationClient) Query() *OrganisationQuery {
+	return &OrganisationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeOrganisation},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Organisation entity by its id.
+func (c *OrganisationClient) Get(ctx context.Context, id uuid.UUID) (*Organisation, error) {
+	return c.Query().Where(organisation.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *OrganisationClient) GetX(ctx context.Context, id uuid.UUID) *Organisation {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *OrganisationClient) Hooks() []Hook {
+	return c.hooks.Organisation
+}
+
+// Interceptors returns the client interceptors.
+func (c *OrganisationClient) Interceptors() []Interceptor {
+	return c.inters.Organisation
+}
+
+func (c *OrganisationClient) mutate(ctx context.Context, m *OrganisationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&OrganisationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&OrganisationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&OrganisationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&OrganisationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Organisation mutation op: %q", m.Op())
 	}
 }
 
@@ -2171,14 +2312,15 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		DescriptionChangedEvent, EndDateChangedEvent, Event, OrganisationChangedEvent,
-		Person, PersonAddedEvent, PersonRemovedEvent, ProjectNotification,
-		ProjectStartedEvent, StartDateChangedEvent, TitleChangedEvent, User []ent.Hook
+		DescriptionChangedEvent, EndDateChangedEvent, Event, Organisation,
+		OrganisationChangedEvent, Person, PersonAddedEvent, PersonRemovedEvent,
+		ProjectNotification, ProjectStartedEvent, StartDateChangedEvent,
+		TitleChangedEvent, User []ent.Hook
 	}
 	inters struct {
-		DescriptionChangedEvent, EndDateChangedEvent, Event, OrganisationChangedEvent,
-		Person, PersonAddedEvent, PersonRemovedEvent, ProjectNotification,
-		ProjectStartedEvent, StartDateChangedEvent, TitleChangedEvent,
-		User []ent.Interceptor
+		DescriptionChangedEvent, EndDateChangedEvent, Event, Organisation,
+		OrganisationChangedEvent, Person, PersonAddedEvent, PersonRemovedEvent,
+		ProjectNotification, ProjectStartedEvent, StartDateChangedEvent,
+		TitleChangedEvent, User []ent.Interceptor
 	}
 )

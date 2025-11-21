@@ -15,6 +15,9 @@ type EndDateChangedEvent func(*sql.Selector)
 // Event is the predicate function for event builders.
 type Event func(*sql.Selector)
 
+// Organisation is the predicate function for organisation builders.
+type Organisation func(*sql.Selector)
+
 // OrganisationChangedEvent is the predicate function for organisationchangedevent builders.
 type OrganisationChangedEvent func(*sql.Selector)
 

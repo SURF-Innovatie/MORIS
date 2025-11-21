@@ -10,7 +10,6 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	en "github.com/SURF-Innovatie/MORIS/ent/event"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 )
 
@@ -89,7 +88,7 @@ func (s *EntStore) Append(
 				SetDescription(v.Description).
 				SetStartDate(v.StartDate).
 				SetEndDate(v.EndDate).
-				SetOrganisationName(v.Organisation.Name).
+				SetOrganisationID(v.OrganisationID).
 				Save(ctx); err != nil {
 				_ = tx.Rollback()
 				return err
@@ -219,7 +218,7 @@ func (s *EntStore) Append(
 			if _, err := tx.OrganisationChangedEvent.
 				Create().
 				SetEvent(evRow).
-				SetOrganisationName(v.Organisation.Name).
+				SetOrganisationID(v.OrganisationID).
 				Save(ctx); err != nil {
 				_ = tx.Rollback()
 				return err
@@ -322,16 +321,13 @@ func (s *EntStore) Load(
 				return nil, 0, fmt.Errorf("missing ProjectStarted edge for event %s", r.ID)
 			}
 			out = append(out, events.ProjectStarted{
-				Base:        base,
-				Title:       payload.Title,
-				Description: payload.Description,
-				StartDate:   payload.StartDate,
-				EndDate:     payload.EndDate,
-				Organisation: entities.Organisation{
-					Id:   uuid.Nil, // or real ID if you store it
-					Name: payload.OrganisationName,
-				},
-				People: nil, // driven by PersonAdded events
+				Base:           base,
+				Title:          payload.Title,
+				Description:    payload.Description,
+				StartDate:      payload.StartDate,
+				EndDate:        payload.EndDate,
+				OrganisationID: payload.OrganisationID,
+				People:         nil, // driven by PersonAdded events
 			})
 
 		case events.TitleChangedType:
@@ -380,11 +376,8 @@ func (s *EntStore) Load(
 				return nil, 0, fmt.Errorf("missing OrganisationChanged edge for event %s", r.ID)
 			}
 			out = append(out, events.OrganisationChanged{
-				Base: base,
-				Organisation: entities.Organisation{
-					Id:   uuid.Nil,
-					Name: payload.OrganisationName,
-				},
+				Base:           base,
+				OrganisationID: payload.OrganisationID,
 			})
 
 		case events.PersonAddedType:

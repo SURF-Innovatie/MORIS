@@ -15,8 +15,6 @@ const (
 	FieldID = "id"
 	// FieldOrganisationID holds the string denoting the organisation_id field in the database.
 	FieldOrganisationID = "organisation_id"
-	// FieldOrganisationName holds the string denoting the organisation_name field in the database.
-	FieldOrganisationName = "organisation_name"
 	// EdgeEvent holds the string denoting the event edge name in mutations.
 	EdgeEvent = "event"
 	// Table holds the table name of the organisationchangedevent in the database.
@@ -34,7 +32,6 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldOrganisationID,
-	FieldOrganisationName,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "organisation_changed_events"
@@ -74,11 +71,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByOrganisationID orders the results by the organisation_id field.
 func ByOrganisationID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldOrganisationID, opts...).ToFunc()
-}
-
-// ByOrganisationName orders the results by the organisation_name field.
-func ByOrganisationName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldOrganisationName, opts...).ToFunc()
 }
 
 // ByEventField orders the results by event field.

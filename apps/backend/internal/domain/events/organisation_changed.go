@@ -1,10 +1,12 @@
 package events
 
-import "github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+import (
+	"github.com/google/uuid"
+)
 
 type OrganisationChanged struct {
 	Base
-	Organisation entities.Organisation `json:"organisation"`
+	OrganisationID uuid.UUID `json:"organisation"`
 }
 
 func (OrganisationChanged) isEvent()     {}

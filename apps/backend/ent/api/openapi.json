@@ -638,6 +638,22 @@
           "occurred_at"
         ]
       },
+      "Organisation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
       "OrganisationChangedEvent": {
         "type": "object",
         "properties": {
@@ -646,10 +662,8 @@
             "format": "uuid"
           },
           "organisation_id": {
-            "type": "string"
-          },
-          "organisation_name": {
-            "type": "string"
+            "type": "string",
+            "format": "uuid"
           },
           "event": {
             "$ref": "#/components/schemas/Event"
@@ -658,7 +672,6 @@
         "required": [
           "id",
           "organisation_id",
-          "organisation_name",
           "event"
         ]
       },
@@ -773,8 +786,9 @@
             "type": "string",
             "format": "date-time"
           },
-          "organisation_name": {
-            "type": "string"
+          "organisation_id": {
+            "type": "string",
+            "format": "uuid"
           },
           "event": {
             "$ref": "#/components/schemas/Event"
@@ -786,7 +800,7 @@
           "description",
           "start_date",
           "end_date",
-          "organisation_name",
+          "organisation_id",
           "event"
         ]
       },

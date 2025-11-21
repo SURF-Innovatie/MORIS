@@ -8,6 +8,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/descriptionchangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/enddatechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/event"
+	"github.com/SURF-Innovatie/MORIS/ent/organisation"
 	"github.com/SURF-Innovatie/MORIS/ent/organisationchangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/person"
 	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
@@ -47,6 +48,12 @@ func init() {
 	eventDescID := eventFields[0].Descriptor()
 	// event.DefaultID holds the default value on creation for the id field.
 	event.DefaultID = eventDescID.Default.(func() uuid.UUID)
+	organisationFields := schema.Organisation{}.Fields()
+	_ = organisationFields
+	// organisationDescID is the schema descriptor for id field.
+	organisationDescID := organisationFields[0].Descriptor()
+	// organisation.DefaultID holds the default value on creation for the id field.
+	organisation.DefaultID = organisationDescID.Default.(func() uuid.UUID)
 	organisationchangedeventFields := schema.OrganisationChangedEvent{}.Fields()
 	_ = organisationchangedeventFields
 	// organisationchangedeventDescID is the schema descriptor for id field.

@@ -19,7 +19,7 @@ func (ProjectStartedEvent) Fields() []ent.Field {
 		field.String("description"),
 		field.Time("start_date"),
 		field.Time("end_date"),
-		field.String("organisation_name"),
+		field.UUID("organisation_id", uuid.UUID{}),
 	}
 }
 

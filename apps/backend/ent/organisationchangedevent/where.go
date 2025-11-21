@@ -55,143 +55,48 @@ func IDLTE(id uuid.UUID) predicate.OrganisationChangedEvent {
 }
 
 // OrganisationID applies equality check predicate on the "organisation_id" field. It's identical to OrganisationIDEQ.
-func OrganisationID(v string) predicate.OrganisationChangedEvent {
+func OrganisationID(v uuid.UUID) predicate.OrganisationChangedEvent {
 	return predicate.OrganisationChangedEvent(sql.FieldEQ(FieldOrganisationID, v))
 }
 
-// OrganisationName applies equality check predicate on the "organisation_name" field. It's identical to OrganisationNameEQ.
-func OrganisationName(v string) predicate.OrganisationChangedEvent {
-	return predicate.OrganisationChangedEvent(sql.FieldEQ(FieldOrganisationName, v))
-}
-
 // OrganisationIDEQ applies the EQ predicate on the "organisation_id" field.
-func OrganisationIDEQ(v string) predicate.OrganisationChangedEvent {
+func OrganisationIDEQ(v uuid.UUID) predicate.OrganisationChangedEvent {
 	return predicate.OrganisationChangedEvent(sql.FieldEQ(FieldOrganisationID, v))
 }
 
 // OrganisationIDNEQ applies the NEQ predicate on the "organisation_id" field.
-func OrganisationIDNEQ(v string) predicate.OrganisationChangedEvent {
+func OrganisationIDNEQ(v uuid.UUID) predicate.OrganisationChangedEvent {
 	return predicate.OrganisationChangedEvent(sql.FieldNEQ(FieldOrganisationID, v))
 }
 
 // OrganisationIDIn applies the In predicate on the "organisation_id" field.
-func OrganisationIDIn(vs ...string) predicate.OrganisationChangedEvent {
+func OrganisationIDIn(vs ...uuid.UUID) predicate.OrganisationChangedEvent {
 	return predicate.OrganisationChangedEvent(sql.FieldIn(FieldOrganisationID, vs...))
 }
 
 // OrganisationIDNotIn applies the NotIn predicate on the "organisation_id" field.
-func OrganisationIDNotIn(vs ...string) predicate.OrganisationChangedEvent {
+func OrganisationIDNotIn(vs ...uuid.UUID) predicate.OrganisationChangedEvent {
 	return predicate.OrganisationChangedEvent(sql.FieldNotIn(FieldOrganisationID, vs...))
 }
 
 // OrganisationIDGT applies the GT predicate on the "organisation_id" field.
-func OrganisationIDGT(v string) predicate.OrganisationChangedEvent {
+func OrganisationIDGT(v uuid.UUID) predicate.OrganisationChangedEvent {
 	return predicate.OrganisationChangedEvent(sql.FieldGT(FieldOrganisationID, v))
 }
 
 // OrganisationIDGTE applies the GTE predicate on the "organisation_id" field.
-func OrganisationIDGTE(v string) predicate.OrganisationChangedEvent {
+func OrganisationIDGTE(v uuid.UUID) predicate.OrganisationChangedEvent {
 	return predicate.OrganisationChangedEvent(sql.FieldGTE(FieldOrganisationID, v))
 }
 
 // OrganisationIDLT applies the LT predicate on the "organisation_id" field.
-func OrganisationIDLT(v string) predicate.OrganisationChangedEvent {
+func OrganisationIDLT(v uuid.UUID) predicate.OrganisationChangedEvent {
 	return predicate.OrganisationChangedEvent(sql.FieldLT(FieldOrganisationID, v))
 }
 
 // OrganisationIDLTE applies the LTE predicate on the "organisation_id" field.
-func OrganisationIDLTE(v string) predicate.OrganisationChangedEvent {
+func OrganisationIDLTE(v uuid.UUID) predicate.OrganisationChangedEvent {
 	return predicate.OrganisationChangedEvent(sql.FieldLTE(FieldOrganisationID, v))
-}
-
-// OrganisationIDContains applies the Contains predicate on the "organisation_id" field.
-func OrganisationIDContains(v string) predicate.OrganisationChangedEvent {
-	return predicate.OrganisationChangedEvent(sql.FieldContains(FieldOrganisationID, v))
-}
-
-// OrganisationIDHasPrefix applies the HasPrefix predicate on the "organisation_id" field.
-func OrganisationIDHasPrefix(v string) predicate.OrganisationChangedEvent {
-	return predicate.OrganisationChangedEvent(sql.FieldHasPrefix(FieldOrganisationID, v))
-}
-
-// OrganisationIDHasSuffix applies the HasSuffix predicate on the "organisation_id" field.
-func OrganisationIDHasSuffix(v string) predicate.OrganisationChangedEvent {
-	return predicate.OrganisationChangedEvent(sql.FieldHasSuffix(FieldOrganisationID, v))
-}
-
-// OrganisationIDEqualFold applies the EqualFold predicate on the "organisation_id" field.
-func OrganisationIDEqualFold(v string) predicate.OrganisationChangedEvent {
-	return predicate.OrganisationChangedEvent(sql.FieldEqualFold(FieldOrganisationID, v))
-}
-
-// OrganisationIDContainsFold applies the ContainsFold predicate on the "organisation_id" field.
-func OrganisationIDContainsFold(v string) predicate.OrganisationChangedEvent {
-	return predicate.OrganisationChangedEvent(sql.FieldContainsFold(FieldOrganisationID, v))
-}
-
-// OrganisationNameEQ applies the EQ predicate on the "organisation_name" field.
-func OrganisationNameEQ(v string) predicate.OrganisationChangedEvent {
-	return predicate.OrganisationChangedEvent(sql.FieldEQ(FieldOrganisationName, v))
-}
-
-// OrganisationNameNEQ applies the NEQ predicate on the "organisation_name" field.
-func OrganisationNameNEQ(v string) predicate.OrganisationChangedEvent {
-	return predicate.OrganisationChangedEvent(sql.FieldNEQ(FieldOrganisationName, v))
-}
-
-// OrganisationNameIn applies the In predicate on the "organisation_name" field.
-func OrganisationNameIn(vs ...string) predicate.OrganisationChangedEvent {
-	return predicate.OrganisationChangedEvent(sql.FieldIn(FieldOrganisationName, vs...))
-}
-
-// OrganisationNameNotIn applies the NotIn predicate on the "organisation_name" field.
-func OrganisationNameNotIn(vs ...string) predicate.OrganisationChangedEvent {
-	return predicate.OrganisationChangedEvent(sql.FieldNotIn(FieldOrganisationName, vs...))
-}
-
-// OrganisationNameGT applies the GT predicate on the "organisation_name" field.
-func OrganisationNameGT(v string) predicate.OrganisationChangedEvent {
-	return predicate.OrganisationChangedEvent(sql.FieldGT(FieldOrganisationName, v))
-}
-
-// OrganisationNameGTE applies the GTE predicate on the "organisation_name" field.
-func OrganisationNameGTE(v string) predicate.OrganisationChangedEvent {
-	return predicate.OrganisationChangedEvent(sql.FieldGTE(FieldOrganisationName, v))
-}
-
-// OrganisationNameLT applies the LT predicate on the "organisation_name" field.
-func OrganisationNameLT(v string) predicate.OrganisationChangedEvent {
-	return predicate.OrganisationChangedEvent(sql.FieldLT(FieldOrganisationName, v))
-}
-
-// OrganisationNameLTE applies the LTE predicate on the "organisation_name" field.
-func OrganisationNameLTE(v string) predicate.OrganisationChangedEvent {
-	return predicate.OrganisationChangedEvent(sql.FieldLTE(FieldOrganisationName, v))
-}
-
-// OrganisationNameContains applies the Contains predicate on the "organisation_name" field.
-func OrganisationNameContains(v string) predicate.OrganisationChangedEvent {
-	return predicate.OrganisationChangedEvent(sql.FieldContains(FieldOrganisationName, v))
-}
-
-// OrganisationNameHasPrefix applies the HasPrefix predicate on the "organisation_name" field.
-func OrganisationNameHasPrefix(v string) predicate.OrganisationChangedEvent {
-	return predicate.OrganisationChangedEvent(sql.FieldHasPrefix(FieldOrganisationName, v))
-}
-
-// OrganisationNameHasSuffix applies the HasSuffix predicate on the "organisation_name" field.
-func OrganisationNameHasSuffix(v string) predicate.OrganisationChangedEvent {
-	return predicate.OrganisationChangedEvent(sql.FieldHasSuffix(FieldOrganisationName, v))
-}
-
-// OrganisationNameEqualFold applies the EqualFold predicate on the "organisation_name" field.
-func OrganisationNameEqualFold(v string) predicate.OrganisationChangedEvent {
-	return predicate.OrganisationChangedEvent(sql.FieldEqualFold(FieldOrganisationName, v))
-}
-
-// OrganisationNameContainsFold applies the ContainsFold predicate on the "organisation_name" field.
-func OrganisationNameContainsFold(v string) predicate.OrganisationChangedEvent {
-	return predicate.OrganisationChangedEvent(sql.FieldContainsFold(FieldOrganisationName, v))
 }
 
 // HasEvent applies the HasEdge predicate on the "event" edge.

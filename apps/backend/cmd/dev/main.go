@@ -6,12 +6,15 @@ import (
 	"net/http"
 	"os"
 
+	_ "github.com/SURF-Innovatie/MORIS/api/swag-docs"
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	"github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/handler/custom"
+	organisationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/organisation"
 	personhandler "github.com/SURF-Innovatie/MORIS/internal/handler/person"
 	projecthandler "github.com/SURF-Innovatie/MORIS/internal/handler/project"
+	"github.com/SURF-Innovatie/MORIS/internal/organisation"
 	"github.com/SURF-Innovatie/MORIS/internal/person"
 	"github.com/SURF-Innovatie/MORIS/internal/platform/eventstore"
 	"github.com/SURF-Innovatie/MORIS/internal/project"
@@ -22,7 +25,6 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
-	_ "github.com/SURF-Innovatie/MORIS/api/swag-docs"
 )
 
 // @title MORIS
@@ -75,6 +77,9 @@ func main() {
 	personSvc := person.NewService(client)
 	personHandler := personhandler.NewHandler(personSvc)
 
+	organisationSvc := organisation.NewService(client)
+	organisationHandler := organisationhandler.NewHandler(organisationSvc)
+
 	// Set auth service for middleware
 	auth.SetAuthService(authSvc)
 
@@ -95,8 +100,8 @@ func main() {
 		custom.MountCustomHandlers(r, customHandler)
 		projecthandler.MountProjectRoutes(r, projHandler)
 		personhandler.MountPersonRoutes(r, personHandler)
+		organisationhandler.MountOrganisationRoutes(r, organisationHandler)
 	})
-
 
 	port := os.Getenv("PORT")
 	if port == "" {

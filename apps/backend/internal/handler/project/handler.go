@@ -79,11 +79,11 @@ func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := project.StartProjectParams{
-		Title:        req.Title,
-		Description:  req.Description,
-		Organisation: req.Organisation,
-		StartDate:    start,
-		EndDate:      end,
+		Title:          req.Title,
+		Description:    req.Description,
+		OrganisationID: req.OrganisationID,
+		StartDate:      start,
+		EndDate:        end,
 	}
 
 	proj, err := h.svc.StartProject(r.Context(), params)

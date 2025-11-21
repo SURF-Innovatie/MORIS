@@ -17,7 +17,7 @@ func StartProject(
 	title, description string,
 	start, end time.Time,
 	people []uuid.UUID,
-	org entities.Organisation,
+	org uuid.UUID,
 ) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
@@ -29,13 +29,13 @@ func StartProject(
 		return nil, errors.New("end date before start date")
 	}
 	return events.ProjectStarted{
-		Base:         base(id),
-		Title:        title,
-		Description:  description,
-		StartDate:    start,
-		EndDate:      end,
-		People:       people,
-		Organisation: org,
+		Base:           base(id),
+		Title:          title,
+		Description:    description,
+		StartDate:      start,
+		EndDate:        end,
+		People:         people,
+		OrganisationID: org,
 	}, nil
 }
 
@@ -84,14 +84,14 @@ func ChangeEndDate(id uuid.UUID, cur *entities.Project, end time.Time) (events.E
 }
 
 // SetOrganisation emits OrganisationChanged when different.
-func SetOrganisation(id uuid.UUID, cur *entities.Project, org entities.Organisation) (events.Event, error) {
+func SetOrganisation(id uuid.UUID, cur *entities.Project, org uuid.UUID) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
 	if cur.Organisation == org {
 		return nil, nil
 	}
-	return events.OrganisationChanged{Base: base(id), Organisation: org}, nil
+	return events.OrganisationChanged{Base: base(id), OrganisationID: org}, nil
 }
 
 // AddPerson emits PersonAdded when not present.

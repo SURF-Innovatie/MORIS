@@ -86,16 +86,16 @@ func (_u *ProjectStartedEventUpdate) SetNillableEndDate(v *time.Time) *ProjectSt
 	return _u
 }
 
-// SetOrganisationName sets the "organisation_name" field.
-func (_u *ProjectStartedEventUpdate) SetOrganisationName(v string) *ProjectStartedEventUpdate {
-	_u.mutation.SetOrganisationName(v)
+// SetOrganisationID sets the "organisation_id" field.
+func (_u *ProjectStartedEventUpdate) SetOrganisationID(v uuid.UUID) *ProjectStartedEventUpdate {
+	_u.mutation.SetOrganisationID(v)
 	return _u
 }
 
-// SetNillableOrganisationName sets the "organisation_name" field if the given value is not nil.
-func (_u *ProjectStartedEventUpdate) SetNillableOrganisationName(v *string) *ProjectStartedEventUpdate {
+// SetNillableOrganisationID sets the "organisation_id" field if the given value is not nil.
+func (_u *ProjectStartedEventUpdate) SetNillableOrganisationID(v *uuid.UUID) *ProjectStartedEventUpdate {
 	if v != nil {
-		_u.SetOrganisationName(*v)
+		_u.SetOrganisationID(*v)
 	}
 	return _u
 }
@@ -181,8 +181,8 @@ func (_u *ProjectStartedEventUpdate) sqlSave(ctx context.Context) (_node int, er
 	if value, ok := _u.mutation.EndDate(); ok {
 		_spec.SetField(projectstartedevent.FieldEndDate, field.TypeTime, value)
 	}
-	if value, ok := _u.mutation.OrganisationName(); ok {
-		_spec.SetField(projectstartedevent.FieldOrganisationName, field.TypeString, value)
+	if value, ok := _u.mutation.OrganisationID(); ok {
+		_spec.SetField(projectstartedevent.FieldOrganisationID, field.TypeUUID, value)
 	}
 	if _u.mutation.EventCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -289,16 +289,16 @@ func (_u *ProjectStartedEventUpdateOne) SetNillableEndDate(v *time.Time) *Projec
 	return _u
 }
 
-// SetOrganisationName sets the "organisation_name" field.
-func (_u *ProjectStartedEventUpdateOne) SetOrganisationName(v string) *ProjectStartedEventUpdateOne {
-	_u.mutation.SetOrganisationName(v)
+// SetOrganisationID sets the "organisation_id" field.
+func (_u *ProjectStartedEventUpdateOne) SetOrganisationID(v uuid.UUID) *ProjectStartedEventUpdateOne {
+	_u.mutation.SetOrganisationID(v)
 	return _u
 }
 
-// SetNillableOrganisationName sets the "organisation_name" field if the given value is not nil.
-func (_u *ProjectStartedEventUpdateOne) SetNillableOrganisationName(v *string) *ProjectStartedEventUpdateOne {
+// SetNillableOrganisationID sets the "organisation_id" field if the given value is not nil.
+func (_u *ProjectStartedEventUpdateOne) SetNillableOrganisationID(v *uuid.UUID) *ProjectStartedEventUpdateOne {
 	if v != nil {
-		_u.SetOrganisationName(*v)
+		_u.SetOrganisationID(*v)
 	}
 	return _u
 }
@@ -414,8 +414,8 @@ func (_u *ProjectStartedEventUpdateOne) sqlSave(ctx context.Context) (_node *Pro
 	if value, ok := _u.mutation.EndDate(); ok {
 		_spec.SetField(projectstartedevent.FieldEndDate, field.TypeTime, value)
 	}
-	if value, ok := _u.mutation.OrganisationName(); ok {
-		_spec.SetField(projectstartedevent.FieldOrganisationName, field.TypeString, value)
+	if value, ok := _u.mutation.OrganisationID(); ok {
+		_spec.SetField(projectstartedevent.FieldOrganisationID, field.TypeUUID, value)
 	}
 	if _u.mutation.EventCleared() {
 		edge := &sqlgraph.EdgeSpec{

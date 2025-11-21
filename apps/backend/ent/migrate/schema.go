@@ -62,11 +62,21 @@ var (
 		Columns:    EventsColumns,
 		PrimaryKey: []*schema.Column{EventsColumns[0]},
 	}
+	// OrganisationsColumns holds the columns for the "organisations" table.
+	OrganisationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "name", Type: field.TypeString},
+	}
+	// OrganisationsTable holds the schema information for the "organisations" table.
+	OrganisationsTable = &schema.Table{
+		Name:       "organisations",
+		Columns:    OrganisationsColumns,
+		PrimaryKey: []*schema.Column{OrganisationsColumns[0]},
+	}
 	// OrganisationChangedEventsColumns holds the columns for the "organisation_changed_events" table.
 	OrganisationChangedEventsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "organisation_id", Type: field.TypeString},
-		{Name: "organisation_name", Type: field.TypeString},
+		{Name: "organisation_id", Type: field.TypeUUID},
 		{Name: "event_organisation_changed", Type: field.TypeUUID, Unique: true},
 	}
 	// OrganisationChangedEventsTable holds the schema information for the "organisation_changed_events" table.
@@ -77,7 +87,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "organisation_changed_events_events_organisation_changed",
-				Columns:    []*schema.Column{OrganisationChangedEventsColumns[3]},
+				Columns:    []*schema.Column{OrganisationChangedEventsColumns[2]},
 				RefColumns: []*schema.Column{EventsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -165,7 +175,7 @@ var (
 		{Name: "description", Type: field.TypeString},
 		{Name: "start_date", Type: field.TypeTime},
 		{Name: "end_date", Type: field.TypeTime},
-		{Name: "organisation_name", Type: field.TypeString},
+		{Name: "organisation_id", Type: field.TypeUUID},
 		{Name: "event_project_started", Type: field.TypeUUID, Unique: true},
 	}
 	// ProjectStartedEventsTable holds the schema information for the "project_started_events" table.
@@ -240,6 +250,7 @@ var (
 		DescriptionChangedEventsTable,
 		EndDateChangedEventsTable,
 		EventsTable,
+		OrganisationsTable,
 		OrganisationChangedEventsTable,
 		PersonsTable,
 		PersonAddedEventsTable,

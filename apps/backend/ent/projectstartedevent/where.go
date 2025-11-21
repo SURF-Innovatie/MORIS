@@ -76,9 +76,9 @@ func EndDate(v time.Time) predicate.ProjectStartedEvent {
 	return predicate.ProjectStartedEvent(sql.FieldEQ(FieldEndDate, v))
 }
 
-// OrganisationName applies equality check predicate on the "organisation_name" field. It's identical to OrganisationNameEQ.
-func OrganisationName(v string) predicate.ProjectStartedEvent {
-	return predicate.ProjectStartedEvent(sql.FieldEQ(FieldOrganisationName, v))
+// OrganisationID applies equality check predicate on the "organisation_id" field. It's identical to OrganisationIDEQ.
+func OrganisationID(v uuid.UUID) predicate.ProjectStartedEvent {
+	return predicate.ProjectStartedEvent(sql.FieldEQ(FieldOrganisationID, v))
 }
 
 // TitleEQ applies the EQ predicate on the "title" field.
@@ -291,69 +291,44 @@ func EndDateLTE(v time.Time) predicate.ProjectStartedEvent {
 	return predicate.ProjectStartedEvent(sql.FieldLTE(FieldEndDate, v))
 }
 
-// OrganisationNameEQ applies the EQ predicate on the "organisation_name" field.
-func OrganisationNameEQ(v string) predicate.ProjectStartedEvent {
-	return predicate.ProjectStartedEvent(sql.FieldEQ(FieldOrganisationName, v))
+// OrganisationIDEQ applies the EQ predicate on the "organisation_id" field.
+func OrganisationIDEQ(v uuid.UUID) predicate.ProjectStartedEvent {
+	return predicate.ProjectStartedEvent(sql.FieldEQ(FieldOrganisationID, v))
 }
 
-// OrganisationNameNEQ applies the NEQ predicate on the "organisation_name" field.
-func OrganisationNameNEQ(v string) predicate.ProjectStartedEvent {
-	return predicate.ProjectStartedEvent(sql.FieldNEQ(FieldOrganisationName, v))
+// OrganisationIDNEQ applies the NEQ predicate on the "organisation_id" field.
+func OrganisationIDNEQ(v uuid.UUID) predicate.ProjectStartedEvent {
+	return predicate.ProjectStartedEvent(sql.FieldNEQ(FieldOrganisationID, v))
 }
 
-// OrganisationNameIn applies the In predicate on the "organisation_name" field.
-func OrganisationNameIn(vs ...string) predicate.ProjectStartedEvent {
-	return predicate.ProjectStartedEvent(sql.FieldIn(FieldOrganisationName, vs...))
+// OrganisationIDIn applies the In predicate on the "organisation_id" field.
+func OrganisationIDIn(vs ...uuid.UUID) predicate.ProjectStartedEvent {
+	return predicate.ProjectStartedEvent(sql.FieldIn(FieldOrganisationID, vs...))
 }
 
-// OrganisationNameNotIn applies the NotIn predicate on the "organisation_name" field.
-func OrganisationNameNotIn(vs ...string) predicate.ProjectStartedEvent {
-	return predicate.ProjectStartedEvent(sql.FieldNotIn(FieldOrganisationName, vs...))
+// OrganisationIDNotIn applies the NotIn predicate on the "organisation_id" field.
+func OrganisationIDNotIn(vs ...uuid.UUID) predicate.ProjectStartedEvent {
+	return predicate.ProjectStartedEvent(sql.FieldNotIn(FieldOrganisationID, vs...))
 }
 
-// OrganisationNameGT applies the GT predicate on the "organisation_name" field.
-func OrganisationNameGT(v string) predicate.ProjectStartedEvent {
-	return predicate.ProjectStartedEvent(sql.FieldGT(FieldOrganisationName, v))
+// OrganisationIDGT applies the GT predicate on the "organisation_id" field.
+func OrganisationIDGT(v uuid.UUID) predicate.ProjectStartedEvent {
+	return predicate.ProjectStartedEvent(sql.FieldGT(FieldOrganisationID, v))
 }
 
-// OrganisationNameGTE applies the GTE predicate on the "organisation_name" field.
-func OrganisationNameGTE(v string) predicate.ProjectStartedEvent {
-	return predicate.ProjectStartedEvent(sql.FieldGTE(FieldOrganisationName, v))
+// OrganisationIDGTE applies the GTE predicate on the "organisation_id" field.
+func OrganisationIDGTE(v uuid.UUID) predicate.ProjectStartedEvent {
+	return predicate.ProjectStartedEvent(sql.FieldGTE(FieldOrganisationID, v))
 }
 
-// OrganisationNameLT applies the LT predicate on the "organisation_name" field.
-func OrganisationNameLT(v string) predicate.ProjectStartedEvent {
-	return predicate.ProjectStartedEvent(sql.FieldLT(FieldOrganisationName, v))
+// OrganisationIDLT applies the LT predicate on the "organisation_id" field.
+func OrganisationIDLT(v uuid.UUID) predicate.ProjectStartedEvent {
+	return predicate.ProjectStartedEvent(sql.FieldLT(FieldOrganisationID, v))
 }
 
-// OrganisationNameLTE applies the LTE predicate on the "organisation_name" field.
-func OrganisationNameLTE(v string) predicate.ProjectStartedEvent {
-	return predicate.ProjectStartedEvent(sql.FieldLTE(FieldOrganisationName, v))
-}
-
-// OrganisationNameContains applies the Contains predicate on the "organisation_name" field.
-func OrganisationNameContains(v string) predicate.ProjectStartedEvent {
-	return predicate.ProjectStartedEvent(sql.FieldContains(FieldOrganisationName, v))
-}
-
-// OrganisationNameHasPrefix applies the HasPrefix predicate on the "organisation_name" field.
-func OrganisationNameHasPrefix(v string) predicate.ProjectStartedEvent {
-	return predicate.ProjectStartedEvent(sql.FieldHasPrefix(FieldOrganisationName, v))
-}
-
-// OrganisationNameHasSuffix applies the HasSuffix predicate on the "organisation_name" field.
-func OrganisationNameHasSuffix(v string) predicate.ProjectStartedEvent {
-	return predicate.ProjectStartedEvent(sql.FieldHasSuffix(FieldOrganisationName, v))
-}
-
-// OrganisationNameEqualFold applies the EqualFold predicate on the "organisation_name" field.
-func OrganisationNameEqualFold(v string) predicate.ProjectStartedEvent {
-	return predicate.ProjectStartedEvent(sql.FieldEqualFold(FieldOrganisationName, v))
-}
-
-// OrganisationNameContainsFold applies the ContainsFold predicate on the "organisation_name" field.
-func OrganisationNameContainsFold(v string) predicate.ProjectStartedEvent {
-	return predicate.ProjectStartedEvent(sql.FieldContainsFold(FieldOrganisationName, v))
+// OrganisationIDLTE applies the LTE predicate on the "organisation_id" field.
+func OrganisationIDLTE(v uuid.UUID) predicate.ProjectStartedEvent {
+	return predicate.ProjectStartedEvent(sql.FieldLTE(FieldOrganisationID, v))
 }
 
 // HasEvent applies the HasEdge predicate on the "event" edge.

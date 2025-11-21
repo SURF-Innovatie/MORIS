@@ -15,8 +15,7 @@ func (OrganisationChangedEvent) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).
 			Default(uuid.New),
-		field.String("organisation_id"),
-		field.String("organisation_name"),
+		field.UUID("organisation_id", uuid.UUID{}),
 	}
 }
 

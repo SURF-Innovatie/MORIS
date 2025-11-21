@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	organisationent "github.com/SURF-Innovatie/MORIS/ent/organisation"
 	personent "github.com/SURF-Innovatie/MORIS/ent/person"
 	"github.com/SURF-Innovatie/MORIS/internal/api/organisationdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/persondto"
@@ -37,11 +38,11 @@ type service struct {
 }
 
 type StartProjectParams struct {
-	Title        string
-	Description  string
-	Organisation string
-	StartDate    time.Time
-	EndDate      time.Time
+	Title          string
+	Description    string
+	OrganisationID uuid.UUID
+	StartDate      time.Time
+	EndDate        time.Time
 }
 
 func NewService(es eventstore.Store, cli *ent.Client) Service {
@@ -76,21 +77,16 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 	projectID := uuid.New()
 	now := time.Now().UTC()
 
-	org := entities.Organisation{
-		Id:   uuid.New(),
-		Name: params.Organisation,
-	}
-
 	startEvent := events.ProjectStarted{
 		Base: events.Base{
 			ProjectID: projectID,
 			At:        now,
 		},
-		Title:        params.Title,
-		Description:  params.Description,
-		StartDate:    params.StartDate,
-		EndDate:      params.EndDate,
-		Organisation: org,
+		Title:          params.Title,
+		Description:    params.Description,
+		StartDate:      params.StartDate,
+		EndDate:        params.EndDate,
+		OrganisationID: params.OrganisationID,
 	}
 
 	if err := s.es.Append(ctx, projectID, 0, startEvent); err != nil {
@@ -262,9 +258,17 @@ func (s *service) projectToResponse(ctx context.Context, proj *entities.Project)
 		})
 	}
 
+	org, err := s.cli.Organisation.
+		Query().
+		Where(organisationent.ID(proj.Organisation)).
+		First(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	orgDTO := organisationdto.Response{
-		Id:   proj.Organisation.Id,
-		Name: proj.Organisation.Name,
+		ID:   org.ID,
+		Name: org.Name,
 	}
 
 	return &projectdto.Response{

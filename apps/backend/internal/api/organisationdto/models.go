@@ -2,7 +2,11 @@ package organisationdto
 
 import "github.com/google/uuid"
 
+type CreateRequest struct {
+	Name string `json:"name"`
+}
+
 type Response struct {
-	Id   uuid.UUID `json:"id"`
+	ID   uuid.UUID `json:"id"`
 	Name string    `json:"name"`
 }

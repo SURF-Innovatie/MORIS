@@ -24,7 +24,7 @@ func Apply(p *entities.Project, e events.Event) {
 		p.Description = ev.Description
 		p.StartDate = ev.StartDate
 		p.EndDate = ev.EndDate
-		p.Organisation = ev.Organisation
+		p.Organisation = ev.OrganisationID
 		p.People = ev.People
 
 	case events.TitleChanged:
@@ -40,7 +40,7 @@ func Apply(p *entities.Project, e events.Event) {
 		p.EndDate = ev.EndDate
 
 	case events.OrganisationChanged:
-		p.Organisation = ev.Organisation
+		p.Organisation = ev.OrganisationID
 
 	case events.PersonAdded:
 		if !hasPerson(p.People, ev.PersonId) {

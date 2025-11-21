@@ -19,9 +19,7 @@ type OrganisationChangedEvent struct {
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
 	// OrganisationID holds the value of the "organisation_id" field.
-	OrganisationID string `json:"organisation_id,omitempty"`
-	// OrganisationName holds the value of the "organisation_name" field.
-	OrganisationName string `json:"organisation_name,omitempty"`
+	OrganisationID uuid.UUID `json:"organisation_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the OrganisationChangedEventQuery when eager-loading is set.
 	Edges                      OrganisationChangedEventEdges `json:"edges"`
@@ -54,9 +52,7 @@ func (*OrganisationChangedEvent) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case organisationchangedevent.FieldOrganisationID, organisationchangedevent.FieldOrganisationName:
-			values[i] = new(sql.NullString)
-		case organisationchangedevent.FieldID:
+		case organisationchangedevent.FieldID, organisationchangedevent.FieldOrganisationID:
 			values[i] = new(uuid.UUID)
 		case organisationchangedevent.ForeignKeys[0]: // event_organisation_changed
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
@@ -82,16 +78,10 @@ func (_m *OrganisationChangedEvent) assignValues(columns []string, values []any)
 				_m.ID = *value
 			}
 		case organisationchangedevent.FieldOrganisationID:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field organisation_id", values[i])
-			} else if value.Valid {
-				_m.OrganisationID = value.String
-			}
-		case organisationchangedevent.FieldOrganisationName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field organisation_name", values[i])
-			} else if value.Valid {
-				_m.OrganisationName = value.String
+			} else if value != nil {
+				_m.OrganisationID = *value
 			}
 		case organisationchangedevent.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -142,10 +132,7 @@ func (_m *OrganisationChangedEvent) String() string {
 	builder.WriteString("OrganisationChangedEvent(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("organisation_id=")
-	builder.WriteString(_m.OrganisationID)
-	builder.WriteString(", ")
-	builder.WriteString("organisation_name=")
-	builder.WriteString(_m.OrganisationName)
+	builder.WriteString(fmt.Sprintf("%v", _m.OrganisationID))
 	builder.WriteByte(')')
 	return builder.String()
 }
