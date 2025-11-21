@@ -1,5 +1,7 @@
 package custom
 
+import "github.com/google/uuid"
+
 // RegisterRequest swagger:model RegisterRequest
 // Represents the request body for user registration.
 type RegisterRequest struct {
@@ -11,9 +13,9 @@ type RegisterRequest struct {
 // RegisterResponse swagger:model RegisterResponse
 // Represents the response body for successful registration.
 type RegisterResponse struct {
-	ID    int    `json:"id" example:"1"`
-	Email string `json:"email" example:"user@example.com"`
-	Name  string `json:"name" example:"John Doe"`
+	ID    uuid.UUID `json:"id" example:"1"`
+	Email string    `json:"email" example:"user@example.com"`
+	Name  string    `json:"name" example:"John Doe"`
 }
 
 // LoginRequest swagger:model LoginRequest
@@ -28,9 +30,9 @@ type LoginRequest struct {
 type LoginResponse struct {
 	Token string `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
 	User  struct {
-		ID    int      `json:"id" example:"1"`
-		Email string   `json:"email" example:"user@example.com"`
-		Roles []string `json:"roles" example:"user"`
+		ID    uuid.UUID `json:"id" example:"1"`
+		Email string    `json:"email" example:"user@example.com"`
+		Roles []string  `json:"roles" example:"user"`
 	} `json:"user"`
 }
 

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SURF-Innovatie/MORIS/internal/api/projectdto"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
@@ -58,7 +59,7 @@ func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /projects [post]
 func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
-	req := StartRequest{}
+	req := projectdto.StartRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid body", http.StatusBadRequest)
@@ -112,10 +113,6 @@ func (h *Handler) GetAllProjects(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(proj)
-}
-
-type personRequest struct {
-	Name string `json:"name"`
 }
 
 // AddPerson godoc

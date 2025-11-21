@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"os"
 	"time"
@@ -50,11 +51,23 @@ func main() {
 
 	ctx := context.Background()
 
+	// Hard reset: drop and recreate the public schema
+	rawDB, err := sql.Open("postgres", dsn)
+	if err != nil {
+		logrus.Fatalf("failed opening raw db connection: %v", err)
+	}
+	if _, err := rawDB.ExecContext(ctx, `DROP SCHEMA public CASCADE; CREATE SCHEMA public;`); err != nil {
+		logrus.Fatalf("failed resetting schema: %v", err)
+	}
+	if err := rawDB.Close(); err != nil {
+		logrus.Fatalf("failed closing raw db: %v", err)
+	}
+	logrus.Info("Database schema reset (dropped and recreated).")
+
 	// drop database and run migrations
 	if err := client.Schema.Create(
 		ctx,
-		migrate.WithDropColumn(true),
-		migrate.WithDropIndex(true),
+		migrate.WithGlobalUniqueID(true),
 	); err != nil {
 		logrus.Fatalf("failed running Ent database migrations: %v", err)
 	}

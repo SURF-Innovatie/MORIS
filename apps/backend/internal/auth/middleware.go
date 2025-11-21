@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 type contextKey string
@@ -15,9 +17,9 @@ const userContextKey contextKey = "user" // Key to store user info in context
 // AuthenticatedUser represents the user's information after authentication
 // used by Swagger for API documentation
 type AuthenticatedUser struct {
-	ID    int      `json:"id" example:"1"`
-	Email string   `json:"email" example:"admin@example.com"`
-	Roles []string `json:"roles" example:"admin,user"`
+	ID    uuid.UUID `json:"id" example:"1"`
+	Email string    `json:"email" example:"admin@example.com"`
+	Roles []string  `json:"roles" example:"admin,user"`
 	// Add other relevant user data
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -16,7 +17,7 @@ type Service interface {
 	Register(ctx context.Context, name, email, password string) (*ent.User, error)
 	Login(ctx context.Context, email, password string) (string, *AuthenticatedUser, error)
 	ValidateToken(tokenString string) (*AuthenticatedUser, error)
-	GetUserByID(ctx context.Context, id int) (*ent.User, error)
+	GetUserByID(ctx context.Context, id uuid.UUID) (*ent.User, error)
 }
 
 type service struct {
@@ -136,8 +137,13 @@ func (s *service) ValidateToken(tokenString string) (*AuthenticatedUser, error) 
 	}
 
 	// Extract user info from claims
-	userID, ok := claims["user_id"].(float64)
+	userID, ok := claims["user_id"].(string)
 	if !ok {
+		return nil, fmt.Errorf("invalid user_id in token")
+	}
+
+	uid, err := uuid.Parse(userID)
+	if err != nil {
 		return nil, fmt.Errorf("invalid user_id in token")
 	}
 
@@ -160,14 +166,14 @@ func (s *service) ValidateToken(tokenString string) (*AuthenticatedUser, error) 
 	}
 
 	return &AuthenticatedUser{
-		ID:    int(userID),
+		ID:    uid,
 		Email: email,
 		Roles: roles,
 	}, nil
 }
 
 // GetUserByID retrieves a user by their ID
-func (s *service) GetUserByID(ctx context.Context, id int) (*ent.User, error) {
+func (s *service) GetUserByID(ctx context.Context, id uuid.UUID) (*ent.User, error) {
 	usr, err := s.client.User.Get(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)

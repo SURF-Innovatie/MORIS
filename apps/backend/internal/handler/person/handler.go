@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/SURF-Innovatie/MORIS/internal/api/persondto"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
@@ -20,7 +21,7 @@ func NewHandler(s personsvc.Service) *Handler {
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	var req CreatePersonRequest
+	var req persondto.CreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid body", http.StatusBadRequest)
 		return
@@ -41,8 +42,8 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, PersonResponse{
-		ID:         p.Id.String(),
+	writeJSON(w, persondto.Response{
+		ID:         p.Id,
 		Name:       p.Name,
 		GivenName:  p.GivenName,
 		FamilyName: p.FamilyName,
@@ -62,8 +63,8 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	writeJSON(w, PersonResponse{
-		ID:         p.Id.String(),
+	writeJSON(w, persondto.Response{
+		ID:         p.Id,
 		Name:       p.Name,
 		GivenName:  p.GivenName,
 		FamilyName: p.FamilyName,
