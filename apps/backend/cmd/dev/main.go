@@ -11,6 +11,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	"github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/handler/custom"
+	notificationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/notification"
 	organisationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/organisation"
 	personhandler "github.com/SURF-Innovatie/MORIS/internal/handler/person"
 	projecthandler "github.com/SURF-Innovatie/MORIS/internal/handler/project"
@@ -93,6 +94,8 @@ func main() {
 	projSvc := project.NewService(esStore, client, notifierSvc)
 	projHandler := projecthandler.NewHandler(projSvc)
 
+	notificationHandler := notificationhandler.NewHandler(notifierSvc)
+
 	// Router
 	r := chi.NewRouter()
 	log := logrus.New()
@@ -104,6 +107,7 @@ func main() {
 		projecthandler.MountProjectRoutes(r, projHandler)
 		personhandler.MountPersonRoutes(r, personHandler)
 		organisationhandler.MountOrganisationRoutes(r, organisationHandler)
+		notificationhandler.MountNotificationRoutes(r, notificationHandler)
 	})
 
 	port := os.Getenv("PORT")

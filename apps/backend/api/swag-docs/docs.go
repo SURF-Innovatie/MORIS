@@ -133,6 +133,44 @@ const docTemplate = `{
                 }
             }
         },
+        "/notifications": {
+            "get": {
+                "description": "Retrieves a list of notifications for the authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Get notifications for the logged-in user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProjectNotification"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/profile": {
             "get": {
                 "security": [
@@ -217,7 +255,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_project.StartRequest"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.StartRequest"
                         }
                     }
                 ],
@@ -285,9 +323,66 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "put": {
+                "description": "Updates an existing project with the provided details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "projects"
+                ],
+                "summary": "Update a project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Project details",
+                        "name": "project",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.UpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid body, id or date format",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "project not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
             }
         },
-        "/projects/{id}/people": {
+        "/projects/{id}/people/{personId}": {
             "post": {
                 "description": "Adds a new person to the specified project",
                 "consumes": [
@@ -309,13 +404,11 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Person details",
-                        "name": "person",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/internal_handler_project.personRequest"
-                        }
+                        "type": "string",
+                        "description": "Person ID (UUID)",
+                        "name": "personId",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -338,9 +431,7 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/projects/{id}/people/{personId}": {
+            },
             "delete": {
                 "description": "Removes a person from the specified project",
                 "consumes": [
@@ -502,6 +593,71 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "ent.User": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "description": "Email holds the value of the \"email\" field.",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name holds the value of the \"name\" field.",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_projectdto.StartRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "This is a new project"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2025-12-31T23:59:59Z"
+                },
+                "organisationID": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2025-01-01T00:00:00Z"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "New Project"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_projectdto.UpdateRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "This is an updated project"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2025-12-31T23:59:59Z"
+                },
+                "organisationID": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2025-01-01T00:00:00Z"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Updated Project"
+                }
+            }
+        },
         "github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser": {
             "type": "object",
             "properties": {
@@ -510,8 +666,8 @@ const docTemplate = `{
                     "example": "admin@example.com"
                 },
                 "id": {
-                    "type": "integer",
-                    "example": 1
+                    "type": "string",
+                    "example": "1"
                 },
                 "roles": {
                     "type": "array",
@@ -546,28 +702,6 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Organisation": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Person": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
         "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project": {
             "type": "object",
             "properties": {
@@ -581,12 +715,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "organisation": {
-                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Organisation"
+                    "type": "string"
                 },
                 "people": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Person"
+                        "type": "string"
                     }
                 },
                 "startDate": {
@@ -597,6 +731,26 @@ const docTemplate = `{
                 },
                 "version": {
                     "type": "integer"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProjectNotification": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "projectId": {
+                    "type": "string"
+                },
+                "sentAt": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/ent.User"
                 }
             }
         },
@@ -628,8 +782,8 @@ const docTemplate = `{
                             "example": "user@example.com"
                         },
                         "id": {
-                            "type": "integer",
-                            "example": 1
+                            "type": "string",
+                            "example": "1"
                         },
                         "roles": {
                             "type": "array",
@@ -669,8 +823,8 @@ const docTemplate = `{
                     "example": "user@example.com"
                 },
                 "id": {
-                    "type": "integer",
-                    "example": 1
+                    "type": "string",
+                    "example": "1"
                 },
                 "name": {
                     "type": "string",
@@ -697,39 +851,6 @@ const docTemplate = `{
                 "total_users": {
                     "type": "integer",
                     "example": 123
-                }
-            }
-        },
-        "internal_handler_project.StartRequest": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "example": "This is a new project"
-                },
-                "endDate": {
-                    "type": "string",
-                    "example": "2025-12-31T23:59:59Z"
-                },
-                "organisation": {
-                    "type": "string",
-                    "example": "SURF"
-                },
-                "startDate": {
-                    "type": "string",
-                    "example": "2025-01-01T00:00:00Z"
-                },
-                "title": {
-                    "type": "string",
-                    "example": "New Project"
-                }
-            }
-        },
-        "internal_handler_project.personRequest": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
                 }
             }
         }

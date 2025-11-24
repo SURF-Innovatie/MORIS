@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 
 import RootLayout from './routes/root';
 import DashboardRoute from './routes/dashboard';
+import ProjectFormRoute from './routes/project-form';
 import LoginRoute from './routes/login';
 import RegisterRoute from './routes/register';
 import RouteError from './routes/route-error';
@@ -31,6 +32,14 @@ export function createAppRouter() {
             {
               index: true,
               element: <DashboardRoute />,
+            },
+            {
+              path: 'projects/new',
+              element: <ProjectFormRoute />,
+            },
+            {
+              path: 'projects/:id/edit',
+              element: <ProjectFormRoute />,
             },
           ],
         },

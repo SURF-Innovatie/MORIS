@@ -8,7 +8,7 @@
     "dev": "wgo run ./cmd/dev/main.go",
     "db:seed": "go run ./cmd/seed/main.go",
     "db:generate": "go generate ./ent/...",
-    "swag-init": "swag init -g cmd/dev/main.go --dir ./cmd/dev,./internal,./ent --output api/swag-docs --parseDependency --parseInternal",
+    "api:generate": "swag init -g cmd/dev/main.go --output api/swag-docs --parseDependency --parseInternal",
     "test": "go test ./..."
   }
 }

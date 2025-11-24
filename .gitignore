@@ -6,3 +6,4 @@ generated-orval
 *.tsbuildinfo
 dist
 .orval
+.agent

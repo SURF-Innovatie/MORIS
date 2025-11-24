@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/projectdto"
+	_ "github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/project"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-
-	"github.com/SURF-Innovatie/MORIS/internal/project"
 )
 
 type Handler struct {
@@ -53,7 +53,7 @@ func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 // @Tags projects
 // @Accept json
 // @Produce json
-// @Param project body StartRequest true "Project details"
+// @Param project body projectdto.StartRequest true "Project details"
 // @Success 200 {object} entities.Project
 // @Failure 400 {string} string "invalid body or date format"
 // @Failure 500 {string} string "internal server error"
@@ -96,6 +96,67 @@ func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(proj)
 }
 
+// UpdateProject godoc
+// @Summary Update a project
+// @Description Updates an existing project with the provided details
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Param id path string true "Project ID (UUID)"
+// @Param project body projectdto.UpdateRequest true "Project details"
+// @Success 200 {object} entities.Project
+// @Failure 400 {string} string "invalid body, id or date format"
+// @Failure 404 {string} string "project not found"
+// @Failure 500 {string} string "internal server error"
+// @Router /projects/{id} [put]
+func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		http.Error(w, "invalid project id", http.StatusBadRequest)
+		return
+	}
+
+	req := projectdto.UpdateRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+
+	start, err := time.Parse(time.RFC3339, req.StartDate)
+	if err != nil {
+		http.Error(w, "invalid startDate", http.StatusBadRequest)
+		return
+	}
+
+	end, err := time.Parse(time.RFC3339, req.EndDate)
+	if err != nil {
+		http.Error(w, "invalid endDate", http.StatusBadRequest)
+		return
+	}
+
+	params := project.UpdateProjectParams{
+		Title:          req.Title,
+		Description:    req.Description,
+		OrganisationID: req.OrganisationID,
+		StartDate:      start,
+		EndDate:        end,
+	}
+
+	proj, err := h.svc.UpdateProject(r.Context(), id, params)
+	if err != nil {
+		if err == project.ErrNotFound {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(proj)
+}
+
 // GetAllProjects godoc
 // @Summary Get all projects
 // @Description Retrieves a list of all projects
@@ -122,11 +183,11 @@ func (h *Handler) GetAllProjects(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path string true "Project ID (UUID)"
-// @Param person body personRequest true "Person details"
+// @Param personId path string true "Person ID (UUID)"
 // @Success 200 {object} entities.Project
 // @Failure 400 {string} string "invalid project id or body"
 // @Failure 500 {string} string "internal server error"
-// @Router /projects/{id}/people [post]
+// @Router /projects/{id}/people/{personId} [post]
 func (h *Handler) AddPerson(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)

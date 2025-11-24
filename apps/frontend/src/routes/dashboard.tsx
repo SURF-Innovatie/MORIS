@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { 
-  Bell, 
-  Inbox, 
-  LayoutGrid, 
-  Table as TableIcon, 
+import { useNavigate } from 'react-router-dom';
+import {
+  Bell,
+  Inbox,
+  LayoutGrid,
+  Table as TableIcon,
   Users as UsersIcon,
   Calendar,
   Building2,
@@ -53,6 +54,7 @@ const FAKE_NOTIFICATIONS = [
 ];
 
 const DashboardRoute = () => {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const { data: projects, isLoading, error } = useGetProjects();
 
@@ -95,9 +97,8 @@ const DashboardRoute = () => {
                 {FAKE_NOTIFICATIONS.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`flex items-start gap-4 p-4 transition-colors hover:bg-muted/50 ${
-                      !notification.read ? 'bg-primary/5' : ''
-                    }`}
+                    className={`flex items-start gap-4 p-4 transition-colors hover:bg-muted/50 ${!notification.read ? 'bg-primary/5' : ''
+                      }`}
                   >
                     <div className="mt-1">
                       {!notification.read && (
@@ -150,6 +151,9 @@ const DashboardRoute = () => {
               <TableIcon className="mr-2 h-4 w-4" />
               Table
             </Button>
+            <Button size="sm" onClick={() => navigate('/dashboard/projects/new')}>
+              Create Project
+            </Button>
           </div>
         </div>
 
@@ -174,7 +178,7 @@ const DashboardRoute = () => {
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <Building2 className="mb-4 h-12 w-12 text-muted-foreground/50" />
               <p className="text-sm text-muted-foreground">No projects found</p>
-              <Button className="mt-4" size="sm">
+              <Button className="mt-4" size="sm" onClick={() => navigate('/dashboard/projects/new')}>
                 Create your first project
               </Button>
             </CardContent>
@@ -193,7 +197,12 @@ const DashboardRoute = () => {
                         {project.description || 'No description available'}
                       </CardDescription>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => navigate(`/dashboard/projects/${project.id}/edit`)}
+                    >
                       <ExternalLink className="h-4 w-4" />
                     </Button>
                   </div>
@@ -260,7 +269,12 @@ const DashboardRoute = () => {
                         {project.people?.length || 0}
                       </TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => navigate(`/dashboard/projects/${project.id}/edit`)}
+                        >
                           <ExternalLink className="h-4 w-4" />
                         </Button>
                       </TableCell>

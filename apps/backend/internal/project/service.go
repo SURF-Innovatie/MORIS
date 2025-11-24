@@ -31,6 +31,7 @@ type Service interface {
 	GetProject(ctx context.Context, id uuid.UUID) (*projectdto.Response, error)
 	GetAllProjects(ctx context.Context) ([]*projectdto.Response, error)
 	StartProject(ctx context.Context, params StartProjectParams) (*projectdto.Response, error)
+	UpdateProject(ctx context.Context, id uuid.UUID, params UpdateProjectParams) (*projectdto.Response, error)
 	AddPerson(ctx context.Context, projectID uuid.UUID, personID uuid.UUID) (*projectdto.Response, error)
 	RemovePerson(ctx context.Context, projectID uuid.UUID, personID uuid.UUID) (*projectdto.Response, error)
 }
@@ -42,6 +43,14 @@ type service struct {
 }
 
 type StartProjectParams struct {
+	Title          string
+	Description    string
+	OrganisationID uuid.UUID
+	StartDate      time.Time
+	EndDate        time.Time
+}
+
+type UpdateProjectParams struct {
 	Title          string
 	Description    string
 	OrganisationID uuid.UUID
@@ -111,6 +120,70 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 	}
 
 	return resp, nil
+}
+
+func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params UpdateProjectParams) (*projectdto.Response, error) {
+	evts, version, err := s.es.Load(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if len(evts) == 0 {
+		return nil, ErrNotFound
+	}
+
+	proj := projection.Reduce(id, evts)
+	proj.Version = version
+
+	var newEvents []events.Event
+
+	if evt, err := commands.ChangeTitle(id, proj, params.Title); err != nil {
+		return nil, err
+	} else if evt != nil {
+		newEvents = append(newEvents, evt)
+		projection.Apply(proj, evt)
+	}
+
+	if evt, err := commands.ChangeDescription(id, proj, params.Description); err != nil {
+		return nil, err
+	} else if evt != nil {
+		newEvents = append(newEvents, evt)
+		projection.Apply(proj, evt)
+	}
+
+	if evt, err := commands.ChangeStartDate(id, proj, params.StartDate); err != nil {
+		return nil, err
+	} else if evt != nil {
+		newEvents = append(newEvents, evt)
+		projection.Apply(proj, evt)
+	}
+
+	if evt, err := commands.ChangeEndDate(id, proj, params.EndDate); err != nil {
+		return nil, err
+	} else if evt != nil {
+		newEvents = append(newEvents, evt)
+		projection.Apply(proj, evt)
+	}
+
+	if evt, err := commands.SetOrganisation(id, proj, params.OrganisationID); err != nil {
+		return nil, err
+	} else if evt != nil {
+		newEvents = append(newEvents, evt)
+		projection.Apply(proj, evt)
+	}
+
+	if len(newEvents) == 0 {
+		return s.projectToResponse(ctx, proj)
+	}
+
+	for _, evt := range newEvents {
+		if err := s.es.Append(ctx, id, version, evt); err != nil {
+			return nil, err
+		}
+		version++
+	}
+	proj.Version = version
+
+	return s.projectToResponse(ctx, proj)
 }
 
 // TODO, instead of a helper function there should be a currentUserService
