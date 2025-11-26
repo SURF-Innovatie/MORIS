@@ -8,6 +8,8 @@ import ProjectEditRoute from "./routes/project-edit";
 import LoginRoute from "./routes/login";
 import RegisterRoute from "./routes/register";
 import RouteError from "./routes/route-error";
+import ProfileRoute from "./routes/profile";
+import OrcidCallbackRoute from "./routes/orcid-callback";
 import ProtectedRoute from "./routes/protected-route";
 
 export function createAppRouter() {
@@ -38,6 +40,10 @@ export function createAppRouter() {
               path: "projects/new",
               element: <ProjectFormRoute />,
             },
+            {
+              path: "profile",
+              element: <ProfileRoute />,
+            },
           ],
         },
       ],
@@ -50,6 +56,17 @@ export function createAppRouter() {
         {
           path: ":id/edit",
           element: <ProjectEditRoute />,
+        },
+      ],
+    },
+    {
+      path: "/orcid-callback",
+      element: <ProtectedRoute />,
+      errorElement: <RouteError />,
+      children: [
+        {
+          index: true,
+          element: <OrcidCallbackRoute />,
         },
       ],
     },

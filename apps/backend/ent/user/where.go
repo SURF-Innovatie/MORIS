@@ -68,6 +68,11 @@ func Password(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldPassword, v))
 }
 
+// OrcidID applies equality check predicate on the "orcid_id" field. It's identical to OrcidIDEQ.
+func OrcidID(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldOrcidID, v))
+}
+
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldName, v))
@@ -261,6 +266,81 @@ func PasswordEqualFold(v string) predicate.User {
 // PasswordContainsFold applies the ContainsFold predicate on the "password" field.
 func PasswordContainsFold(v string) predicate.User {
 	return predicate.User(sql.FieldContainsFold(FieldPassword, v))
+}
+
+// OrcidIDEQ applies the EQ predicate on the "orcid_id" field.
+func OrcidIDEQ(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldOrcidID, v))
+}
+
+// OrcidIDNEQ applies the NEQ predicate on the "orcid_id" field.
+func OrcidIDNEQ(v string) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldOrcidID, v))
+}
+
+// OrcidIDIn applies the In predicate on the "orcid_id" field.
+func OrcidIDIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldIn(FieldOrcidID, vs...))
+}
+
+// OrcidIDNotIn applies the NotIn predicate on the "orcid_id" field.
+func OrcidIDNotIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldOrcidID, vs...))
+}
+
+// OrcidIDGT applies the GT predicate on the "orcid_id" field.
+func OrcidIDGT(v string) predicate.User {
+	return predicate.User(sql.FieldGT(FieldOrcidID, v))
+}
+
+// OrcidIDGTE applies the GTE predicate on the "orcid_id" field.
+func OrcidIDGTE(v string) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldOrcidID, v))
+}
+
+// OrcidIDLT applies the LT predicate on the "orcid_id" field.
+func OrcidIDLT(v string) predicate.User {
+	return predicate.User(sql.FieldLT(FieldOrcidID, v))
+}
+
+// OrcidIDLTE applies the LTE predicate on the "orcid_id" field.
+func OrcidIDLTE(v string) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldOrcidID, v))
+}
+
+// OrcidIDContains applies the Contains predicate on the "orcid_id" field.
+func OrcidIDContains(v string) predicate.User {
+	return predicate.User(sql.FieldContains(FieldOrcidID, v))
+}
+
+// OrcidIDHasPrefix applies the HasPrefix predicate on the "orcid_id" field.
+func OrcidIDHasPrefix(v string) predicate.User {
+	return predicate.User(sql.FieldHasPrefix(FieldOrcidID, v))
+}
+
+// OrcidIDHasSuffix applies the HasSuffix predicate on the "orcid_id" field.
+func OrcidIDHasSuffix(v string) predicate.User {
+	return predicate.User(sql.FieldHasSuffix(FieldOrcidID, v))
+}
+
+// OrcidIDIsNil applies the IsNil predicate on the "orcid_id" field.
+func OrcidIDIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldOrcidID))
+}
+
+// OrcidIDNotNil applies the NotNil predicate on the "orcid_id" field.
+func OrcidIDNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldOrcidID))
+}
+
+// OrcidIDEqualFold applies the EqualFold predicate on the "orcid_id" field.
+func OrcidIDEqualFold(v string) predicate.User {
+	return predicate.User(sql.FieldEqualFold(FieldOrcidID, v))
+}
+
+// OrcidIDContainsFold applies the ContainsFold predicate on the "orcid_id" field.
+func OrcidIDContainsFold(v string) predicate.User {
+	return predicate.User(sql.FieldContainsFold(FieldOrcidID, v))
 }
 
 // And groups predicates with the AND operator between them.

@@ -34,12 +34,8 @@ import {
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
-  startDate: z.date({
-    required_error: "Start date is required",
-  }),
-  endDate: z.date({
-    required_error: "End date is required",
-  }),
+  startDate: z.date(),
+  endDate: z.date(),
   organisationID: z.string().uuid("Invalid organisation ID"),
 });
 
@@ -78,7 +74,7 @@ export default function ProjectFormRoute() {
         startDate: project.startDate ? new Date(project.startDate) : undefined,
         endDate: project.endDate ? new Date(project.endDate) : undefined,
         organisationID:
-          project.organization?.id || "00000000-0000-0000-0000-000000000000",
+          project.organisation || "00000000-0000-0000-0000-000000000000",
       });
     }
   }, [project, form]);

@@ -5804,6 +5804,7 @@ type UserMutation struct {
 	name          *string
 	email         *string
 	password      *string
+	orcid_id      *string
 	clearedFields map[string]struct{}
 	done          bool
 	oldValue      func(context.Context) (*User, error)
@@ -6022,6 +6023,55 @@ func (m *UserMutation) ResetPassword() {
 	m.password = nil
 }
 
+// SetOrcidID sets the "orcid_id" field.
+func (m *UserMutation) SetOrcidID(s string) {
+	m.orcid_id = &s
+}
+
+// OrcidID returns the value of the "orcid_id" field in the mutation.
+func (m *UserMutation) OrcidID() (r string, exists bool) {
+	v := m.orcid_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrcidID returns the old "orcid_id" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldOrcidID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrcidID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrcidID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrcidID: %w", err)
+	}
+	return oldValue.OrcidID, nil
+}
+
+// ClearOrcidID clears the value of the "orcid_id" field.
+func (m *UserMutation) ClearOrcidID() {
+	m.orcid_id = nil
+	m.clearedFields[user.FieldOrcidID] = struct{}{}
+}
+
+// OrcidIDCleared returns if the "orcid_id" field was cleared in this mutation.
+func (m *UserMutation) OrcidIDCleared() bool {
+	_, ok := m.clearedFields[user.FieldOrcidID]
+	return ok
+}
+
+// ResetOrcidID resets all changes to the "orcid_id" field.
+func (m *UserMutation) ResetOrcidID() {
+	m.orcid_id = nil
+	delete(m.clearedFields, user.FieldOrcidID)
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -6056,7 +6106,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
 	if m.name != nil {
 		fields = append(fields, user.FieldName)
 	}
@@ -6065,6 +6115,9 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.password != nil {
 		fields = append(fields, user.FieldPassword)
+	}
+	if m.orcid_id != nil {
+		fields = append(fields, user.FieldOrcidID)
 	}
 	return fields
 }
@@ -6080,6 +6133,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.Email()
 	case user.FieldPassword:
 		return m.Password()
+	case user.FieldOrcidID:
+		return m.OrcidID()
 	}
 	return nil, false
 }
@@ -6095,6 +6150,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldEmail(ctx)
 	case user.FieldPassword:
 		return m.OldPassword(ctx)
+	case user.FieldOrcidID:
+		return m.OldOrcidID(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -6125,6 +6182,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetPassword(v)
 		return nil
+	case user.FieldOrcidID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrcidID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
 }
@@ -6154,7 +6218,11 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *UserMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(user.FieldOrcidID) {
+		fields = append(fields, user.FieldOrcidID)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -6167,6 +6235,11 @@ func (m *UserMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *UserMutation) ClearField(name string) error {
+	switch name {
+	case user.FieldOrcidID:
+		m.ClearOrcidID()
+		return nil
+	}
 	return fmt.Errorf("unknown User nullable field %s", name)
 }
 
@@ -6182,6 +6255,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldPassword:
 		m.ResetPassword()
+		return nil
+	case user.FieldOrcidID:
+		m.ResetOrcidID()
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)

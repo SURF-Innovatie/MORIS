@@ -53,3 +53,15 @@ type TotalUsersResponse struct {
 // `internal/auth` package, and annotated with `swagger:model`. We don't need
 // wrapper types here anymore; referencing the canonical `auth` types in
 // handler comments will prevent duplicate schema definitions in the OpenAPI spec.
+
+// ORCIDAuthURLResponse swagger:model ORCIDAuthURLResponse
+// Represents the response body for getting the ORCID auth URL.
+type ORCIDAuthURLResponse struct {
+	URL string `json:"url" example:"https://orcid.org/oauth/authorize?..."`
+}
+
+// LinkORCIDRequest swagger:model LinkORCIDRequest
+// Represents the request body for linking an ORCID ID.
+type LinkORCIDRequest struct {
+	Code string `json:"code" example:"authentication_code_from_orcid"`
+}

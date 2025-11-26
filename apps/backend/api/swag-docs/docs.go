@@ -52,13 +52,156 @@ const docTemplate = `{
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/auth.BackendError"
                         }
                     },
                     "403": {
                         "description": "Insufficient permissions",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/auth.BackendError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/orcid/link": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Links an ORCID ID to the authenticated user's account",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Link ORCID ID",
+                "parameters": [
+                    {
+                        "description": "ORCID link request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/custom.LinkORCIDRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/custom.StatusResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/auth.BackendError"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/auth.BackendError"
+                        }
+                    },
+                    "409": {
+                        "description": "ORCID ID already linked",
+                        "schema": {
+                            "$ref": "#/definitions/auth.BackendError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/auth.BackendError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/orcid/unlink": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Unlinks the ORCID ID from the authenticated user's account",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Unlink ORCID ID",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/custom.StatusResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/auth.BackendError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/auth.BackendError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/orcid/url": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the URL to redirect the user to for ORCID authentication",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Get ORCID authorization URL",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/custom.ORCIDAuthURLResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/auth.BackendError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/auth.BackendError"
                         }
                     }
                 }
@@ -81,7 +224,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.StatusResponse"
+                            "$ref": "#/definitions/custom.StatusResponse"
                         }
                     }
                 }
@@ -107,7 +250,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.LoginRequest"
+                            "$ref": "#/definitions/custom.LoginRequest"
                         }
                     }
                 ],
@@ -115,19 +258,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.LoginResponse"
+                            "$ref": "#/definitions/custom.LoginResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/auth.BackendError"
                         }
                     },
                     "401": {
                         "description": "Invalid credentials",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/auth.BackendError"
                         }
                     }
                 }
@@ -152,7 +295,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProjectNotification"
+                                "$ref": "#/definitions/entities.ProjectNotification"
                             }
                         }
                     },
@@ -193,13 +336,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser"
+                            "$ref": "#/definitions/auth.AuthenticatedUser"
                         }
                     },
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/auth.BackendError"
                         }
                     }
                 }
@@ -224,7 +367,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                                "$ref": "#/definitions/entities.Project"
                             }
                         }
                     },
@@ -255,7 +398,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.StartRequest"
+                            "$ref": "#/definitions/projectdto.StartRequest"
                         }
                     }
                 ],
@@ -263,7 +406,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                            "$ref": "#/definitions/entities.Project"
                         }
                     },
                     "400": {
@@ -307,7 +450,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                            "$ref": "#/definitions/entities.Project"
                         }
                     },
                     "400": {
@@ -350,7 +493,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.UpdateRequest"
+                            "$ref": "#/definitions/projectdto.UpdateRequest"
                         }
                     }
                 ],
@@ -358,7 +501,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                            "$ref": "#/definitions/entities.Project"
                         }
                     },
                     "400": {
@@ -408,7 +551,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.Changelog"
+                            "$ref": "#/definitions/changelogdto.Changelog"
                         }
                     },
                     "400": {
@@ -459,7 +602,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                            "$ref": "#/definitions/entities.Project"
                         }
                     },
                     "400": {
@@ -508,7 +651,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response"
+                            "$ref": "#/definitions/projectdto.Response"
                         }
                     },
                     "400": {
@@ -546,7 +689,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.RegisterRequest"
+                            "$ref": "#/definitions/custom.RegisterRequest"
                         }
                     }
                 ],
@@ -554,19 +697,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.RegisterResponse"
+                            "$ref": "#/definitions/custom.RegisterResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request body or missing fields",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/auth.BackendError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/auth.BackendError"
                         }
                     }
                 }
@@ -589,7 +732,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.StatusResponse"
+                            "$ref": "#/definitions/custom.StatusResponse"
                         }
                     }
                 }
@@ -617,19 +760,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.TotalUsersResponse"
+                            "$ref": "#/definitions/custom.TotalUsersResponse"
                         }
                     },
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/auth.BackendError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/auth.BackendError"
                         }
                     }
                 }
@@ -637,161 +780,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "ent.User": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "description": "Email holds the value of the \"email\" field.",
-                    "type": "string"
-                },
-                "id": {
-                    "description": "ID of the ent.",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "Name holds the value of the \"name\" field.",
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.Changelog": {
-            "type": "object",
-            "properties": {
-                "entries": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.ChangelogEntry"
-                    }
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.ChangelogEntry": {
-            "type": "object",
-            "properties": {
-                "at": {
-                    "type": "string"
-                },
-                "event": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_api_organisationdto.Response": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_api_persondto.Response": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "familyName": {
-                    "type": "string"
-                },
-                "givenName": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "example": "This is a new project"
-                },
-                "endDate": {
-                    "type": "string",
-                    "example": "2025-12-31T23:59:59Z"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "organization": {
-                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_organisationdto.Response"
-                },
-                "people": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_persondto.Response"
-                    }
-                },
-                "startDate": {
-                    "type": "string",
-                    "example": "2025-01-01T00:00:00Z"
-                },
-                "title": {
-                    "type": "string",
-                    "example": "New Project"
-                },
-                "version": {
-                    "type": "integer"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_api_projectdto.StartRequest": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "example": "This is a new project"
-                },
-                "endDate": {
-                    "type": "string",
-                    "example": "2025-12-31T23:59:59Z"
-                },
-                "organisationID": {
-                    "type": "string"
-                },
-                "startDate": {
-                    "type": "string",
-                    "example": "2025-01-01T00:00:00Z"
-                },
-                "title": {
-                    "type": "string",
-                    "example": "New Project"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_api_projectdto.UpdateRequest": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "example": "This is an updated project"
-                },
-                "endDate": {
-                    "type": "string",
-                    "example": "2025-12-31T23:59:59Z"
-                },
-                "organisationID": {
-                    "type": "string"
-                },
-                "startDate": {
-                    "type": "string",
-                    "example": "2025-01-01T00:00:00Z"
-                },
-                "title": {
-                    "type": "string",
-                    "example": "Updated Project"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser": {
+        "auth.AuthenticatedUser": {
             "type": "object",
             "properties": {
                 "email": {
@@ -801,6 +790,10 @@ const docTemplate = `{
                 "id": {
                     "type": "string",
                     "example": "1"
+                },
+                "orcid_id": {
+                    "type": "string",
+                    "example": "0000-0000-0000-0000"
                 },
                 "roles": {
                     "type": "array",
@@ -814,7 +807,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_SURF-Innovatie_MORIS_internal_auth.BackendError": {
+        "auth.BackendError": {
             "type": "object",
             "properties": {
                 "code": {
@@ -835,7 +828,168 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project": {
+        "changelogdto.Changelog": {
+            "type": "object",
+            "properties": {
+                "entries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/changelogdto.ChangelogEntry"
+                    }
+                }
+            }
+        },
+        "changelogdto.ChangelogEntry": {
+            "type": "object",
+            "properties": {
+                "at": {
+                    "type": "string"
+                },
+                "event": {
+                    "type": "string"
+                }
+            }
+        },
+        "custom.LinkORCIDRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "authentication_code_from_orcid"
+                }
+            }
+        },
+        "custom.LoginRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "secretpassword"
+                }
+            }
+        },
+        "custom.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                },
+                "user": {
+                    "type": "object",
+                    "properties": {
+                        "email": {
+                            "type": "string",
+                            "example": "user@example.com"
+                        },
+                        "id": {
+                            "type": "string",
+                            "example": "1"
+                        },
+                        "roles": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "example": [
+                                "user"
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "custom.ORCIDAuthURLResponse": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "example": "https://orcid.org/oauth/authorize?..."
+                }
+            }
+        },
+        "custom.RegisterRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "secretpassword"
+                }
+            }
+        },
+        "custom.RegisterResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "1"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "John Doe"
+                }
+            }
+        },
+        "custom.StatusResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "ok"
+                },
+                "timestamp": {
+                    "type": "string",
+                    "example": "2025-11-12T10:00:00Z"
+                }
+            }
+        },
+        "custom.TotalUsersResponse": {
+            "type": "object",
+            "properties": {
+                "total_users": {
+                    "type": "integer",
+                    "example": 123
+                }
+            }
+        },
+        "ent.User": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "description": "Email holds the value of the \"email\" field.",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name holds the value of the \"name\" field.",
+                    "type": "string"
+                },
+                "orcid_id": {
+                    "description": "OrcidID holds the value of the \"orcid_id\" field.",
+                    "type": "string"
+                }
+            }
+        },
+        "entities.Project": {
             "type": "object",
             "properties": {
                 "description": {
@@ -867,7 +1021,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProjectNotification": {
+        "entities.ProjectNotification": {
             "type": "object",
             "properties": {
                 "id": {
@@ -887,103 +1041,118 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handler_custom.LoginRequest": {
+        "organisationdto.Response": {
             "type": "object",
             "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
-                },
-                "password": {
-                    "type": "string",
-                    "example": "secretpassword"
-                }
-            }
-        },
-        "internal_handler_custom.LoginResponse": {
-            "type": "object",
-            "properties": {
-                "token": {
-                    "type": "string",
-                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                },
-                "user": {
-                    "type": "object",
-                    "properties": {
-                        "email": {
-                            "type": "string",
-                            "example": "user@example.com"
-                        },
-                        "id": {
-                            "type": "string",
-                            "example": "1"
-                        },
-                        "roles": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            },
-                            "example": [
-                                "user"
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "internal_handler_custom.RegisterRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
+                "id": {
+                    "type": "string"
                 },
                 "name": {
-                    "type": "string",
-                    "example": "John Doe"
-                },
-                "password": {
-                    "type": "string",
-                    "example": "secretpassword"
+                    "type": "string"
                 }
             }
         },
-        "internal_handler_custom.RegisterResponse": {
+        "persondto.Response": {
             "type": "object",
             "properties": {
                 "email": {
-                    "type": "string",
-                    "example": "user@example.com"
+                    "type": "string"
+                },
+                "familyName": {
+                    "type": "string"
+                },
+                "givenName": {
+                    "type": "string"
                 },
                 "id": {
-                    "type": "string",
-                    "example": "1"
+                    "type": "string"
                 },
                 "name": {
-                    "type": "string",
-                    "example": "John Doe"
+                    "type": "string"
                 }
             }
         },
-        "internal_handler_custom.StatusResponse": {
+        "projectdto.Response": {
             "type": "object",
             "properties": {
-                "status": {
+                "description": {
                     "type": "string",
-                    "example": "ok"
+                    "example": "This is a new project"
                 },
-                "timestamp": {
+                "endDate": {
                     "type": "string",
-                    "example": "2025-11-12T10:00:00Z"
+                    "example": "2025-12-31T23:59:59Z"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "organization": {
+                    "$ref": "#/definitions/organisationdto.Response"
+                },
+                "people": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/persondto.Response"
+                    }
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2025-01-01T00:00:00Z"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "New Project"
+                },
+                "version": {
+                    "type": "integer"
                 }
             }
         },
-        "internal_handler_custom.TotalUsersResponse": {
+        "projectdto.StartRequest": {
             "type": "object",
             "properties": {
-                "total_users": {
-                    "type": "integer",
-                    "example": 123
+                "description": {
+                    "type": "string",
+                    "example": "This is a new project"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2025-12-31T23:59:59Z"
+                },
+                "organisationID": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2025-01-01T00:00:00Z"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "New Project"
+                }
+            }
+        },
+        "projectdto.UpdateRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "This is an updated project"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2025-12-31T23:59:59Z"
+                },
+                "organisationID": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2025-01-01T00:00:00Z"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Updated Project"
                 }
             }
         }

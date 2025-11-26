@@ -1,0 +1,94 @@
+import { useEffect, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import {
+  usePostAuthOrcidLink,
+  useGetProfile,
+} from "../api/generated-orval/moris";
+import { useToast } from "../hooks/use-toast";
+import { useAuth } from "../hooks/useAuth";
+
+const OrcidCallbackRoute = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { updateUser } = useAuth();
+  const { mutateAsync: linkORCID } = usePostAuthOrcidLink();
+  const { refetch: fetchProfile } = useGetProfile({
+    query: {
+      enabled: false,
+    },
+  });
+  const processedRef = useRef(false);
+
+  useEffect(() => {
+    const code = searchParams.get("code");
+    const error = searchParams.get("error");
+
+    if (processedRef.current) return;
+    processedRef.current = true;
+
+    if (error) {
+      toast({
+        title: "ORCID Connection Failed",
+        description: "You denied access or an error occurred.",
+        variant: "destructive",
+      });
+      navigate("/dashboard/profile", { replace: true });
+      return;
+    }
+
+    if (!code) {
+      toast({
+        title: "Error",
+        description: "No authorization code received.",
+        variant: "destructive",
+      });
+      navigate("/dashboard/profile", { replace: true });
+      return;
+    }
+
+    const link = async () => {
+      try {
+        await linkORCID({ data: { code } });
+
+        try {
+          const { data: user } = await fetchProfile();
+          if (user) {
+            updateUser(user);
+          }
+        } catch (error) {
+          console.error("Failed to update user context:", error);
+        }
+
+        toast({
+          title: "Success",
+          description: "Your ORCID iD has been successfully linked.",
+        });
+      } catch (err: any) {
+        toast({
+          title: "Connection Failed",
+          description:
+            err.response?.data?.message || "Failed to link ORCID iD.",
+          variant: "destructive",
+        });
+      } finally {
+        navigate("/dashboard/profile", { replace: true });
+      }
+    };
+
+    link();
+  }, [searchParams, navigate, toast, linkORCID, fetchProfile, updateUser]);
+
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center space-y-4">
+        <h2 className="text-2xl font-bold">Connecting to ORCID...</h2>
+        <p className="text-muted-foreground">
+          Please wait while we link your account.
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default OrcidCallbackRoute;

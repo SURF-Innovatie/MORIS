@@ -1,117 +1,15 @@
 basePath: /api
 definitions:
-  ent.User:
-    properties:
-      email:
-        description: Email holds the value of the "email" field.
-        type: string
-      id:
-        description: ID of the ent.
-        type: string
-      name:
-        description: Name holds the value of the "name" field.
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.Changelog:
-    properties:
-      entries:
-        items:
-          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.ChangelogEntry'
-        type: array
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.ChangelogEntry:
-    properties:
-      at:
-        type: string
-      event:
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_api_organisationdto.Response:
-    properties:
-      id:
-        type: string
-      name:
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_api_persondto.Response:
-    properties:
-      email:
-        type: string
-      familyName:
-        type: string
-      givenName:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response:
-    properties:
-      description:
-        example: This is a new project
-        type: string
-      endDate:
-        example: "2025-12-31T23:59:59Z"
-        type: string
-      id:
-        type: string
-      organization:
-        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_organisationdto.Response'
-      people:
-        items:
-          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_persondto.Response'
-        type: array
-      startDate:
-        example: "2025-01-01T00:00:00Z"
-        type: string
-      title:
-        example: New Project
-        type: string
-      version:
-        type: integer
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_api_projectdto.StartRequest:
-    properties:
-      description:
-        example: This is a new project
-        type: string
-      endDate:
-        example: "2025-12-31T23:59:59Z"
-        type: string
-      organisationID:
-        type: string
-      startDate:
-        example: "2025-01-01T00:00:00Z"
-        type: string
-      title:
-        example: New Project
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_api_projectdto.UpdateRequest:
-    properties:
-      description:
-        example: This is an updated project
-        type: string
-      endDate:
-        example: "2025-12-31T23:59:59Z"
-        type: string
-      organisationID:
-        type: string
-      startDate:
-        example: "2025-01-01T00:00:00Z"
-        type: string
-      title:
-        example: Updated Project
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser:
+  auth.AuthenticatedUser:
     properties:
       email:
         example: admin@example.com
         type: string
       id:
         example: "1"
+        type: string
+      orcid_id:
+        example: 0000-0000-0000-0000
         type: string
       roles:
         example:
@@ -121,7 +19,7 @@ definitions:
           type: string
         type: array
     type: object
-  github_com_SURF-Innovatie_MORIS_internal_auth.BackendError:
+  auth.BackendError:
     properties:
       code:
         example: 400
@@ -136,41 +34,27 @@ definitions:
         example: Bad Request
         type: string
     type: object
-  github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project:
+  changelogdto.Changelog:
     properties:
-      description:
-        type: string
-      endDate:
-        type: string
-      id:
-        type: string
-      organisation:
-        type: string
-      people:
+      entries:
         items:
-          type: string
+          $ref: '#/definitions/changelogdto.ChangelogEntry'
         type: array
-      startDate:
-        type: string
-      title:
-        type: string
-      version:
-        type: integer
     type: object
-  github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProjectNotification:
+  changelogdto.ChangelogEntry:
     properties:
-      id:
+      at:
         type: string
-      message:
+      event:
         type: string
-      projectId:
-        type: string
-      sentAt:
-        type: string
-      user:
-        $ref: '#/definitions/ent.User'
     type: object
-  internal_handler_custom.LoginRequest:
+  custom.LinkORCIDRequest:
+    properties:
+      code:
+        example: authentication_code_from_orcid
+        type: string
+    type: object
+  custom.LoginRequest:
     properties:
       email:
         example: user@example.com
@@ -179,7 +63,7 @@ definitions:
         example: secretpassword
         type: string
     type: object
-  internal_handler_custom.LoginResponse:
+  custom.LoginResponse:
     properties:
       token:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -200,7 +84,13 @@ definitions:
             type: array
         type: object
     type: object
-  internal_handler_custom.RegisterRequest:
+  custom.ORCIDAuthURLResponse:
+    properties:
+      url:
+        example: https://orcid.org/oauth/authorize?...
+        type: string
+    type: object
+  custom.RegisterRequest:
     properties:
       email:
         example: user@example.com
@@ -212,7 +102,7 @@ definitions:
         example: secretpassword
         type: string
     type: object
-  internal_handler_custom.RegisterResponse:
+  custom.RegisterResponse:
     properties:
       email:
         example: user@example.com
@@ -224,7 +114,7 @@ definitions:
         example: John Doe
         type: string
     type: object
-  internal_handler_custom.StatusResponse:
+  custom.StatusResponse:
     properties:
       status:
         example: ok
@@ -233,11 +123,139 @@ definitions:
         example: "2025-11-12T10:00:00Z"
         type: string
     type: object
-  internal_handler_custom.TotalUsersResponse:
+  custom.TotalUsersResponse:
     properties:
       total_users:
         example: 123
         type: integer
+    type: object
+  ent.User:
+    properties:
+      email:
+        description: Email holds the value of the "email" field.
+        type: string
+      id:
+        description: ID of the ent.
+        type: string
+      name:
+        description: Name holds the value of the "name" field.
+        type: string
+      orcid_id:
+        description: OrcidID holds the value of the "orcid_id" field.
+        type: string
+    type: object
+  entities.Project:
+    properties:
+      description:
+        type: string
+      endDate:
+        type: string
+      id:
+        type: string
+      organisation:
+        type: string
+      people:
+        items:
+          type: string
+        type: array
+      startDate:
+        type: string
+      title:
+        type: string
+      version:
+        type: integer
+    type: object
+  entities.ProjectNotification:
+    properties:
+      id:
+        type: string
+      message:
+        type: string
+      projectId:
+        type: string
+      sentAt:
+        type: string
+      user:
+        $ref: '#/definitions/ent.User'
+    type: object
+  organisationdto.Response:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  persondto.Response:
+    properties:
+      email:
+        type: string
+      familyName:
+        type: string
+      givenName:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  projectdto.Response:
+    properties:
+      description:
+        example: This is a new project
+        type: string
+      endDate:
+        example: "2025-12-31T23:59:59Z"
+        type: string
+      id:
+        type: string
+      organization:
+        $ref: '#/definitions/organisationdto.Response'
+      people:
+        items:
+          $ref: '#/definitions/persondto.Response'
+        type: array
+      startDate:
+        example: "2025-01-01T00:00:00Z"
+        type: string
+      title:
+        example: New Project
+        type: string
+      version:
+        type: integer
+    type: object
+  projectdto.StartRequest:
+    properties:
+      description:
+        example: This is a new project
+        type: string
+      endDate:
+        example: "2025-12-31T23:59:59Z"
+        type: string
+      organisationID:
+        type: string
+      startDate:
+        example: "2025-01-01T00:00:00Z"
+        type: string
+      title:
+        example: New Project
+        type: string
+    type: object
+  projectdto.UpdateRequest:
+    properties:
+      description:
+        example: This is an updated project
+        type: string
+      endDate:
+        example: "2025-12-31T23:59:59Z"
+        type: string
+      organisationID:
+        type: string
+      startDate:
+        example: "2025-01-01T00:00:00Z"
+        type: string
+      title:
+        example: Updated Project
+        type: string
     type: object
 host: localhost:8080
 info:
@@ -268,16 +286,106 @@ paths:
         "401":
           description: User not authenticated
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/auth.BackendError'
         "403":
           description: Insufficient permissions
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/auth.BackendError'
       security:
       - BearerAuth: []
       summary: Get all users (Admin only)
       tags:
       - admin
+  /auth/orcid/link:
+    post:
+      consumes:
+      - application/json
+      description: Links an ORCID ID to the authenticated user's account
+      parameters:
+      - description: ORCID link request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/custom.LinkORCIDRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/custom.StatusResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/auth.BackendError'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/auth.BackendError'
+        "409":
+          description: ORCID ID already linked
+          schema:
+            $ref: '#/definitions/auth.BackendError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/auth.BackendError'
+      security:
+      - BearerAuth: []
+      summary: Link ORCID ID
+      tags:
+      - auth
+  /auth/orcid/unlink:
+    post:
+      consumes:
+      - application/json
+      description: Unlinks the ORCID ID from the authenticated user's account
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/custom.StatusResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/auth.BackendError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/auth.BackendError'
+      security:
+      - BearerAuth: []
+      summary: Unlink ORCID ID
+      tags:
+      - auth
+  /auth/orcid/url:
+    get:
+      consumes:
+      - application/json
+      description: Returns the URL to redirect the user to for ORCID authentication
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/custom.ORCIDAuthURLResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/auth.BackendError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/auth.BackendError'
+      security:
+      - BearerAuth: []
+      summary: Get ORCID authorization URL
+      tags:
+      - auth
   /health:
     get:
       consumes:
@@ -289,7 +397,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handler_custom.StatusResponse'
+            $ref: '#/definitions/custom.StatusResponse'
       summary: Health check
       tags:
       - status
@@ -304,22 +412,22 @@ paths:
         name: credentials
         required: true
         schema:
-          $ref: '#/definitions/internal_handler_custom.LoginRequest'
+          $ref: '#/definitions/custom.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handler_custom.LoginResponse'
+            $ref: '#/definitions/custom.LoginResponse'
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/auth.BackendError'
         "401":
           description: Invalid credentials
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/auth.BackendError'
       summary: Login user
       tags:
       - auth
@@ -335,7 +443,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProjectNotification'
+              $ref: '#/definitions/entities.ProjectNotification'
             type: array
         "401":
           description: unauthorized
@@ -359,11 +467,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser'
+            $ref: '#/definitions/auth.AuthenticatedUser'
         "401":
           description: User not authenticated
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/auth.BackendError'
       security:
       - BearerAuth: []
       summary: Get user profile
@@ -381,7 +489,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project'
+              $ref: '#/definitions/entities.Project'
             type: array
         "500":
           description: internal server error
@@ -400,14 +508,14 @@ paths:
         name: project
         required: true
         schema:
-          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.StartRequest'
+          $ref: '#/definitions/projectdto.StartRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project'
+            $ref: '#/definitions/entities.Project'
         "400":
           description: invalid body or date format
           schema:
@@ -436,7 +544,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project'
+            $ref: '#/definitions/entities.Project'
         "400":
           description: invalid project id
           schema:
@@ -463,14 +571,14 @@ paths:
         name: project
         required: true
         schema:
-          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.UpdateRequest'
+          $ref: '#/definitions/projectdto.UpdateRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project'
+            $ref: '#/definitions/entities.Project'
         "400":
           description: invalid body, id or date format
           schema:
@@ -503,7 +611,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.Changelog'
+            $ref: '#/definitions/changelogdto.Changelog'
         "400":
           description: invalid project id
           schema:
@@ -537,7 +645,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response'
+            $ref: '#/definitions/projectdto.Response'
         "400":
           description: invalid project id or person id
           schema:
@@ -570,7 +678,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project'
+            $ref: '#/definitions/entities.Project'
         "400":
           description: invalid project id or body
           schema:
@@ -593,22 +701,22 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/internal_handler_custom.RegisterRequest'
+          $ref: '#/definitions/custom.RegisterRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_handler_custom.RegisterResponse'
+            $ref: '#/definitions/custom.RegisterResponse'
         "400":
           description: Invalid request body or missing fields
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/auth.BackendError'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/auth.BackendError'
       summary: Register a new user
       tags:
       - auth
@@ -623,7 +731,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handler_custom.StatusResponse'
+            $ref: '#/definitions/custom.StatusResponse'
       summary: Check API status
       tags:
       - status
@@ -638,15 +746,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handler_custom.TotalUsersResponse'
+            $ref: '#/definitions/custom.TotalUsersResponse'
         "401":
           description: User not authenticated
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/auth.BackendError'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/auth.BackendError'
       security:
       - BearerAuth: []
       summary: Get total user count

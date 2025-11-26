@@ -22,7 +22,9 @@ type User struct {
 	// Email holds the value of the "email" field.
 	Email string `json:"email,omitempty"`
 	// Password holds the value of the "password" field.
-	Password     string `json:"-"`
+	Password string `json:"-"`
+	// OrcidID holds the value of the "orcid_id" field.
+	OrcidID      string `json:"orcid_id,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -31,7 +33,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldName, user.FieldEmail, user.FieldPassword:
+		case user.FieldName, user.FieldEmail, user.FieldPassword, user.FieldOrcidID:
 			values[i] = new(sql.NullString)
 		case user.FieldID:
 			values[i] = new(uuid.UUID)
@@ -73,6 +75,12 @@ func (_m *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field password", values[i])
 			} else if value.Valid {
 				_m.Password = value.String
+			}
+		case user.FieldOrcidID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field orcid_id", values[i])
+			} else if value.Valid {
+				_m.OrcidID = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -117,6 +125,9 @@ func (_m *User) String() string {
 	builder.WriteString(_m.Email)
 	builder.WriteString(", ")
 	builder.WriteString("password=<sensitive>")
+	builder.WriteString(", ")
+	builder.WriteString("orcid_id=")
+	builder.WriteString(_m.OrcidID)
 	builder.WriteByte(')')
 	return builder.String()
 }

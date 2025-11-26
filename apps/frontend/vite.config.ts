@@ -12,15 +12,16 @@ export default defineConfig({
     },
   },
   server: {
+    host: "127.0.0.1",
     port: 3000,
     proxy: {
       "/api": {
-        target: "http://localhost:8080", // Go backend dev server running on host
+        target: "http://127.0.0.1:8080", // Go backend dev server running on host
         changeOrigin: true,
       },
       // Proxy OpenAPI spec access during development for orval to read it
       "/openapi.json": {
-        target: "http://localhost:8080",
+        target: "http://127.0.0.1:8080",
         changeOrigin: true,
       },
     },

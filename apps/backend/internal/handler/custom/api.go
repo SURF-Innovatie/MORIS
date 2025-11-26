@@ -18,6 +18,11 @@ func MountCustomHandlers(r chi.Router, h *Handler) {
 		r.Get("/profile", h.Profile)
 		r.Get("/users/count", h.TotalUserCount)
 
+		// ORCID
+		r.Get("/auth/orcid/url", h.GetORCIDAuthURL)
+		r.Post("/auth/orcid/link", h.LinkORCID)
+		r.Post("/auth/orcid/unlink", h.UnlinkORCID)
+
 		r.Group(func(r chi.Router) {
 			r.Use(auth.RequireRoleMiddleware("admin"))
 			r.Get("/admin/users/list", h.AdminUserList)

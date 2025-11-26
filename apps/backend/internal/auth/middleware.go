@@ -17,9 +17,10 @@ const userContextKey contextKey = "user" // Key to store user info in context
 // AuthenticatedUser represents the user's information after authentication
 // used by Swagger for API documentation
 type AuthenticatedUser struct {
-	ID    uuid.UUID `json:"id" example:"1"`
-	Email string    `json:"email" example:"admin@example.com"`
-	Roles []string  `json:"roles" example:"admin,user"`
+	ID      uuid.UUID `json:"id" example:"1"`
+	Email   string    `json:"email" example:"admin@example.com"`
+	OrcidID string    `json:"orcid_id,omitempty" example:"0000-0000-0000-0000"`
+	Roles   []string  `json:"roles" example:"admin,user"`
 	// Add other relevant user data
 }
 

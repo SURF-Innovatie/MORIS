@@ -239,14 +239,14 @@ const DashboardRoute = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {project.organisation && (
+                  {/* {project.organisation && (
                     <div className="flex items-center gap-2 text-sm">
                       <Building2 className="h-4 w-4 text-muted-foreground" />
                       <span className="text-muted-foreground">
-                        {project.organisation.name}
+                        {project.organisation}
                       </span>
                     </div>
-                  )}
+                  )} */}
                   <div className="flex items-center gap-2 text-sm">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="text-muted-foreground">
@@ -294,7 +294,8 @@ const DashboardRoute = () => {
                         {project.description || "No description"}
                       </TableCell>
                       <TableCell>
-                        {project.organisation?.name || "N/A"}
+                        {/* {project.organisation || "N/A"} */}
+                        N/A
                       </TableCell>
                       <TableCell>{formatDate(project.startDate)}</TableCell>
                       <TableCell>{formatDate(project.endDate)}</TableCell>

@@ -18,6 +18,9 @@ type Service interface {
 	Login(ctx context.Context, email, password string) (string, *AuthenticatedUser, error)
 	ValidateToken(tokenString string) (*AuthenticatedUser, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (*ent.User, error)
+	GenerateORCIDAuthURL(ctx context.Context) (string, error)
+	LinkORCID(ctx context.Context, userID uuid.UUID, code string) error
+	UnlinkORCID(ctx context.Context, userID uuid.UUID) error
 }
 
 type service struct {
@@ -79,8 +82,10 @@ func (s *service) Login(ctx context.Context, email, password string) (string, *A
 	}
 
 	authUser := &AuthenticatedUser{
-		ID:    usr.ID,
-		Email: usr.Email,
+		ID:      usr.ID,
+		Email:   usr.Email,
+		OrcidID: usr.OrcidID,
+		//Roles:   usr.Roles,
 	}
 
 	return token, authUser, nil
@@ -94,10 +99,11 @@ func (s *service) generateJWT(usr *ent.User) (string, error) {
 	}
 
 	claims := jwt.MapClaims{
-		"user_id": usr.ID,
-		"email":   usr.Email,
-		"exp":     time.Now().Add(time.Hour * 24 * 7).Unix(), // 7 days expiry
-		"iat":     time.Now().Unix(),
+		"user_id":  usr.ID,
+		"email":    usr.Email,
+		"orcid_id": usr.OrcidID,
+		"exp":      time.Now().Add(time.Hour * 24 * 7).Unix(), // 7 days expiry
+		"iat":      time.Now().Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -152,23 +158,26 @@ func (s *service) ValidateToken(tokenString string) (*AuthenticatedUser, error) 
 		return nil, fmt.Errorf("invalid email in token")
 	}
 
-	rolesInterface, ok := claims["roles"].([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("invalid roles in token")
-	}
+	orcidID, _ := claims["orcid_id"].(string) // Optional field
 
-	roles := make([]string, len(rolesInterface))
-	for i, r := range rolesInterface {
-		roles[i], ok = r.(string)
-		if !ok {
-			return nil, fmt.Errorf("invalid role format in token")
-		}
-	}
+	//rolesInterface, ok := claims["roles"].([]interface{})
+	//if !ok {
+	//	return nil, fmt.Errorf("invalid roles in token")
+	//}
+
+	//roles := make([]string, len(rolesInterface))
+	//for i, r := range rolesInterface {
+	//	roles[i], ok = r.(string)
+	//	if !ok {
+	//		return nil, fmt.Errorf("invalid role format in token")
+	//	}
+	//}
 
 	return &AuthenticatedUser{
-		ID:    uid,
-		Email: email,
-		Roles: roles,
+		ID:      uid,
+		Email:   email,
+		OrcidID: orcidID,
+		//Roles:   roles,
 	}, nil
 }
 
@@ -179,4 +188,54 @@ func (s *service) GetUserByID(ctx context.Context, id uuid.UUID) (*ent.User, err
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 	return usr, nil
+}
+
+// GenerateORCIDAuthURL generates the ORCID authorization URL
+func (s *service) GenerateORCIDAuthURL(ctx context.Context) (string, error) {
+	config, err := GetORCIDConfig()
+	if err != nil {
+		return "", err
+	}
+	return config.GenerateAuthURL(), nil
+}
+
+// LinkORCID links an ORCID ID to a user account
+func (s *service) LinkORCID(ctx context.Context, userID uuid.UUID, code string) error {
+	config, err := GetORCIDConfig()
+	if err != nil {
+		return err
+	}
+
+	orcidID, err := config.ExchangeCode(ctx, code)
+	if err != nil {
+		return err
+	}
+
+	// Check if ORCID is already linked to another user
+	exists, err := s.client.User.Query().Where(user.OrcidIDEQ(orcidID)).Exist(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to check if ORCID is already linked: %w", err)
+	}
+	if exists {
+		return fmt.Errorf("ORCID ID is already linked to another account")
+	}
+
+	// Update user with ORCID ID
+	_, err = s.client.User.UpdateOneID(userID).SetOrcidID(orcidID).Save(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to link ORCID ID: %w", err)
+	}
+
+	return nil
+}
+
+// UnlinkORCID removes the ORCID ID from a user account
+func (s *service) UnlinkORCID(ctx context.Context, userID uuid.UUID) error {
+	// Update user to remove ORCID ID
+	_, err := s.client.User.UpdateOneID(userID).ClearOrcidID().Save(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to unlink ORCID ID: %w", err)
+	}
+
+	return nil
 }

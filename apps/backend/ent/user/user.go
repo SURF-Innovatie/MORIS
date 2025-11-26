@@ -18,6 +18,8 @@ const (
 	FieldEmail = "email"
 	// FieldPassword holds the string denoting the password field in the database.
 	FieldPassword = "password"
+	// FieldOrcidID holds the string denoting the orcid_id field in the database.
+	FieldOrcidID = "orcid_id"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 )
@@ -28,6 +30,7 @@ var Columns = []string{
 	FieldName,
 	FieldEmail,
 	FieldPassword,
+	FieldOrcidID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -70,4 +73,9 @@ func ByEmail(opts ...sql.OrderTermOption) OrderOption {
 // ByPassword orders the results by the password field.
 func ByPassword(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPassword, opts...).ToFunc()
+}
+
+// ByOrcidID orders the results by the orcid_id field.
+func ByOrcidID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOrcidID, opts...).ToFunc()
 }

@@ -38,6 +38,20 @@ func (_c *UserCreate) SetPassword(v string) *UserCreate {
 	return _c
 }
 
+// SetOrcidID sets the "orcid_id" field.
+func (_c *UserCreate) SetOrcidID(v string) *UserCreate {
+	_c.mutation.SetOrcidID(v)
+	return _c
+}
+
+// SetNillableOrcidID sets the "orcid_id" field if the given value is not nil.
+func (_c *UserCreate) SetNillableOrcidID(v *string) *UserCreate {
+	if v != nil {
+		_c.SetOrcidID(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *UserCreate) SetID(v uuid.UUID) *UserCreate {
 	_c.mutation.SetID(v)
@@ -160,6 +174,10 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
 		_node.Password = value
+	}
+	if value, ok := _c.mutation.OrcidID(); ok {
+		_spec.SetField(user.FieldOrcidID, field.TypeString, value)
+		_node.OrcidID = value
 	}
 	return _node, _spec
 }

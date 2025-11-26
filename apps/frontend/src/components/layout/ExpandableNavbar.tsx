@@ -1,13 +1,24 @@
-import { useState, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { Grid, Star, Zap, LogOut, Menu, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import {
+  Grid,
+  Star,
+  Zap,
+  LogOut,
+  Menu,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  User,
+} from "lucide-react";
 
-import { Button } from '../ui/button';
-import { useAuth } from '../../hooks/useAuth';
-import { useLogout } from '../../hooks/useLogout';
+import { Button } from "../ui/button";
+import { useAuth } from "../../hooks/useAuth";
+import { useLogout } from "../../hooks/useLogout";
 
 const NAV_ITEMS = [
-  { to: '/dashboard', label: 'Dashboard', icon: Grid },
+  { to: "/dashboard", label: "Dashboard", icon: Grid },
+  { to: "/dashboard/profile", label: "Profile", icon: User },
 ];
 
 interface ExpandableNavbarProps {
@@ -28,7 +39,7 @@ export const ExpandableNavbar = ({ onExpandChange }: ExpandableNavbarProps) => {
   const handleLogout = () => {
     logout(undefined, {
       onSuccess: () => {
-        navigate('/', { replace: true });
+        navigate("/", { replace: true });
       },
     });
   };
@@ -45,14 +56,23 @@ export const ExpandableNavbar = ({ onExpandChange }: ExpandableNavbarProps) => {
     <>
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between bg-background border-b border-white/10 px-4 py-3">
-        <NavLink to="/dashboard" className="flex items-center gap-2 text-lg font-semibold">
+        <NavLink
+          to="/dashboard"
+          className="flex items-center gap-2 text-lg font-semibold"
+        >
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Star className="h-6 w-6" aria-hidden />
           </span>
-          <span className="font-display text-lg tracking-tight text-foreground">MORIS UI</span>
+          <span className="font-display text-lg tracking-tight text-foreground">
+            MORIS UI
+          </span>
         </NavLink>
         <Button variant="ghost" size="sm" onClick={toggleMobileMenu}>
-          {isMobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {isMobileOpen ? (
+            <X className="h-6 w-6" />
+          ) : (
+            <Menu className="h-6 w-6" />
+          )}
         </Button>
       </div>
 
@@ -65,15 +85,15 @@ export const ExpandableNavbar = ({ onExpandChange }: ExpandableNavbarProps) => {
                 <NavLink
                   key={to}
                   to={to}
-                  end={to === '/dashboard'}
+                  end={to === "/dashboard"}
                   onClick={() => setIsMobileOpen(false)}
                   className={({ isActive }) =>
                     [
-                      'flex items-center gap-3 rounded-xl px-4 py-3 transition-colors duration-200',
+                      "flex items-center gap-3 rounded-xl px-4 py-3 transition-colors duration-200",
                       isActive
-                        ? 'bg-primary/15 text-primary'
-                        : 'text-muted-foreground hover:bg-white/10 hover:text-foreground',
-                    ].join(' ')
+                        ? "bg-primary/15 text-primary"
+                        : "text-muted-foreground hover:bg-white/10 hover:text-foreground",
+                    ].join(" ")
                   }
                 >
                   <Icon className="h-5 w-5" aria-hidden />
@@ -85,11 +105,23 @@ export const ExpandableNavbar = ({ onExpandChange }: ExpandableNavbarProps) => {
             <div className="mt-auto space-y-4">
               {user && (
                 <div className="px-4 py-2 text-sm text-muted-foreground">
-                  Logged in as <span className="font-medium text-foreground">{user.email}</span>
+                  Logged in as{" "}
+                  <span className="font-medium text-foreground">
+                    {user.email}
+                  </span>
                 </div>
               )}
-              <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
-                <a href="https://ui.shadcn.com/components" target="_blank" rel="noreferrer">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start"
+                asChild
+              >
+                <a
+                  href="https://ui.shadcn.com/components"
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   <Zap className="mr-2 h-4 w-4" aria-hidden /> Browse components
                 </a>
               </Button>
@@ -109,7 +141,7 @@ export const ExpandableNavbar = ({ onExpandChange }: ExpandableNavbarProps) => {
       {/* Desktop Sidebar */}
       <aside
         className={`hidden lg:flex fixed left-0 top-0 bottom-0 z-40 flex-col bg-background border-r border-white/10 transition-all duration-300 ${
-          isExpanded ? 'w-64' : 'w-20'
+          isExpanded ? "w-64" : "w-20"
         }`}
       >
         {/* Logo Section */}
@@ -120,7 +152,9 @@ export const ExpandableNavbar = ({ onExpandChange }: ExpandableNavbarProps) => {
                 <Star className="h-6 w-6" aria-hidden />
               </span>
               <div className="flex flex-col">
-                <span className="font-display text-lg tracking-tight text-foreground">MORIS UI</span>
+                <span className="font-display text-lg tracking-tight text-foreground">
+                  MORIS UI
+                </span>
                 <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
                   Powered by shadcn
                 </span>
@@ -139,9 +173,13 @@ export const ExpandableNavbar = ({ onExpandChange }: ExpandableNavbarProps) => {
         <button
           onClick={toggleSidebar}
           className="absolute -right-3 top-20 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors"
-          aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
+          aria-label={isExpanded ? "Collapse sidebar" : "Expand sidebar"}
         >
-          {isExpanded ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          {isExpanded ? (
+            <ChevronLeft className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
         </button>
 
         {/* Navigation */}
@@ -150,15 +188,15 @@ export const ExpandableNavbar = ({ onExpandChange }: ExpandableNavbarProps) => {
             <NavLink
               key={to}
               to={to}
-              end={to === '/dashboard'}
+              end={to === "/dashboard"}
               className={({ isActive }) =>
                 [
-                  'flex items-center gap-3 rounded-xl px-3 py-2 transition-colors duration-200',
+                  "flex items-center gap-3 rounded-xl px-3 py-2 transition-colors duration-200",
                   isActive
-                    ? 'bg-primary/15 text-primary'
-                    : 'text-muted-foreground hover:bg-white/10 hover:text-foreground',
-                  !isExpanded && 'justify-center',
-                ].join(' ')
+                    ? "bg-primary/15 text-primary"
+                    : "text-muted-foreground hover:bg-white/10 hover:text-foreground",
+                  !isExpanded && "justify-center",
+                ].join(" ")
               }
               title={!isExpanded ? label : undefined}
             >
@@ -178,24 +216,34 @@ export const ExpandableNavbar = ({ onExpandChange }: ExpandableNavbarProps) => {
           <Button
             variant="ghost"
             size="sm"
-            className={`w-full ${isExpanded ? 'justify-start' : 'justify-center'}`}
+            className={`w-full ${isExpanded ? "justify-start" : "justify-center"}`}
             asChild
-            title={!isExpanded ? 'Browse components' : undefined}
+            title={!isExpanded ? "Browse components" : undefined}
           >
-            <a href="https://ui.shadcn.com/components" target="_blank" rel="noreferrer">
-              <Zap className={`h-4 w-4 ${isExpanded ? 'mr-2' : ''}`} aria-hidden />
-              {isExpanded && 'Browse components'}
+            <a
+              href="https://ui.shadcn.com/components"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Zap
+                className={`h-4 w-4 ${isExpanded ? "mr-2" : ""}`}
+                aria-hidden
+              />
+              {isExpanded && "Browse components"}
             </a>
           </Button>
           <Button
             size="sm"
             variant="destructive"
-            className={`w-full ${isExpanded ? 'justify-start' : 'justify-center'}`}
+            className={`w-full ${isExpanded ? "justify-start" : "justify-center"}`}
             onClick={handleLogout}
-            title={!isExpanded ? 'Logout' : undefined}
+            title={!isExpanded ? "Logout" : undefined}
           >
-            <LogOut className={`h-4 w-4 ${isExpanded ? 'mr-2' : ''}`} aria-hidden />
-            {isExpanded && 'Logout'}
+            <LogOut
+              className={`h-4 w-4 ${isExpanded ? "mr-2" : ""}`}
+              aria-hidden
+            />
+            {isExpanded && "Logout"}
           </Button>
         </div>
       </aside>

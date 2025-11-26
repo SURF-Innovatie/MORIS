@@ -29,7 +29,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                  "$ref": "#/components/schemas/auth.BackendError"
                 }
               }
             }
@@ -39,7 +39,176 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                  "$ref": "#/components/schemas/auth.BackendError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/auth/orcid/link": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Link ORCID ID",
+        "description": "Links an ORCID ID to the authenticated user's account",
+        "requestBody": {
+          "description": "ORCID link request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/custom.LinkORCIDRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/custom.StatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/auth.BackendError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/auth.BackendError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ORCID ID already linked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/auth.BackendError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/auth.BackendError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/auth/orcid/unlink": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Unlink ORCID ID",
+        "description": "Unlinks the ORCID ID from the authenticated user's account",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/custom.StatusResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/auth.BackendError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/auth.BackendError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/auth/orcid/url": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Get ORCID authorization URL",
+        "description": "Returns the URL to redirect the user to for ORCID authentication",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/custom.ORCIDAuthURLResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/auth.BackendError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/auth.BackendError"
                 }
               }
             }
@@ -65,7 +234,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.StatusResponse"
+                  "$ref": "#/components/schemas/custom.StatusResponse"
                 }
               }
             }
@@ -85,7 +254,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/internal_handler_custom.LoginRequest"
+                "$ref": "#/components/schemas/custom.LoginRequest"
               }
             }
           },
@@ -97,7 +266,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.LoginResponse"
+                  "$ref": "#/components/schemas/custom.LoginResponse"
                 }
               }
             }
@@ -107,7 +276,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                  "$ref": "#/components/schemas/auth.BackendError"
                 }
               }
             }
@@ -117,7 +286,51 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                  "$ref": "#/components/schemas/auth.BackendError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Get notifications for the logged-in user",
+        "description": "Retrieves a list of notifications for the authenticated user",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/entities.ProjectNotification"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
                 }
               }
             }
@@ -138,7 +351,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser"
+                  "$ref": "#/components/schemas/auth.AuthenticatedUser"
                 }
               }
             }
@@ -148,7 +361,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                  "$ref": "#/components/schemas/auth.BackendError"
                 }
               }
             }
@@ -176,7 +389,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                    "$ref": "#/components/schemas/entities.Project"
                   }
                 }
               }
@@ -205,7 +418,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/internal_handler_project.StartRequest"
+                "$ref": "#/components/schemas/projectdto.StartRequest"
               }
             }
           },
@@ -217,7 +430,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                  "$ref": "#/components/schemas/entities.Project"
                 }
               }
             }
@@ -269,7 +482,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                  "$ref": "#/components/schemas/entities.Project"
                 }
               }
             }
@@ -295,9 +508,132 @@
             }
           }
         }
+      },
+      "put": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Update a project",
+        "description": "Updates an existing project with the provided details",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Project ID (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Project details",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/projectdto.UpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/entities.Project"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid body, id or date format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "project not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
       }
     },
-    "/projects/{id}/people": {
+    "/projects/{id}/changelog": {
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Get change log for a project",
+        "description": "Retrieves the change log for a specific project",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Project ID (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/changelogdto.Changelog"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid project id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{id}/people/{personId}": {
       "post": {
         "tags": [
           "projects"
@@ -313,26 +649,24 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "personId",
+            "in": "path",
+            "description": "Person ID (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
-        "requestBody": {
-          "description": "Person details",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/internal_handler_project.personRequest"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                  "$ref": "#/components/schemas/entities.Project"
                 }
               }
             }
@@ -358,9 +692,7 @@
             }
           }
         }
-      }
-    },
-    "/projects/{id}/people/{personId}": {
+      },
       "delete": {
         "tags": [
           "projects"
@@ -393,7 +725,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                  "$ref": "#/components/schemas/projectdto.Response"
                 }
               }
             }
@@ -433,7 +765,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/internal_handler_custom.RegisterRequest"
+                "$ref": "#/components/schemas/custom.RegisterRequest"
               }
             }
           },
@@ -445,7 +777,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.RegisterResponse"
+                  "$ref": "#/components/schemas/custom.RegisterResponse"
                 }
               }
             }
@@ -455,7 +787,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                  "$ref": "#/components/schemas/auth.BackendError"
                 }
               }
             }
@@ -465,7 +797,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                  "$ref": "#/components/schemas/auth.BackendError"
                 }
               }
             }
@@ -486,7 +818,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.StatusResponse"
+                  "$ref": "#/components/schemas/custom.StatusResponse"
                 }
               }
             }
@@ -507,7 +839,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.TotalUsersResponse"
+                  "$ref": "#/components/schemas/custom.TotalUsersResponse"
                 }
               }
             }
@@ -517,7 +849,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                  "$ref": "#/components/schemas/auth.BackendError"
                 }
               }
             }
@@ -527,7 +859,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                  "$ref": "#/components/schemas/auth.BackendError"
                 }
               }
             }
@@ -860,6 +1192,9 @@
           },
           "password": {
             "type": "string"
+          },
+          "orcid_id": {
+            "type": "string"
           }
         },
         "required": [
@@ -869,7 +1204,7 @@
           "password"
         ]
       },
-      "github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser": {
+      "auth.AuthenticatedUser": {
         "type": "object",
         "properties": {
           "email": {
@@ -877,8 +1212,12 @@
             "example": "admin@example.com"
           },
           "id": {
-            "type": "integer",
-            "example": 1
+            "type": "string",
+            "example": "1"
+          },
+          "orcid_id": {
+            "type": "string",
+            "example": "0000-0000-0000-0000"
           },
           "roles": {
             "type": "array",
@@ -892,7 +1231,7 @@
           }
         }
       },
-      "github_com_SURF-Innovatie_MORIS_internal_auth.BackendError": {
+      "auth.BackendError": {
         "type": "object",
         "properties": {
           "code": {
@@ -913,61 +1252,38 @@
           }
         }
       },
-      "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Organisation": {
+      "changelogdto.Changelog": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          }
-        }
-      },
-      "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Person": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          }
-        }
-      },
-      "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project": {
-        "type": "object",
-        "properties": {
-          "description": {
-            "type": "string"
-          },
-          "endDate": {
-            "type": "string"
-          },
-          "id": {
-            "type": "string"
-          },
-          "organisation": {
-            "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Organisation"
-          },
-          "people": {
+          "entries": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Person"
+              "$ref": "#/components/schemas/changelogdto.ChangelogEntry"
             }
-          },
-          "startDate": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "version": {
-            "type": "integer"
           }
         }
       },
-      "internal_handler_custom.LoginRequest": {
+      "changelogdto.ChangelogEntry": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "event": {
+            "type": "string"
+          }
+        }
+      },
+      "custom.LinkORCIDRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "authentication_code_from_orcid"
+          }
+        }
+      },
+      "custom.LoginRequest": {
         "type": "object",
         "properties": {
           "email": {
@@ -980,7 +1296,7 @@
           }
         }
       },
-      "internal_handler_custom.LoginResponse": {
+      "custom.LoginResponse": {
         "type": "object",
         "properties": {
           "token": {
@@ -995,8 +1311,8 @@
                 "example": "user@example.com"
               },
               "id": {
-                "type": "integer",
-                "example": 1
+                "type": "string",
+                "example": "1"
               },
               "roles": {
                 "type": "array",
@@ -1011,7 +1327,16 @@
           }
         }
       },
-      "internal_handler_custom.RegisterRequest": {
+      "custom.ORCIDAuthURLResponse": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "example": "https://orcid.org/oauth/authorize?..."
+          }
+        }
+      },
+      "custom.RegisterRequest": {
         "type": "object",
         "properties": {
           "email": {
@@ -1028,7 +1353,7 @@
           }
         }
       },
-      "internal_handler_custom.RegisterResponse": {
+      "custom.RegisterResponse": {
         "type": "object",
         "properties": {
           "email": {
@@ -1036,8 +1361,8 @@
             "example": "user@example.com"
           },
           "id": {
-            "type": "integer",
-            "example": 1
+            "type": "string",
+            "example": "1"
           },
           "name": {
             "type": "string",
@@ -1045,7 +1370,7 @@
           }
         }
       },
-      "internal_handler_custom.StatusResponse": {
+      "custom.StatusResponse": {
         "type": "object",
         "properties": {
           "status": {
@@ -1058,7 +1383,7 @@
           }
         }
       },
-      "internal_handler_custom.TotalUsersResponse": {
+      "custom.TotalUsersResponse": {
         "type": "object",
         "properties": {
           "total_users": {
@@ -1067,7 +1392,111 @@
           }
         }
       },
-      "internal_handler_project.StartRequest": {
+      "ent.User": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "description": "Email holds the value of the \"email\" field.",
+            "type": "string"
+          },
+          "id": {
+            "description": "ID of the ent.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name holds the value of the \"name\" field.",
+            "type": "string"
+          },
+          "orcid_id": {
+            "description": "OrcidID holds the value of the \"orcid_id\" field.",
+            "type": "string"
+          }
+        }
+      },
+      "entities.Project": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "organisation": {
+            "type": "string"
+          },
+          "people": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          }
+        }
+      },
+      "entities.ProjectNotification": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "sentAt": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/ent.User"
+          }
+        }
+      },
+      "organisationdto.Response": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "persondto.Response": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "familyName": {
+            "type": "string"
+          },
+          "givenName": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "projectdto.Response": {
         "type": "object",
         "properties": {
           "description": {
@@ -1078,9 +1507,44 @@
             "type": "string",
             "example": "2025-12-31T23:59:59Z"
           },
-          "organisation": {
+          "id": {
+            "type": "string"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/organisationdto.Response"
+          },
+          "people": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/persondto.Response"
+            }
+          },
+          "startDate": {
             "type": "string",
-            "example": "SURF"
+            "example": "2025-01-01T00:00:00Z"
+          },
+          "title": {
+            "type": "string",
+            "example": "New Project"
+          },
+          "version": {
+            "type": "integer"
+          }
+        }
+      },
+      "projectdto.StartRequest": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "example": "This is a new project"
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2025-12-31T23:59:59Z"
+          },
+          "organisationID": {
+            "type": "string"
           },
           "startDate": {
             "type": "string",
@@ -1092,11 +1556,27 @@
           }
         }
       },
-      "internal_handler_project.personRequest": {
+      "projectdto.UpdateRequest": {
         "type": "object",
         "properties": {
-          "name": {
+          "description": {
+            "type": "string",
+            "example": "This is an updated project"
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2025-12-31T23:59:59Z"
+          },
+          "organisationID": {
             "type": "string"
+          },
+          "startDate": {
+            "type": "string",
+            "example": "2025-01-01T00:00:00Z"
+          },
+          "title": {
+            "type": "string",
+            "example": "Updated Project"
           }
         }
       }
