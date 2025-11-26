@@ -129,7 +129,8 @@ var (
 	}
 	// PersonRemovedEventsColumns holds the columns for the "person_removed_events" table.
 	PersonRemovedEventsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUUID},
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "person_id", Type: field.TypeUUID},
 		{Name: "event_person_removed", Type: field.TypeUUID, Unique: true},
 	}
 	// PersonRemovedEventsTable holds the schema information for the "person_removed_events" table.
@@ -140,7 +141,61 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "person_removed_events_events_person_removed",
-				Columns:    []*schema.Column{PersonRemovedEventsColumns[1]},
+				Columns:    []*schema.Column{PersonRemovedEventsColumns[2]},
+				RefColumns: []*schema.Column{EventsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// ProductsColumns holds the columns for the "products" table.
+	ProductsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "name", Type: field.TypeString},
+		{Name: "language", Type: field.TypeString, Nullable: true},
+		{Name: "type", Type: field.TypeInt, Nullable: true},
+		{Name: "doi", Type: field.TypeString, Nullable: true},
+	}
+	// ProductsTable holds the schema information for the "products" table.
+	ProductsTable = &schema.Table{
+		Name:       "products",
+		Columns:    ProductsColumns,
+		PrimaryKey: []*schema.Column{ProductsColumns[0]},
+	}
+	// ProductAddedEventsColumns holds the columns for the "product_added_events" table.
+	ProductAddedEventsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "product_id", Type: field.TypeUUID},
+		{Name: "event_product_added", Type: field.TypeUUID, Unique: true},
+	}
+	// ProductAddedEventsTable holds the schema information for the "product_added_events" table.
+	ProductAddedEventsTable = &schema.Table{
+		Name:       "product_added_events",
+		Columns:    ProductAddedEventsColumns,
+		PrimaryKey: []*schema.Column{ProductAddedEventsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "product_added_events_events_product_added",
+				Columns:    []*schema.Column{ProductAddedEventsColumns[2]},
+				RefColumns: []*schema.Column{EventsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// ProductRemovedEventsColumns holds the columns for the "product_removed_events" table.
+	ProductRemovedEventsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "product_id", Type: field.TypeUUID},
+		{Name: "event_product_removed", Type: field.TypeUUID, Unique: true},
+	}
+	// ProductRemovedEventsTable holds the schema information for the "product_removed_events" table.
+	ProductRemovedEventsTable = &schema.Table{
+		Name:       "product_removed_events",
+		Columns:    ProductRemovedEventsColumns,
+		PrimaryKey: []*schema.Column{ProductRemovedEventsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "product_removed_events_events_product_removed",
+				Columns:    []*schema.Column{ProductRemovedEventsColumns[2]},
 				RefColumns: []*schema.Column{EventsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -256,6 +311,9 @@ var (
 		PersonsTable,
 		PersonAddedEventsTable,
 		PersonRemovedEventsTable,
+		ProductsTable,
+		ProductAddedEventsTable,
+		ProductRemovedEventsTable,
 		ProjectNotificationsTable,
 		ProjectStartedEventsTable,
 		StartDateChangedEventsTable,
@@ -270,6 +328,8 @@ func init() {
 	OrganisationChangedEventsTable.ForeignKeys[0].RefTable = EventsTable
 	PersonAddedEventsTable.ForeignKeys[0].RefTable = EventsTable
 	PersonRemovedEventsTable.ForeignKeys[0].RefTable = EventsTable
+	ProductAddedEventsTable.ForeignKeys[0].RefTable = EventsTable
+	ProductRemovedEventsTable.ForeignKeys[0].RefTable = EventsTable
 	ProjectNotificationsTable.ForeignKeys[0].RefTable = UsersTable
 	ProjectStartedEventsTable.ForeignKeys[0].RefTable = EventsTable
 	StartDateChangedEventsTable.ForeignKeys[0].RefTable = EventsTable

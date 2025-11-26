@@ -30,6 +30,15 @@ type PersonAddedEvent func(*sql.Selector)
 // PersonRemovedEvent is the predicate function for personremovedevent builders.
 type PersonRemovedEvent func(*sql.Selector)
 
+// Product is the predicate function for product builders.
+type Product func(*sql.Selector)
+
+// ProductAddedEvent is the predicate function for productaddedevent builders.
+type ProductAddedEvent func(*sql.Selector)
+
+// ProductRemovedEvent is the predicate function for productremovedevent builders.
+type ProductRemovedEvent func(*sql.Selector)
+
 // ProjectNotification is the predicate function for projectnotification builders.
 type ProjectNotification func(*sql.Selector)
 

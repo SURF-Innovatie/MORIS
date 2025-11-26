@@ -126,6 +126,37 @@ func RemovePerson(id uuid.UUID, cur *entities.Project, personId uuid.UUID) (even
 	return events.PersonRemoved{Base: base(id), PersonId: personId}, nil
 }
 
+// AddProduct emits ProductAdded when not present
+func AddProduct(id uuid.UUID, cur *entities.Project, productID uuid.UUID) (events.Event, error) {
+	if id == uuid.Nil {
+		return nil, errors.New("project id is required")
+	}
+
+	for _, x := range cur.Products {
+		if x == productID {
+			return nil, errors.New(fmt.Sprintf("product %s already exists in project %s", productID, cur.Id))
+		}
+	}
+	return events.ProductAdded{Base: base(id), ProductID: productID}, nil
+}
+
+// RemoveProduct emits ProductRemoved when present
+func RemoveProduct(id uuid.UUID, cur *entities.Project, productID uuid.UUID) (events.Event, error) {
+	if id == uuid.Nil {
+		return nil, errors.New("project id is required")
+	}
+	exist := false
+	for _, x := range cur.People {
+		if x == productID {
+			exist = true
+		}
+	}
+	if !exist {
+		return nil, errors.New(fmt.Sprintf("product %s not found for project %s", productID, cur.Id))
+	}
+	return events.ProductRemoved{Base: base(id), ProductID: productID}, nil
+}
+
 func base(id uuid.UUID) events.Base {
 	return events.Base{ProjectID: id, At: time.Now().UTC()}
 }

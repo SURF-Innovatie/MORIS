@@ -29,6 +29,20 @@ func (_u *PersonRemovedEventUpdate) Where(ps ...predicate.PersonRemovedEvent) *P
 	return _u
 }
 
+// SetPersonID sets the "person_id" field.
+func (_u *PersonRemovedEventUpdate) SetPersonID(v uuid.UUID) *PersonRemovedEventUpdate {
+	_u.mutation.SetPersonID(v)
+	return _u
+}
+
+// SetNillablePersonID sets the "person_id" field if the given value is not nil.
+func (_u *PersonRemovedEventUpdate) SetNillablePersonID(v *uuid.UUID) *PersonRemovedEventUpdate {
+	if v != nil {
+		_u.SetPersonID(*v)
+	}
+	return _u
+}
+
 // SetEventID sets the "event" edge to the Event entity by ID.
 func (_u *PersonRemovedEventUpdate) SetEventID(id uuid.UUID) *PersonRemovedEventUpdate {
 	_u.mutation.SetEventID(id)
@@ -90,13 +104,16 @@ func (_u *PersonRemovedEventUpdate) sqlSave(ctx context.Context) (_node int, err
 	if err := _u.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(personremovedevent.Table, personremovedevent.Columns, sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeUUID))
+	_spec := sqlgraph.NewUpdateSpec(personremovedevent.Table, personremovedevent.Columns, sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeInt))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.PersonID(); ok {
+		_spec.SetField(personremovedevent.FieldPersonID, field.TypeUUID, value)
 	}
 	if _u.mutation.EventCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -145,6 +162,20 @@ type PersonRemovedEventUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *PersonRemovedEventMutation
+}
+
+// SetPersonID sets the "person_id" field.
+func (_u *PersonRemovedEventUpdateOne) SetPersonID(v uuid.UUID) *PersonRemovedEventUpdateOne {
+	_u.mutation.SetPersonID(v)
+	return _u
+}
+
+// SetNillablePersonID sets the "person_id" field if the given value is not nil.
+func (_u *PersonRemovedEventUpdateOne) SetNillablePersonID(v *uuid.UUID) *PersonRemovedEventUpdateOne {
+	if v != nil {
+		_u.SetPersonID(*v)
+	}
+	return _u
 }
 
 // SetEventID sets the "event" edge to the Event entity by ID.
@@ -221,7 +252,7 @@ func (_u *PersonRemovedEventUpdateOne) sqlSave(ctx context.Context) (_node *Pers
 	if err := _u.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(personremovedevent.Table, personremovedevent.Columns, sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeUUID))
+	_spec := sqlgraph.NewUpdateSpec(personremovedevent.Table, personremovedevent.Columns, sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeInt))
 	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "PersonRemovedEvent.id" for update`)}
@@ -245,6 +276,9 @@ func (_u *PersonRemovedEventUpdateOne) sqlSave(ctx context.Context) (_node *Pers
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.PersonID(); ok {
+		_spec.SetField(personremovedevent.FieldPersonID, field.TypeUUID, value)
 	}
 	if _u.mutation.EventCleared() {
 		edge := &sqlgraph.EdgeSpec{

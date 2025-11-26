@@ -270,7 +270,59 @@ func (s *EntStore) Append(
 			if _, err := tx.PersonRemovedEvent.
 				Create().
 				SetEvent(evRow).
-				SetID(v.PersonId).
+				SetPersonID(v.PersonId).
+				Save(ctx); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+
+		case events.ProductAdded:
+			evRow, err := tx.Event.
+				Create().
+				SetID(uuid.New()).
+				SetProjectID(projectID).
+				SetVersion(version).
+				SetType(events.ProductAddedType).
+				SetOccurredAt(now).
+				Save(ctx)
+			if err != nil {
+				_ = tx.Rollback()
+				if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+					return ErrConcurrency
+				}
+				return err
+			}
+
+			if _, err := tx.ProductAddedEvent.
+				Create().
+				SetEvent(evRow).
+				SetProductID(v.ProductID).
+				Save(ctx); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+
+		case events.ProductRemoved:
+			evRow, err := tx.Event.
+				Create().
+				SetID(uuid.New()).
+				SetProjectID(projectID).
+				SetVersion(version).
+				SetType(events.ProductRemovedType).
+				SetOccurredAt(now).
+				Save(ctx)
+			if err != nil {
+				_ = tx.Rollback()
+				if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+					return ErrConcurrency
+				}
+				return err
+			}
+
+			if _, err := tx.ProductRemovedEvent.
+				Create().
+				SetEvent(evRow).
+				SetProductID(v.ProductID).
 				Save(ctx); err != nil {
 				_ = tx.Rollback()
 				return err
@@ -301,6 +353,8 @@ func (s *EntStore) Load(
 		WithOrganisationChanged().
 		WithPersonAdded().
 		WithPersonRemoved().
+		WithProductAdded().
+		WithProductRemoved().
 		All(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -397,7 +451,27 @@ func (s *EntStore) Load(
 			}
 			out = append(out, events.PersonRemoved{
 				Base:     base,
-				PersonId: payload.ID,
+				PersonId: payload.PersonID,
+			})
+
+		case events.ProductAddedType:
+			payload := r.Edges.ProductAdded
+			if payload == nil {
+				return nil, 0, fmt.Errorf("missing ProductAdded edge for event %s", r.ID)
+			}
+			out = append(out, events.ProductAdded{
+				Base:      base,
+				ProductID: payload.ProductID,
+			})
+
+		case events.ProductRemovedType:
+			payload := r.Edges.ProductRemoved
+			if payload == nil {
+				return nil, 0, fmt.Errorf("missing ProductRemoved edge for event %s", r.ID)
+			}
+			out = append(out, events.ProductRemoved{
+				Base:      base,
+				ProductID: payload.ProductID,
 			})
 
 		default:

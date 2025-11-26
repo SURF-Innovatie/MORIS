@@ -13,6 +13,8 @@ const (
 	Label = "person_removed_event"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldPersonID holds the string denoting the person_id field in the database.
+	FieldPersonID = "person_id"
 	// EdgeEvent holds the string denoting the event edge name in mutations.
 	EdgeEvent = "event"
 	// Table holds the table name of the personremovedevent in the database.
@@ -29,6 +31,7 @@ const (
 // Columns holds all SQL columns for personremovedevent fields.
 var Columns = []string{
 	FieldID,
+	FieldPersonID,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "person_removed_events"
@@ -53,8 +56,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// DefaultID holds the default value on creation for the "id" field.
-	DefaultID func() uuid.UUID
+	// DefaultPersonID holds the default value on creation for the "person_id" field.
+	DefaultPersonID func() uuid.UUID
 )
 
 // OrderOption defines the ordering options for the PersonRemovedEvent queries.
@@ -63,6 +66,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByPersonID orders the results by the person_id field.
+func ByPersonID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPersonID, opts...).ToFunc()
 }
 
 // ByEventField orders the results by event field.

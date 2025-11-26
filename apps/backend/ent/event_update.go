@@ -18,6 +18,8 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/personremovedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/predicate"
+	"github.com/SURF-Innovatie/MORIS/ent/productaddedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/productremovedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/startdatechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/titlechangedevent"
@@ -234,13 +236,13 @@ func (_u *EventUpdate) SetPersonAdded(v *PersonAddedEvent) *EventUpdate {
 }
 
 // SetPersonRemovedID sets the "person_removed" edge to the PersonRemovedEvent entity by ID.
-func (_u *EventUpdate) SetPersonRemovedID(id uuid.UUID) *EventUpdate {
+func (_u *EventUpdate) SetPersonRemovedID(id int) *EventUpdate {
 	_u.mutation.SetPersonRemovedID(id)
 	return _u
 }
 
 // SetNillablePersonRemovedID sets the "person_removed" edge to the PersonRemovedEvent entity by ID if the given value is not nil.
-func (_u *EventUpdate) SetNillablePersonRemovedID(id *uuid.UUID) *EventUpdate {
+func (_u *EventUpdate) SetNillablePersonRemovedID(id *int) *EventUpdate {
 	if id != nil {
 		_u = _u.SetPersonRemovedID(*id)
 	}
@@ -250,6 +252,44 @@ func (_u *EventUpdate) SetNillablePersonRemovedID(id *uuid.UUID) *EventUpdate {
 // SetPersonRemoved sets the "person_removed" edge to the PersonRemovedEvent entity.
 func (_u *EventUpdate) SetPersonRemoved(v *PersonRemovedEvent) *EventUpdate {
 	return _u.SetPersonRemovedID(v.ID)
+}
+
+// SetProductAddedID sets the "product_added" edge to the ProductAddedEvent entity by ID.
+func (_u *EventUpdate) SetProductAddedID(id int) *EventUpdate {
+	_u.mutation.SetProductAddedID(id)
+	return _u
+}
+
+// SetNillableProductAddedID sets the "product_added" edge to the ProductAddedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdate) SetNillableProductAddedID(id *int) *EventUpdate {
+	if id != nil {
+		_u = _u.SetProductAddedID(*id)
+	}
+	return _u
+}
+
+// SetProductAdded sets the "product_added" edge to the ProductAddedEvent entity.
+func (_u *EventUpdate) SetProductAdded(v *ProductAddedEvent) *EventUpdate {
+	return _u.SetProductAddedID(v.ID)
+}
+
+// SetProductRemovedID sets the "product_removed" edge to the ProductRemovedEvent entity by ID.
+func (_u *EventUpdate) SetProductRemovedID(id int) *EventUpdate {
+	_u.mutation.SetProductRemovedID(id)
+	return _u
+}
+
+// SetNillableProductRemovedID sets the "product_removed" edge to the ProductRemovedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdate) SetNillableProductRemovedID(id *int) *EventUpdate {
+	if id != nil {
+		_u = _u.SetProductRemovedID(*id)
+	}
+	return _u
+}
+
+// SetProductRemoved sets the "product_removed" edge to the ProductRemovedEvent entity.
+func (_u *EventUpdate) SetProductRemoved(v *ProductRemovedEvent) *EventUpdate {
+	return _u.SetProductRemovedID(v.ID)
 }
 
 // Mutation returns the EventMutation object of the builder.
@@ -302,6 +342,18 @@ func (_u *EventUpdate) ClearPersonAdded() *EventUpdate {
 // ClearPersonRemoved clears the "person_removed" edge to the PersonRemovedEvent entity.
 func (_u *EventUpdate) ClearPersonRemoved() *EventUpdate {
 	_u.mutation.ClearPersonRemoved()
+	return _u
+}
+
+// ClearProductAdded clears the "product_added" edge to the ProductAddedEvent entity.
+func (_u *EventUpdate) ClearProductAdded() *EventUpdate {
+	_u.mutation.ClearProductAdded()
+	return _u
+}
+
+// ClearProductRemoved clears the "product_removed" edge to the ProductRemovedEvent entity.
+func (_u *EventUpdate) ClearProductRemoved() *EventUpdate {
+	_u.mutation.ClearProductRemoved()
 	return _u
 }
 
@@ -567,7 +619,7 @@ func (_u *EventUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Columns: []string{event.PersonRemovedColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -580,7 +632,65 @@ func (_u *EventUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Columns: []string{event.PersonRemovedColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ProductAddedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.ProductAddedTable,
+			Columns: []string{event.ProductAddedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(productaddedevent.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ProductAddedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.ProductAddedTable,
+			Columns: []string{event.ProductAddedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(productaddedevent.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ProductRemovedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.ProductRemovedTable,
+			Columns: []string{event.ProductRemovedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(productremovedevent.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ProductRemovedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.ProductRemovedTable,
+			Columns: []string{event.ProductRemovedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(productremovedevent.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -805,13 +915,13 @@ func (_u *EventUpdateOne) SetPersonAdded(v *PersonAddedEvent) *EventUpdateOne {
 }
 
 // SetPersonRemovedID sets the "person_removed" edge to the PersonRemovedEvent entity by ID.
-func (_u *EventUpdateOne) SetPersonRemovedID(id uuid.UUID) *EventUpdateOne {
+func (_u *EventUpdateOne) SetPersonRemovedID(id int) *EventUpdateOne {
 	_u.mutation.SetPersonRemovedID(id)
 	return _u
 }
 
 // SetNillablePersonRemovedID sets the "person_removed" edge to the PersonRemovedEvent entity by ID if the given value is not nil.
-func (_u *EventUpdateOne) SetNillablePersonRemovedID(id *uuid.UUID) *EventUpdateOne {
+func (_u *EventUpdateOne) SetNillablePersonRemovedID(id *int) *EventUpdateOne {
 	if id != nil {
 		_u = _u.SetPersonRemovedID(*id)
 	}
@@ -821,6 +931,44 @@ func (_u *EventUpdateOne) SetNillablePersonRemovedID(id *uuid.UUID) *EventUpdate
 // SetPersonRemoved sets the "person_removed" edge to the PersonRemovedEvent entity.
 func (_u *EventUpdateOne) SetPersonRemoved(v *PersonRemovedEvent) *EventUpdateOne {
 	return _u.SetPersonRemovedID(v.ID)
+}
+
+// SetProductAddedID sets the "product_added" edge to the ProductAddedEvent entity by ID.
+func (_u *EventUpdateOne) SetProductAddedID(id int) *EventUpdateOne {
+	_u.mutation.SetProductAddedID(id)
+	return _u
+}
+
+// SetNillableProductAddedID sets the "product_added" edge to the ProductAddedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableProductAddedID(id *int) *EventUpdateOne {
+	if id != nil {
+		_u = _u.SetProductAddedID(*id)
+	}
+	return _u
+}
+
+// SetProductAdded sets the "product_added" edge to the ProductAddedEvent entity.
+func (_u *EventUpdateOne) SetProductAdded(v *ProductAddedEvent) *EventUpdateOne {
+	return _u.SetProductAddedID(v.ID)
+}
+
+// SetProductRemovedID sets the "product_removed" edge to the ProductRemovedEvent entity by ID.
+func (_u *EventUpdateOne) SetProductRemovedID(id int) *EventUpdateOne {
+	_u.mutation.SetProductRemovedID(id)
+	return _u
+}
+
+// SetNillableProductRemovedID sets the "product_removed" edge to the ProductRemovedEvent entity by ID if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableProductRemovedID(id *int) *EventUpdateOne {
+	if id != nil {
+		_u = _u.SetProductRemovedID(*id)
+	}
+	return _u
+}
+
+// SetProductRemoved sets the "product_removed" edge to the ProductRemovedEvent entity.
+func (_u *EventUpdateOne) SetProductRemoved(v *ProductRemovedEvent) *EventUpdateOne {
+	return _u.SetProductRemovedID(v.ID)
 }
 
 // Mutation returns the EventMutation object of the builder.
@@ -873,6 +1021,18 @@ func (_u *EventUpdateOne) ClearPersonAdded() *EventUpdateOne {
 // ClearPersonRemoved clears the "person_removed" edge to the PersonRemovedEvent entity.
 func (_u *EventUpdateOne) ClearPersonRemoved() *EventUpdateOne {
 	_u.mutation.ClearPersonRemoved()
+	return _u
+}
+
+// ClearProductAdded clears the "product_added" edge to the ProductAddedEvent entity.
+func (_u *EventUpdateOne) ClearProductAdded() *EventUpdateOne {
+	_u.mutation.ClearProductAdded()
+	return _u
+}
+
+// ClearProductRemoved clears the "product_removed" edge to the ProductRemovedEvent entity.
+func (_u *EventUpdateOne) ClearProductRemoved() *EventUpdateOne {
+	_u.mutation.ClearProductRemoved()
 	return _u
 }
 
@@ -1168,7 +1328,7 @@ func (_u *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error)
 			Columns: []string{event.PersonRemovedColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1181,7 +1341,65 @@ func (_u *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error)
 			Columns: []string{event.PersonRemovedColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ProductAddedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.ProductAddedTable,
+			Columns: []string{event.ProductAddedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(productaddedevent.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ProductAddedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.ProductAddedTable,
+			Columns: []string{event.ProductAddedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(productaddedevent.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ProductRemovedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.ProductRemovedTable,
+			Columns: []string{event.ProductRemovedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(productremovedevent.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ProductRemovedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   event.ProductRemovedTable,
+			Columns: []string{event.ProductRemovedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(productremovedevent.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

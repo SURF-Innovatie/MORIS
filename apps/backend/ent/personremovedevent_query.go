@@ -108,8 +108,8 @@ func (_q *PersonRemovedEventQuery) FirstX(ctx context.Context) *PersonRemovedEve
 
 // FirstID returns the first PersonRemovedEvent ID from the query.
 // Returns a *NotFoundError when no PersonRemovedEvent ID was found.
-func (_q *PersonRemovedEventQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
-	var ids []uuid.UUID
+func (_q *PersonRemovedEventQuery) FirstID(ctx context.Context) (id int, err error) {
+	var ids []int
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
@@ -121,7 +121,7 @@ func (_q *PersonRemovedEventQuery) FirstID(ctx context.Context) (id uuid.UUID, e
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *PersonRemovedEventQuery) FirstIDX(ctx context.Context) uuid.UUID {
+func (_q *PersonRemovedEventQuery) FirstIDX(ctx context.Context) int {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -159,8 +159,8 @@ func (_q *PersonRemovedEventQuery) OnlyX(ctx context.Context) *PersonRemovedEven
 // OnlyID is like Only, but returns the only PersonRemovedEvent ID in the query.
 // Returns a *NotSingularError when more than one PersonRemovedEvent ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *PersonRemovedEventQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
-	var ids []uuid.UUID
+func (_q *PersonRemovedEventQuery) OnlyID(ctx context.Context) (id int, err error) {
+	var ids []int
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
@@ -176,7 +176,7 @@ func (_q *PersonRemovedEventQuery) OnlyID(ctx context.Context) (id uuid.UUID, er
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *PersonRemovedEventQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+func (_q *PersonRemovedEventQuery) OnlyIDX(ctx context.Context) int {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -204,7 +204,7 @@ func (_q *PersonRemovedEventQuery) AllX(ctx context.Context) []*PersonRemovedEve
 }
 
 // IDs executes the query and returns a list of PersonRemovedEvent IDs.
-func (_q *PersonRemovedEventQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+func (_q *PersonRemovedEventQuery) IDs(ctx context.Context) (ids []int, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
@@ -216,7 +216,7 @@ func (_q *PersonRemovedEventQuery) IDs(ctx context.Context) (ids []uuid.UUID, er
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *PersonRemovedEventQuery) IDsX(ctx context.Context) []uuid.UUID {
+func (_q *PersonRemovedEventQuery) IDsX(ctx context.Context) []int {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -296,6 +296,18 @@ func (_q *PersonRemovedEventQuery) WithEvent(opts ...func(*EventQuery)) *PersonR
 
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
+//
+// Example:
+//
+//	var v []struct {
+//		PersonID uuid.UUID `json:"person_id,omitempty"`
+//		Count int `json:"count,omitempty"`
+//	}
+//
+//	client.PersonRemovedEvent.Query().
+//		GroupBy(personremovedevent.FieldPersonID).
+//		Aggregate(ent.Count()).
+//		Scan(ctx, &v)
 func (_q *PersonRemovedEventQuery) GroupBy(field string, fields ...string) *PersonRemovedEventGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
 	grbuild := &PersonRemovedEventGroupBy{build: _q}
@@ -307,6 +319,16 @@ func (_q *PersonRemovedEventQuery) GroupBy(field string, fields ...string) *Pers
 
 // Select allows the selection one or more fields/columns for the given query,
 // instead of selecting all fields in the entity.
+//
+// Example:
+//
+//	var v []struct {
+//		PersonID uuid.UUID `json:"person_id,omitempty"`
+//	}
+//
+//	client.PersonRemovedEvent.Query().
+//		Select(personremovedevent.FieldPersonID).
+//		Scan(ctx, &v)
 func (_q *PersonRemovedEventQuery) Select(fields ...string) *PersonRemovedEventSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
 	sbuild := &PersonRemovedEventSelect{PersonRemovedEventQuery: _q}
@@ -431,7 +453,7 @@ func (_q *PersonRemovedEventQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (_q *PersonRemovedEventQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(personremovedevent.Table, personremovedevent.Columns, sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeUUID))
+	_spec := sqlgraph.NewQuerySpec(personremovedevent.Table, personremovedevent.Columns, sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeInt))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique

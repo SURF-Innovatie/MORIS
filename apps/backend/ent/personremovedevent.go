@@ -15,9 +15,11 @@ import (
 
 // PersonRemovedEvent is the model entity for the PersonRemovedEvent schema.
 type PersonRemovedEvent struct {
-	config
+	config `json:"-"`
 	// ID of the ent.
-	ID uuid.UUID `json:"id,omitempty"`
+	ID int `json:"id,omitempty"`
+	// PersonID holds the value of the "person_id" field.
+	PersonID uuid.UUID `json:"person_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the PersonRemovedEventQuery when eager-loading is set.
 	Edges                PersonRemovedEventEdges `json:"edges"`
@@ -51,6 +53,8 @@ func (*PersonRemovedEvent) scanValues(columns []string) ([]any, error) {
 	for i := range columns {
 		switch columns[i] {
 		case personremovedevent.FieldID:
+			values[i] = new(sql.NullInt64)
+		case personremovedevent.FieldPersonID:
 			values[i] = new(uuid.UUID)
 		case personremovedevent.ForeignKeys[0]: // event_person_removed
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
@@ -70,10 +74,16 @@ func (_m *PersonRemovedEvent) assignValues(columns []string, values []any) error
 	for i := range columns {
 		switch columns[i] {
 		case personremovedevent.FieldID:
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
+			}
+			_m.ID = int(value.Int64)
+		case personremovedevent.FieldPersonID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
-				return fmt.Errorf("unexpected type %T for field id", values[i])
+				return fmt.Errorf("unexpected type %T for field person_id", values[i])
 			} else if value != nil {
-				_m.ID = *value
+				_m.PersonID = *value
 			}
 		case personremovedevent.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -122,7 +132,9 @@ func (_m *PersonRemovedEvent) Unwrap() *PersonRemovedEvent {
 func (_m *PersonRemovedEvent) String() string {
 	var builder strings.Builder
 	builder.WriteString("PersonRemovedEvent(")
-	builder.WriteString(fmt.Sprintf("id=%v", _m.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("person_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.PersonID))
 	builder.WriteByte(')')
 	return builder.String()
 }

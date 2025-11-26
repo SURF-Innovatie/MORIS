@@ -13,6 +13,9 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/person"
 	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/personremovedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/product"
+	"github.com/SURF-Innovatie/MORIS/ent/productaddedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/productremovedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/projectnotification"
 	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/schema"
@@ -74,10 +77,28 @@ func init() {
 	personaddedevent.DefaultPersonID = personaddedeventDescPersonID.Default.(func() uuid.UUID)
 	personremovedeventFields := schema.PersonRemovedEvent{}.Fields()
 	_ = personremovedeventFields
-	// personremovedeventDescID is the schema descriptor for id field.
-	personremovedeventDescID := personremovedeventFields[0].Descriptor()
-	// personremovedevent.DefaultID holds the default value on creation for the id field.
-	personremovedevent.DefaultID = personremovedeventDescID.Default.(func() uuid.UUID)
+	// personremovedeventDescPersonID is the schema descriptor for person_id field.
+	personremovedeventDescPersonID := personremovedeventFields[0].Descriptor()
+	// personremovedevent.DefaultPersonID holds the default value on creation for the person_id field.
+	personremovedevent.DefaultPersonID = personremovedeventDescPersonID.Default.(func() uuid.UUID)
+	productFields := schema.Product{}.Fields()
+	_ = productFields
+	// productDescID is the schema descriptor for id field.
+	productDescID := productFields[0].Descriptor()
+	// product.DefaultID holds the default value on creation for the id field.
+	product.DefaultID = productDescID.Default.(func() uuid.UUID)
+	productaddedeventFields := schema.ProductAddedEvent{}.Fields()
+	_ = productaddedeventFields
+	// productaddedeventDescProductID is the schema descriptor for product_id field.
+	productaddedeventDescProductID := productaddedeventFields[0].Descriptor()
+	// productaddedevent.DefaultProductID holds the default value on creation for the product_id field.
+	productaddedevent.DefaultProductID = productaddedeventDescProductID.Default.(func() uuid.UUID)
+	productremovedeventFields := schema.ProductRemovedEvent{}.Fields()
+	_ = productremovedeventFields
+	// productremovedeventDescProductID is the schema descriptor for product_id field.
+	productremovedeventDescProductID := productremovedeventFields[0].Descriptor()
+	// productremovedevent.DefaultProductID holds the default value on creation for the product_id field.
+	productremovedevent.DefaultProductID = productremovedeventDescProductID.Default.(func() uuid.UUID)
 	projectnotificationFields := schema.ProjectNotification{}.Fields()
 	_ = projectnotificationFields
 	// projectnotificationDescSentAt is the schema descriptor for sent_at field.

@@ -445,6 +445,52 @@ func HasPersonRemovedWith(preds ...predicate.PersonRemovedEvent) predicate.Event
 	})
 }
 
+// HasProductAdded applies the HasEdge predicate on the "product_added" edge.
+func HasProductAdded() predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, ProductAddedTable, ProductAddedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasProductAddedWith applies the HasEdge predicate on the "product_added" edge with a given conditions (other predicates).
+func HasProductAddedWith(preds ...predicate.ProductAddedEvent) predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := newProductAddedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasProductRemoved applies the HasEdge predicate on the "product_removed" edge.
+func HasProductRemoved() predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, ProductRemovedTable, ProductRemovedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasProductRemovedWith applies the HasEdge predicate on the "product_removed" edge with a given conditions (other predicates).
+func HasProductRemovedWith(preds ...predicate.ProductRemovedEvent) predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := newProductRemovedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Event) predicate.Event {
 	return predicate.Event(sql.AndPredicates(predicates...))

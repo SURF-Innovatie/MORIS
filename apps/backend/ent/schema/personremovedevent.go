@@ -13,7 +13,7 @@ type PersonRemovedEvent struct {
 
 func (PersonRemovedEvent) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", uuid.UUID{}).
+		field.UUID("person_id", uuid.UUID{}).
 			Default(uuid.New),
 	}
 }

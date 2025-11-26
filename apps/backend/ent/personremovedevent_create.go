@@ -21,16 +21,16 @@ type PersonRemovedEventCreate struct {
 	hooks    []Hook
 }
 
-// SetID sets the "id" field.
-func (_c *PersonRemovedEventCreate) SetID(v uuid.UUID) *PersonRemovedEventCreate {
-	_c.mutation.SetID(v)
+// SetPersonID sets the "person_id" field.
+func (_c *PersonRemovedEventCreate) SetPersonID(v uuid.UUID) *PersonRemovedEventCreate {
+	_c.mutation.SetPersonID(v)
 	return _c
 }
 
-// SetNillableID sets the "id" field if the given value is not nil.
-func (_c *PersonRemovedEventCreate) SetNillableID(v *uuid.UUID) *PersonRemovedEventCreate {
+// SetNillablePersonID sets the "person_id" field if the given value is not nil.
+func (_c *PersonRemovedEventCreate) SetNillablePersonID(v *uuid.UUID) *PersonRemovedEventCreate {
 	if v != nil {
-		_c.SetID(*v)
+		_c.SetPersonID(*v)
 	}
 	return _c
 }
@@ -81,14 +81,17 @@ func (_c *PersonRemovedEventCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *PersonRemovedEventCreate) defaults() {
-	if _, ok := _c.mutation.ID(); !ok {
-		v := personremovedevent.DefaultID()
-		_c.mutation.SetID(v)
+	if _, ok := _c.mutation.PersonID(); !ok {
+		v := personremovedevent.DefaultPersonID()
+		_c.mutation.SetPersonID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *PersonRemovedEventCreate) check() error {
+	if _, ok := _c.mutation.PersonID(); !ok {
+		return &ValidationError{Name: "person_id", err: errors.New(`ent: missing required field "PersonRemovedEvent.person_id"`)}
+	}
 	if len(_c.mutation.EventIDs()) == 0 {
 		return &ValidationError{Name: "event", err: errors.New(`ent: missing required edge "PersonRemovedEvent.event"`)}
 	}
@@ -106,13 +109,8 @@ func (_c *PersonRemovedEventCreate) sqlSave(ctx context.Context) (*PersonRemoved
 		}
 		return nil, err
 	}
-	if _spec.ID.Value != nil {
-		if id, ok := _spec.ID.Value.(*uuid.UUID); ok {
-			_node.ID = *id
-		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
-			return nil, err
-		}
-	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
 	_c.mutation.id = &_node.ID
 	_c.mutation.done = true
 	return _node, nil
@@ -121,11 +119,11 @@ func (_c *PersonRemovedEventCreate) sqlSave(ctx context.Context) (*PersonRemoved
 func (_c *PersonRemovedEventCreate) createSpec() (*PersonRemovedEvent, *sqlgraph.CreateSpec) {
 	var (
 		_node = &PersonRemovedEvent{config: _c.config}
-		_spec = sqlgraph.NewCreateSpec(personremovedevent.Table, sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeUUID))
+		_spec = sqlgraph.NewCreateSpec(personremovedevent.Table, sqlgraph.NewFieldSpec(personremovedevent.FieldID, field.TypeInt))
 	)
-	if id, ok := _c.mutation.ID(); ok {
-		_node.ID = id
-		_spec.ID.Value = &id
+	if value, ok := _c.mutation.PersonID(); ok {
+		_spec.SetField(personremovedevent.FieldPersonID, field.TypeUUID, value)
+		_node.PersonID = value
 	}
 	if nodes := _c.mutation.EventIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -192,6 +190,10 @@ func (_c *PersonRemovedEventCreateBulk) Save(ctx context.Context) ([]*PersonRemo
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
+				if specs[i].ID.Value != nil {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int(id)
+				}
 				mutation.done = true
 				return nodes[i], nil
 			})

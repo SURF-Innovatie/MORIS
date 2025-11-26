@@ -15,6 +15,8 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/organisationchangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/personremovedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/productaddedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/productremovedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/startdatechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/titlechangedevent"
@@ -58,9 +60,13 @@ type EventEdges struct {
 	PersonAdded *PersonAddedEvent `json:"person_added,omitempty"`
 	// PersonRemoved holds the value of the person_removed edge.
 	PersonRemoved *PersonRemovedEvent `json:"person_removed,omitempty"`
+	// ProductAdded holds the value of the product_added edge.
+	ProductAdded *ProductAddedEvent `json:"product_added,omitempty"`
+	// ProductRemoved holds the value of the product_removed edge.
+	ProductRemoved *ProductRemovedEvent `json:"product_removed,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [8]bool
+	loadedTypes [10]bool
 }
 
 // ProjectStartedOrErr returns the ProjectStarted value or an error if the edge
@@ -149,6 +155,28 @@ func (e EventEdges) PersonRemovedOrErr() (*PersonRemovedEvent, error) {
 		return nil, &NotFoundError{label: personremovedevent.Label}
 	}
 	return nil, &NotLoadedError{edge: "person_removed"}
+}
+
+// ProductAddedOrErr returns the ProductAdded value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) ProductAddedOrErr() (*ProductAddedEvent, error) {
+	if e.ProductAdded != nil {
+		return e.ProductAdded, nil
+	} else if e.loadedTypes[8] {
+		return nil, &NotFoundError{label: productaddedevent.Label}
+	}
+	return nil, &NotLoadedError{edge: "product_added"}
+}
+
+// ProductRemovedOrErr returns the ProductRemoved value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) ProductRemovedOrErr() (*ProductRemovedEvent, error) {
+	if e.ProductRemoved != nil {
+		return e.ProductRemoved, nil
+	} else if e.loadedTypes[9] {
+		return nil, &NotFoundError{label: productremovedevent.Label}
+	}
+	return nil, &NotLoadedError{edge: "product_removed"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -260,6 +288,16 @@ func (_m *Event) QueryPersonAdded() *PersonAddedEventQuery {
 // QueryPersonRemoved queries the "person_removed" edge of the Event entity.
 func (_m *Event) QueryPersonRemoved() *PersonRemovedEventQuery {
 	return NewEventClient(_m.config).QueryPersonRemoved(_m)
+}
+
+// QueryProductAdded queries the "product_added" edge of the Event entity.
+func (_m *Event) QueryProductAdded() *ProductAddedEventQuery {
+	return NewEventClient(_m.config).QueryProductAdded(_m)
+}
+
+// QueryProductRemoved queries the "product_removed" edge of the Event entity.
+func (_m *Event) QueryProductRemoved() *ProductRemovedEventQuery {
+	return NewEventClient(_m.config).QueryProductRemoved(_m)
 }
 
 // Update returns a builder for updating this Event.

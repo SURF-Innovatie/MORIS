@@ -24,6 +24,9 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/person"
 	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/personremovedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/product"
+	"github.com/SURF-Innovatie/MORIS/ent/productaddedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/productremovedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/projectnotification"
 	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/startdatechangedevent"
@@ -52,6 +55,12 @@ type Client struct {
 	PersonAddedEvent *PersonAddedEventClient
 	// PersonRemovedEvent is the client for interacting with the PersonRemovedEvent builders.
 	PersonRemovedEvent *PersonRemovedEventClient
+	// Product is the client for interacting with the Product builders.
+	Product *ProductClient
+	// ProductAddedEvent is the client for interacting with the ProductAddedEvent builders.
+	ProductAddedEvent *ProductAddedEventClient
+	// ProductRemovedEvent is the client for interacting with the ProductRemovedEvent builders.
+	ProductRemovedEvent *ProductRemovedEventClient
 	// ProjectNotification is the client for interacting with the ProjectNotification builders.
 	ProjectNotification *ProjectNotificationClient
 	// ProjectStartedEvent is the client for interacting with the ProjectStartedEvent builders.
@@ -81,6 +90,9 @@ func (c *Client) init() {
 	c.Person = NewPersonClient(c.config)
 	c.PersonAddedEvent = NewPersonAddedEventClient(c.config)
 	c.PersonRemovedEvent = NewPersonRemovedEventClient(c.config)
+	c.Product = NewProductClient(c.config)
+	c.ProductAddedEvent = NewProductAddedEventClient(c.config)
+	c.ProductRemovedEvent = NewProductRemovedEventClient(c.config)
 	c.ProjectNotification = NewProjectNotificationClient(c.config)
 	c.ProjectStartedEvent = NewProjectStartedEventClient(c.config)
 	c.StartDateChangedEvent = NewStartDateChangedEventClient(c.config)
@@ -186,6 +198,9 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Person:                   NewPersonClient(cfg),
 		PersonAddedEvent:         NewPersonAddedEventClient(cfg),
 		PersonRemovedEvent:       NewPersonRemovedEventClient(cfg),
+		Product:                  NewProductClient(cfg),
+		ProductAddedEvent:        NewProductAddedEventClient(cfg),
+		ProductRemovedEvent:      NewProductRemovedEventClient(cfg),
 		ProjectNotification:      NewProjectNotificationClient(cfg),
 		ProjectStartedEvent:      NewProjectStartedEventClient(cfg),
 		StartDateChangedEvent:    NewStartDateChangedEventClient(cfg),
@@ -218,6 +233,9 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Person:                   NewPersonClient(cfg),
 		PersonAddedEvent:         NewPersonAddedEventClient(cfg),
 		PersonRemovedEvent:       NewPersonRemovedEventClient(cfg),
+		Product:                  NewProductClient(cfg),
+		ProductAddedEvent:        NewProductAddedEventClient(cfg),
+		ProductRemovedEvent:      NewProductRemovedEventClient(cfg),
 		ProjectNotification:      NewProjectNotificationClient(cfg),
 		ProjectStartedEvent:      NewProjectStartedEventClient(cfg),
 		StartDateChangedEvent:    NewStartDateChangedEventClient(cfg),
@@ -254,8 +272,8 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.DescriptionChangedEvent, c.EndDateChangedEvent, c.Event, c.Organisation,
 		c.OrganisationChangedEvent, c.Person, c.PersonAddedEvent, c.PersonRemovedEvent,
-		c.ProjectNotification, c.ProjectStartedEvent, c.StartDateChangedEvent,
-		c.TitleChangedEvent, c.User,
+		c.Product, c.ProductAddedEvent, c.ProductRemovedEvent, c.ProjectNotification,
+		c.ProjectStartedEvent, c.StartDateChangedEvent, c.TitleChangedEvent, c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -267,8 +285,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.DescriptionChangedEvent, c.EndDateChangedEvent, c.Event, c.Organisation,
 		c.OrganisationChangedEvent, c.Person, c.PersonAddedEvent, c.PersonRemovedEvent,
-		c.ProjectNotification, c.ProjectStartedEvent, c.StartDateChangedEvent,
-		c.TitleChangedEvent, c.User,
+		c.Product, c.ProductAddedEvent, c.ProductRemovedEvent, c.ProjectNotification,
+		c.ProjectStartedEvent, c.StartDateChangedEvent, c.TitleChangedEvent, c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -293,6 +311,12 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.PersonAddedEvent.mutate(ctx, m)
 	case *PersonRemovedEventMutation:
 		return c.PersonRemovedEvent.mutate(ctx, m)
+	case *ProductMutation:
+		return c.Product.mutate(ctx, m)
+	case *ProductAddedEventMutation:
+		return c.ProductAddedEvent.mutate(ctx, m)
+	case *ProductRemovedEventMutation:
+		return c.ProductRemovedEvent.mutate(ctx, m)
 	case *ProjectNotificationMutation:
 		return c.ProjectNotification.mutate(ctx, m)
 	case *ProjectStartedEventMutation:
@@ -835,6 +859,38 @@ func (c *EventClient) QueryPersonRemoved(_m *Event) *PersonRemovedEventQuery {
 			sqlgraph.From(event.Table, event.FieldID, id),
 			sqlgraph.To(personremovedevent.Table, personremovedevent.FieldID),
 			sqlgraph.Edge(sqlgraph.O2O, false, event.PersonRemovedTable, event.PersonRemovedColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryProductAdded queries the product_added edge of a Event.
+func (c *EventClient) QueryProductAdded(_m *Event) *ProductAddedEventQuery {
+	query := (&ProductAddedEventClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(event.Table, event.FieldID, id),
+			sqlgraph.To(productaddedevent.Table, productaddedevent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, event.ProductAddedTable, event.ProductAddedColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryProductRemoved queries the product_removed edge of a Event.
+func (c *EventClient) QueryProductRemoved(_m *Event) *ProductRemovedEventQuery {
+	query := (&ProductRemovedEventClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(event.Table, event.FieldID, id),
+			sqlgraph.To(productremovedevent.Table, productremovedevent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, event.ProductRemovedTable, event.ProductRemovedColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -1492,7 +1548,7 @@ func (c *PersonRemovedEventClient) UpdateOne(_m *PersonRemovedEvent) *PersonRemo
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *PersonRemovedEventClient) UpdateOneID(id uuid.UUID) *PersonRemovedEventUpdateOne {
+func (c *PersonRemovedEventClient) UpdateOneID(id int) *PersonRemovedEventUpdateOne {
 	mutation := newPersonRemovedEventMutation(c.config, OpUpdateOne, withPersonRemovedEventID(id))
 	return &PersonRemovedEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -1509,7 +1565,7 @@ func (c *PersonRemovedEventClient) DeleteOne(_m *PersonRemovedEvent) *PersonRemo
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *PersonRemovedEventClient) DeleteOneID(id uuid.UUID) *PersonRemovedEventDeleteOne {
+func (c *PersonRemovedEventClient) DeleteOneID(id int) *PersonRemovedEventDeleteOne {
 	builder := c.Delete().Where(personremovedevent.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -1526,12 +1582,12 @@ func (c *PersonRemovedEventClient) Query() *PersonRemovedEventQuery {
 }
 
 // Get returns a PersonRemovedEvent entity by its id.
-func (c *PersonRemovedEventClient) Get(ctx context.Context, id uuid.UUID) (*PersonRemovedEvent, error) {
+func (c *PersonRemovedEventClient) Get(ctx context.Context, id int) (*PersonRemovedEvent, error) {
 	return c.Query().Where(personremovedevent.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *PersonRemovedEventClient) GetX(ctx context.Context, id uuid.UUID) *PersonRemovedEvent {
+func (c *PersonRemovedEventClient) GetX(ctx context.Context, id int) *PersonRemovedEvent {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -1577,6 +1633,437 @@ func (c *PersonRemovedEventClient) mutate(ctx context.Context, m *PersonRemovedE
 		return (&PersonRemovedEventDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown PersonRemovedEvent mutation op: %q", m.Op())
+	}
+}
+
+// ProductClient is a client for the Product schema.
+type ProductClient struct {
+	config
+}
+
+// NewProductClient returns a client for the Product from the given config.
+func NewProductClient(c config) *ProductClient {
+	return &ProductClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `product.Hooks(f(g(h())))`.
+func (c *ProductClient) Use(hooks ...Hook) {
+	c.hooks.Product = append(c.hooks.Product, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `product.Intercept(f(g(h())))`.
+func (c *ProductClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Product = append(c.inters.Product, interceptors...)
+}
+
+// Create returns a builder for creating a Product entity.
+func (c *ProductClient) Create() *ProductCreate {
+	mutation := newProductMutation(c.config, OpCreate)
+	return &ProductCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Product entities.
+func (c *ProductClient) CreateBulk(builders ...*ProductCreate) *ProductCreateBulk {
+	return &ProductCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ProductClient) MapCreateBulk(slice any, setFunc func(*ProductCreate, int)) *ProductCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ProductCreateBulk{err: fmt.Errorf("calling to ProductClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ProductCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ProductCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Product.
+func (c *ProductClient) Update() *ProductUpdate {
+	mutation := newProductMutation(c.config, OpUpdate)
+	return &ProductUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ProductClient) UpdateOne(_m *Product) *ProductUpdateOne {
+	mutation := newProductMutation(c.config, OpUpdateOne, withProduct(_m))
+	return &ProductUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ProductClient) UpdateOneID(id uuid.UUID) *ProductUpdateOne {
+	mutation := newProductMutation(c.config, OpUpdateOne, withProductID(id))
+	return &ProductUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Product.
+func (c *ProductClient) Delete() *ProductDelete {
+	mutation := newProductMutation(c.config, OpDelete)
+	return &ProductDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ProductClient) DeleteOne(_m *Product) *ProductDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ProductClient) DeleteOneID(id uuid.UUID) *ProductDeleteOne {
+	builder := c.Delete().Where(product.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ProductDeleteOne{builder}
+}
+
+// Query returns a query builder for Product.
+func (c *ProductClient) Query() *ProductQuery {
+	return &ProductQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeProduct},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Product entity by its id.
+func (c *ProductClient) Get(ctx context.Context, id uuid.UUID) (*Product, error) {
+	return c.Query().Where(product.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ProductClient) GetX(ctx context.Context, id uuid.UUID) *Product {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ProductClient) Hooks() []Hook {
+	return c.hooks.Product
+}
+
+// Interceptors returns the client interceptors.
+func (c *ProductClient) Interceptors() []Interceptor {
+	return c.inters.Product
+}
+
+func (c *ProductClient) mutate(ctx context.Context, m *ProductMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ProductCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ProductUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ProductUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ProductDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Product mutation op: %q", m.Op())
+	}
+}
+
+// ProductAddedEventClient is a client for the ProductAddedEvent schema.
+type ProductAddedEventClient struct {
+	config
+}
+
+// NewProductAddedEventClient returns a client for the ProductAddedEvent from the given config.
+func NewProductAddedEventClient(c config) *ProductAddedEventClient {
+	return &ProductAddedEventClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `productaddedevent.Hooks(f(g(h())))`.
+func (c *ProductAddedEventClient) Use(hooks ...Hook) {
+	c.hooks.ProductAddedEvent = append(c.hooks.ProductAddedEvent, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `productaddedevent.Intercept(f(g(h())))`.
+func (c *ProductAddedEventClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ProductAddedEvent = append(c.inters.ProductAddedEvent, interceptors...)
+}
+
+// Create returns a builder for creating a ProductAddedEvent entity.
+func (c *ProductAddedEventClient) Create() *ProductAddedEventCreate {
+	mutation := newProductAddedEventMutation(c.config, OpCreate)
+	return &ProductAddedEventCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ProductAddedEvent entities.
+func (c *ProductAddedEventClient) CreateBulk(builders ...*ProductAddedEventCreate) *ProductAddedEventCreateBulk {
+	return &ProductAddedEventCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ProductAddedEventClient) MapCreateBulk(slice any, setFunc func(*ProductAddedEventCreate, int)) *ProductAddedEventCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ProductAddedEventCreateBulk{err: fmt.Errorf("calling to ProductAddedEventClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ProductAddedEventCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ProductAddedEventCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ProductAddedEvent.
+func (c *ProductAddedEventClient) Update() *ProductAddedEventUpdate {
+	mutation := newProductAddedEventMutation(c.config, OpUpdate)
+	return &ProductAddedEventUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ProductAddedEventClient) UpdateOne(_m *ProductAddedEvent) *ProductAddedEventUpdateOne {
+	mutation := newProductAddedEventMutation(c.config, OpUpdateOne, withProductAddedEvent(_m))
+	return &ProductAddedEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ProductAddedEventClient) UpdateOneID(id int) *ProductAddedEventUpdateOne {
+	mutation := newProductAddedEventMutation(c.config, OpUpdateOne, withProductAddedEventID(id))
+	return &ProductAddedEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ProductAddedEvent.
+func (c *ProductAddedEventClient) Delete() *ProductAddedEventDelete {
+	mutation := newProductAddedEventMutation(c.config, OpDelete)
+	return &ProductAddedEventDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ProductAddedEventClient) DeleteOne(_m *ProductAddedEvent) *ProductAddedEventDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ProductAddedEventClient) DeleteOneID(id int) *ProductAddedEventDeleteOne {
+	builder := c.Delete().Where(productaddedevent.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ProductAddedEventDeleteOne{builder}
+}
+
+// Query returns a query builder for ProductAddedEvent.
+func (c *ProductAddedEventClient) Query() *ProductAddedEventQuery {
+	return &ProductAddedEventQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeProductAddedEvent},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ProductAddedEvent entity by its id.
+func (c *ProductAddedEventClient) Get(ctx context.Context, id int) (*ProductAddedEvent, error) {
+	return c.Query().Where(productaddedevent.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ProductAddedEventClient) GetX(ctx context.Context, id int) *ProductAddedEvent {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryEvent queries the event edge of a ProductAddedEvent.
+func (c *ProductAddedEventClient) QueryEvent(_m *ProductAddedEvent) *EventQuery {
+	query := (&EventClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(productaddedevent.Table, productaddedevent.FieldID, id),
+			sqlgraph.To(event.Table, event.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, productaddedevent.EventTable, productaddedevent.EventColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ProductAddedEventClient) Hooks() []Hook {
+	return c.hooks.ProductAddedEvent
+}
+
+// Interceptors returns the client interceptors.
+func (c *ProductAddedEventClient) Interceptors() []Interceptor {
+	return c.inters.ProductAddedEvent
+}
+
+func (c *ProductAddedEventClient) mutate(ctx context.Context, m *ProductAddedEventMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ProductAddedEventCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ProductAddedEventUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ProductAddedEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ProductAddedEventDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ProductAddedEvent mutation op: %q", m.Op())
+	}
+}
+
+// ProductRemovedEventClient is a client for the ProductRemovedEvent schema.
+type ProductRemovedEventClient struct {
+	config
+}
+
+// NewProductRemovedEventClient returns a client for the ProductRemovedEvent from the given config.
+func NewProductRemovedEventClient(c config) *ProductRemovedEventClient {
+	return &ProductRemovedEventClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `productremovedevent.Hooks(f(g(h())))`.
+func (c *ProductRemovedEventClient) Use(hooks ...Hook) {
+	c.hooks.ProductRemovedEvent = append(c.hooks.ProductRemovedEvent, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `productremovedevent.Intercept(f(g(h())))`.
+func (c *ProductRemovedEventClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ProductRemovedEvent = append(c.inters.ProductRemovedEvent, interceptors...)
+}
+
+// Create returns a builder for creating a ProductRemovedEvent entity.
+func (c *ProductRemovedEventClient) Create() *ProductRemovedEventCreate {
+	mutation := newProductRemovedEventMutation(c.config, OpCreate)
+	return &ProductRemovedEventCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ProductRemovedEvent entities.
+func (c *ProductRemovedEventClient) CreateBulk(builders ...*ProductRemovedEventCreate) *ProductRemovedEventCreateBulk {
+	return &ProductRemovedEventCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ProductRemovedEventClient) MapCreateBulk(slice any, setFunc func(*ProductRemovedEventCreate, int)) *ProductRemovedEventCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ProductRemovedEventCreateBulk{err: fmt.Errorf("calling to ProductRemovedEventClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ProductRemovedEventCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ProductRemovedEventCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ProductRemovedEvent.
+func (c *ProductRemovedEventClient) Update() *ProductRemovedEventUpdate {
+	mutation := newProductRemovedEventMutation(c.config, OpUpdate)
+	return &ProductRemovedEventUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ProductRemovedEventClient) UpdateOne(_m *ProductRemovedEvent) *ProductRemovedEventUpdateOne {
+	mutation := newProductRemovedEventMutation(c.config, OpUpdateOne, withProductRemovedEvent(_m))
+	return &ProductRemovedEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ProductRemovedEventClient) UpdateOneID(id int) *ProductRemovedEventUpdateOne {
+	mutation := newProductRemovedEventMutation(c.config, OpUpdateOne, withProductRemovedEventID(id))
+	return &ProductRemovedEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ProductRemovedEvent.
+func (c *ProductRemovedEventClient) Delete() *ProductRemovedEventDelete {
+	mutation := newProductRemovedEventMutation(c.config, OpDelete)
+	return &ProductRemovedEventDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ProductRemovedEventClient) DeleteOne(_m *ProductRemovedEvent) *ProductRemovedEventDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ProductRemovedEventClient) DeleteOneID(id int) *ProductRemovedEventDeleteOne {
+	builder := c.Delete().Where(productremovedevent.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ProductRemovedEventDeleteOne{builder}
+}
+
+// Query returns a query builder for ProductRemovedEvent.
+func (c *ProductRemovedEventClient) Query() *ProductRemovedEventQuery {
+	return &ProductRemovedEventQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeProductRemovedEvent},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ProductRemovedEvent entity by its id.
+func (c *ProductRemovedEventClient) Get(ctx context.Context, id int) (*ProductRemovedEvent, error) {
+	return c.Query().Where(productremovedevent.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ProductRemovedEventClient) GetX(ctx context.Context, id int) *ProductRemovedEvent {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryEvent queries the event edge of a ProductRemovedEvent.
+func (c *ProductRemovedEventClient) QueryEvent(_m *ProductRemovedEvent) *EventQuery {
+	query := (&EventClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(productremovedevent.Table, productremovedevent.FieldID, id),
+			sqlgraph.To(event.Table, event.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, productremovedevent.EventTable, productremovedevent.EventColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ProductRemovedEventClient) Hooks() []Hook {
+	return c.hooks.ProductRemovedEvent
+}
+
+// Interceptors returns the client interceptors.
+func (c *ProductRemovedEventClient) Interceptors() []Interceptor {
+	return c.inters.ProductRemovedEvent
+}
+
+func (c *ProductRemovedEventClient) mutate(ctx context.Context, m *ProductRemovedEventMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ProductRemovedEventCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ProductRemovedEventUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ProductRemovedEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ProductRemovedEventDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ProductRemovedEvent mutation op: %q", m.Op())
 	}
 }
 
@@ -2314,13 +2801,14 @@ type (
 	hooks struct {
 		DescriptionChangedEvent, EndDateChangedEvent, Event, Organisation,
 		OrganisationChangedEvent, Person, PersonAddedEvent, PersonRemovedEvent,
-		ProjectNotification, ProjectStartedEvent, StartDateChangedEvent,
-		TitleChangedEvent, User []ent.Hook
+		Product, ProductAddedEvent, ProductRemovedEvent, ProjectNotification,
+		ProjectStartedEvent, StartDateChangedEvent, TitleChangedEvent, User []ent.Hook
 	}
 	inters struct {
 		DescriptionChangedEvent, EndDateChangedEvent, Event, Organisation,
 		OrganisationChangedEvent, Person, PersonAddedEvent, PersonRemovedEvent,
-		ProjectNotification, ProjectStartedEvent, StartDateChangedEvent,
-		TitleChangedEvent, User []ent.Interceptor
+		Product, ProductAddedEvent, ProductRemovedEvent, ProjectNotification,
+		ProjectStartedEvent, StartDateChangedEvent, TitleChangedEvent,
+		User []ent.Interceptor
 	}
 )

@@ -35,5 +35,7 @@ func (Event) Edges() []ent.Edge {
 		edge.To("organisation_changed", OrganisationChangedEvent.Type).Unique(),
 		edge.To("person_added", PersonAddedEvent.Type).Unique(),
 		edge.To("person_removed", PersonRemovedEvent.Type).Unique(),
+		edge.To("product_added", ProductAddedEvent.Type).Unique(),
+		edge.To("product_removed", ProductRemovedEvent.Type).Unique(),
 	}
 }

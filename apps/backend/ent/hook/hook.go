@@ -105,6 +105,42 @@ func (f PersonRemovedEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PersonRemovedEventMutation", m)
 }
 
+// The ProductFunc type is an adapter to allow the use of ordinary
+// function as Product mutator.
+type ProductFunc func(context.Context, *ent.ProductMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ProductFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ProductMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ProductMutation", m)
+}
+
+// The ProductAddedEventFunc type is an adapter to allow the use of ordinary
+// function as ProductAddedEvent mutator.
+type ProductAddedEventFunc func(context.Context, *ent.ProductAddedEventMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ProductAddedEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ProductAddedEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ProductAddedEventMutation", m)
+}
+
+// The ProductRemovedEventFunc type is an adapter to allow the use of ordinary
+// function as ProductRemovedEvent mutator.
+type ProductRemovedEventFunc func(context.Context, *ent.ProductRemovedEventMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ProductRemovedEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ProductRemovedEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ProductRemovedEventMutation", m)
+}
+
 // The ProjectNotificationFunc type is an adapter to allow the use of ordinary
 // function as ProjectNotification mutator.
 type ProjectNotificationFunc func(context.Context, *ent.ProjectNotificationMutation) (ent.Value, error)

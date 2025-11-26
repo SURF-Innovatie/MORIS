@@ -7,23 +7,24 @@ import (
 	"sort"
 	"time"
 
+	"github.com/SURF-Innovatie/MORIS/ent"
+	en "github.com/SURF-Innovatie/MORIS/ent/event"
 	organisationent "github.com/SURF-Innovatie/MORIS/ent/organisation"
 	personent "github.com/SURF-Innovatie/MORIS/ent/person"
+	productent "github.com/SURF-Innovatie/MORIS/ent/product"
 	"github.com/SURF-Innovatie/MORIS/internal/api/changelogdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/organisationdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/persondto"
+	"github.com/SURF-Innovatie/MORIS/internal/api/productdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/projectdto"
 	"github.com/SURF-Innovatie/MORIS/internal/auth"
-	notification "github.com/SURF-Innovatie/MORIS/internal/projectnotification"
-	"github.com/google/uuid"
-
-	"github.com/SURF-Innovatie/MORIS/ent"
-	en "github.com/SURF-Innovatie/MORIS/ent/event"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/commands"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
 	"github.com/SURF-Innovatie/MORIS/internal/platform/eventstore"
+	notification "github.com/SURF-Innovatie/MORIS/internal/projectnotification"
+	"github.com/google/uuid"
 )
 
 // ErrNotFound is returned when a project does not exist (no events).
@@ -36,6 +37,8 @@ type Service interface {
 	UpdateProject(ctx context.Context, id uuid.UUID, params UpdateProjectParams) (*projectdto.Response, error)
 	AddPerson(ctx context.Context, projectID uuid.UUID, personID uuid.UUID) (*projectdto.Response, error)
 	RemovePerson(ctx context.Context, projectID uuid.UUID, personID uuid.UUID) (*projectdto.Response, error)
+	AddProduct(ctx context.Context, projectID uuid.UUID, productID uuid.UUID) (*projectdto.Response, error)
+	RemoveProduct(ctx context.Context, projectID uuid.UUID, productID uuid.UUID) (*projectdto.Response, error)
 	GetChangeLog(ctx context.Context, id uuid.UUID) (*changelogdto.Changelog, error)
 }
 
@@ -66,16 +69,10 @@ func NewService(es eventstore.Store, cli *ent.Client, notifier notification.Serv
 }
 
 func (s *service) GetProject(ctx context.Context, id uuid.UUID) (*projectdto.Response, error) {
-	evts, version, err := s.es.Load(ctx, id)
+	proj, err := s.fromDb(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if len(evts) == 0 {
-		return nil, ErrNotFound
-	}
-
-	proj := projection.Reduce(id, evts)
-	proj.Version = version
 
 	resp, err := s.projectToResponse(ctx, proj)
 	if err != nil {
@@ -126,16 +123,10 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 }
 
 func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params UpdateProjectParams) (*projectdto.Response, error) {
-	evts, version, err := s.es.Load(ctx, id)
+	proj, err := s.fromDb(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if len(evts) == 0 {
-		return nil, ErrNotFound
-	}
-
-	proj := projection.Reduce(id, evts)
-	proj.Version = version
 
 	var newEvents []events.Event
 
@@ -179,12 +170,11 @@ func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params Update
 	}
 
 	for _, evt := range newEvents {
-		if err := s.es.Append(ctx, id, version, evt); err != nil {
+		if err := s.es.Append(ctx, id, proj.Version, evt); err != nil {
 			return nil, err
 		}
-		version++
+		proj.Version++
 	}
-	proj.Version = version
 
 	return s.projectToResponse(ctx, proj)
 }
@@ -211,16 +201,10 @@ func (s *service) GetAllProjects(ctx context.Context) ([]*projectdto.Response, e
 
 	projects := make([]*projectdto.Response, 0, len(ids))
 	for _, id := range ids {
-		evts, version, err := s.es.Load(ctx, id)
+		proj, err := s.fromDb(ctx, id)
 		if err != nil {
 			return nil, err
 		}
-		if len(evts) == 0 {
-			continue
-		}
-
-		proj := projection.Reduce(id, evts)
-		proj.Version = version
 
 		dto, err := s.projectToResponse(ctx, proj)
 		if err != nil {
@@ -238,16 +222,10 @@ func (s *service) AddPerson(
 	projectID uuid.UUID,
 	personId uuid.UUID,
 ) (*projectdto.Response, error) {
-	evts, version, err := s.es.Load(ctx, projectID)
+	proj, err := s.fromDb(ctx, projectID)
 	if err != nil {
 		return nil, err
 	}
-	if len(evts) == 0 {
-		return nil, ErrNotFound
-	}
-
-	proj := projection.Reduce(projectID, evts)
-	proj.Version = version
 
 	evt, err := commands.AddPerson(projectID, proj, personId)
 	if err != nil {
@@ -262,12 +240,12 @@ func (s *service) AddPerson(
 		return resp, nil
 	}
 
-	if err := s.es.Append(ctx, projectID, version, evt); err != nil {
+	if err := s.es.Append(ctx, projectID, proj.Version, evt); err != nil {
 		return nil, err
 	}
 
 	projection.Apply(proj, evt)
-	proj.Version = version + 1
+	proj.Version++
 
 	resp, err := s.projectToResponse(ctx, proj)
 	if err != nil {
@@ -282,26 +260,12 @@ func (s *service) RemovePerson(
 	projectID uuid.UUID,
 	personID uuid.UUID,
 ) (*projectdto.Response, error) {
-	evts, version, err := s.es.Load(ctx, projectID)
+	proj, err := s.fromDb(ctx, projectID)
 	if err != nil {
 		return nil, err
 	}
-	if len(evts) == 0 {
-		return nil, ErrNotFound
-	}
 
-	proj := projection.Reduce(projectID, evts)
-	proj.Version = version
-
-	var personId uuid.UUID
-	for _, p := range proj.People {
-		if p == personID {
-			personId = p
-			break
-		}
-	}
-
-	evt, err := commands.RemovePerson(projectID, proj, personId)
+	evt, err := commands.RemovePerson(projectID, proj, personID)
 	if err != nil {
 		return nil, err
 	}
@@ -314,12 +278,88 @@ func (s *service) RemovePerson(
 		return resp, nil
 	}
 
-	if err := s.es.Append(ctx, projectID, version, evt); err != nil {
+	if err := s.es.Append(ctx, projectID, proj.Version, evt); err != nil {
 		return nil, err
 	}
 
 	projection.Apply(proj, evt)
-	proj.Version = version + 1
+	proj.Version++
+
+	resp, err := s.projectToResponse(ctx, proj)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (s *service) AddProduct(
+	ctx context.Context,
+	projectID uuid.UUID,
+	productID uuid.UUID,
+) (*projectdto.Response, error) {
+	proj, err := s.fromDb(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	evt, err := commands.AddProduct(projectID, proj, productID)
+	if err != nil {
+		return nil, err
+	}
+	if evt == nil {
+		resp, err := s.projectToResponse(ctx, proj)
+		if err != nil {
+			return nil, err
+		}
+
+		return resp, nil
+	}
+
+	if err := s.es.Append(ctx, projectID, proj.Version, evt); err != nil {
+		return nil, err
+	}
+
+	projection.Apply(proj, evt)
+	proj.Version += 1
+
+	resp, err := s.projectToResponse(ctx, proj)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (s *service) RemoveProduct(
+	ctx context.Context,
+	projectID uuid.UUID,
+	productID uuid.UUID,
+) (*projectdto.Response, error) {
+	proj, err := s.fromDb(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	evt, err := commands.RemoveProduct(projectID, proj, productID)
+	if err != nil {
+		return nil, err
+	}
+	if evt == nil {
+		resp, err := s.projectToResponse(ctx, proj)
+		if err != nil {
+			return nil, err
+		}
+
+		return resp, nil
+	}
+
+	if err := s.es.Append(ctx, projectID, proj.Version, evt); err != nil {
+		return nil, err
+	}
+
+	projection.Apply(proj, evt)
+	proj.Version += 1
 
 	resp, err := s.projectToResponse(ctx, proj)
 	if err != nil {
@@ -353,6 +393,25 @@ func (s *service) projectToResponse(ctx context.Context, proj *entities.Project)
 		})
 	}
 
+	productRows, err := s.cli.Product.
+		Query().
+		Where(productent.IDIn(proj.Products...)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	productDTOs := make([]productdto.Response, 0, len(productRows))
+	for _, p := range productRows {
+		productDTOs = append(productDTOs, productdto.Response{
+			ID:       p.ID,
+			Name:     p.Name,
+			Language: *p.Language,
+			Type:     entities.ProductType(p.Type),
+			DOI:      *p.Doi,
+		})
+	}
+
 	org, err := s.cli.Organisation.
 		Query().
 		Where(organisationent.ID(proj.Organisation)).
@@ -375,20 +434,21 @@ func (s *service) projectToResponse(ctx context.Context, proj *entities.Project)
 		EndDate:      proj.EndDate,
 		Organization: orgDTO,
 		People:       peopleDTOs,
+		Products:     productDTOs,
 	}, nil
 }
 
 func (s *service) GetChangeLog(ctx context.Context, id uuid.UUID) (*changelogdto.Changelog, error) {
-	events, _, err := s.es.Load(ctx, id)
+	evts, _, err := s.es.Load(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if len(events) == 0 {
+	if len(evts) == 0 {
 		return nil, ErrNotFound
 	}
 
 	var changeLog changelogdto.Changelog
-	for _, evt := range events {
+	for _, evt := range evts {
 		changeLog.Entries = append(changeLog.Entries, changelogdto.ChangelogEntry{
 			Event: evt.String(),
 			At:    evt.OccurredAt(),
@@ -401,4 +461,19 @@ func (s *service) GetChangeLog(ctx context.Context, id uuid.UUID) (*changelogdto
 	})
 
 	return &changeLog, nil
+}
+
+func (s *service) fromDb(ctx context.Context, projectID uuid.UUID) (*entities.Project, error) {
+	evts, version, err := s.es.Load(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+	if len(evts) == 0 {
+		return nil, ErrNotFound
+	}
+
+	proj := projection.Reduce(projectID, evts)
+	proj.Version = version
+
+	return proj, nil
 }

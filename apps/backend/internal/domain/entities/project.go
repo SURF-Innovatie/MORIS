@@ -15,4 +15,5 @@ type Project struct {
 	Description  string
 	People       []uuid.UUID
 	Organisation uuid.UUID
+	Products     []uuid.UUID
 }

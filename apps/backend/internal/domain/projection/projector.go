@@ -43,13 +43,23 @@ func Apply(p *entities.Project, e events.Event) {
 		p.Organisation = ev.OrganisationID
 
 	case events.PersonAdded:
-		if !hasPerson(p.People, ev.PersonId) {
+		if !hasItem(p.People, ev.PersonId) {
 			p.People = append(p.People, ev.PersonId)
 		}
 
 	case events.PersonRemoved:
-		p.People = filterPeople(p.People, func(id uuid.UUID) bool {
+		p.People = filterItem(p.People, func(id uuid.UUID) bool {
 			return id != ev.PersonId
+		})
+
+	case events.ProductAdded:
+		if !hasItem(p.Products, ev.ProductID) {
+			p.Products = append(p.Products, ev.ProductID)
+		}
+
+	case events.ProductRemoved:
+		p.Products = filterItem(p.Products, func(id uuid.UUID) bool {
+			return id != ev.ProductID
 		})
 
 	default:
@@ -57,7 +67,7 @@ func Apply(p *entities.Project, e events.Event) {
 	}
 }
 
-func hasPerson(list []uuid.UUID, id uuid.UUID) bool {
+func hasItem(list []uuid.UUID, id uuid.UUID) bool {
 	for _, p := range list {
 		if p == id {
 			return true
@@ -66,7 +76,7 @@ func hasPerson(list []uuid.UUID, id uuid.UUID) bool {
 	return false
 }
 
-func filterPeople(list []uuid.UUID, keep func(uuid.UUID) bool) []uuid.UUID {
+func filterItem(list []uuid.UUID, keep func(uuid.UUID) bool) []uuid.UUID {
 	if len(list) == 0 {
 		return nil
 	}

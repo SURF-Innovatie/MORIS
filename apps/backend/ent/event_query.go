@@ -19,6 +19,8 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/personremovedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/predicate"
+	"github.com/SURF-Innovatie/MORIS/ent/productaddedevent"
+	"github.com/SURF-Innovatie/MORIS/ent/productremovedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/startdatechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/titlechangedevent"
@@ -40,6 +42,8 @@ type EventQuery struct {
 	withOrganisationChanged *OrganisationChangedEventQuery
 	withPersonAdded         *PersonAddedEventQuery
 	withPersonRemoved       *PersonRemovedEventQuery
+	withProductAdded        *ProductAddedEventQuery
+	withProductRemoved      *ProductRemovedEventQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -252,6 +256,50 @@ func (_q *EventQuery) QueryPersonRemoved() *PersonRemovedEventQuery {
 	return query
 }
 
+// QueryProductAdded chains the current query on the "product_added" edge.
+func (_q *EventQuery) QueryProductAdded() *ProductAddedEventQuery {
+	query := (&ProductAddedEventClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(event.Table, event.FieldID, selector),
+			sqlgraph.To(productaddedevent.Table, productaddedevent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, event.ProductAddedTable, event.ProductAddedColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryProductRemoved chains the current query on the "product_removed" edge.
+func (_q *EventQuery) QueryProductRemoved() *ProductRemovedEventQuery {
+	query := (&ProductRemovedEventClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(event.Table, event.FieldID, selector),
+			sqlgraph.To(productremovedevent.Table, productremovedevent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, event.ProductRemovedTable, event.ProductRemovedColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Event entity from the query.
 // Returns a *NotFoundError when no Event was found.
 func (_q *EventQuery) First(ctx context.Context) (*Event, error) {
@@ -452,6 +500,8 @@ func (_q *EventQuery) Clone() *EventQuery {
 		withOrganisationChanged: _q.withOrganisationChanged.Clone(),
 		withPersonAdded:         _q.withPersonAdded.Clone(),
 		withPersonRemoved:       _q.withPersonRemoved.Clone(),
+		withProductAdded:        _q.withProductAdded.Clone(),
+		withProductRemoved:      _q.withProductRemoved.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -546,6 +596,28 @@ func (_q *EventQuery) WithPersonRemoved(opts ...func(*PersonRemovedEventQuery)) 
 	return _q
 }
 
+// WithProductAdded tells the query-builder to eager-load the nodes that are connected to
+// the "product_added" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *EventQuery) WithProductAdded(opts ...func(*ProductAddedEventQuery)) *EventQuery {
+	query := (&ProductAddedEventClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withProductAdded = query
+	return _q
+}
+
+// WithProductRemoved tells the query-builder to eager-load the nodes that are connected to
+// the "product_removed" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *EventQuery) WithProductRemoved(opts ...func(*ProductRemovedEventQuery)) *EventQuery {
+	query := (&ProductRemovedEventClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withProductRemoved = query
+	return _q
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -624,7 +696,7 @@ func (_q *EventQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Event,
 	var (
 		nodes       = []*Event{}
 		_spec       = _q.querySpec()
-		loadedTypes = [8]bool{
+		loadedTypes = [10]bool{
 			_q.withProjectStarted != nil,
 			_q.withTitleChanged != nil,
 			_q.withDescriptionChanged != nil,
@@ -633,6 +705,8 @@ func (_q *EventQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Event,
 			_q.withOrganisationChanged != nil,
 			_q.withPersonAdded != nil,
 			_q.withPersonRemoved != nil,
+			_q.withProductAdded != nil,
+			_q.withProductRemoved != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -698,6 +772,18 @@ func (_q *EventQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Event,
 	if query := _q.withPersonRemoved; query != nil {
 		if err := _q.loadPersonRemoved(ctx, query, nodes, nil,
 			func(n *Event, e *PersonRemovedEvent) { n.Edges.PersonRemoved = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withProductAdded; query != nil {
+		if err := _q.loadProductAdded(ctx, query, nodes, nil,
+			func(n *Event, e *ProductAddedEvent) { n.Edges.ProductAdded = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withProductRemoved; query != nil {
+		if err := _q.loadProductRemoved(ctx, query, nodes, nil,
+			func(n *Event, e *ProductRemovedEvent) { n.Edges.ProductRemoved = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -923,6 +1009,62 @@ func (_q *EventQuery) loadPersonRemoved(ctx context.Context, query *PersonRemove
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "event_person_removed" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *EventQuery) loadProductAdded(ctx context.Context, query *ProductAddedEventQuery, nodes []*Event, init func(*Event), assign func(*Event, *ProductAddedEvent)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Event)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	query.withFKs = true
+	query.Where(predicate.ProductAddedEvent(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(event.ProductAddedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.event_product_added
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "event_product_added" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "event_product_added" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *EventQuery) loadProductRemoved(ctx context.Context, query *ProductRemovedEventQuery, nodes []*Event, init func(*Event), assign func(*Event, *ProductRemovedEvent)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Event)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	query.withFKs = true
+	query.Where(predicate.ProductRemovedEvent(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(event.ProductRemovedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.event_product_removed
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "event_product_removed" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "event_product_removed" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

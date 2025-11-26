@@ -10,6 +10,8 @@ func MountProjectRoutes(r chi.Router, h *Handler) {
 		r.Put("/{id}", h.UpdateProject)
 		r.Post("/{id}/people/{personId}", h.AddPerson)
 		r.Delete("/{id}/people/{personId}", h.RemovePerson)
+		r.Post("/{id}/products/{productID}", h.AddProduct)
+		r.Delete("/{id}/products/{productID}", h.RemoveProduct)
 		r.Get("/{id}/changelog", h.GetChangelog)
 	})
 }

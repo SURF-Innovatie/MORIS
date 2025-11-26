@@ -1010,6 +1010,12 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "products": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "startDate": {
                     "type": "string"
                 },

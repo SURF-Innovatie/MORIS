@@ -39,6 +39,10 @@ const (
 	EdgePersonAdded = "person_added"
 	// EdgePersonRemoved holds the string denoting the person_removed edge name in mutations.
 	EdgePersonRemoved = "person_removed"
+	// EdgeProductAdded holds the string denoting the product_added edge name in mutations.
+	EdgeProductAdded = "product_added"
+	// EdgeProductRemoved holds the string denoting the product_removed edge name in mutations.
+	EdgeProductRemoved = "product_removed"
 	// Table holds the table name of the event in the database.
 	Table = "events"
 	// ProjectStartedTable is the table that holds the project_started relation/edge.
@@ -97,6 +101,20 @@ const (
 	PersonRemovedInverseTable = "person_removed_events"
 	// PersonRemovedColumn is the table column denoting the person_removed relation/edge.
 	PersonRemovedColumn = "event_person_removed"
+	// ProductAddedTable is the table that holds the product_added relation/edge.
+	ProductAddedTable = "product_added_events"
+	// ProductAddedInverseTable is the table name for the ProductAddedEvent entity.
+	// It exists in this package in order to avoid circular dependency with the "productaddedevent" package.
+	ProductAddedInverseTable = "product_added_events"
+	// ProductAddedColumn is the table column denoting the product_added relation/edge.
+	ProductAddedColumn = "event_product_added"
+	// ProductRemovedTable is the table that holds the product_removed relation/edge.
+	ProductRemovedTable = "product_removed_events"
+	// ProductRemovedInverseTable is the table name for the ProductRemovedEvent entity.
+	// It exists in this package in order to avoid circular dependency with the "productremovedevent" package.
+	ProductRemovedInverseTable = "product_removed_events"
+	// ProductRemovedColumn is the table column denoting the product_removed relation/edge.
+	ProductRemovedColumn = "event_product_removed"
 )
 
 // Columns holds all SQL columns for event fields.
@@ -208,6 +226,20 @@ func ByPersonRemovedField(field string, opts ...sql.OrderTermOption) OrderOption
 		sqlgraph.OrderByNeighborTerms(s, newPersonRemovedStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByProductAddedField orders the results by product_added field.
+func ByProductAddedField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newProductAddedStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByProductRemovedField orders the results by product_removed field.
+func ByProductRemovedField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newProductRemovedStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newProjectStartedStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -262,5 +294,19 @@ func newPersonRemovedStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(PersonRemovedInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2O, false, PersonRemovedTable, PersonRemovedColumn),
+	)
+}
+func newProductAddedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ProductAddedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, ProductAddedTable, ProductAddedColumn),
+	)
+}
+func newProductRemovedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ProductRemovedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, ProductRemovedTable, ProductRemovedColumn),
 	)
 }

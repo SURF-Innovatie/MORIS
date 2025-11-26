@@ -5,22 +5,14 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/organisationdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/persondto"
+	"github.com/SURF-Innovatie/MORIS/internal/api/productdto"
 	"github.com/google/uuid"
 )
 
-// StartRequest represents the request body for starting a new project
-type StartRequest struct {
+// Request represents the request body for starting a new project
+type Request struct {
 	Title          string    `json:"title" example:"New Project"`
 	Description    string    `json:"description" example:"This is a new project"`
-	OrganisationID uuid.UUID `json:"organisationID"`
-	StartDate      string    `json:"startDate" example:"2025-01-01T00:00:00Z"`
-	EndDate        string    `json:"endDate" example:"2025-12-31T23:59:59Z"`
-}
-
-// UpdateRequest represents the request body for updating a project
-type UpdateRequest struct {
-	Title          string    `json:"title" example:"Updated Project"`
-	Description    string    `json:"description" example:"This is an updated project"`
 	OrganisationID uuid.UUID `json:"organisationID"`
 	StartDate      string    `json:"startDate" example:"2025-01-01T00:00:00Z"`
 	EndDate        string    `json:"endDate" example:"2025-12-31T23:59:59Z"`
@@ -35,4 +27,5 @@ type Response struct {
 	EndDate      time.Time                `json:"endDate" example:"2025-12-31T23:59:59Z"`
 	Organization organisationdto.Response `json:"organization"`
 	People       []persondto.Response     `json:"people"`
+	Products     []productdto.Response    `json:"products"`
 }

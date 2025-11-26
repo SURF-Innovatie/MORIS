@@ -23,6 +23,8 @@ const (
 	OrganisationChangedType = "project.organisation_changed"
 	PersonAddedType         = "project.person_added"
 	PersonRemovedType       = "project.person_removed"
+	ProductAddedType        = "project.product_added"
+	ProductRemovedType      = "project.product_removed"
 )
 
 type Base struct {

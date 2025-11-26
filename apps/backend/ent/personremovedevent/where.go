@@ -10,48 +10,93 @@ import (
 )
 
 // ID filters vertices based on their ID field.
-func ID(id uuid.UUID) predicate.PersonRemovedEvent {
+func ID(id int) predicate.PersonRemovedEvent {
 	return predicate.PersonRemovedEvent(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id uuid.UUID) predicate.PersonRemovedEvent {
+func IDEQ(id int) predicate.PersonRemovedEvent {
 	return predicate.PersonRemovedEvent(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id uuid.UUID) predicate.PersonRemovedEvent {
+func IDNEQ(id int) predicate.PersonRemovedEvent {
 	return predicate.PersonRemovedEvent(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...uuid.UUID) predicate.PersonRemovedEvent {
+func IDIn(ids ...int) predicate.PersonRemovedEvent {
 	return predicate.PersonRemovedEvent(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...uuid.UUID) predicate.PersonRemovedEvent {
+func IDNotIn(ids ...int) predicate.PersonRemovedEvent {
 	return predicate.PersonRemovedEvent(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id uuid.UUID) predicate.PersonRemovedEvent {
+func IDGT(id int) predicate.PersonRemovedEvent {
 	return predicate.PersonRemovedEvent(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id uuid.UUID) predicate.PersonRemovedEvent {
+func IDGTE(id int) predicate.PersonRemovedEvent {
 	return predicate.PersonRemovedEvent(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id uuid.UUID) predicate.PersonRemovedEvent {
+func IDLT(id int) predicate.PersonRemovedEvent {
 	return predicate.PersonRemovedEvent(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id uuid.UUID) predicate.PersonRemovedEvent {
+func IDLTE(id int) predicate.PersonRemovedEvent {
 	return predicate.PersonRemovedEvent(sql.FieldLTE(FieldID, id))
+}
+
+// PersonID applies equality check predicate on the "person_id" field. It's identical to PersonIDEQ.
+func PersonID(v uuid.UUID) predicate.PersonRemovedEvent {
+	return predicate.PersonRemovedEvent(sql.FieldEQ(FieldPersonID, v))
+}
+
+// PersonIDEQ applies the EQ predicate on the "person_id" field.
+func PersonIDEQ(v uuid.UUID) predicate.PersonRemovedEvent {
+	return predicate.PersonRemovedEvent(sql.FieldEQ(FieldPersonID, v))
+}
+
+// PersonIDNEQ applies the NEQ predicate on the "person_id" field.
+func PersonIDNEQ(v uuid.UUID) predicate.PersonRemovedEvent {
+	return predicate.PersonRemovedEvent(sql.FieldNEQ(FieldPersonID, v))
+}
+
+// PersonIDIn applies the In predicate on the "person_id" field.
+func PersonIDIn(vs ...uuid.UUID) predicate.PersonRemovedEvent {
+	return predicate.PersonRemovedEvent(sql.FieldIn(FieldPersonID, vs...))
+}
+
+// PersonIDNotIn applies the NotIn predicate on the "person_id" field.
+func PersonIDNotIn(vs ...uuid.UUID) predicate.PersonRemovedEvent {
+	return predicate.PersonRemovedEvent(sql.FieldNotIn(FieldPersonID, vs...))
+}
+
+// PersonIDGT applies the GT predicate on the "person_id" field.
+func PersonIDGT(v uuid.UUID) predicate.PersonRemovedEvent {
+	return predicate.PersonRemovedEvent(sql.FieldGT(FieldPersonID, v))
+}
+
+// PersonIDGTE applies the GTE predicate on the "person_id" field.
+func PersonIDGTE(v uuid.UUID) predicate.PersonRemovedEvent {
+	return predicate.PersonRemovedEvent(sql.FieldGTE(FieldPersonID, v))
+}
+
+// PersonIDLT applies the LT predicate on the "person_id" field.
+func PersonIDLT(v uuid.UUID) predicate.PersonRemovedEvent {
+	return predicate.PersonRemovedEvent(sql.FieldLT(FieldPersonID, v))
+}
+
+// PersonIDLTE applies the LTE predicate on the "person_id" field.
+func PersonIDLTE(v uuid.UUID) predicate.PersonRemovedEvent {
+	return predicate.PersonRemovedEvent(sql.FieldLTE(FieldPersonID, v))
 }
 
 // HasEvent applies the HasEdge predicate on the "event" edge.

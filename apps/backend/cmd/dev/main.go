@@ -14,10 +14,12 @@ import (
 	notificationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/notification"
 	organisationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/organisation"
 	personhandler "github.com/SURF-Innovatie/MORIS/internal/handler/person"
+	producthandler "github.com/SURF-Innovatie/MORIS/internal/handler/product"
 	projecthandler "github.com/SURF-Innovatie/MORIS/internal/handler/project"
 	"github.com/SURF-Innovatie/MORIS/internal/organisation"
 	"github.com/SURF-Innovatie/MORIS/internal/person"
 	"github.com/SURF-Innovatie/MORIS/internal/platform/eventstore"
+	"github.com/SURF-Innovatie/MORIS/internal/product"
 	"github.com/SURF-Innovatie/MORIS/internal/project"
 	notification "github.com/SURF-Innovatie/MORIS/internal/projectnotification"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
@@ -79,6 +81,9 @@ func main() {
 	personSvc := person.NewService(client)
 	personHandler := personhandler.NewHandler(personSvc)
 
+	productSvc := product.NewService(client)
+	productHandler := producthandler.NewHandler(productSvc)
+
 	organisationSvc := organisation.NewService(client)
 	organisationHandler := organisationhandler.NewHandler(organisationSvc)
 
@@ -106,6 +111,7 @@ func main() {
 		custom.MountCustomHandlers(r, customHandler)
 		projecthandler.MountProjectRoutes(r, projHandler)
 		personhandler.MountPersonRoutes(r, personHandler)
+		producthandler.MountProductRoutes(r, productHandler)
 		organisationhandler.MountOrganisationRoutes(r, organisationHandler)
 		notificationhandler.MountNotificationRoutes(r, notificationHandler)
 	})
