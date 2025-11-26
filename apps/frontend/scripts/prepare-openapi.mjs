@@ -174,18 +174,59 @@ function renameResponses(responses) {
 function renameSchemas(schemas) {
   if (!schemas) return schemas;
 
-  const result = {};
-  for (const [key, value] of Object.entries(schemas)) {
-    // Take the last token after the last dot and capitalize it
+  const simpleNameCounts = {};
+  for (const key of Object.keys(schemas)) {
     const base = key.includes('.') ? key.slice(key.lastIndexOf('.') + 1) : key;
-    const nextKey = base.charAt(0).toUpperCase() + base.slice(1);
+    const simpleName = base.charAt(0).toUpperCase() + base.slice(1);
+    simpleNameCounts[simpleName] = (simpleNameCounts[simpleName] || 0) + 1;
+  }
 
-    if (result[nextKey]) {
-      // Preserve the existing entry if a duplicate sanitized name appears.
-      continue;
+  const result = {};
+  const usedNames = new Set();
+
+  for (const [key, value] of Object.entries(schemas)) {
+    const base = key.includes('.') ? key.slice(key.lastIndexOf('.') + 1) : key;
+    const simpleName = base.charAt(0).toUpperCase() + base.slice(1);
+
+    let nextKey;
+    if (simpleNameCounts[simpleName] > 1) {
+      // Collision detected, use long name
+      const parts = key.split('.');
+      if (parts.length > 1) {
+        const typeName = parts[parts.length - 1];
+        const packageStr = parts[parts.length - 2];
+        // Extract the last segment of the package string to avoid extremely long names
+        // e.g. github_com_..._projectdto -> projectdto
+        const packageSegments = packageStr.split('_');
+        let shortPackage = packageSegments[packageSegments.length - 1];
+        
+        // Remove "dto" from the end of the package name if present
+        if (shortPackage.toLowerCase().endsWith('dto')) {
+          shortPackage = shortPackage.slice(0, -3);
+        }
+        
+        const p = shortPackage.charAt(0).toUpperCase() + shortPackage.slice(1);
+        const t = typeName.charAt(0).toUpperCase() + typeName.slice(1);
+        nextKey = `${p}${t}`;
+      } else {
+        nextKey = simpleName;
+      }
+    } else {
+      nextKey = simpleName;
     }
 
+    // Ensure uniqueness in the final result
+    let candidate = nextKey;
+    let counter = 1;
+    while (usedNames.has(candidate)) {
+      counter++;
+      candidate = `${nextKey}${counter}`;
+    }
+    nextKey = candidate;
+
+    usedNames.add(nextKey);
     result[nextKey] = value;
+
     if (nextKey !== key) {
       refRenameMap[`#/components/schemas/${key}`] = `#/components/schemas/${nextKey}`;
     }

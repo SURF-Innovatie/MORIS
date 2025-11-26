@@ -11,6 +11,7 @@ type Event interface {
 	AggregateID() uuid.UUID
 	OccurredAt() time.Time
 	Type() string
+	String() string
 }
 
 const (

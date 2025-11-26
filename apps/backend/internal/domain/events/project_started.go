@@ -1,6 +1,7 @@
 package events
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,3 +19,6 @@ type ProjectStarted struct {
 
 func (ProjectStarted) isEvent()     {}
 func (ProjectStarted) Type() string { return ProjectStartedType }
+func (e ProjectStarted) String() string {
+	return fmt.Sprintf("Project started: %s", e.Title)
+}

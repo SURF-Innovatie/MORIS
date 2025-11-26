@@ -5,8 +5,10 @@ import (
 	"net/http"
 	"time"
 
+	_ "github.com/SURF-Innovatie/MORIS/internal/api/changelogdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/projectdto"
 	_ "github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+
 	"github.com/SURF-Innovatie/MORIS/internal/project"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -216,7 +218,7 @@ func (h *Handler) AddPerson(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path string true "Project ID (UUID)"
 // @Param personId path string true "Person ID (UUID)"
-// @Success 200 {object} entities.Project
+// @Success 200 {object} projectdto.Response
 // @Failure 400 {string} string "invalid project id or person id"
 // @Failure 500 {string} string "internal server error"
 // @Router /projects/{id}/people/{personId} [delete]
@@ -236,6 +238,35 @@ func (h *Handler) RemovePerson(w http.ResponseWriter, r *http.Request) {
 	}
 
 	proj, err := h.svc.RemovePerson(r.Context(), id, personId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(proj)
+}
+
+// GetChangelog godoc
+// @Summary Get change log for a project
+// @Description Retrieves the change log for a specific project
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Param id path string true "Project ID (UUID)"
+// @Success 200 {object} changelogdto.Changelog
+// @Failure 400 {string} string "invalid project id"
+// @Failure 500 {string} string "internal server error"
+// @Router /projects/{id}/changelog [get]
+func (h *Handler) GetChangelog(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		http.Error(w, "invalid project id", http.StatusBadRequest)
+		return
+	}
+
+	proj, err := h.svc.GetChangeLog(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -1,6 +1,9 @@
 package events
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type EndDateChanged struct {
 	Base
@@ -9,3 +12,6 @@ type EndDateChanged struct {
 
 func (EndDateChanged) isEvent()     {}
 func (EndDateChanged) Type() string { return EndDateChangedType }
+func (e EndDateChanged) String() string {
+	return fmt.Sprintf("End date changed: %s", e.EndDate)
+}

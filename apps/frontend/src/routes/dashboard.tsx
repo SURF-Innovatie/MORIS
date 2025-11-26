@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Bell,
   Inbox,
@@ -9,61 +9,74 @@ import {
   Calendar,
   Building2,
   ExternalLink,
-  CheckCircle2
-} from 'lucide-react';
+  CheckCircle2,
+} from "lucide-react";
 
-import { Badge } from '../components/ui/badge';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { useGetProjects } from '../api/generated-orval/moris';
+import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
+import { useGetProjects } from "../api/generated-orval/moris";
 
 const FAKE_NOTIFICATIONS = [
   {
-    id: '1',
-    type: 'project',
-    title: 'New project assignment',
+    id: "1",
+    type: "project",
+    title: "New project assignment",
     description: 'You have been added to "Website Redesign 2024"',
-    timestamp: '2 hours ago',
+    timestamp: "2 hours ago",
     read: false,
   },
   {
-    id: '2',
-    type: 'message',
-    title: 'Team message from Sarah Chen',
-    description: 'Can you review the latest design mockups?',
-    timestamp: '5 hours ago',
+    id: "2",
+    type: "message",
+    title: "Team message from Sarah Chen",
+    description: "Can you review the latest design mockups?",
+    timestamp: "5 hours ago",
     read: false,
   },
   {
-    id: '3',
-    type: 'update',
-    title: 'Project milestone completed',
-    description: 'Mobile App Development reached 75% completion',
-    timestamp: '1 day ago',
+    id: "3",
+    type: "update",
+    title: "Project milestone completed",
+    description: "Mobile App Development reached 75% completion",
+    timestamp: "1 day ago",
     read: true,
   },
   {
-    id: '4',
-    type: 'project',
-    title: 'Project deadline approaching',
-    description: 'API Integration project is due in 3 days',
-    timestamp: '1 day ago',
+    id: "4",
+    type: "project",
+    title: "Project deadline approaching",
+    description: "API Integration project is due in 3 days",
+    timestamp: "1 day ago",
     read: true,
   },
 ];
 
 const DashboardRoute = () => {
   const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const { data: projects, isLoading, error } = useGetProjects();
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -76,7 +89,7 @@ const DashboardRoute = () => {
             <Inbox className="h-5 w-5 text-muted-foreground" />
             <h2 className="text-2xl font-semibold tracking-tight">Inbox</h2>
             <Badge variant="default" className="ml-2">
-              {FAKE_NOTIFICATIONS.filter(n => !n.read).length}
+              {FAKE_NOTIFICATIONS.filter((n) => !n.read).length}
             </Badge>
           </div>
           <Button variant="ghost" size="sm">
@@ -90,15 +103,18 @@ const DashboardRoute = () => {
             {FAKE_NOTIFICATIONS.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <Bell className="mb-4 h-12 w-12 text-muted-foreground/50" />
-                <p className="text-sm text-muted-foreground">No new notifications</p>
+                <p className="text-sm text-muted-foreground">
+                  No new notifications
+                </p>
               </div>
             ) : (
               <div className="divide-y">
                 {FAKE_NOTIFICATIONS.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`flex items-start gap-4 p-4 transition-colors hover:bg-muted/50 ${!notification.read ? 'bg-primary/5' : ''
-                      }`}
+                    className={`flex items-start gap-4 p-4 transition-colors hover:bg-muted/50 ${
+                      !notification.read ? "bg-primary/5" : ""
+                    }`}
                   >
                     <div className="mt-1">
                       {!notification.read && (
@@ -106,7 +122,9 @@ const DashboardRoute = () => {
                       )}
                     </div>
                     <div className="flex-1 space-y-1">
-                      <p className="font-medium leading-none">{notification.title}</p>
+                      <p className="font-medium leading-none">
+                        {notification.title}
+                      </p>
                       <p className="text-sm text-muted-foreground">
                         {notification.description}
                       </p>
@@ -136,22 +154,25 @@ const DashboardRoute = () => {
           </div>
           <div className="flex items-center gap-2">
             <Button
-              variant={viewMode === 'cards' ? 'default' : 'ghost'}
+              variant={viewMode === "cards" ? "default" : "ghost"}
               size="sm"
-              onClick={() => setViewMode('cards')}
+              onClick={() => setViewMode("cards")}
             >
               <LayoutGrid className="mr-2 h-4 w-4" />
               Cards
             </Button>
             <Button
-              variant={viewMode === 'table' ? 'default' : 'ghost'}
+              variant={viewMode === "table" ? "default" : "ghost"}
               size="sm"
-              onClick={() => setViewMode('table')}
+              onClick={() => setViewMode("table")}
             >
               <TableIcon className="mr-2 h-4 w-4" />
               Table
             </Button>
-            <Button size="sm" onClick={() => navigate('/dashboard/projects/new')}>
+            <Button
+              size="sm"
+              onClick={() => navigate("/dashboard/projects/new")}
+            >
               Create Project
             </Button>
           </div>
@@ -160,7 +181,9 @@ const DashboardRoute = () => {
         {isLoading && (
           <Card>
             <CardContent className="flex items-center justify-center py-12">
-              <p className="text-sm text-muted-foreground">Loading projects...</p>
+              <p className="text-sm text-muted-foreground">
+                Loading projects...
+              </p>
             </CardContent>
           </Card>
         )}
@@ -168,7 +191,9 @@ const DashboardRoute = () => {
         {error && (
           <Card>
             <CardContent className="flex items-center justify-center py-12">
-              <p className="text-sm text-destructive">Failed to load projects</p>
+              <p className="text-sm text-destructive">
+                Failed to load projects
+              </p>
             </CardContent>
           </Card>
         )}
@@ -178,30 +203,36 @@ const DashboardRoute = () => {
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <Building2 className="mb-4 h-12 w-12 text-muted-foreground/50" />
               <p className="text-sm text-muted-foreground">No projects found</p>
-              <Button className="mt-4" size="sm" onClick={() => navigate('/dashboard/projects/new')}>
+              <Button
+                className="mt-4"
+                size="sm"
+                onClick={() => navigate("/dashboard/projects/new")}
+              >
                 Create your first project
               </Button>
             </CardContent>
           </Card>
         )}
 
-        {projects && projects.length > 0 && viewMode === 'cards' && (
+        {projects && projects.length > 0 && viewMode === "cards" && (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {projects.map((project) => (
               <Card key={project.id} className="transition-all hover:shadow-lg">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="line-clamp-1">{project.title || 'Untitled Project'}</CardTitle>
+                      <CardTitle className="line-clamp-1">
+                        {project.title || "Untitled Project"}
+                      </CardTitle>
                       <CardDescription className="mt-2 line-clamp-2">
-                        {project.description || 'No description available'}
+                        {project.description || "No description available"}
                       </CardDescription>
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() => navigate(`/dashboard/projects/${project.id}/edit`)}
+                      onClick={() => navigate(`/projects/${project.id}/edit`)}
                     >
                       <ExternalLink className="h-4 w-4" />
                     </Button>
@@ -219,14 +250,16 @@ const DashboardRoute = () => {
                   <div className="flex items-center gap-2 text-sm">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="text-muted-foreground">
-                      {formatDate(project.startDate)} - {formatDate(project.endDate)}
+                      {formatDate(project.startDate)} -{" "}
+                      {formatDate(project.endDate)}
                     </span>
                   </div>
                   {project.people && project.people.length > 0 && (
                     <div className="flex items-center gap-2 text-sm">
                       <UsersIcon className="h-4 w-4 text-muted-foreground" />
                       <span className="text-muted-foreground">
-                        {project.people.length} {project.people.length === 1 ? 'member' : 'members'}
+                        {project.people.length}{" "}
+                        {project.people.length === 1 ? "member" : "members"}
                       </span>
                     </div>
                   )}
@@ -236,7 +269,7 @@ const DashboardRoute = () => {
           </div>
         )}
 
-        {projects && projects.length > 0 && viewMode === 'table' && (
+        {projects && projects.length > 0 && viewMode === "table" && (
           <Card>
             <CardContent className="p-0">
               <Table>
@@ -255,13 +288,13 @@ const DashboardRoute = () => {
                   {projects.map((project) => (
                     <TableRow key={project.id}>
                       <TableCell className="font-medium">
-                        {project.title || 'Untitled Project'}
+                        {project.title || "Untitled Project"}
                       </TableCell>
                       <TableCell className="max-w-[300px] truncate">
-                        {project.description || 'No description'}
+                        {project.description || "No description"}
                       </TableCell>
                       <TableCell>
-                        {project.organisation?.name || 'N/A'}
+                        {project.organisation?.name || "N/A"}
                       </TableCell>
                       <TableCell>{formatDate(project.startDate)}</TableCell>
                       <TableCell>{formatDate(project.endDate)}</TableCell>
@@ -273,7 +306,9 @@ const DashboardRoute = () => {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => navigate(`/dashboard/projects/${project.id}/edit`)}
+                          onClick={() =>
+                            navigate(`/projects/${project.id}/edit`)
+                          }
                         >
                           <ExternalLink className="h-4 w-4" />
                         </Button>

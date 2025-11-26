@@ -376,6 +376,50 @@
                 }
             }
         },
+        "/projects/{id}/changelog": {
+            "get": {
+                "description": "Retrieves the change log for a specific project",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "projects"
+                ],
+                "summary": "Get change log for a project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.Changelog"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid project id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/projects/{id}/people/{personId}": {
             "post": {
                 "description": "Adds a new person to the specified project",
@@ -458,7 +502,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response"
                         }
                     },
                     "400": {
@@ -601,6 +645,95 @@
                 "name": {
                     "description": "Name holds the value of the \"name\" field.",
                     "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.Changelog": {
+            "type": "object",
+            "properties": {
+                "entries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.ChangelogEntry"
+                    }
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.ChangelogEntry": {
+            "type": "object",
+            "properties": {
+                "at": {
+                    "type": "string"
+                },
+                "event": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_organisationdto.Response": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_persondto.Response": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "familyName": {
+                    "type": "string"
+                },
+                "givenName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "This is a new project"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2025-12-31T23:59:59Z"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "organization": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_organisationdto.Response"
+                },
+                "people": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_persondto.Response"
+                    }
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2025-01-01T00:00:00Z"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "New Project"
+                },
+                "version": {
+                    "type": "integer"
                 }
             }
         },

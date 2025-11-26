@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	organisationent "github.com/SURF-Innovatie/MORIS/ent/organisation"
 	personent "github.com/SURF-Innovatie/MORIS/ent/person"
+	"github.com/SURF-Innovatie/MORIS/internal/api/changelogdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/organisationdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/persondto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/projectdto"
@@ -34,6 +36,7 @@ type Service interface {
 	UpdateProject(ctx context.Context, id uuid.UUID, params UpdateProjectParams) (*projectdto.Response, error)
 	AddPerson(ctx context.Context, projectID uuid.UUID, personID uuid.UUID) (*projectdto.Response, error)
 	RemovePerson(ctx context.Context, projectID uuid.UUID, personID uuid.UUID) (*projectdto.Response, error)
+	GetChangeLog(ctx context.Context, id uuid.UUID) (*changelogdto.Changelog, error)
 }
 
 type service struct {
@@ -373,4 +376,29 @@ func (s *service) projectToResponse(ctx context.Context, proj *entities.Project)
 		Organization: orgDTO,
 		People:       peopleDTOs,
 	}, nil
+}
+
+func (s *service) GetChangeLog(ctx context.Context, id uuid.UUID) (*changelogdto.Changelog, error) {
+	events, _, err := s.es.Load(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if len(events) == 0 {
+		return nil, ErrNotFound
+	}
+
+	var changeLog changelogdto.Changelog
+	for _, evt := range events {
+		changeLog.Entries = append(changeLog.Entries, changelogdto.ChangelogEntry{
+			Event: evt.String(),
+			At:    evt.OccurredAt(),
+		})
+	}
+
+	// order by desc occurredAt
+	sort.Slice(changeLog.Entries, func(i, j int) bool {
+		return changeLog.Entries[i].At.After(changeLog.Entries[j].At)
+	})
+
+	return &changeLog, nil
 }
