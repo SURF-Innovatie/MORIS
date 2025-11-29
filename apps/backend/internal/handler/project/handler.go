@@ -247,16 +247,28 @@ func (h *Handler) RemovePerson(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(proj)
 }
 
+// AddProduct godoc
+// @Summary Add a product to a project
+// @Description Adds an existing product to the specified project using its ID
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Param id path string true "Project ID (UUID)"
+// @Param productID path string true "Product ID (UUID)"
+// @Success 200 {object} projectdto.Response
+// @Failure 400 {string} string "invalid project id or product id"
+// @Failure 500 {string} string "internal server error"
+// @Router /projects/{id}/products/{productID} [post]
 func (h *Handler) AddProduct(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
 		http.Error(w, "invalid project id", http.StatusBadRequest)
+		return
 	}
 
 	productIDStr := chi.URLParam(r, "productID")
 	productID, err := uuid.Parse(productIDStr)
-
 	if err != nil {
 		http.Error(w, "invalid productID", http.StatusBadRequest)
 		return
@@ -272,16 +284,28 @@ func (h *Handler) AddProduct(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(proj)
 }
 
+// RemoveProduct godoc
+// @Summary Remove a product from a project
+// @Description Removes a product association from the specified project
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Param id path string true "Project ID (UUID)"
+// @Param productID path string true "Product ID (UUID)"
+// @Success 200 {object} projectdto.Response
+// @Failure 400 {string} string "invalid project id or product id"
+// @Failure 500 {string} string "internal server error"
+// @Router /projects/{id}/products/{productID} [delete]
 func (h *Handler) RemoveProduct(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
 		http.Error(w, "invalid project id", http.StatusBadRequest)
+		return
 	}
 
 	productIDStr := chi.URLParam(r, "productID")
 	productID, err := uuid.Parse(productIDStr)
-
 	if err != nil {
 		http.Error(w, "invalid productID", http.StatusBadRequest)
 		return

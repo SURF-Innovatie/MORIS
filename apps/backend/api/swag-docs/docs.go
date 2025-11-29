@@ -52,13 +52,13 @@ const docTemplate = `{
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "$ref": "#/definitions/auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     },
                     "403": {
                         "description": "Insufficient permissions",
                         "schema": {
-                            "$ref": "#/definitions/auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     }
                 }
@@ -89,7 +89,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/custom.LinkORCIDRequest"
+                            "$ref": "#/definitions/internal_handler_custom.LinkORCIDRequest"
                         }
                     }
                 ],
@@ -97,31 +97,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/custom.StatusResponse"
+                            "$ref": "#/definitions/internal_handler_custom.StatusResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request",
                         "schema": {
-                            "$ref": "#/definitions/auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     },
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "$ref": "#/definitions/auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     },
                     "409": {
                         "description": "ORCID ID already linked",
                         "schema": {
-                            "$ref": "#/definitions/auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     }
                 }
@@ -149,19 +149,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/custom.StatusResponse"
+                            "$ref": "#/definitions/internal_handler_custom.StatusResponse"
                         }
                     },
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "$ref": "#/definitions/auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     }
                 }
@@ -189,19 +189,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/custom.ORCIDAuthURLResponse"
+                            "$ref": "#/definitions/internal_handler_custom.ORCIDAuthURLResponse"
                         }
                     },
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "$ref": "#/definitions/auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     }
                 }
@@ -224,7 +224,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/custom.StatusResponse"
+                            "$ref": "#/definitions/internal_handler_custom.StatusResponse"
                         }
                     }
                 }
@@ -250,7 +250,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/custom.LoginRequest"
+                            "$ref": "#/definitions/internal_handler_custom.LoginRequest"
                         }
                     }
                 ],
@@ -258,19 +258,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/custom.LoginResponse"
+                            "$ref": "#/definitions/internal_handler_custom.LoginResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     },
                     "401": {
                         "description": "Invalid credentials",
                         "schema": {
-                            "$ref": "#/definitions/auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     }
                 }
@@ -295,12 +295,216 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/entities.ProjectNotification"
+                                "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProjectNotification"
                             }
                         }
                     },
                     "401": {
                         "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/products": {
+            "get": {
+                "description": "Returns all products",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "List products",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_productdto.Response"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a new product",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Create a product",
+                "parameters": [
+                    {
+                        "description": "Product data",
+                        "name": "product",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_productdto.Request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_productdto.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/{id}": {
+            "get": {
+                "description": "Get a single product by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Get a product",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_productdto.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update an existing product",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Update a product",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Product data",
+                        "name": "product",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_productdto.Request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_productdto.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id or body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a product by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Delete a product",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id",
                         "schema": {
                             "type": "string"
                         }
@@ -336,13 +540,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/auth.AuthenticatedUser"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser"
                         }
                     },
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "$ref": "#/definitions/auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     }
                 }
@@ -367,7 +571,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/entities.Project"
+                                "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
                             }
                         }
                     },
@@ -398,7 +602,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/projectdto.StartRequest"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Request"
                         }
                     }
                 ],
@@ -406,7 +610,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/entities.Project"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
                         }
                     },
                     "400": {
@@ -450,7 +654,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/entities.Project"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
                         }
                     },
                     "400": {
@@ -493,7 +697,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/projectdto.UpdateRequest"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Request"
                         }
                     }
                 ],
@@ -501,7 +705,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/entities.Project"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
                         }
                     },
                     "400": {
@@ -551,7 +755,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/changelogdto.Changelog"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.Changelog"
                         }
                     },
                     "400": {
@@ -602,7 +806,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/entities.Project"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
                         }
                     },
                     "400": {
@@ -651,11 +855,111 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/projectdto.Response"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response"
                         }
                     },
                     "400": {
                         "description": "invalid project id or person id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/projects/{id}/products/{productID}": {
+            "post": {
+                "description": "Adds an existing product to the specified project using its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "projects"
+                ],
+                "summary": "Add a product to a project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product ID (UUID)",
+                        "name": "productID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid project id or product id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Removes a product association from the specified project",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "projects"
+                ],
+                "summary": "Remove a product from a project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product ID (UUID)",
+                        "name": "productID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid project id or product id",
                         "schema": {
                             "type": "string"
                         }
@@ -689,7 +993,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/custom.RegisterRequest"
+                            "$ref": "#/definitions/internal_handler_custom.RegisterRequest"
                         }
                     }
                 ],
@@ -697,19 +1001,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/custom.RegisterResponse"
+                            "$ref": "#/definitions/internal_handler_custom.RegisterResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request body or missing fields",
                         "schema": {
-                            "$ref": "#/definitions/auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     }
                 }
@@ -732,7 +1036,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/custom.StatusResponse"
+                            "$ref": "#/definitions/internal_handler_custom.StatusResponse"
                         }
                     }
                 }
@@ -760,19 +1064,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/custom.TotalUsersResponse"
+                            "$ref": "#/definitions/internal_handler_custom.TotalUsersResponse"
                         }
                     },
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "$ref": "#/definitions/auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
                         }
                     }
                 }
@@ -780,7 +1084,184 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "auth.AuthenticatedUser": {
+        "ent.User": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "description": "Email holds the value of the \"email\" field.",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name holds the value of the \"name\" field.",
+                    "type": "string"
+                },
+                "orcid_id": {
+                    "description": "OrcidID holds the value of the \"orcid_id\" field.",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.Changelog": {
+            "type": "object",
+            "properties": {
+                "entries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.ChangelogEntry"
+                    }
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.ChangelogEntry": {
+            "type": "object",
+            "properties": {
+                "at": {
+                    "type": "string"
+                },
+                "event": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_organisationdto.Response": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_persondto.Response": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "familyName": {
+                    "type": "string"
+                },
+                "givenName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_productdto.Request": {
+            "type": "object",
+            "properties": {
+                "doi": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_productdto.Response": {
+            "type": "object",
+            "properties": {
+                "doi": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProductType"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Request": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "This is a new project"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2025-12-31T23:59:59Z"
+                },
+                "organisationID": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2025-01-01T00:00:00Z"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "New Project"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "This is a new project"
+                },
+                "endDate": {
+                    "type": "string",
+                    "example": "2025-12-31T23:59:59Z"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "organization": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_organisationdto.Response"
+                },
+                "people": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_persondto.Response"
+                    }
+                },
+                "products": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_productdto.Response"
+                    }
+                },
+                "startDate": {
+                    "type": "string",
+                    "example": "2025-01-01T00:00:00Z"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "New Project"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser": {
             "type": "object",
             "properties": {
                 "email": {
@@ -807,7 +1288,7 @@ const docTemplate = `{
                 }
             }
         },
-        "auth.BackendError": {
+        "github_com_SURF-Innovatie_MORIS_internal_auth.BackendError": {
             "type": "object",
             "properties": {
                 "code": {
@@ -828,168 +1309,34 @@ const docTemplate = `{
                 }
             }
         },
-        "changelogdto.Changelog": {
-            "type": "object",
-            "properties": {
-                "entries": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/changelogdto.ChangelogEntry"
-                    }
-                }
-            }
+        "github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProductType": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9
+            ],
+            "x-enum-varnames": [
+                "CartographicMaterial",
+                "Dataset",
+                "Image",
+                "InteractiveResource",
+                "LearningObject",
+                "Other",
+                "Software",
+                "Sound",
+                "Trademark",
+                "Workflow"
+            ]
         },
-        "changelogdto.ChangelogEntry": {
-            "type": "object",
-            "properties": {
-                "at": {
-                    "type": "string"
-                },
-                "event": {
-                    "type": "string"
-                }
-            }
-        },
-        "custom.LinkORCIDRequest": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "string",
-                    "example": "authentication_code_from_orcid"
-                }
-            }
-        },
-        "custom.LoginRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
-                },
-                "password": {
-                    "type": "string",
-                    "example": "secretpassword"
-                }
-            }
-        },
-        "custom.LoginResponse": {
-            "type": "object",
-            "properties": {
-                "token": {
-                    "type": "string",
-                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                },
-                "user": {
-                    "type": "object",
-                    "properties": {
-                        "email": {
-                            "type": "string",
-                            "example": "user@example.com"
-                        },
-                        "id": {
-                            "type": "string",
-                            "example": "1"
-                        },
-                        "roles": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            },
-                            "example": [
-                                "user"
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "custom.ORCIDAuthURLResponse": {
-            "type": "object",
-            "properties": {
-                "url": {
-                    "type": "string",
-                    "example": "https://orcid.org/oauth/authorize?..."
-                }
-            }
-        },
-        "custom.RegisterRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "John Doe"
-                },
-                "password": {
-                    "type": "string",
-                    "example": "secretpassword"
-                }
-            }
-        },
-        "custom.RegisterResponse": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "1"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "John Doe"
-                }
-            }
-        },
-        "custom.StatusResponse": {
-            "type": "object",
-            "properties": {
-                "status": {
-                    "type": "string",
-                    "example": "ok"
-                },
-                "timestamp": {
-                    "type": "string",
-                    "example": "2025-11-12T10:00:00Z"
-                }
-            }
-        },
-        "custom.TotalUsersResponse": {
-            "type": "object",
-            "properties": {
-                "total_users": {
-                    "type": "integer",
-                    "example": 123
-                }
-            }
-        },
-        "ent.User": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "description": "Email holds the value of the \"email\" field.",
-                    "type": "string"
-                },
-                "id": {
-                    "description": "ID of the ent.",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "Name holds the value of the \"name\" field.",
-                    "type": "string"
-                },
-                "orcid_id": {
-                    "description": "OrcidID holds the value of the \"orcid_id\" field.",
-                    "type": "string"
-                }
-            }
-        },
-        "entities.Project": {
+        "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project": {
             "type": "object",
             "properties": {
                 "description": {
@@ -1027,7 +1374,7 @@ const docTemplate = `{
                 }
             }
         },
-        "entities.ProjectNotification": {
+        "github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProjectNotification": {
             "type": "object",
             "properties": {
                 "id": {
@@ -1047,118 +1394,121 @@ const docTemplate = `{
                 }
             }
         },
-        "organisationdto.Response": {
+        "internal_handler_custom.LinkORCIDRequest": {
             "type": "object",
             "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
+                "code": {
+                    "type": "string",
+                    "example": "authentication_code_from_orcid"
                 }
             }
         },
-        "persondto.Response": {
+        "internal_handler_custom.LoginRequest": {
             "type": "object",
             "properties": {
                 "email": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "user@example.com"
                 },
-                "familyName": {
-                    "type": "string"
+                "password": {
+                    "type": "string",
+                    "example": "secretpassword"
+                }
+            }
+        },
+        "internal_handler_custom.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                 },
-                "givenName": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
+                "user": {
+                    "type": "object",
+                    "properties": {
+                        "email": {
+                            "type": "string",
+                            "example": "user@example.com"
+                        },
+                        "id": {
+                            "type": "string",
+                            "example": "1"
+                        },
+                        "roles": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "example": [
+                                "user"
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "internal_handler_custom.ORCIDAuthURLResponse": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "example": "https://orcid.org/oauth/authorize?..."
+                }
+            }
+        },
+        "internal_handler_custom.RegisterRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "secretpassword"
                 }
             }
         },
-        "projectdto.Response": {
+        "internal_handler_custom.RegisterResponse": {
             "type": "object",
             "properties": {
-                "description": {
+                "email": {
                     "type": "string",
-                    "example": "This is a new project"
-                },
-                "endDate": {
-                    "type": "string",
-                    "example": "2025-12-31T23:59:59Z"
+                    "example": "user@example.com"
                 },
                 "id": {
-                    "type": "string"
-                },
-                "organization": {
-                    "$ref": "#/definitions/organisationdto.Response"
-                },
-                "people": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/persondto.Response"
-                    }
-                },
-                "startDate": {
                     "type": "string",
-                    "example": "2025-01-01T00:00:00Z"
+                    "example": "1"
                 },
-                "title": {
+                "name": {
                     "type": "string",
-                    "example": "New Project"
-                },
-                "version": {
-                    "type": "integer"
+                    "example": "John Doe"
                 }
             }
         },
-        "projectdto.StartRequest": {
+        "internal_handler_custom.StatusResponse": {
             "type": "object",
             "properties": {
-                "description": {
+                "status": {
                     "type": "string",
-                    "example": "This is a new project"
+                    "example": "ok"
                 },
-                "endDate": {
+                "timestamp": {
                     "type": "string",
-                    "example": "2025-12-31T23:59:59Z"
-                },
-                "organisationID": {
-                    "type": "string"
-                },
-                "startDate": {
-                    "type": "string",
-                    "example": "2025-01-01T00:00:00Z"
-                },
-                "title": {
-                    "type": "string",
-                    "example": "New Project"
+                    "example": "2025-11-12T10:00:00Z"
                 }
             }
         },
-        "projectdto.UpdateRequest": {
+        "internal_handler_custom.TotalUsersResponse": {
             "type": "object",
             "properties": {
-                "description": {
-                    "type": "string",
-                    "example": "This is an updated project"
-                },
-                "endDate": {
-                    "type": "string",
-                    "example": "2025-12-31T23:59:59Z"
-                },
-                "organisationID": {
-                    "type": "string"
-                },
-                "startDate": {
-                    "type": "string",
-                    "example": "2025-01-01T00:00:00Z"
-                },
-                "title": {
-                    "type": "string",
-                    "example": "Updated Project"
+                "total_users": {
+                    "type": "integer",
+                    "example": 123
                 }
             }
         }
