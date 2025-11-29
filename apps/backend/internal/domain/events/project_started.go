@@ -9,6 +9,7 @@ import (
 
 type ProjectStarted struct {
 	Base
+	ProjectAdmin   uuid.UUID   `json:"projectAdmin"`
 	Title          string      `json:"title"`
 	Description    string      `json:"description"`
 	StartDate      time.Time   `json:"startDate"`

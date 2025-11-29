@@ -21,6 +21,7 @@ func Apply(p *entities.Project, e events.Event) {
 	switch ev := e.(type) {
 	case events.ProjectStarted:
 		p.Title = ev.Title
+		p.ProjectAdmin = ev.ProjectAdmin
 		p.Description = ev.Description
 		p.StartDate = ev.StartDate
 		p.EndDate = ev.EndDate

@@ -111,6 +111,10 @@ func init() {
 	projectnotification.DefaultID = projectnotificationDescID.Default.(func() uuid.UUID)
 	projectstartedeventFields := schema.ProjectStartedEvent{}.Fields()
 	_ = projectstartedeventFields
+	// projectstartedeventDescProjectAdmin is the schema descriptor for project_admin field.
+	projectstartedeventDescProjectAdmin := projectstartedeventFields[1].Descriptor()
+	// projectstartedevent.DefaultProjectAdmin holds the default value on creation for the project_admin field.
+	projectstartedevent.DefaultProjectAdmin = projectstartedeventDescProjectAdmin.Default.(func() uuid.UUID)
 	// projectstartedeventDescID is the schema descriptor for id field.
 	projectstartedeventDescID := projectstartedeventFields[0].Descriptor()
 	// projectstartedevent.DefaultID holds the default value on creation for the id field.

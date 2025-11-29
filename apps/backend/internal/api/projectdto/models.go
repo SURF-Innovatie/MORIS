@@ -11,6 +11,7 @@ import (
 
 // Request represents the request body for starting a new project
 type Request struct {
+	ProjectAdmin   uuid.UUID `json:"projectAdmin"`
 	Title          string    `json:"title" example:"New Project"`
 	Description    string    `json:"description" example:"This is a new project"`
 	OrganisationID uuid.UUID `json:"organisationID"`
@@ -20,6 +21,7 @@ type Request struct {
 
 type Response struct {
 	Id           uuid.UUID                `json:"id"`
+	ProjectAdmin uuid.UUID                `json:"projectAdmin"`
 	Version      int                      `json:"version"`
 	Title        string                   `json:"title" example:"New Project"`
 	Description  string                   `json:"description" example:"This is a new project"`

@@ -49,6 +49,7 @@ type service struct {
 }
 
 type StartProjectParams struct {
+	ProjectAdmin   uuid.UUID
 	Title          string
 	Description    string
 	OrganisationID uuid.UUID
@@ -95,6 +96,7 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 			ProjectID: projectID,
 			At:        now,
 		},
+		ProjectAdmin:   params.ProjectAdmin,
 		Title:          params.Title,
 		Description:    params.Description,
 		StartDate:      params.StartDate,
@@ -427,6 +429,7 @@ func (s *service) projectToResponse(ctx context.Context, proj *entities.Project)
 
 	return &projectdto.Response{
 		Id:           proj.Id,
+		ProjectAdmin: proj.ProjectAdmin,
 		Version:      proj.Version,
 		Title:        proj.Title,
 		Description:  proj.Description,

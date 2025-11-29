@@ -15,6 +15,8 @@ func (ProjectStartedEvent) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).
 			Default(uuid.New),
+		field.UUID("project_admin", uuid.UUID{}).
+			Default(uuid.New),
 		field.String("title"),
 		field.String("description"),
 		field.Time("start_date"),

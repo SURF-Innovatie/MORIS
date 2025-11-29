@@ -30,6 +30,20 @@ func (_u *ProjectStartedEventUpdate) Where(ps ...predicate.ProjectStartedEvent) 
 	return _u
 }
 
+// SetProjectAdmin sets the "project_admin" field.
+func (_u *ProjectStartedEventUpdate) SetProjectAdmin(v uuid.UUID) *ProjectStartedEventUpdate {
+	_u.mutation.SetProjectAdmin(v)
+	return _u
+}
+
+// SetNillableProjectAdmin sets the "project_admin" field if the given value is not nil.
+func (_u *ProjectStartedEventUpdate) SetNillableProjectAdmin(v *uuid.UUID) *ProjectStartedEventUpdate {
+	if v != nil {
+		_u.SetProjectAdmin(*v)
+	}
+	return _u
+}
+
 // SetTitle sets the "title" field.
 func (_u *ProjectStartedEventUpdate) SetTitle(v string) *ProjectStartedEventUpdate {
 	_u.mutation.SetTitle(v)
@@ -169,6 +183,9 @@ func (_u *ProjectStartedEventUpdate) sqlSave(ctx context.Context) (_node int, er
 			}
 		}
 	}
+	if value, ok := _u.mutation.ProjectAdmin(); ok {
+		_spec.SetField(projectstartedevent.FieldProjectAdmin, field.TypeUUID, value)
+	}
 	if value, ok := _u.mutation.Title(); ok {
 		_spec.SetField(projectstartedevent.FieldTitle, field.TypeString, value)
 	}
@@ -231,6 +248,20 @@ type ProjectStartedEventUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *ProjectStartedEventMutation
+}
+
+// SetProjectAdmin sets the "project_admin" field.
+func (_u *ProjectStartedEventUpdateOne) SetProjectAdmin(v uuid.UUID) *ProjectStartedEventUpdateOne {
+	_u.mutation.SetProjectAdmin(v)
+	return _u
+}
+
+// SetNillableProjectAdmin sets the "project_admin" field if the given value is not nil.
+func (_u *ProjectStartedEventUpdateOne) SetNillableProjectAdmin(v *uuid.UUID) *ProjectStartedEventUpdateOne {
+	if v != nil {
+		_u.SetProjectAdmin(*v)
+	}
+	return _u
 }
 
 // SetTitle sets the "title" field.
@@ -401,6 +432,9 @@ func (_u *ProjectStartedEventUpdateOne) sqlSave(ctx context.Context) (_node *Pro
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.ProjectAdmin(); ok {
+		_spec.SetField(projectstartedevent.FieldProjectAdmin, field.TypeUUID, value)
 	}
 	if value, ok := _u.mutation.Title(); ok {
 		_spec.SetField(projectstartedevent.FieldTitle, field.TypeString, value)

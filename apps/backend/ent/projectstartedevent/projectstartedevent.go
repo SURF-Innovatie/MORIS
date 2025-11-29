@@ -13,6 +13,8 @@ const (
 	Label = "project_started_event"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldProjectAdmin holds the string denoting the project_admin field in the database.
+	FieldProjectAdmin = "project_admin"
 	// FieldTitle holds the string denoting the title field in the database.
 	FieldTitle = "title"
 	// FieldDescription holds the string denoting the description field in the database.
@@ -39,6 +41,7 @@ const (
 // Columns holds all SQL columns for projectstartedevent fields.
 var Columns = []string{
 	FieldID,
+	FieldProjectAdmin,
 	FieldTitle,
 	FieldDescription,
 	FieldStartDate,
@@ -68,6 +71,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// DefaultProjectAdmin holds the default value on creation for the "project_admin" field.
+	DefaultProjectAdmin func() uuid.UUID
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -78,6 +83,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByProjectAdmin orders the results by the project_admin field.
+func ByProjectAdmin(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProjectAdmin, opts...).ToFunc()
 }
 
 // ByTitle orders the results by the title field.

@@ -300,12 +300,12 @@ func (_q *ProjectStartedEventQuery) WithEvent(opts ...func(*EventQuery)) *Projec
 // Example:
 //
 //	var v []struct {
-//		Title string `json:"title,omitempty"`
+//		ProjectAdmin uuid.UUID `json:"project_admin,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.ProjectStartedEvent.Query().
-//		GroupBy(projectstartedevent.FieldTitle).
+//		GroupBy(projectstartedevent.FieldProjectAdmin).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *ProjectStartedEventQuery) GroupBy(field string, fields ...string) *ProjectStartedEventGroupBy {
@@ -323,11 +323,11 @@ func (_q *ProjectStartedEventQuery) GroupBy(field string, fields ...string) *Pro
 // Example:
 //
 //	var v []struct {
-//		Title string `json:"title,omitempty"`
+//		ProjectAdmin uuid.UUID `json:"project_admin,omitempty"`
 //	}
 //
 //	client.ProjectStartedEvent.Query().
-//		Select(projectstartedevent.FieldTitle).
+//		Select(projectstartedevent.FieldProjectAdmin).
 //		Scan(ctx, &v)
 func (_q *ProjectStartedEventQuery) Select(fields ...string) *ProjectStartedEventSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

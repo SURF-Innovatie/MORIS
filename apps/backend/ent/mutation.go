@@ -5945,6 +5945,7 @@ type ProjectStartedEventMutation struct {
 	op              Op
 	typ             string
 	id              *uuid.UUID
+	project_admin   *uuid.UUID
 	title           *string
 	description     *string
 	start_date      *time.Time
@@ -6060,6 +6061,42 @@ func (m *ProjectStartedEventMutation) IDs(ctx context.Context) ([]uuid.UUID, err
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetProjectAdmin sets the "project_admin" field.
+func (m *ProjectStartedEventMutation) SetProjectAdmin(u uuid.UUID) {
+	m.project_admin = &u
+}
+
+// ProjectAdmin returns the value of the "project_admin" field in the mutation.
+func (m *ProjectStartedEventMutation) ProjectAdmin() (r uuid.UUID, exists bool) {
+	v := m.project_admin
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProjectAdmin returns the old "project_admin" field's value of the ProjectStartedEvent entity.
+// If the ProjectStartedEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProjectStartedEventMutation) OldProjectAdmin(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProjectAdmin is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProjectAdmin requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProjectAdmin: %w", err)
+	}
+	return oldValue.ProjectAdmin, nil
+}
+
+// ResetProjectAdmin resets all changes to the "project_admin" field.
+func (m *ProjectStartedEventMutation) ResetProjectAdmin() {
+	m.project_admin = nil
 }
 
 // SetTitle sets the "title" field.
@@ -6315,7 +6352,10 @@ func (m *ProjectStartedEventMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ProjectStartedEventMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
+	if m.project_admin != nil {
+		fields = append(fields, projectstartedevent.FieldProjectAdmin)
+	}
 	if m.title != nil {
 		fields = append(fields, projectstartedevent.FieldTitle)
 	}
@@ -6339,6 +6379,8 @@ func (m *ProjectStartedEventMutation) Fields() []string {
 // schema.
 func (m *ProjectStartedEventMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case projectstartedevent.FieldProjectAdmin:
+		return m.ProjectAdmin()
 	case projectstartedevent.FieldTitle:
 		return m.Title()
 	case projectstartedevent.FieldDescription:
@@ -6358,6 +6400,8 @@ func (m *ProjectStartedEventMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *ProjectStartedEventMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case projectstartedevent.FieldProjectAdmin:
+		return m.OldProjectAdmin(ctx)
 	case projectstartedevent.FieldTitle:
 		return m.OldTitle(ctx)
 	case projectstartedevent.FieldDescription:
@@ -6377,6 +6421,13 @@ func (m *ProjectStartedEventMutation) OldField(ctx context.Context, name string)
 // type.
 func (m *ProjectStartedEventMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case projectstartedevent.FieldProjectAdmin:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProjectAdmin(v)
+		return nil
 	case projectstartedevent.FieldTitle:
 		v, ok := value.(string)
 		if !ok {
@@ -6461,6 +6512,9 @@ func (m *ProjectStartedEventMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *ProjectStartedEventMutation) ResetField(name string) error {
 	switch name {
+	case projectstartedevent.FieldProjectAdmin:
+		m.ResetProjectAdmin()
+		return nil
 	case projectstartedevent.FieldTitle:
 		m.ResetTitle()
 		return nil

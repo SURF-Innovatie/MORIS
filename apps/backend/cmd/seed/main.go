@@ -262,6 +262,7 @@ func main() {
 				ProjectID: projectID,
 				At:        time.Now().UTC(),
 			},
+			ProjectAdmin:   personIDs[sp.People[0]],
 			Title:          sp.Title,
 			Description:    sp.Description,
 			StartDate:      sp.Start,

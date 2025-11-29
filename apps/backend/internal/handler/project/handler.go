@@ -81,6 +81,7 @@ func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := project.StartProjectParams{
+		ProjectAdmin:   req.ProjectAdmin,
 		Title:          req.Title,
 		Description:    req.Description,
 		OrganisationID: req.OrganisationID,

@@ -8,6 +8,7 @@ import (
 
 type Project struct {
 	Id           uuid.UUID
+	ProjectAdmin uuid.UUID
 	Version      int
 	StartDate    time.Time
 	EndDate      time.Time

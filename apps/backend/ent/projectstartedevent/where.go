@@ -56,6 +56,11 @@ func IDLTE(id uuid.UUID) predicate.ProjectStartedEvent {
 	return predicate.ProjectStartedEvent(sql.FieldLTE(FieldID, id))
 }
 
+// ProjectAdmin applies equality check predicate on the "project_admin" field. It's identical to ProjectAdminEQ.
+func ProjectAdmin(v uuid.UUID) predicate.ProjectStartedEvent {
+	return predicate.ProjectStartedEvent(sql.FieldEQ(FieldProjectAdmin, v))
+}
+
 // Title applies equality check predicate on the "title" field. It's identical to TitleEQ.
 func Title(v string) predicate.ProjectStartedEvent {
 	return predicate.ProjectStartedEvent(sql.FieldEQ(FieldTitle, v))
@@ -79,6 +84,46 @@ func EndDate(v time.Time) predicate.ProjectStartedEvent {
 // OrganisationID applies equality check predicate on the "organisation_id" field. It's identical to OrganisationIDEQ.
 func OrganisationID(v uuid.UUID) predicate.ProjectStartedEvent {
 	return predicate.ProjectStartedEvent(sql.FieldEQ(FieldOrganisationID, v))
+}
+
+// ProjectAdminEQ applies the EQ predicate on the "project_admin" field.
+func ProjectAdminEQ(v uuid.UUID) predicate.ProjectStartedEvent {
+	return predicate.ProjectStartedEvent(sql.FieldEQ(FieldProjectAdmin, v))
+}
+
+// ProjectAdminNEQ applies the NEQ predicate on the "project_admin" field.
+func ProjectAdminNEQ(v uuid.UUID) predicate.ProjectStartedEvent {
+	return predicate.ProjectStartedEvent(sql.FieldNEQ(FieldProjectAdmin, v))
+}
+
+// ProjectAdminIn applies the In predicate on the "project_admin" field.
+func ProjectAdminIn(vs ...uuid.UUID) predicate.ProjectStartedEvent {
+	return predicate.ProjectStartedEvent(sql.FieldIn(FieldProjectAdmin, vs...))
+}
+
+// ProjectAdminNotIn applies the NotIn predicate on the "project_admin" field.
+func ProjectAdminNotIn(vs ...uuid.UUID) predicate.ProjectStartedEvent {
+	return predicate.ProjectStartedEvent(sql.FieldNotIn(FieldProjectAdmin, vs...))
+}
+
+// ProjectAdminGT applies the GT predicate on the "project_admin" field.
+func ProjectAdminGT(v uuid.UUID) predicate.ProjectStartedEvent {
+	return predicate.ProjectStartedEvent(sql.FieldGT(FieldProjectAdmin, v))
+}
+
+// ProjectAdminGTE applies the GTE predicate on the "project_admin" field.
+func ProjectAdminGTE(v uuid.UUID) predicate.ProjectStartedEvent {
+	return predicate.ProjectStartedEvent(sql.FieldGTE(FieldProjectAdmin, v))
+}
+
+// ProjectAdminLT applies the LT predicate on the "project_admin" field.
+func ProjectAdminLT(v uuid.UUID) predicate.ProjectStartedEvent {
+	return predicate.ProjectStartedEvent(sql.FieldLT(FieldProjectAdmin, v))
+}
+
+// ProjectAdminLTE applies the LTE predicate on the "project_admin" field.
+func ProjectAdminLTE(v uuid.UUID) predicate.ProjectStartedEvent {
+	return predicate.ProjectStartedEvent(sql.FieldLTE(FieldProjectAdmin, v))
 }
 
 // TitleEQ applies the EQ predicate on the "title" field.

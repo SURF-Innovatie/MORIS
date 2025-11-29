@@ -22,6 +22,20 @@ type ProjectStartedEventCreate struct {
 	hooks    []Hook
 }
 
+// SetProjectAdmin sets the "project_admin" field.
+func (_c *ProjectStartedEventCreate) SetProjectAdmin(v uuid.UUID) *ProjectStartedEventCreate {
+	_c.mutation.SetProjectAdmin(v)
+	return _c
+}
+
+// SetNillableProjectAdmin sets the "project_admin" field if the given value is not nil.
+func (_c *ProjectStartedEventCreate) SetNillableProjectAdmin(v *uuid.UUID) *ProjectStartedEventCreate {
+	if v != nil {
+		_c.SetProjectAdmin(*v)
+	}
+	return _c
+}
+
 // SetTitle sets the "title" field.
 func (_c *ProjectStartedEventCreate) SetTitle(v string) *ProjectStartedEventCreate {
 	_c.mutation.SetTitle(v)
@@ -112,6 +126,10 @@ func (_c *ProjectStartedEventCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *ProjectStartedEventCreate) defaults() {
+	if _, ok := _c.mutation.ProjectAdmin(); !ok {
+		v := projectstartedevent.DefaultProjectAdmin()
+		_c.mutation.SetProjectAdmin(v)
+	}
 	if _, ok := _c.mutation.ID(); !ok {
 		v := projectstartedevent.DefaultID()
 		_c.mutation.SetID(v)
@@ -120,6 +138,9 @@ func (_c *ProjectStartedEventCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *ProjectStartedEventCreate) check() error {
+	if _, ok := _c.mutation.ProjectAdmin(); !ok {
+		return &ValidationError{Name: "project_admin", err: errors.New(`ent: missing required field "ProjectStartedEvent.project_admin"`)}
+	}
 	if _, ok := _c.mutation.Title(); !ok {
 		return &ValidationError{Name: "title", err: errors.New(`ent: missing required field "ProjectStartedEvent.title"`)}
 	}
@@ -172,6 +193,10 @@ func (_c *ProjectStartedEventCreate) createSpec() (*ProjectStartedEvent, *sqlgra
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
+	}
+	if value, ok := _c.mutation.ProjectAdmin(); ok {
+		_spec.SetField(projectstartedevent.FieldProjectAdmin, field.TypeUUID, value)
+		_node.ProjectAdmin = value
 	}
 	if value, ok := _c.mutation.Title(); ok {
 		_spec.SetField(projectstartedevent.FieldTitle, field.TypeString, value)

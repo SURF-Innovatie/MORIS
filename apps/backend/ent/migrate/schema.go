@@ -226,6 +226,7 @@ var (
 	// ProjectStartedEventsColumns holds the columns for the "project_started_events" table.
 	ProjectStartedEventsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
+		{Name: "project_admin", Type: field.TypeUUID},
 		{Name: "title", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString},
 		{Name: "start_date", Type: field.TypeTime},
@@ -241,7 +242,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "project_started_events_events_project_started",
-				Columns:    []*schema.Column{ProjectStartedEventsColumns[6]},
+				Columns:    []*schema.Column{ProjectStartedEventsColumns[7]},
 				RefColumns: []*schema.Column{EventsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

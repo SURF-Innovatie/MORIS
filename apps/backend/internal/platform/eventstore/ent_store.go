@@ -3,6 +3,7 @@ package eventstore
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -84,6 +85,7 @@ func (s *EntStore) Append(
 			if _, err := tx.ProjectStartedEvent.
 				Create().
 				SetEvent(evRow). // or SetEventID(evRow.ID)
+				SetProjectAdmin(v.ProjectAdmin).
 				SetTitle(v.Title).
 				SetDescription(v.Description).
 				SetStartDate(v.StartDate).
@@ -376,6 +378,7 @@ func (s *EntStore) Load(
 			}
 			out = append(out, events.ProjectStarted{
 				Base:           base,
+				ProjectAdmin:   payload.ProjectAdmin,
 				Title:          payload.Title,
 				Description:    payload.Description,
 				StartDate:      payload.StartDate,
@@ -475,7 +478,7 @@ func (s *EntStore) Load(
 			})
 
 		default:
-			// unknown type: ignore or log, depending on your policy
+			log.Printf("unknown event type %T", r)
 		}
 	}
 
