@@ -12,11 +12,13 @@ import (
 )
 
 type Service interface {
-	Get(ctx context.Context, id uuid.UUID) (*userdto.Response, error)
-	Create(ctx context.Context, product entities.User) (*userdto.Response, error)
-	Update(ctx context.Context, id uuid.UUID, product entities.User) (*userdto.Response, error)
+	Get(ctx context.Context, id uuid.UUID) (*entities.User, error)
+	Create(ctx context.Context, product entities.User) (*entities.User, error)
+	Update(ctx context.Context, id uuid.UUID, product entities.User) (*entities.User, error)
 	Delete(ctx context.Context, id uuid.UUID) error
-	GetByEmail(ctx context.Context, email string) (*userdto.Response, error)
+
+	GetAccount(ctx context.Context, id uuid.UUID) (*entities.UserAccount, error)
+	GetAccountByEmail(ctx context.Context, email string) (*entities.UserAccount, error)
 }
 
 type service struct {
@@ -28,7 +30,7 @@ func NewService(cli *ent.Client, personSvc person.Service) Service {
 	return &service{cli: cli, personSvc: personSvc}
 }
 
-func (s *service) Get(ctx context.Context, id uuid.UUID) (*userdto.Response, error) {
+func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.User, error) {
 	row, err := s.cli.User.
 		Query().
 		Where(user.IDEQ(id)).
@@ -38,10 +40,14 @@ func (s *service) Get(ctx context.Context, id uuid.UUID) (*userdto.Response, err
 		return nil, err
 	}
 
-	return s.mapRow(ctx, row)
+	return &entities.User{
+		ID:       row.ID,
+		PersonID: row.PersonID,
+	}, nil
 }
 
-func (s *service) Create(ctx context.Context, user entities.User) (*userdto.Response, error) {
+func (s *service) Create(ctx context.Context, user entities.User) (*entities.User, error) {
+	// TODO: Validate personID, check password requirements and Hash password before storing it
 	row, err := s.cli.User.
 		Create().
 		SetPersonID(user.PersonID).
@@ -51,10 +57,13 @@ func (s *service) Create(ctx context.Context, user entities.User) (*userdto.Resp
 		return nil, err
 	}
 
-	return s.mapRow(ctx, row)
+	return &entities.User{
+		ID:       row.ID,
+		PersonID: row.PersonID,
+	}, nil
 }
 
-func (s *service) Update(ctx context.Context, id uuid.UUID, user entities.User) (*userdto.Response, error) {
+func (s *service) Update(ctx context.Context, id uuid.UUID, user entities.User) (*entities.User, error) {
 	row, err := s.cli.User.
 		UpdateOneID(id).
 		SetPersonID(user.PersonID).
@@ -64,7 +73,10 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, user entities.User) 
 		return nil, err
 	}
 
-	return s.mapRow(ctx, row)
+	return &entities.User{
+		ID:       row.ID,
+		PersonID: row.PersonID,
+	}, nil
 }
 
 func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
@@ -73,21 +85,52 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 		Exec(ctx)
 }
 
-func (s *service) GetByEmail(ctx context.Context, email string) (*userdto.Response, error) {
-	// TODO: very convoluted way to get user by email, refactor later
-	personRow, err := s.personSvc.GetByEmail(ctx, email)
+func (s *service) GetAccount(ctx context.Context, id uuid.UUID) (*entities.UserAccount, error) {
+	userRow, err := s.cli.User.
+		Query().
+		Where(user.IDEQ(id)).
+		Only(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	personEntity, err := s.personSvc.Get(ctx, userRow.PersonID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &entities.UserAccount{
+		User: entities.User{
+			ID:       userRow.ID,
+			PersonID: userRow.PersonID,
+			// Password is omitted for security reasons
+		},
+		Person: *personEntity,
+	}, nil
+}
+
+func (s *service) GetAccountByEmail(ctx context.Context, email string) (*entities.UserAccount, error) {
+	personEntity, err := s.personSvc.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
 
 	userRow, err := s.cli.User.
 		Query().
-		Where(user.PersonIDEQ(personRow.Id)).
+		Where(user.PersonIDEQ(personEntity.Id)).
 		Only(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return s.mapRow(ctx, userRow)
+
+	return &entities.UserAccount{
+		User: entities.User{
+			ID:       userRow.ID,
+			PersonID: userRow.PersonID,
+			// Password is omitted for security reasons
+		},
+		Person: *personEntity,
+	}, nil
 }
 
 func (s *service) mapRow(ctx context.Context, row *ent.User) (*userdto.Response, error) {

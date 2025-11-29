@@ -37,7 +37,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.PersonID == uuid.Nil {
-		http.Error(w, "name is required", http.StatusBadRequest)
+		http.Error(w, "person ID is required", http.StatusBadRequest)
 	}
 
 	u, err := h.svc.Create(r.Context(), entities.User{
@@ -49,7 +49,12 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, u)
+	acc, err := h.svc.GetAccount(r.Context(), u.ID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	writeJSON(w, acc)
 }
 
 // GetUser godoc
@@ -70,12 +75,12 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid id", http.StatusBadRequest)
 	}
 
-	u, err := h.svc.Get(r.Context(), id)
+	acc, err := h.svc.GetAccount(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	writeJSON(w, u)
+	writeJSON(w, acc)
 }
 
 // UpdateUser godoc
@@ -103,7 +108,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := h.svc.Update(r.Context(), id, entities.User{
+	_, err = h.svc.Update(r.Context(), id, entities.User{
 		PersonID: req.PersonID,
 		Password: req.Password,
 	})
@@ -112,7 +117,12 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	writeJSON(w, u)
+	acc, err := h.svc.GetAccount(r.Context(), id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	writeJSON(w, acc)
 }
 
 // DeleteUser godoc
@@ -140,7 +150,22 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func writeJSON(w http.ResponseWriter, resp *userdto.Response) {
+func writeJSON(w http.ResponseWriter, acc *entities.UserAccount) {
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(resp)
+	_ = json.NewEncoder(w).Encode(toUserResponse(acc))
+}
+
+func toUserResponse(acc *entities.UserAccount) userdto.Response {
+	p := acc.Person
+	u := acc.User
+
+	return userdto.Response{
+		ID:         u.ID,
+		PersonID:   u.PersonID,
+		Email:      p.Email,
+		Name:       p.Name,
+		ORCiD:      p.ORCiD,
+		GivenName:  p.GivenName,
+		FamilyName: p.FamilyName,
+	}
 }

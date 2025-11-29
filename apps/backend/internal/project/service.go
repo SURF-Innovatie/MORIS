@@ -12,11 +12,6 @@ import (
 	organisationent "github.com/SURF-Innovatie/MORIS/ent/organisation"
 	personent "github.com/SURF-Innovatie/MORIS/ent/person"
 	productent "github.com/SURF-Innovatie/MORIS/ent/product"
-	"github.com/SURF-Innovatie/MORIS/internal/api/changelogdto"
-	"github.com/SURF-Innovatie/MORIS/internal/api/organisationdto"
-	"github.com/SURF-Innovatie/MORIS/internal/api/persondto"
-	"github.com/SURF-Innovatie/MORIS/internal/api/productdto"
-	"github.com/SURF-Innovatie/MORIS/internal/api/projectdto"
 	"github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/commands"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
@@ -31,15 +26,15 @@ import (
 var ErrNotFound = errors.New("project not found")
 
 type Service interface {
-	GetProject(ctx context.Context, id uuid.UUID) (*projectdto.Response, error)
-	GetAllProjects(ctx context.Context) ([]*projectdto.Response, error)
-	StartProject(ctx context.Context, params StartProjectParams) (*projectdto.Response, error)
-	UpdateProject(ctx context.Context, id uuid.UUID, params UpdateProjectParams) (*projectdto.Response, error)
-	AddPerson(ctx context.Context, projectID uuid.UUID, personID uuid.UUID) (*projectdto.Response, error)
-	RemovePerson(ctx context.Context, projectID uuid.UUID, personID uuid.UUID) (*projectdto.Response, error)
-	AddProduct(ctx context.Context, projectID uuid.UUID, productID uuid.UUID) (*projectdto.Response, error)
-	RemoveProduct(ctx context.Context, projectID uuid.UUID, productID uuid.UUID) (*projectdto.Response, error)
-	GetChangeLog(ctx context.Context, id uuid.UUID) (*changelogdto.Changelog, error)
+	GetProject(ctx context.Context, id uuid.UUID) (*entities.ProjectDetails, error)
+	GetAllProjects(ctx context.Context) ([]*entities.ProjectDetails, error)
+	StartProject(ctx context.Context, params StartProjectParams) (*entities.ProjectDetails, error)
+	UpdateProject(ctx context.Context, id uuid.UUID, params UpdateProjectParams) (*entities.ProjectDetails, error)
+	AddPerson(ctx context.Context, projectID uuid.UUID, personID uuid.UUID) (*entities.ProjectDetails, error)
+	RemovePerson(ctx context.Context, projectID uuid.UUID, personID uuid.UUID) (*entities.ProjectDetails, error)
+	AddProduct(ctx context.Context, projectID uuid.UUID, productID uuid.UUID) (*entities.ProjectDetails, error)
+	RemoveProduct(ctx context.Context, projectID uuid.UUID, productID uuid.UUID) (*entities.ProjectDetails, error)
+	GetChangeLog(ctx context.Context, id uuid.UUID) (*entities.ChangeLog, error)
 }
 
 type service struct {
@@ -69,21 +64,16 @@ func NewService(es eventstore.Store, cli *ent.Client, notifier notification.Serv
 	return &service{es: es, cli: cli, notifier: notifier}
 }
 
-func (s *service) GetProject(ctx context.Context, id uuid.UUID) (*projectdto.Response, error) {
+func (s *service) GetProject(ctx context.Context, id uuid.UUID) (*entities.ProjectDetails, error) {
 	proj, err := s.fromDb(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := s.projectToResponse(ctx, proj)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	return s.buildProjectDetails(ctx, proj)
 }
 
-func (s *service) StartProject(ctx context.Context, params StartProjectParams) (*projectdto.Response, error) {
+func (s *service) StartProject(ctx context.Context, params StartProjectParams) (*entities.ProjectDetails, error) {
 	if params.Title == "" {
 		return nil, errors.New("title is required")
 	}
@@ -116,7 +106,7 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 	proj := projection.Reduce(projectID, []events.Event{startEvent})
 	proj.Version = 1
 
-	resp, err := s.projectToResponse(ctx, proj)
+	resp, err := s.buildProjectDetails(ctx, proj)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +114,7 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 	return resp, nil
 }
 
-func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params UpdateProjectParams) (*projectdto.Response, error) {
+func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params UpdateProjectParams) (*entities.ProjectDetails, error) {
 	proj, err := s.fromDb(ctx, id)
 	if err != nil {
 		return nil, err
@@ -168,7 +158,7 @@ func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params Update
 	}
 
 	if len(newEvents) == 0 {
-		return s.projectToResponse(ctx, proj)
+		return s.buildProjectDetails(ctx, proj)
 	}
 
 	for _, evt := range newEvents {
@@ -178,7 +168,7 @@ func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params Update
 		proj.Version++
 	}
 
-	return s.projectToResponse(ctx, proj)
+	return s.buildProjectDetails(ctx, proj)
 }
 
 // TODO, instead of a helper function there should be a currentUserService
@@ -191,7 +181,7 @@ func currentUser(ctx context.Context, cli *ent.Client) (*ent.User, error) {
 	return cli.User.Get(ctx, authUser.ID)
 }
 
-func (s *service) GetAllProjects(ctx context.Context) ([]*projectdto.Response, error) {
+func (s *service) GetAllProjects(ctx context.Context) ([]*entities.ProjectDetails, error) {
 	var ids []uuid.UUID
 	if err := s.cli.Event.
 		Query().
@@ -201,19 +191,19 @@ func (s *service) GetAllProjects(ctx context.Context) ([]*projectdto.Response, e
 		return nil, err
 	}
 
-	projects := make([]*projectdto.Response, 0, len(ids))
+	projects := make([]*entities.ProjectDetails, 0, len(ids))
 	for _, id := range ids {
 		proj, err := s.fromDb(ctx, id)
 		if err != nil {
 			return nil, err
 		}
 
-		dto, err := s.projectToResponse(ctx, proj)
+		details, err := s.buildProjectDetails(ctx, proj)
 		if err != nil {
 			return nil, err
 		}
 
-		projects = append(projects, dto)
+		projects = append(projects, details)
 	}
 
 	return projects, nil
@@ -223,7 +213,7 @@ func (s *service) AddPerson(
 	ctx context.Context,
 	projectID uuid.UUID,
 	personId uuid.UUID,
-) (*projectdto.Response, error) {
+) (*entities.ProjectDetails, error) {
 	proj, err := s.fromDb(ctx, projectID)
 	if err != nil {
 		return nil, err
@@ -234,7 +224,7 @@ func (s *service) AddPerson(
 		return nil, err
 	}
 	if evt == nil {
-		resp, err := s.projectToResponse(ctx, proj)
+		resp, err := s.buildProjectDetails(ctx, proj)
 		if err != nil {
 			return nil, err
 		}
@@ -249,7 +239,7 @@ func (s *service) AddPerson(
 	projection.Apply(proj, evt)
 	proj.Version++
 
-	resp, err := s.projectToResponse(ctx, proj)
+	resp, err := s.buildProjectDetails(ctx, proj)
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +251,7 @@ func (s *service) RemovePerson(
 	ctx context.Context,
 	projectID uuid.UUID,
 	personID uuid.UUID,
-) (*projectdto.Response, error) {
+) (*entities.ProjectDetails, error) {
 	proj, err := s.fromDb(ctx, projectID)
 	if err != nil {
 		return nil, err
@@ -272,7 +262,7 @@ func (s *service) RemovePerson(
 		return nil, err
 	}
 	if evt == nil {
-		resp, err := s.projectToResponse(ctx, proj)
+		resp, err := s.buildProjectDetails(ctx, proj)
 		if err != nil {
 			return nil, err
 		}
@@ -287,7 +277,7 @@ func (s *service) RemovePerson(
 	projection.Apply(proj, evt)
 	proj.Version++
 
-	resp, err := s.projectToResponse(ctx, proj)
+	resp, err := s.buildProjectDetails(ctx, proj)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +289,7 @@ func (s *service) AddProduct(
 	ctx context.Context,
 	projectID uuid.UUID,
 	productID uuid.UUID,
-) (*projectdto.Response, error) {
+) (*entities.ProjectDetails, error) {
 	proj, err := s.fromDb(ctx, projectID)
 	if err != nil {
 		return nil, err
@@ -310,7 +300,7 @@ func (s *service) AddProduct(
 		return nil, err
 	}
 	if evt == nil {
-		resp, err := s.projectToResponse(ctx, proj)
+		resp, err := s.buildProjectDetails(ctx, proj)
 		if err != nil {
 			return nil, err
 		}
@@ -325,7 +315,7 @@ func (s *service) AddProduct(
 	projection.Apply(proj, evt)
 	proj.Version += 1
 
-	resp, err := s.projectToResponse(ctx, proj)
+	resp, err := s.buildProjectDetails(ctx, proj)
 	if err != nil {
 		return nil, err
 	}
@@ -337,7 +327,7 @@ func (s *service) RemoveProduct(
 	ctx context.Context,
 	projectID uuid.UUID,
 	productID uuid.UUID,
-) (*projectdto.Response, error) {
+) (*entities.ProjectDetails, error) {
 	proj, err := s.fromDb(ctx, projectID)
 	if err != nil {
 		return nil, err
@@ -348,7 +338,7 @@ func (s *service) RemoveProduct(
 		return nil, err
 	}
 	if evt == nil {
-		resp, err := s.projectToResponse(ctx, proj)
+		resp, err := s.buildProjectDetails(ctx, proj)
 		if err != nil {
 			return nil, err
 		}
@@ -363,7 +353,7 @@ func (s *service) RemoveProduct(
 	projection.Apply(proj, evt)
 	proj.Version += 1
 
-	resp, err := s.projectToResponse(ctx, proj)
+	resp, err := s.buildProjectDetails(ctx, proj)
 	if err != nil {
 		return nil, err
 	}
@@ -371,7 +361,7 @@ func (s *service) RemoveProduct(
 	return resp, nil
 }
 
-func (s *service) projectToResponse(ctx context.Context, proj *entities.Project) (*projectdto.Response, error) {
+func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Project) (*entities.ProjectDetails, error) {
 	if proj == nil {
 		return nil, errors.New("project is nil")
 	}
@@ -384,14 +374,16 @@ func (s *service) projectToResponse(ctx context.Context, proj *entities.Project)
 		return nil, err
 	}
 
-	peopleDTOs := make([]persondto.Response, 0, len(peopleRows))
+	people := make([]entities.Person, 0, len(peopleRows))
 	for _, p := range peopleRows {
-		peopleDTOs = append(peopleDTOs, persondto.Response{
-			ID:         p.ID,
+		people = append(people, entities.Person{
+			Id:         p.ID,
+			UserID:     p.UserID,
 			Name:       p.Name,
 			GivenName:  p.GivenName,
 			FamilyName: p.FamilyName,
 			Email:      p.Email,
+			ORCiD:      &p.OrcidID,
 		})
 	}
 
@@ -403,10 +395,10 @@ func (s *service) projectToResponse(ctx context.Context, proj *entities.Project)
 		return nil, err
 	}
 
-	productDTOs := make([]productdto.Response, 0, len(productRows))
+	products := make([]entities.Product, 0, len(productRows))
 	for _, p := range productRows {
-		productDTOs = append(productDTOs, productdto.Response{
-			ID:       p.ID,
+		products = append(products, entities.Product{
+			Id:       p.ID,
 			Name:     p.Name,
 			Language: *p.Language,
 			Type:     entities.ProductType(p.Type),
@@ -414,7 +406,7 @@ func (s *service) projectToResponse(ctx context.Context, proj *entities.Project)
 		})
 	}
 
-	org, err := s.cli.Organisation.
+	orgRow, err := s.cli.Organisation.
 		Query().
 		Where(organisationent.ID(proj.Organisation)).
 		First(ctx)
@@ -422,26 +414,20 @@ func (s *service) projectToResponse(ctx context.Context, proj *entities.Project)
 		return nil, err
 	}
 
-	orgDTO := organisationdto.Response{
-		ID:   org.ID,
-		Name: org.Name,
+	org := entities.Organisation{
+		Id:   orgRow.ID,
+		Name: orgRow.Name,
 	}
 
-	return &projectdto.Response{
-		Id:           proj.Id,
-		ProjectAdmin: proj.ProjectAdmin,
-		Version:      proj.Version,
-		Title:        proj.Title,
-		Description:  proj.Description,
-		StartDate:    proj.StartDate,
-		EndDate:      proj.EndDate,
-		Organization: orgDTO,
-		People:       peopleDTOs,
-		Products:     productDTOs,
+	return &entities.ProjectDetails{
+		Project:      *proj,
+		Organisation: org,
+		People:       people,
+		Products:     products,
 	}, nil
 }
 
-func (s *service) GetChangeLog(ctx context.Context, id uuid.UUID) (*changelogdto.Changelog, error) {
+func (s *service) GetChangeLog(ctx context.Context, id uuid.UUID) (*entities.ChangeLog, error) {
 	evts, _, err := s.es.Load(ctx, id)
 	if err != nil {
 		return nil, err
@@ -450,20 +436,19 @@ func (s *service) GetChangeLog(ctx context.Context, id uuid.UUID) (*changelogdto
 		return nil, ErrNotFound
 	}
 
-	var changeLog changelogdto.Changelog
+	var log entities.ChangeLog
 	for _, evt := range evts {
-		changeLog.Entries = append(changeLog.Entries, changelogdto.ChangelogEntry{
+		log.Entries = append(log.Entries, entities.ChangeLogEntry{
 			Event: evt.String(),
 			At:    evt.OccurredAt(),
 		})
 	}
 
-	// order by desc occurredAt
-	sort.Slice(changeLog.Entries, func(i, j int) bool {
-		return changeLog.Entries[i].At.After(changeLog.Entries[j].At)
+	sort.Slice(log.Entries, func(i, j int) bool {
+		return log.Entries[i].At.After(log.Entries[j].At)
 	})
 
-	return &changeLog, nil
+	return &log, nil
 }
 
 func (s *service) fromDb(ctx context.Context, projectID uuid.UUID) (*entities.Project, error) {

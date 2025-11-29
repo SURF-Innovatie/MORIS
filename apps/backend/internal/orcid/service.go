@@ -64,17 +64,17 @@ func (s *service) Link(ctx context.Context, userID uuid.UUID, code string) error
 		return err
 	}
 
-	usr, err := s.userSvc.Get(ctx, userID)
+	usr, err := s.userSvc.GetAccount(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("failed to get user: %w", err)
 	}
-	if usr.ORCiD != nil {
+	if usr.Person.ORCiD != nil {
 		return ErrAlreadyLinked
 	}
 
 	// Update person with ORCID ID
 	if _, err := s.client.Person.
-		UpdateOneID(usr.PersonID).
+		UpdateOneID(usr.Person.Id).
 		SetOrcidID(orcidID).
 		Save(ctx); err != nil {
 		return fmt.Errorf("failed to link ORCID ID: %w", err)

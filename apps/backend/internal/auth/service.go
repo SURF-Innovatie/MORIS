@@ -9,6 +9,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	userent "github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -16,9 +17,9 @@ import (
 )
 
 type Service interface {
-	Register(ctx context.Context, req userdto.Request) (*userdto.Response, error)
-	Login(ctx context.Context, email, password string) (string, *userdto.Response, error)
-	ValidateToken(tokenString string) (*userdto.Response, error)
+	Register(ctx context.Context, req userdto.Request) (*entities.UserAccount, error)
+	Login(ctx context.Context, email, password string) (string, *entities.UserAccount, error)
+	ValidateToken(tokenString string) (*entities.UserAccount, error)
 }
 
 type service struct {
@@ -31,7 +32,7 @@ func NewService(client *ent.Client, userSvc user.Service) Service {
 }
 
 // Register creates a new user with hashed password
-func (s *service) Register(ctx context.Context, req userdto.Request) (*userdto.Response, error) {
+func (s *service) Register(ctx context.Context, req userdto.Request) (*entities.UserAccount, error) {
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -49,13 +50,13 @@ func (s *service) Register(ctx context.Context, req userdto.Request) (*userdto.R
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	return s.userSvc.Get(ctx, usr.ID)
+	return s.userSvc.GetAccount(ctx, usr.ID)
 }
 
 // Login authenticates a user and returns a JWT token
-func (s *service) Login(ctx context.Context, email, password string) (string, *userdto.Response, error) {
+func (s *service) Login(ctx context.Context, email, password string) (string, *entities.UserAccount, error) {
 	// Find user by email
-	usr, err := s.userSvc.GetByEmail(ctx, email)
+	usr, err := s.userSvc.GetAccountByEmail(ctx, email)
 
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -66,7 +67,7 @@ func (s *service) Login(ctx context.Context, email, password string) (string, *u
 
 	usrPwd, err := s.client.User.
 		Query().
-		Where(userent.IDEQ(usr.ID)).
+		Where(userent.IDEQ(usr.User.ID)).
 		Select(userent.FieldPassword).
 		String(ctx)
 	if err != nil {
@@ -88,16 +89,16 @@ func (s *service) Login(ctx context.Context, email, password string) (string, *u
 }
 
 // generateJWT creates a JWT token for the user
-func (s *service) generateJWT(usr *userdto.Response) (string, error) {
+func (s *service) generateJWT(usr *entities.UserAccount) (string, error) {
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		jwtSecret = "your-secret-key-change-this-in-production" // Fallback for development
 	}
 
 	claims := jwt.MapClaims{
-		"user_id":  usr.ID,
-		"email":    usr.Email,
-		"orcid_id": usr.ORCiD,
+		"user_id":  usr.User.ID,
+		"email":    usr.Person.Email,
+		"orcid_id": usr.Person.ORCiD,
 		"exp":      time.Now().Add(time.Hour * 24 * 7).Unix(), // 7 days expiry
 		"iat":      time.Now().Unix(),
 	}
@@ -112,7 +113,7 @@ func (s *service) generateJWT(usr *userdto.Response) (string, error) {
 }
 
 // ValidateToken validates a JWT token and returns the user info
-func (s *service) ValidateToken(tokenString string) (*userdto.Response, error) {
+func (s *service) ValidateToken(tokenString string) (*entities.UserAccount, error) {
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		jwtSecret = "your-secret-key-change-this-in-production"
@@ -149,7 +150,7 @@ func (s *service) ValidateToken(tokenString string) (*userdto.Response, error) {
 		return nil, fmt.Errorf("invalid user_id in token")
 	}
 
-	usr, err := s.userSvc.Get(context.Background(), uid)
+	usr, err := s.userSvc.GetAccount(context.Background(), uid)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}

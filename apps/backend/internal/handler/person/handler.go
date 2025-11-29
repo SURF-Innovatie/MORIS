@@ -44,6 +44,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, persondto.Response{
 		ID:         p.Id,
+		UserID:     p.UserID,
 		Name:       p.Name,
 		GivenName:  p.GivenName,
 		FamilyName: p.FamilyName,
@@ -65,6 +66,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, persondto.Response{
 		ID:         p.Id,
+		UserID:     p.UserID,
 		Name:       p.Name,
 		GivenName:  p.GivenName,
 		FamilyName: p.FamilyName,

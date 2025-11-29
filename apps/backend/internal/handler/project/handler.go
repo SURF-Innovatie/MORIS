@@ -5,8 +5,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SURF-Innovatie/MORIS/internal/api/changelogdto"
 	_ "github.com/SURF-Innovatie/MORIS/internal/api/changelogdto"
+	"github.com/SURF-Innovatie/MORIS/internal/api/organisationdto"
+	"github.com/SURF-Innovatie/MORIS/internal/api/persondto"
+	"github.com/SURF-Innovatie/MORIS/internal/api/productdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/projectdto"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	_ "github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 
 	"github.com/SURF-Innovatie/MORIS/internal/project"
@@ -46,7 +51,7 @@ func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(proj)
+	_ = json.NewEncoder(w).Encode(toProjectResponse(proj))
 }
 
 // StartProject godoc
@@ -96,7 +101,7 @@ func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(proj)
+	_ = json.NewEncoder(w).Encode(toProjectResponse(proj))
 }
 
 // UpdateProject godoc
@@ -157,7 +162,7 @@ func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(proj)
+	_ = json.NewEncoder(w).Encode(toProjectResponse(proj))
 }
 
 // GetAllProjects godoc
@@ -170,13 +175,17 @@ func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /projects [get]
 func (h *Handler) GetAllProjects(w http.ResponseWriter, r *http.Request) {
-	proj, err := h.svc.GetAllProjects(r.Context())
+	projs, err := h.svc.GetAllProjects(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(proj)
+	resps := make([]projectdto.Response, 0, len(projs))
+	for _, p := range projs {
+		resps = append(resps, toProjectResponse(p))
+	}
+	_ = json.NewEncoder(w).Encode(resps)
 }
 
 // AddPerson godoc
@@ -208,7 +217,7 @@ func (h *Handler) AddPerson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(proj)
+	_ = json.NewEncoder(w).Encode(toProjectResponse(proj))
 }
 
 // RemovePerson godoc
@@ -245,7 +254,7 @@ func (h *Handler) RemovePerson(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(proj)
+	_ = json.NewEncoder(w).Encode(toProjectResponse(proj))
 }
 
 // AddProduct godoc
@@ -282,7 +291,7 @@ func (h *Handler) AddProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(proj)
+	_ = json.NewEncoder(w).Encode(toProjectResponse(proj))
 }
 
 // RemoveProduct godoc
@@ -319,7 +328,7 @@ func (h *Handler) RemoveProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(proj)
+	_ = json.NewEncoder(w).Encode(toProjectResponse(proj))
 }
 
 // GetChangelog godoc
@@ -341,12 +350,75 @@ func (h *Handler) GetChangelog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	proj, err := h.svc.GetChangeLog(r.Context(), id)
+	changeLog, err := h.svc.GetChangeLog(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	changeDto := changelogdto.Changelog{
+		Entries: make([]changelogdto.ChangelogEntry, 0, len(changeLog.Entries)),
+	}
+	for _, entry := range changeLog.Entries {
+		changeDto.Entries = append(changeDto.Entries, changelogdto.ChangelogEntry{
+			Event: entry.Event,
+			At:    entry.At,
+		})
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(proj)
+	_ = json.NewEncoder(w).Encode(changeDto)
+}
+
+func toOrganisationDTO(org entities.Organisation) organisationdto.Response {
+	return organisationdto.Response{
+		ID:   org.Id,
+		Name: org.Name,
+	}
+}
+
+func toPersonDTO(p entities.Person) persondto.Response {
+	return persondto.Response{
+		ID:         p.Id,
+		UserID:     p.UserID,
+		Name:       p.Name,
+		GivenName:  p.GivenName,
+		FamilyName: p.FamilyName,
+		Email:      p.Email,
+	}
+}
+
+func toProductDTO(p entities.Product) productdto.Response {
+	return productdto.Response{
+		ID:       p.Id,
+		Name:     p.Name,
+		Language: p.Language,
+		Type:     p.Type,
+		DOI:      p.DOI,
+	}
+}
+
+func toProjectResponse(d *entities.ProjectDetails) projectdto.Response {
+	peopleDTOs := make([]persondto.Response, 0, len(d.People))
+	for _, p := range d.People {
+		peopleDTOs = append(peopleDTOs, toPersonDTO(p))
+	}
+
+	productDTOs := make([]productdto.Response, 0, len(d.Products))
+	for _, p := range d.Products {
+		productDTOs = append(productDTOs, toProductDTO(p))
+	}
+
+	return projectdto.Response{
+		Id:           d.Project.Id,
+		ProjectAdmin: d.Project.ProjectAdmin,
+		Version:      d.Project.Version,
+		Title:        d.Project.Title,
+		Description:  d.Project.Description,
+		StartDate:    d.Project.StartDate,
+		EndDate:      d.Project.EndDate,
+		Organization: toOrganisationDTO(d.Organisation),
+		People:       peopleDTOs,
+		Products:     productDTOs,
+	}
 }

@@ -18,3 +18,19 @@ type Project struct {
 	Organisation uuid.UUID
 	Products     []uuid.UUID
 }
+
+type ProjectDetails struct {
+	Project      Project
+	Organisation Organisation
+	People       []Person
+	Products     []Product
+}
+
+type ChangeLogEntry struct {
+	Event string
+	At    time.Time
+}
+
+type ChangeLog struct {
+	Entries []ChangeLogEntry
+}

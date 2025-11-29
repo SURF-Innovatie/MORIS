@@ -14,7 +14,7 @@ type Service interface {
 	Create(ctx context.Context, p entities.Person) (*entities.Person, error)
 	Get(ctx context.Context, id uuid.UUID) (*entities.Person, error)
 	Update(ctx context.Context, id uuid.UUID, p entities.Person) (*entities.Person, error)
-	List(ctx context.Context) ([]entities.Person, error)
+	List(ctx context.Context) ([]*entities.Person, error)
 	GetByEmail(ctx context.Context, email string) (*entities.Person, error)
 }
 
@@ -65,16 +65,16 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, p entities.Person) (
 	return mapRow(row), nil
 }
 
-func (s *service) List(ctx context.Context) ([]entities.Person, error) {
+func (s *service) List(ctx context.Context) ([]*entities.Person, error) {
 	rows, err := s.cli.Person.
 		Query().
 		All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]entities.Person, 0, len(rows))
+	out := make([]*entities.Person, 0, len(rows))
 	for _, r := range rows {
-		out = append(out, *mapRow(r))
+		out = append(out, mapRow(r))
 	}
 	return out, nil
 }

@@ -208,9 +208,12 @@ func main() {
 				continue
 			}
 
+			userID := uuid.New()
+
 			row, err := client.Person.
 				Create().
 				SetName(name).
+				SetUserID(userID).
 				SetEmail(strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(name, ".", ""), " ", ".")) + "@example.com").
 				Save(ctx)
 			if err != nil {
@@ -223,6 +226,7 @@ func main() {
 			// We make each person a user with a default password
 			_, err = client.User.
 				Create().
+				SetID(userID).
 				SetPersonID(row.ID).
 				SetPassword(string(hashedPassword)).
 				Save(ctx)

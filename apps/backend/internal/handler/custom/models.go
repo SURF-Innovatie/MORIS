@@ -1,7 +1,7 @@
 package custom
 
 import (
-	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
 
@@ -31,7 +31,7 @@ type LoginRequest struct {
 // Represents the response body for successful login.
 type LoginResponse struct {
 	Token string `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
-	User  *userdto.Response
+	User  *entities.UserAccount
 }
 
 // StatusResponse swagger:model StatusResponse
