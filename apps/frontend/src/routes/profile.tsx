@@ -121,16 +121,16 @@ const ProfileRoute = () => {
             <div>
               <h3 className="font-medium">ORCID</h3>
               <p className="text-sm text-muted-foreground">
-                {user.orcid_id ? (
+                {user.orcid ? (
                   <>
-                    Linked: <span className="font-mono">{user.orcid_id}</span>
+                    Linked: <span className="font-mono">{user.orcid}</span>
                   </>
                 ) : (
                   "Connect your ORCID iD to your account"
                 )}
               </p>
             </div>
-            {user.orcid_id ? (
+            {user.orcid ? (
               <Dialog
                 open={isUnlinkDialogOpen}
                 onOpenChange={setIsUnlinkDialogOpen}

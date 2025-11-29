@@ -17,14 +17,10 @@ type User struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
-	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty"`
-	// Email holds the value of the "email" field.
-	Email string `json:"email,omitempty"`
+	// PersonID holds the value of the "person_id" field.
+	PersonID uuid.UUID `json:"person_id,omitempty"`
 	// Password holds the value of the "password" field.
-	Password string `json:"-"`
-	// OrcidID holds the value of the "orcid_id" field.
-	OrcidID      string `json:"orcid_id,omitempty"`
+	Password     string `json:"-"`
 	selectValues sql.SelectValues
 }
 
@@ -33,9 +29,9 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldName, user.FieldEmail, user.FieldPassword, user.FieldOrcidID:
+		case user.FieldPassword:
 			values[i] = new(sql.NullString)
-		case user.FieldID:
+		case user.FieldID, user.FieldPersonID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -58,29 +54,17 @@ func (_m *User) assignValues(columns []string, values []any) error {
 			} else if value != nil {
 				_m.ID = *value
 			}
-		case user.FieldName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field name", values[i])
-			} else if value.Valid {
-				_m.Name = value.String
-			}
-		case user.FieldEmail:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field email", values[i])
-			} else if value.Valid {
-				_m.Email = value.String
+		case user.FieldPersonID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field person_id", values[i])
+			} else if value != nil {
+				_m.PersonID = *value
 			}
 		case user.FieldPassword:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field password", values[i])
 			} else if value.Valid {
 				_m.Password = value.String
-			}
-		case user.FieldOrcidID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field orcid_id", values[i])
-			} else if value.Valid {
-				_m.OrcidID = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -118,16 +102,10 @@ func (_m *User) String() string {
 	var builder strings.Builder
 	builder.WriteString("User(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("name=")
-	builder.WriteString(_m.Name)
-	builder.WriteString(", ")
-	builder.WriteString("email=")
-	builder.WriteString(_m.Email)
+	builder.WriteString("person_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.PersonID))
 	builder.WriteString(", ")
 	builder.WriteString("password=<sensitive>")
-	builder.WriteString(", ")
-	builder.WriteString("orcid_id=")
-	builder.WriteString(_m.OrcidID)
 	builder.WriteByte(')')
 	return builder.String()
 }

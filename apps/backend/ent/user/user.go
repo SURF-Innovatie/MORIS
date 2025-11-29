@@ -12,14 +12,10 @@ const (
 	Label = "user"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldName holds the string denoting the name field in the database.
-	FieldName = "name"
-	// FieldEmail holds the string denoting the email field in the database.
-	FieldEmail = "email"
+	// FieldPersonID holds the string denoting the person_id field in the database.
+	FieldPersonID = "person_id"
 	// FieldPassword holds the string denoting the password field in the database.
 	FieldPassword = "password"
-	// FieldOrcidID holds the string denoting the orcid_id field in the database.
-	FieldOrcidID = "orcid_id"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 )
@@ -27,10 +23,8 @@ const (
 // Columns holds all SQL columns for user fields.
 var Columns = []string{
 	FieldID,
-	FieldName,
-	FieldEmail,
+	FieldPersonID,
 	FieldPassword,
-	FieldOrcidID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -44,8 +38,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// NameValidator is a validator for the "name" field. It is called by the builders before save.
-	NameValidator func(string) error
+	// DefaultPersonID holds the default value on creation for the "person_id" field.
+	DefaultPersonID func() uuid.UUID
 	// PasswordValidator is a validator for the "password" field. It is called by the builders before save.
 	PasswordValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
@@ -60,22 +54,12 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByName orders the results by the name field.
-func ByName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldName, opts...).ToFunc()
-}
-
-// ByEmail orders the results by the email field.
-func ByEmail(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldEmail, opts...).ToFunc()
+// ByPersonID orders the results by the person_id field.
+func ByPersonID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPersonID, opts...).ToFunc()
 }
 
 // ByPassword orders the results by the password field.
 func ByPassword(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPassword, opts...).ToFunc()
-}
-
-// ByOrcidID orders the results by the orcid_id field.
-func ByOrcidID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldOrcidID, opts...).ToFunc()
 }

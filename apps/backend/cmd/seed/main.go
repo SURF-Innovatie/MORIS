@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
@@ -80,26 +81,26 @@ func main() {
 		logrus.Fatalf("failed running Ent database migrations: %v", err)
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("testpassword123"), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)
 	if err != nil {
 		logrus.Fatalf("failed to hash password: %v", err)
 	}
 
-	client.User.Delete().ExecX(ctx)
-	testUser, err := client.User.
-		Create().
-		SetName("Test User").
-		SetEmail("test@example.com").
-		SetPassword(string(hashedPassword)).
-		Save(ctx)
-	if err != nil {
-		logrus.Fatalf("failed creating test user: %v", err)
-	}
+	//client.User.Delete().ExecX(ctx)
+	//testUser, err := client.User.
+	//	Create().
+	//	SetName("Test User").
+	//	SetEmail("test@example.com").
+	//	SetPassword(string(hashedPassword)).
+	//	Save(ctx)
+	//if err != nil {
+	//	logrus.Fatalf("failed creating test user: %v", err)
+	//}
 
-	logrus.Infof("Successfully created test user with ID: %d", testUser.ID)
-	logrus.Infof("Email: %s", testUser.Email)
-	logrus.Infof("Name: %s", testUser.Name)
-	logrus.Info("Password: testpassword123")
+	//logrus.Infof("Successfully created test user with ID: %d", testUser.ID)
+	//logrus.Infof("Email: %s", testUser.Email)
+	//logrus.Infof("Name: %s", testUser.Name)
+	//logrus.Info("Password: testpassword123")
 
 	es := eventstore.NewEntStore(client)
 
@@ -210,6 +211,7 @@ func main() {
 			row, err := client.Person.
 				Create().
 				SetName(name).
+				SetEmail(strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(name, ".", ""), " ", ".")) + "@example.com").
 				Save(ctx)
 			if err != nil {
 				logrus.Fatalf("failed creating person %q: %v", name, err)
@@ -217,6 +219,17 @@ func main() {
 
 			personIDs[name] = row.ID
 			logrus.Infof("Created person %s (%s)", name, row.ID)
+
+			// We make each person a user with a default password
+			_, err = client.User.
+				Create().
+				SetPersonID(row.ID).
+				SetPassword(string(hashedPassword)).
+				Save(ctx)
+			if err != nil {
+				logrus.Fatalf("failed creating user for person %q: %v", name, err)
+			}
+			logrus.Infof("Created user for person %s", name)
 		}
 
 		for _, prod := range sp.Products {

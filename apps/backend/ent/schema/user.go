@@ -15,10 +15,8 @@ type User struct {
 func (User) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New).Immutable().Unique(),
-		field.String("name").NotEmpty(),
-		field.String("email").Unique(),
+		field.UUID("person_id", uuid.UUID{}).Default(uuid.New).Unique(),
 		field.String("password").NotEmpty().Sensitive(), // Sensitive prevents it from being logged
-		field.String("orcid_id").Optional().Unique(),
 	}
 }
 

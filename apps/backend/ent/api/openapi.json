@@ -1387,6 +1387,13 @@
             "type": "string",
             "format": "uuid"
           },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orcid_id": {
+            "type": "string"
+          },
           "name": {
             "type": "string"
           },
@@ -1402,7 +1409,8 @@
         },
         "required": [
           "id",
-          "name"
+          "name",
+          "email"
         ]
       },
       "PersonAddedEvent": {
@@ -1631,23 +1639,17 @@
             "type": "string",
             "format": "uuid"
           },
-          "name": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
+          "person_id": {
+            "type": "string",
+            "format": "uuid"
           },
           "password": {
-            "type": "string"
-          },
-          "orcid_id": {
             "type": "string"
           }
         },
         "required": [
           "id",
-          "name",
-          "email",
+          "person_id",
           "password"
         ]
       },

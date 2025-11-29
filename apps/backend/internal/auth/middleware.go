@@ -13,10 +13,10 @@ type contextKey string
 
 const userContextKey contextKey = "user" // Key to store user info in context
 
-// AuthenticatedUser swagger:model AuthenticatedUser
-// AuthenticatedUser represents the user's information after authentication
+// authUser swagger:model authUser
+// authUser represents the user's information after authentication
 // used by Swagger for API documentation
-type AuthenticatedUser struct {
+type authUser struct {
 	ID      uuid.UUID `json:"id" example:"1"`
 	Email   string    `json:"email" example:"admin@example.com"`
 	OrcidID string    `json:"orcid_id,omitempty" example:"0000-0000-0000-0000"`
@@ -77,9 +77,9 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// GetUserFromContext retrieves the AuthenticatedUser from the request context
-func GetUserFromContext(ctx context.Context) (*AuthenticatedUser, bool) {
-	user, ok := ctx.Value(userContextKey).(*AuthenticatedUser)
+// GetUserFromContext retrieves the authUser from the request context
+func GetUserFromContext(ctx context.Context) (*authUser, bool) {
+	user, ok := ctx.Value(userContextKey).(*authUser)
 	return user, ok
 }
 

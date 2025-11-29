@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 
 import QueryIndicator from '../components/status/query-indicator';
-import { ExpandableNavbar } from '../components/layout/ExpandableNavbar';
+import { ExpandableNavbar } from '@/components/layout';
 
 const RootLayout = () => {
   const [isNavExpanded, setIsNavExpanded] = useState(true);

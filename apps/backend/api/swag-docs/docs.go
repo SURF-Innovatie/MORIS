@@ -540,7 +540,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_userdto.Response"
                         }
                     },
                     "401": {
@@ -1001,7 +1001,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.RegisterResponse"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_userdto.Response"
                         }
                     },
                     "400": {
@@ -1042,14 +1042,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/count": {
+        "/users": {
             "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Returns the total number of registered users",
+                "description": "Retrieves a single user by its ID, provided as the ` + "`" + `id` + "`" + ` query parameter.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1059,24 +1054,170 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
-                "summary": "Get total user count",
+                "summary": "Get a user by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID (UUID)",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.TotalUsersResponse"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_userdto.Response"
                         }
                     },
-                    "401": {
-                        "description": "User not authenticated",
+                    "400": {
+                        "description": "invalid id",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an existing user's person reference and/or password based on the given ID and request body.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Update a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID (UUID)",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "User update payload",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_userdto.Request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_userdto.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id or request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a new user account for an existing person using the provided person ID and password.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Create a new user",
+                "parameters": [
+                    {
+                        "description": "User creation payload",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_userdto.Request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_userdto.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid request body or missing person ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a user by its ID, provided as the ` + "`" + `id` + "`" + ` query parameter.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Delete a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID (UUID)",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "no content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 }
@@ -1087,20 +1228,12 @@ const docTemplate = `{
         "ent.User": {
             "type": "object",
             "properties": {
-                "email": {
-                    "description": "Email holds the value of the \"email\" field.",
-                    "type": "string"
-                },
                 "id": {
                     "description": "ID of the ent.",
                     "type": "string"
                 },
-                "name": {
-                    "description": "Name holds the value of the \"name\" field.",
-                    "type": "string"
-                },
-                "orcid_id": {
-                    "description": "OrcidID holds the value of the \"orcid_id\" field.",
+                "person_id": {
+                    "description": "PersonID holds the value of the \"person_id\" field.",
                     "type": "string"
                 }
             }
@@ -1154,6 +1287,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "orcid": {
+                    "type": "string"
+                },
+                "user_id": {
                     "type": "string"
                 }
             }
@@ -1209,6 +1348,9 @@ const docTemplate = `{
                 "organisationID": {
                     "type": "string"
                 },
+                "projectAdmin": {
+                    "type": "string"
+                },
                 "startDate": {
                     "type": "string",
                     "example": "2025-01-01T00:00:00Z"
@@ -1248,6 +1390,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_productdto.Response"
                     }
                 },
+                "projectAdmin": {
+                    "type": "string"
+                },
                 "startDate": {
                     "type": "string",
                     "example": "2025-01-01T00:00:00Z"
@@ -1261,30 +1406,40 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser": {
+        "github_com_SURF-Innovatie_MORIS_internal_api_userdto.Request": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "person_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_userdto.Response": {
             "type": "object",
             "properties": {
                 "email": {
-                    "type": "string",
-                    "example": "admin@example.com"
+                    "type": "string"
+                },
+                "familyName": {
+                    "type": "string"
+                },
+                "givenName": {
+                    "type": "string"
                 },
                 "id": {
-                    "type": "string",
-                    "example": "1"
+                    "type": "string"
                 },
-                "orcid_id": {
-                    "type": "string",
-                    "example": "0000-0000-0000-0000"
+                "name": {
+                    "type": "string"
                 },
-                "roles": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "admin",
-                        "user"
-                    ]
+                "orcid": {
+                    "type": "string"
+                },
+                "person_id": {
+                    "type": "string"
                 }
             }
         },
@@ -1363,6 +1518,9 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "projectAdmin": {
+                    "type": "string"
+                },
                 "startDate": {
                     "type": "string"
                 },
@@ -1424,26 +1582,7 @@ const docTemplate = `{
                     "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                 },
                 "user": {
-                    "type": "object",
-                    "properties": {
-                        "email": {
-                            "type": "string",
-                            "example": "user@example.com"
-                        },
-                        "id": {
-                            "type": "string",
-                            "example": "1"
-                        },
-                        "roles": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            },
-                            "example": [
-                                "user"
-                            ]
-                        }
-                    }
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_userdto.Response"
                 }
             }
         },
@@ -1473,23 +1612,6 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handler_custom.RegisterResponse": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "1"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "John Doe"
-                }
-            }
-        },
         "internal_handler_custom.StatusResponse": {
             "type": "object",
             "properties": {
@@ -1500,15 +1622,6 @@ const docTemplate = `{
                 "timestamp": {
                     "type": "string",
                     "example": "2025-11-12T10:00:00Z"
-                }
-            }
-        },
-        "internal_handler_custom.TotalUsersResponse": {
-            "type": "object",
-            "properties": {
-                "total_users": {
-                    "type": "integer",
-                    "example": 123
                 }
             }
         }

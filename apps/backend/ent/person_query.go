@@ -263,12 +263,12 @@ func (_q *PersonQuery) Clone() *PersonQuery {
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		UserID uuid.UUID `json:"user_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Person.Query().
-//		GroupBy(person.FieldName).
+//		GroupBy(person.FieldUserID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *PersonQuery) GroupBy(field string, fields ...string) *PersonGroupBy {
@@ -286,11 +286,11 @@ func (_q *PersonQuery) GroupBy(field string, fields ...string) *PersonGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		UserID uuid.UUID `json:"user_id,omitempty"`
 //	}
 //
 //	client.Person.Query().
-//		Select(person.FieldName).
+//		Select(person.FieldUserID).
 //		Scan(ctx, &v)
 func (_q *PersonQuery) Select(fields ...string) *PersonSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

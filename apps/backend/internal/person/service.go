@@ -15,6 +15,7 @@ type Service interface {
 	Get(ctx context.Context, id uuid.UUID) (*entities.Person, error)
 	Update(ctx context.Context, id uuid.UUID, p entities.Person) (*entities.Person, error)
 	List(ctx context.Context) ([]entities.Person, error)
+	GetByEmail(ctx context.Context, email string) (*entities.Person, error)
 }
 
 type service struct {
@@ -31,7 +32,7 @@ func (s *service) Create(ctx context.Context, p entities.Person) (*entities.Pers
 		SetName(p.Name).
 		SetNillableGivenName(p.GivenName).
 		SetNillableFamilyName(p.FamilyName).
-		SetNillableEmail(p.Email).
+		SetEmail(p.Email).
 		Save(ctx)
 	if err != nil {
 		return nil, err
@@ -56,7 +57,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, p entities.Person) (
 		SetName(p.Name).
 		SetNillableGivenName(p.GivenName).
 		SetNillableFamilyName(p.FamilyName).
-		SetNillableEmail(p.Email).
+		SetEmail(p.Email).
 		Save(ctx)
 	if err != nil {
 		return nil, err
@@ -76,6 +77,17 @@ func (s *service) List(ctx context.Context) ([]entities.Person, error) {
 		out = append(out, *mapRow(r))
 	}
 	return out, nil
+}
+
+func (s *service) GetByEmail(ctx context.Context, email string) (*entities.Person, error) {
+	row, err := s.cli.Person.
+		Query().
+		Where(pe.EmailEQ(email)).
+		Only(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return mapRow(row), nil
 }
 
 func mapRow(r *ent.Person) *entities.Person {

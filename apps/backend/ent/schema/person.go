@@ -13,7 +13,10 @@ type Person struct {
 func (Person) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).
-			Default(uuid.New),
+			Default(uuid.New).Unique().Immutable(),
+		field.UUID("user_id", uuid.UUID{}).
+			Default(uuid.New).Unique().Optional(),
+		field.String("orcid_id").Optional().Unique(),
 		field.String("name"),
 		field.String("given_name").
 			Optional().
@@ -21,9 +24,7 @@ func (Person) Fields() []ent.Field {
 		field.String("family_name").
 			Optional().
 			Nillable(),
-		field.String("email").
-			Optional().
-			Nillable(),
+		field.String("email").Unique(),
 	}
 }
 

@@ -16,6 +16,8 @@ import (
 	personhandler "github.com/SURF-Innovatie/MORIS/internal/handler/person"
 	producthandler "github.com/SURF-Innovatie/MORIS/internal/handler/product"
 	projecthandler "github.com/SURF-Innovatie/MORIS/internal/handler/project"
+	userhandler "github.com/SURF-Innovatie/MORIS/internal/handler/user"
+	"github.com/SURF-Innovatie/MORIS/internal/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/organisation"
 	"github.com/SURF-Innovatie/MORIS/internal/person"
 	"github.com/SURF-Innovatie/MORIS/internal/platform/eventstore"
@@ -75,12 +77,12 @@ func main() {
 	}
 
 	// Create services
-	userSvc := user.NewService(client)
-	authSvc := auth.NewService(client)
-
 	personSvc := person.NewService(client)
-	personHandler := personhandler.NewHandler(personSvc)
+	userSvc := user.NewService(client, personSvc)
+	authSvc := auth.NewService(client, userSvc)
+	orcidSvc := orcid.NewService(client, userSvc)
 
+	personHandler := personhandler.NewHandler(personSvc)
 	productSvc := product.NewService(client)
 	productHandler := producthandler.NewHandler(productSvc)
 
@@ -93,7 +95,9 @@ func main() {
 	auth.SetAuthService(authSvc)
 
 	// Create HTTP handler/controller
-	customHandler := custom.NewHandler(userSvc, authSvc)
+	customHandler := custom.NewHandler(userSvc, authSvc, orcidSvc)
+
+	userHandler := userhandler.NewHandler(userSvc)
 
 	esStore := eventstore.NewEntStore(client)
 	projSvc := project.NewService(esStore, client, notifierSvc)
@@ -114,6 +118,7 @@ func main() {
 		producthandler.MountProductRoutes(r, productHandler)
 		organisationhandler.MountOrganisationRoutes(r, organisationHandler)
 		notificationhandler.MountNotificationRoutes(r, notificationHandler)
+		userhandler.MountUserRoutes(r, userHandler)
 	})
 
 	port := os.Getenv("PORT")

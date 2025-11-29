@@ -20,6 +20,34 @@ type PersonCreate struct {
 	hooks    []Hook
 }
 
+// SetUserID sets the "user_id" field.
+func (_c *PersonCreate) SetUserID(v uuid.UUID) *PersonCreate {
+	_c.mutation.SetUserID(v)
+	return _c
+}
+
+// SetNillableUserID sets the "user_id" field if the given value is not nil.
+func (_c *PersonCreate) SetNillableUserID(v *uuid.UUID) *PersonCreate {
+	if v != nil {
+		_c.SetUserID(*v)
+	}
+	return _c
+}
+
+// SetOrcidID sets the "orcid_id" field.
+func (_c *PersonCreate) SetOrcidID(v string) *PersonCreate {
+	_c.mutation.SetOrcidID(v)
+	return _c
+}
+
+// SetNillableOrcidID sets the "orcid_id" field if the given value is not nil.
+func (_c *PersonCreate) SetNillableOrcidID(v *string) *PersonCreate {
+	if v != nil {
+		_c.SetOrcidID(*v)
+	}
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *PersonCreate) SetName(v string) *PersonCreate {
 	_c.mutation.SetName(v)
@@ -57,14 +85,6 @@ func (_c *PersonCreate) SetNillableFamilyName(v *string) *PersonCreate {
 // SetEmail sets the "email" field.
 func (_c *PersonCreate) SetEmail(v string) *PersonCreate {
 	_c.mutation.SetEmail(v)
-	return _c
-}
-
-// SetNillableEmail sets the "email" field if the given value is not nil.
-func (_c *PersonCreate) SetNillableEmail(v *string) *PersonCreate {
-	if v != nil {
-		_c.SetEmail(*v)
-	}
 	return _c
 }
 
@@ -117,6 +137,10 @@ func (_c *PersonCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *PersonCreate) defaults() {
+	if _, ok := _c.mutation.UserID(); !ok {
+		v := person.DefaultUserID()
+		_c.mutation.SetUserID(v)
+	}
 	if _, ok := _c.mutation.ID(); !ok {
 		v := person.DefaultID()
 		_c.mutation.SetID(v)
@@ -127,6 +151,9 @@ func (_c *PersonCreate) defaults() {
 func (_c *PersonCreate) check() error {
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Person.name"`)}
+	}
+	if _, ok := _c.mutation.Email(); !ok {
+		return &ValidationError{Name: "email", err: errors.New(`ent: missing required field "Person.email"`)}
 	}
 	return nil
 }
@@ -163,6 +190,14 @@ func (_c *PersonCreate) createSpec() (*Person, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
+	if value, ok := _c.mutation.UserID(); ok {
+		_spec.SetField(person.FieldUserID, field.TypeUUID, value)
+		_node.UserID = value
+	}
+	if value, ok := _c.mutation.OrcidID(); ok {
+		_spec.SetField(person.FieldOrcidID, field.TypeString, value)
+		_node.OrcidID = value
+	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(person.FieldName, field.TypeString, value)
 		_node.Name = value
@@ -177,7 +212,7 @@ func (_c *PersonCreate) createSpec() (*Person, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := _c.mutation.Email(); ok {
 		_spec.SetField(person.FieldEmail, field.TypeString, value)
-		_node.Email = &value
+		_node.Email = value
 	}
 	return _node, _spec
 }

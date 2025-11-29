@@ -20,35 +20,23 @@ type UserCreate struct {
 	hooks    []Hook
 }
 
-// SetName sets the "name" field.
-func (_c *UserCreate) SetName(v string) *UserCreate {
-	_c.mutation.SetName(v)
+// SetPersonID sets the "person_id" field.
+func (_c *UserCreate) SetPersonID(v uuid.UUID) *UserCreate {
+	_c.mutation.SetPersonID(v)
 	return _c
 }
 
-// SetEmail sets the "email" field.
-func (_c *UserCreate) SetEmail(v string) *UserCreate {
-	_c.mutation.SetEmail(v)
+// SetNillablePersonID sets the "person_id" field if the given value is not nil.
+func (_c *UserCreate) SetNillablePersonID(v *uuid.UUID) *UserCreate {
+	if v != nil {
+		_c.SetPersonID(*v)
+	}
 	return _c
 }
 
 // SetPassword sets the "password" field.
 func (_c *UserCreate) SetPassword(v string) *UserCreate {
 	_c.mutation.SetPassword(v)
-	return _c
-}
-
-// SetOrcidID sets the "orcid_id" field.
-func (_c *UserCreate) SetOrcidID(v string) *UserCreate {
-	_c.mutation.SetOrcidID(v)
-	return _c
-}
-
-// SetNillableOrcidID sets the "orcid_id" field if the given value is not nil.
-func (_c *UserCreate) SetNillableOrcidID(v *string) *UserCreate {
-	if v != nil {
-		_c.SetOrcidID(*v)
-	}
 	return _c
 }
 
@@ -101,6 +89,10 @@ func (_c *UserCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *UserCreate) defaults() {
+	if _, ok := _c.mutation.PersonID(); !ok {
+		v := user.DefaultPersonID()
+		_c.mutation.SetPersonID(v)
+	}
 	if _, ok := _c.mutation.ID(); !ok {
 		v := user.DefaultID()
 		_c.mutation.SetID(v)
@@ -109,16 +101,8 @@ func (_c *UserCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *UserCreate) check() error {
-	if _, ok := _c.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "User.name"`)}
-	}
-	if v, ok := _c.mutation.Name(); ok {
-		if err := user.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "User.name": %w`, err)}
-		}
-	}
-	if _, ok := _c.mutation.Email(); !ok {
-		return &ValidationError{Name: "email", err: errors.New(`ent: missing required field "User.email"`)}
+	if _, ok := _c.mutation.PersonID(); !ok {
+		return &ValidationError{Name: "person_id", err: errors.New(`ent: missing required field "User.person_id"`)}
 	}
 	if _, ok := _c.mutation.Password(); !ok {
 		return &ValidationError{Name: "password", err: errors.New(`ent: missing required field "User.password"`)}
@@ -163,21 +147,13 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := _c.mutation.Name(); ok {
-		_spec.SetField(user.FieldName, field.TypeString, value)
-		_node.Name = value
-	}
-	if value, ok := _c.mutation.Email(); ok {
-		_spec.SetField(user.FieldEmail, field.TypeString, value)
-		_node.Email = value
+	if value, ok := _c.mutation.PersonID(); ok {
+		_spec.SetField(user.FieldPersonID, field.TypeUUID, value)
+		_node.PersonID = value
 	}
 	if value, ok := _c.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
 		_node.Password = value
-	}
-	if value, ok := _c.mutation.OrcidID(); ok {
-		_spec.SetField(user.FieldOrcidID, field.TypeString, value)
-		_node.OrcidID = value
 	}
 	return _node, _spec
 }

@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/SURF-Innovatie/MORIS/ent/person"
 	"github.com/SURF-Innovatie/MORIS/ent/predicate"
+	"github.com/google/uuid"
 )
 
 // PersonUpdate is the builder for updating Person entities.
@@ -24,6 +25,46 @@ type PersonUpdate struct {
 // Where appends a list predicates to the PersonUpdate builder.
 func (_u *PersonUpdate) Where(ps ...predicate.Person) *PersonUpdate {
 	_u.mutation.Where(ps...)
+	return _u
+}
+
+// SetUserID sets the "user_id" field.
+func (_u *PersonUpdate) SetUserID(v uuid.UUID) *PersonUpdate {
+	_u.mutation.SetUserID(v)
+	return _u
+}
+
+// SetNillableUserID sets the "user_id" field if the given value is not nil.
+func (_u *PersonUpdate) SetNillableUserID(v *uuid.UUID) *PersonUpdate {
+	if v != nil {
+		_u.SetUserID(*v)
+	}
+	return _u
+}
+
+// ClearUserID clears the value of the "user_id" field.
+func (_u *PersonUpdate) ClearUserID() *PersonUpdate {
+	_u.mutation.ClearUserID()
+	return _u
+}
+
+// SetOrcidID sets the "orcid_id" field.
+func (_u *PersonUpdate) SetOrcidID(v string) *PersonUpdate {
+	_u.mutation.SetOrcidID(v)
+	return _u
+}
+
+// SetNillableOrcidID sets the "orcid_id" field if the given value is not nil.
+func (_u *PersonUpdate) SetNillableOrcidID(v *string) *PersonUpdate {
+	if v != nil {
+		_u.SetOrcidID(*v)
+	}
+	return _u
+}
+
+// ClearOrcidID clears the value of the "orcid_id" field.
+func (_u *PersonUpdate) ClearOrcidID() *PersonUpdate {
+	_u.mutation.ClearOrcidID()
 	return _u
 }
 
@@ -95,12 +136,6 @@ func (_u *PersonUpdate) SetNillableEmail(v *string) *PersonUpdate {
 	return _u
 }
 
-// ClearEmail clears the value of the "email" field.
-func (_u *PersonUpdate) ClearEmail() *PersonUpdate {
-	_u.mutation.ClearEmail()
-	return _u
-}
-
 // Mutation returns the PersonMutation object of the builder.
 func (_u *PersonUpdate) Mutation() *PersonMutation {
 	return _u.mutation
@@ -142,6 +177,18 @@ func (_u *PersonUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.UserID(); ok {
+		_spec.SetField(person.FieldUserID, field.TypeUUID, value)
+	}
+	if _u.mutation.UserIDCleared() {
+		_spec.ClearField(person.FieldUserID, field.TypeUUID)
+	}
+	if value, ok := _u.mutation.OrcidID(); ok {
+		_spec.SetField(person.FieldOrcidID, field.TypeString, value)
+	}
+	if _u.mutation.OrcidIDCleared() {
+		_spec.ClearField(person.FieldOrcidID, field.TypeString)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(person.FieldName, field.TypeString, value)
 	}
@@ -159,9 +206,6 @@ func (_u *PersonUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.Email(); ok {
 		_spec.SetField(person.FieldEmail, field.TypeString, value)
-	}
-	if _u.mutation.EmailCleared() {
-		_spec.ClearField(person.FieldEmail, field.TypeString)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -181,6 +225,46 @@ type PersonUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *PersonMutation
+}
+
+// SetUserID sets the "user_id" field.
+func (_u *PersonUpdateOne) SetUserID(v uuid.UUID) *PersonUpdateOne {
+	_u.mutation.SetUserID(v)
+	return _u
+}
+
+// SetNillableUserID sets the "user_id" field if the given value is not nil.
+func (_u *PersonUpdateOne) SetNillableUserID(v *uuid.UUID) *PersonUpdateOne {
+	if v != nil {
+		_u.SetUserID(*v)
+	}
+	return _u
+}
+
+// ClearUserID clears the value of the "user_id" field.
+func (_u *PersonUpdateOne) ClearUserID() *PersonUpdateOne {
+	_u.mutation.ClearUserID()
+	return _u
+}
+
+// SetOrcidID sets the "orcid_id" field.
+func (_u *PersonUpdateOne) SetOrcidID(v string) *PersonUpdateOne {
+	_u.mutation.SetOrcidID(v)
+	return _u
+}
+
+// SetNillableOrcidID sets the "orcid_id" field if the given value is not nil.
+func (_u *PersonUpdateOne) SetNillableOrcidID(v *string) *PersonUpdateOne {
+	if v != nil {
+		_u.SetOrcidID(*v)
+	}
+	return _u
+}
+
+// ClearOrcidID clears the value of the "orcid_id" field.
+func (_u *PersonUpdateOne) ClearOrcidID() *PersonUpdateOne {
+	_u.mutation.ClearOrcidID()
+	return _u
 }
 
 // SetName sets the "name" field.
@@ -248,12 +332,6 @@ func (_u *PersonUpdateOne) SetNillableEmail(v *string) *PersonUpdateOne {
 	if v != nil {
 		_u.SetEmail(*v)
 	}
-	return _u
-}
-
-// ClearEmail clears the value of the "email" field.
-func (_u *PersonUpdateOne) ClearEmail() *PersonUpdateOne {
-	_u.mutation.ClearEmail()
 	return _u
 }
 
@@ -328,6 +406,18 @@ func (_u *PersonUpdateOne) sqlSave(ctx context.Context) (_node *Person, err erro
 			}
 		}
 	}
+	if value, ok := _u.mutation.UserID(); ok {
+		_spec.SetField(person.FieldUserID, field.TypeUUID, value)
+	}
+	if _u.mutation.UserIDCleared() {
+		_spec.ClearField(person.FieldUserID, field.TypeUUID)
+	}
+	if value, ok := _u.mutation.OrcidID(); ok {
+		_spec.SetField(person.FieldOrcidID, field.TypeString, value)
+	}
+	if _u.mutation.OrcidIDCleared() {
+		_spec.ClearField(person.FieldOrcidID, field.TypeString)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(person.FieldName, field.TypeString, value)
 	}
@@ -345,9 +435,6 @@ func (_u *PersonUpdateOne) sqlSave(ctx context.Context) (_node *Person, err erro
 	}
 	if value, ok := _u.mutation.Email(); ok {
 		_spec.SetField(person.FieldEmail, field.TypeString, value)
-	}
-	if _u.mutation.EmailCleared() {
-		_spec.ClearField(person.FieldEmail, field.TypeString)
 	}
 	_node = &Person{config: _u.config}
 	_spec.Assign = _node.assignValues

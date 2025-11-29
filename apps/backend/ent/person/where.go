@@ -53,6 +53,16 @@ func IDLTE(id uuid.UUID) predicate.Person {
 	return predicate.Person(sql.FieldLTE(FieldID, id))
 }
 
+// UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
+func UserID(v uuid.UUID) predicate.Person {
+	return predicate.Person(sql.FieldEQ(FieldUserID, v))
+}
+
+// OrcidID applies equality check predicate on the "orcid_id" field. It's identical to OrcidIDEQ.
+func OrcidID(v string) predicate.Person {
+	return predicate.Person(sql.FieldEQ(FieldOrcidID, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Person {
 	return predicate.Person(sql.FieldEQ(FieldName, v))
@@ -71,6 +81,131 @@ func FamilyName(v string) predicate.Person {
 // Email applies equality check predicate on the "email" field. It's identical to EmailEQ.
 func Email(v string) predicate.Person {
 	return predicate.Person(sql.FieldEQ(FieldEmail, v))
+}
+
+// UserIDEQ applies the EQ predicate on the "user_id" field.
+func UserIDEQ(v uuid.UUID) predicate.Person {
+	return predicate.Person(sql.FieldEQ(FieldUserID, v))
+}
+
+// UserIDNEQ applies the NEQ predicate on the "user_id" field.
+func UserIDNEQ(v uuid.UUID) predicate.Person {
+	return predicate.Person(sql.FieldNEQ(FieldUserID, v))
+}
+
+// UserIDIn applies the In predicate on the "user_id" field.
+func UserIDIn(vs ...uuid.UUID) predicate.Person {
+	return predicate.Person(sql.FieldIn(FieldUserID, vs...))
+}
+
+// UserIDNotIn applies the NotIn predicate on the "user_id" field.
+func UserIDNotIn(vs ...uuid.UUID) predicate.Person {
+	return predicate.Person(sql.FieldNotIn(FieldUserID, vs...))
+}
+
+// UserIDGT applies the GT predicate on the "user_id" field.
+func UserIDGT(v uuid.UUID) predicate.Person {
+	return predicate.Person(sql.FieldGT(FieldUserID, v))
+}
+
+// UserIDGTE applies the GTE predicate on the "user_id" field.
+func UserIDGTE(v uuid.UUID) predicate.Person {
+	return predicate.Person(sql.FieldGTE(FieldUserID, v))
+}
+
+// UserIDLT applies the LT predicate on the "user_id" field.
+func UserIDLT(v uuid.UUID) predicate.Person {
+	return predicate.Person(sql.FieldLT(FieldUserID, v))
+}
+
+// UserIDLTE applies the LTE predicate on the "user_id" field.
+func UserIDLTE(v uuid.UUID) predicate.Person {
+	return predicate.Person(sql.FieldLTE(FieldUserID, v))
+}
+
+// UserIDIsNil applies the IsNil predicate on the "user_id" field.
+func UserIDIsNil() predicate.Person {
+	return predicate.Person(sql.FieldIsNull(FieldUserID))
+}
+
+// UserIDNotNil applies the NotNil predicate on the "user_id" field.
+func UserIDNotNil() predicate.Person {
+	return predicate.Person(sql.FieldNotNull(FieldUserID))
+}
+
+// OrcidIDEQ applies the EQ predicate on the "orcid_id" field.
+func OrcidIDEQ(v string) predicate.Person {
+	return predicate.Person(sql.FieldEQ(FieldOrcidID, v))
+}
+
+// OrcidIDNEQ applies the NEQ predicate on the "orcid_id" field.
+func OrcidIDNEQ(v string) predicate.Person {
+	return predicate.Person(sql.FieldNEQ(FieldOrcidID, v))
+}
+
+// OrcidIDIn applies the In predicate on the "orcid_id" field.
+func OrcidIDIn(vs ...string) predicate.Person {
+	return predicate.Person(sql.FieldIn(FieldOrcidID, vs...))
+}
+
+// OrcidIDNotIn applies the NotIn predicate on the "orcid_id" field.
+func OrcidIDNotIn(vs ...string) predicate.Person {
+	return predicate.Person(sql.FieldNotIn(FieldOrcidID, vs...))
+}
+
+// OrcidIDGT applies the GT predicate on the "orcid_id" field.
+func OrcidIDGT(v string) predicate.Person {
+	return predicate.Person(sql.FieldGT(FieldOrcidID, v))
+}
+
+// OrcidIDGTE applies the GTE predicate on the "orcid_id" field.
+func OrcidIDGTE(v string) predicate.Person {
+	return predicate.Person(sql.FieldGTE(FieldOrcidID, v))
+}
+
+// OrcidIDLT applies the LT predicate on the "orcid_id" field.
+func OrcidIDLT(v string) predicate.Person {
+	return predicate.Person(sql.FieldLT(FieldOrcidID, v))
+}
+
+// OrcidIDLTE applies the LTE predicate on the "orcid_id" field.
+func OrcidIDLTE(v string) predicate.Person {
+	return predicate.Person(sql.FieldLTE(FieldOrcidID, v))
+}
+
+// OrcidIDContains applies the Contains predicate on the "orcid_id" field.
+func OrcidIDContains(v string) predicate.Person {
+	return predicate.Person(sql.FieldContains(FieldOrcidID, v))
+}
+
+// OrcidIDHasPrefix applies the HasPrefix predicate on the "orcid_id" field.
+func OrcidIDHasPrefix(v string) predicate.Person {
+	return predicate.Person(sql.FieldHasPrefix(FieldOrcidID, v))
+}
+
+// OrcidIDHasSuffix applies the HasSuffix predicate on the "orcid_id" field.
+func OrcidIDHasSuffix(v string) predicate.Person {
+	return predicate.Person(sql.FieldHasSuffix(FieldOrcidID, v))
+}
+
+// OrcidIDIsNil applies the IsNil predicate on the "orcid_id" field.
+func OrcidIDIsNil() predicate.Person {
+	return predicate.Person(sql.FieldIsNull(FieldOrcidID))
+}
+
+// OrcidIDNotNil applies the NotNil predicate on the "orcid_id" field.
+func OrcidIDNotNil() predicate.Person {
+	return predicate.Person(sql.FieldNotNull(FieldOrcidID))
+}
+
+// OrcidIDEqualFold applies the EqualFold predicate on the "orcid_id" field.
+func OrcidIDEqualFold(v string) predicate.Person {
+	return predicate.Person(sql.FieldEqualFold(FieldOrcidID, v))
+}
+
+// OrcidIDContainsFold applies the ContainsFold predicate on the "orcid_id" field.
+func OrcidIDContainsFold(v string) predicate.Person {
+	return predicate.Person(sql.FieldContainsFold(FieldOrcidID, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -341,16 +476,6 @@ func EmailHasPrefix(v string) predicate.Person {
 // EmailHasSuffix applies the HasSuffix predicate on the "email" field.
 func EmailHasSuffix(v string) predicate.Person {
 	return predicate.Person(sql.FieldHasSuffix(FieldEmail, v))
-}
-
-// EmailIsNil applies the IsNil predicate on the "email" field.
-func EmailIsNil() predicate.Person {
-	return predicate.Person(sql.FieldIsNull(FieldEmail))
-}
-
-// EmailNotNil applies the NotNil predicate on the "email" field.
-func EmailNotNil() predicate.Person {
-	return predicate.Person(sql.FieldNotNull(FieldEmail))
 }
 
 // EmailEqualFold applies the EqualFold predicate on the "email" field.

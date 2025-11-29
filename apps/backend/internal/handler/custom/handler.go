@@ -2,23 +2,27 @@ package custom
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
-	"strings"
 	"time"
 
+	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
 	"github.com/SURF-Innovatie/MORIS/internal/auth"
+	"github.com/SURF-Innovatie/MORIS/internal/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
 )
 
 type Handler struct {
-	userService user.Service
-	authService auth.Service
+	userService  user.Service
+	authService  auth.Service
+	orcidService orcid.Service
 }
 
-func NewHandler(userService user.Service, authService auth.Service) *Handler {
+func NewHandler(userService user.Service, authService auth.Service, orcidService orcid.Service) *Handler {
 	return &Handler{
-		userService: userService,
-		authService: authService,
+		userService:  userService,
+		authService:  authService,
+		orcidService: orcidService,
 	}
 }
 
@@ -63,7 +67,7 @@ func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param user body RegisterRequest true "User registration details"
-// @Success 201 {object} RegisterResponse
+// @Success 201 {object} userdto.Response
 // @Failure 400 {object} auth.BackendError "Invalid request body or missing fields"
 // @Failure 500 {object} auth.BackendError "Internal server error"
 // @Router /register [post]
@@ -80,19 +84,8 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate input
-	if req.Name == "" || req.Email == "" || req.Password == "" {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(auth.BackendError{
-			Code:    http.StatusBadRequest,
-			Status:  "Bad Request",
-			Message: "Name, email, and password are required",
-		})
-		return
-	}
-
-	usr, err := h.authService.Register(r.Context(), req.Name, req.Email, req.Password)
+	var usrReq userdto.Request
+	usr, err := h.authService.Register(r.Context(), usrReq)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -106,12 +99,8 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	resp := RegisterResponse{
-		ID:    usr.ID,
-		Email: usr.Email,
-		Name:  usr.Name,
-	}
-	_ = json.NewEncoder(w).Encode(resp)
+
+	_ = json.NewEncoder(w).Encode(usr)
 }
 
 // Login godoc
@@ -153,10 +142,8 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	resp := LoginResponse{
 		Token: token,
+		User:  authUser,
 	}
-	resp.User.ID = authUser.ID
-	resp.User.Email = authUser.Email
-	resp.User.Roles = authUser.Roles
 	_ = json.NewEncoder(w).Encode(resp)
 }
 
@@ -167,7 +154,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} auth.AuthenticatedUser
+// @Success 200 {object} userdto.Response
 // @Failure 401 {object} auth.BackendError "User not authenticated"
 // @Router /profile [get]
 func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
@@ -184,7 +171,7 @@ func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch fresh user data from database
-	freshUser, err := h.authService.GetUserByID(r.Context(), userCtx.ID)
+	freshUser, err := h.userService.Get(r.Context(), userCtx.ID)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -196,42 +183,8 @@ func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authUser := &auth.AuthenticatedUser{
-		ID:      freshUser.ID,
-		Email:   freshUser.Email,
-		OrcidID: freshUser.OrcidID,
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(authUser)
-}
-
-// TotalUserCount godoc
-// @Summary Get total user count
-// @Description Returns the total number of registered users
-// @Tags users
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Success 200 {object} TotalUsersResponse
-// @Failure 401 {object} auth.BackendError "User not authenticated"
-// @Failure 500 {object} auth.BackendError "Internal server error"
-// @Router /users/count [get]
-func (h *Handler) TotalUserCount(w http.ResponseWriter, r *http.Request) {
-	count, err := h.userService.TotalUserCount(r.Context())
-	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(auth.BackendError{
-			Code:    http.StatusInternalServerError,
-			Status:  "Internal Server Error",
-			Message: "failed to get user count: " + err.Error(),
-		})
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	resp := TotalUsersResponse{TotalUsers: count}
-	_ = json.NewEncoder(w).Encode(resp)
+	_ = json.NewEncoder(w).Encode(freshUser)
 }
 
 // AdminUserList godoc
@@ -262,7 +215,7 @@ func (h *Handler) AdminUserList(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} auth.BackendError "Internal server error"
 // @Router /auth/orcid/url [get]
 func (h *Handler) GetORCIDAuthURL(w http.ResponseWriter, r *http.Request) {
-	_, ok := auth.GetUserFromContext(r.Context())
+	u, ok := auth.GetUserFromContext(r.Context())
 	if !ok {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
@@ -274,14 +227,19 @@ func (h *Handler) GetORCIDAuthURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url, err := h.authService.GenerateORCIDAuthURL(r.Context())
+	url, err := h.orcidService.GetAuthURL(r.Context(), u.ID)
 	if err != nil {
+		statusCode := http.StatusInternalServerError
+		if errors.Is(err, orcid.ErrUnauthenticated) {
+			statusCode = http.StatusUnauthorized
+		}
+
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(statusCode)
 		json.NewEncoder(w).Encode(auth.BackendError{
-			Code:    http.StatusInternalServerError,
-			Status:  "Internal Server Error",
-			Message: "Failed to generate ORCID auth URL: " + err.Error(),
+			Code:    statusCode,
+			Status:  http.StatusText(statusCode),
+			Message: err.Error(),
 		})
 		return
 	}
@@ -306,7 +264,7 @@ func (h *Handler) GetORCIDAuthURL(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} auth.BackendError "Internal server error"
 // @Router /auth/orcid/link [post]
 func (h *Handler) LinkORCID(w http.ResponseWriter, r *http.Request) {
-	user, ok := auth.GetUserFromContext(r.Context())
+	u, ok := auth.GetUserFromContext(r.Context())
 	if !ok {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
@@ -330,21 +288,13 @@ func (h *Handler) LinkORCID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Code == "" {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(auth.BackendError{
-			Code:    http.StatusBadRequest,
-			Status:  "Bad Request",
-			Message: "Authorization code is required",
-		})
-		return
-	}
-
-	err := h.authService.LinkORCID(r.Context(), user.ID, req.Code)
+	err := h.orcidService.Link(r.Context(), u.ID, req.Code)
 	if err != nil {
 		statusCode := http.StatusInternalServerError
-		if strings.Contains(err.Error(), "already linked") {
+		switch {
+		case errors.Is(err, orcid.ErrMissingCode):
+			statusCode = http.StatusBadRequest
+		case errors.Is(err, orcid.ErrAlreadyLinked):
 			statusCode = http.StatusConflict
 		}
 
@@ -378,7 +328,7 @@ func (h *Handler) LinkORCID(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} auth.BackendError "Internal server error"
 // @Router /auth/orcid/unlink [post]
 func (h *Handler) UnlinkORCID(w http.ResponseWriter, r *http.Request) {
-	user, ok := auth.GetUserFromContext(r.Context())
+	u, ok := auth.GetUserFromContext(r.Context())
 	if !ok {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
@@ -390,8 +340,7 @@ func (h *Handler) UnlinkORCID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.authService.UnlinkORCID(r.Context(), user.ID)
-	if err != nil {
+	if err := h.orcidService.Unlink(r.Context(), u.ID); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(auth.BackendError{

@@ -17,6 +17,10 @@ type Person struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
+	// UserID holds the value of the "user_id" field.
+	UserID uuid.UUID `json:"user_id,omitempty"`
+	// OrcidID holds the value of the "orcid_id" field.
+	OrcidID string `json:"orcid_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// GivenName holds the value of the "given_name" field.
@@ -24,7 +28,7 @@ type Person struct {
 	// FamilyName holds the value of the "family_name" field.
 	FamilyName *string `json:"family_name,omitempty"`
 	// Email holds the value of the "email" field.
-	Email        *string `json:"email,omitempty"`
+	Email        string `json:"email,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -33,9 +37,9 @@ func (*Person) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case person.FieldName, person.FieldGivenName, person.FieldFamilyName, person.FieldEmail:
+		case person.FieldOrcidID, person.FieldName, person.FieldGivenName, person.FieldFamilyName, person.FieldEmail:
 			values[i] = new(sql.NullString)
-		case person.FieldID:
+		case person.FieldID, person.FieldUserID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -57,6 +61,18 @@ func (_m *Person) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				_m.ID = *value
+			}
+		case person.FieldUserID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field user_id", values[i])
+			} else if value != nil {
+				_m.UserID = *value
+			}
+		case person.FieldOrcidID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field orcid_id", values[i])
+			} else if value.Valid {
+				_m.OrcidID = value.String
 			}
 		case person.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -82,8 +98,7 @@ func (_m *Person) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field email", values[i])
 			} else if value.Valid {
-				_m.Email = new(string)
-				*_m.Email = value.String
+				_m.Email = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -121,6 +136,12 @@ func (_m *Person) String() string {
 	var builder strings.Builder
 	builder.WriteString("Person(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("user_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.UserID))
+	builder.WriteString(", ")
+	builder.WriteString("orcid_id=")
+	builder.WriteString(_m.OrcidID)
+	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
@@ -134,10 +155,8 @@ func (_m *Person) String() string {
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
-	if v := _m.Email; v != nil {
-		builder.WriteString("email=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("email=")
+	builder.WriteString(_m.Email)
 	builder.WriteByte(')')
 	return builder.String()
 }

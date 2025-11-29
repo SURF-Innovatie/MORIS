@@ -12,6 +12,10 @@ const (
 	Label = "person"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldUserID holds the string denoting the user_id field in the database.
+	FieldUserID = "user_id"
+	// FieldOrcidID holds the string denoting the orcid_id field in the database.
+	FieldOrcidID = "orcid_id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldGivenName holds the string denoting the given_name field in the database.
@@ -27,6 +31,8 @@ const (
 // Columns holds all SQL columns for person fields.
 var Columns = []string{
 	FieldID,
+	FieldUserID,
+	FieldOrcidID,
 	FieldName,
 	FieldGivenName,
 	FieldFamilyName,
@@ -44,6 +50,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// DefaultUserID holds the default value on creation for the "user_id" field.
+	DefaultUserID func() uuid.UUID
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -54,6 +62,16 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByUserID orders the results by the user_id field.
+func ByUserID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUserID, opts...).ToFunc()
+}
+
+// ByOrcidID orders the results by the orcid_id field.
+func ByOrcidID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOrcidID, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.

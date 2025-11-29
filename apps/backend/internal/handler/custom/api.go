@@ -16,7 +16,6 @@ func MountCustomHandlers(r chi.Router, h *Handler) {
 		r.Use(auth.AuthMiddleware)
 
 		r.Get("/profile", h.Profile)
-		r.Get("/users/count", h.TotalUserCount)
 
 		// ORCID
 		r.Get("/auth/orcid/url", h.GetORCIDAuthURL)

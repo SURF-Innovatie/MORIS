@@ -7,34 +7,33 @@ import (
 	"time"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
-	"github.com/SURF-Innovatie/MORIS/ent/user"
+	userent "github.com/SURF-Innovatie/MORIS/ent/user"
+	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
+	"github.com/SURF-Innovatie/MORIS/internal/user"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Service interface {
-	Register(ctx context.Context, name, email, password string) (*ent.User, error)
-	Login(ctx context.Context, email, password string) (string, *AuthenticatedUser, error)
-	ValidateToken(tokenString string) (*AuthenticatedUser, error)
-	GetUserByID(ctx context.Context, id uuid.UUID) (*ent.User, error)
-	GenerateORCIDAuthURL(ctx context.Context) (string, error)
-	LinkORCID(ctx context.Context, userID uuid.UUID, code string) error
-	UnlinkORCID(ctx context.Context, userID uuid.UUID) error
+	Register(ctx context.Context, req userdto.Request) (*userdto.Response, error)
+	Login(ctx context.Context, email, password string) (string, *userdto.Response, error)
+	ValidateToken(tokenString string) (*userdto.Response, error)
 }
 
 type service struct {
-	client *ent.Client
+	client  *ent.Client
+	userSvc user.Service
 }
 
-func NewService(client *ent.Client) Service {
-	return &service{client: client}
+func NewService(client *ent.Client, userSvc user.Service) Service {
+	return &service{client: client, userSvc: userSvc}
 }
 
 // Register creates a new user with hashed password
-func (s *service) Register(ctx context.Context, name, email, password string) (*ent.User, error) {
+func (s *service) Register(ctx context.Context, req userdto.Request) (*userdto.Response, error) {
 	// Hash password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
@@ -42,8 +41,7 @@ func (s *service) Register(ctx context.Context, name, email, password string) (*
 	// Create user with default "user" role
 	usr, err := s.client.User.
 		Create().
-		SetName(name).
-		SetEmail(email).
+		SetPersonID(req.PersonID).
 		SetPassword(string(hashedPassword)).
 		Save(ctx)
 
@@ -51,16 +49,13 @@ func (s *service) Register(ctx context.Context, name, email, password string) (*
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	return usr, nil
+	return s.userSvc.Get(ctx, usr.ID)
 }
 
 // Login authenticates a user and returns a JWT token
-func (s *service) Login(ctx context.Context, email, password string) (string, *AuthenticatedUser, error) {
+func (s *service) Login(ctx context.Context, email, password string) (string, *userdto.Response, error) {
 	// Find user by email
-	usr, err := s.client.User.
-		Query().
-		Where(user.EmailEQ(email)).
-		Only(ctx)
+	usr, err := s.userSvc.GetByEmail(ctx, email)
 
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -69,8 +64,16 @@ func (s *service) Login(ctx context.Context, email, password string) (string, *A
 		return "", nil, fmt.Errorf("failed to query user: %w", err)
 	}
 
-	// Compare password
-	err = bcrypt.CompareHashAndPassword([]byte(usr.Password), []byte(password))
+	usrPwd, err := s.client.User.
+		Query().
+		Where(userent.IDEQ(usr.ID)).
+		Select(userent.FieldPassword).
+		String(ctx)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to query user password: %w", err)
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(usrPwd), []byte(password))
 	if err != nil {
 		return "", nil, fmt.Errorf("invalid credentials")
 	}
@@ -81,18 +84,11 @@ func (s *service) Login(ctx context.Context, email, password string) (string, *A
 		return "", nil, fmt.Errorf("failed to generate token: %w", err)
 	}
 
-	authUser := &AuthenticatedUser{
-		ID:      usr.ID,
-		Email:   usr.Email,
-		OrcidID: usr.OrcidID,
-		//Roles:   usr.Roles,
-	}
-
-	return token, authUser, nil
+	return token, usr, nil
 }
 
 // generateJWT creates a JWT token for the user
-func (s *service) generateJWT(usr *ent.User) (string, error) {
+func (s *service) generateJWT(usr *userdto.Response) (string, error) {
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		jwtSecret = "your-secret-key-change-this-in-production" // Fallback for development
@@ -101,7 +97,7 @@ func (s *service) generateJWT(usr *ent.User) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id":  usr.ID,
 		"email":    usr.Email,
-		"orcid_id": usr.OrcidID,
+		"orcid_id": usr.ORCiD,
 		"exp":      time.Now().Add(time.Hour * 24 * 7).Unix(), // 7 days expiry
 		"iat":      time.Now().Unix(),
 	}
@@ -116,7 +112,7 @@ func (s *service) generateJWT(usr *ent.User) (string, error) {
 }
 
 // ValidateToken validates a JWT token and returns the user info
-func (s *service) ValidateToken(tokenString string) (*AuthenticatedUser, error) {
+func (s *service) ValidateToken(tokenString string) (*userdto.Response, error) {
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		jwtSecret = "your-secret-key-change-this-in-production"
@@ -153,12 +149,18 @@ func (s *service) ValidateToken(tokenString string) (*AuthenticatedUser, error) 
 		return nil, fmt.Errorf("invalid user_id in token")
 	}
 
-	email, ok := claims["email"].(string)
-	if !ok {
-		return nil, fmt.Errorf("invalid email in token")
+	usr, err := s.userSvc.Get(context.Background(), uid)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	orcidID, _ := claims["orcid_id"].(string) // Optional field
+	// TODO: question why do we take fields from token instead of DB
+	//email, ok := claims["email"].(string)
+	//if !ok {
+	//	return nil, fmt.Errorf("invalid email in token")
+	//}
+	//
+	//orcidID, _ := claims["orcid_id"].(string) // Optional field
 
 	//rolesInterface, ok := claims["roles"].([]interface{})
 	//if !ok {
@@ -173,69 +175,5 @@ func (s *service) ValidateToken(tokenString string) (*AuthenticatedUser, error) 
 	//	}
 	//}
 
-	return &AuthenticatedUser{
-		ID:      uid,
-		Email:   email,
-		OrcidID: orcidID,
-		//Roles:   roles,
-	}, nil
-}
-
-// GetUserByID retrieves a user by their ID
-func (s *service) GetUserByID(ctx context.Context, id uuid.UUID) (*ent.User, error) {
-	usr, err := s.client.User.Get(ctx, id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user: %w", err)
-	}
 	return usr, nil
-}
-
-// GenerateORCIDAuthURL generates the ORCID authorization URL
-func (s *service) GenerateORCIDAuthURL(ctx context.Context) (string, error) {
-	config, err := GetORCIDConfig()
-	if err != nil {
-		return "", err
-	}
-	return config.GenerateAuthURL(), nil
-}
-
-// LinkORCID links an ORCID ID to a user account
-func (s *service) LinkORCID(ctx context.Context, userID uuid.UUID, code string) error {
-	config, err := GetORCIDConfig()
-	if err != nil {
-		return err
-	}
-
-	orcidID, err := config.ExchangeCode(ctx, code)
-	if err != nil {
-		return err
-	}
-
-	// Check if ORCID is already linked to another user
-	exists, err := s.client.User.Query().Where(user.OrcidIDEQ(orcidID)).Exist(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to check if ORCID is already linked: %w", err)
-	}
-	if exists {
-		return fmt.Errorf("ORCID ID is already linked to another account")
-	}
-
-	// Update user with ORCID ID
-	_, err = s.client.User.UpdateOneID(userID).SetOrcidID(orcidID).Save(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to link ORCID ID: %w", err)
-	}
-
-	return nil
-}
-
-// UnlinkORCID removes the ORCID ID from a user account
-func (s *service) UnlinkORCID(ctx context.Context, userID uuid.UUID) error {
-	// Update user to remove ORCID ID
-	_, err := s.client.User.UpdateOneID(userID).ClearOrcidID().Save(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to unlink ORCID ID: %w", err)
-	}
-
-	return nil
 }

@@ -1,6 +1,9 @@
 package custom
 
-import "github.com/google/uuid"
+import (
+	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
+	"github.com/google/uuid"
+)
 
 // RegisterRequest swagger:model RegisterRequest
 // Represents the request body for user registration.
@@ -13,9 +16,8 @@ type RegisterRequest struct {
 // RegisterResponse swagger:model RegisterResponse
 // Represents the response body for successful registration.
 type RegisterResponse struct {
-	ID    uuid.UUID `json:"id" example:"1"`
-	Email string    `json:"email" example:"user@example.com"`
-	Name  string    `json:"name" example:"John Doe"`
+	ID       uuid.UUID `json:"id" example:"1"`
+	PersonID uuid.UUID `json:"person_id" example:"2"`
 }
 
 // LoginRequest swagger:model LoginRequest
@@ -29,11 +31,7 @@ type LoginRequest struct {
 // Represents the response body for successful login.
 type LoginResponse struct {
 	Token string `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
-	User  struct {
-		ID    uuid.UUID `json:"id" example:"1"`
-		Email string    `json:"email" example:"user@example.com"`
-		Roles []string  `json:"roles" example:"user"`
-	} `json:"user"`
+	User  *userdto.Response
 }
 
 // StatusResponse swagger:model StatusResponse
@@ -42,17 +40,6 @@ type StatusResponse struct {
 	Status    string `json:"status" example:"ok"`
 	Timestamp string `json:"timestamp" example:"2025-11-12T10:00:00Z"`
 }
-
-// TotalUsersResponse swagger:model TotalUsersResponse
-// Represents the payload returned by /users/count.
-type TotalUsersResponse struct {
-	TotalUsers int `json:"total_users" example:"123"`
-}
-
-// Note: BackendError and AuthenticatedUser types are defined in the
-// `internal/auth` package, and annotated with `swagger:model`. We don't need
-// wrapper types here anymore; referencing the canonical `auth` types in
-// handler comments will prevent duplicate schema definitions in the OpenAPI spec.
 
 // ORCIDAuthURLResponse swagger:model ORCIDAuthURLResponse
 // Represents the response body for getting the ORCID auth URL.

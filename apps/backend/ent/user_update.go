@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/SURF-Innovatie/MORIS/ent/predicate"
 	"github.com/SURF-Innovatie/MORIS/ent/user"
+	"github.com/google/uuid"
 )
 
 // UserUpdate is the builder for updating User entities.
@@ -27,30 +28,16 @@ func (_u *UserUpdate) Where(ps ...predicate.User) *UserUpdate {
 	return _u
 }
 
-// SetName sets the "name" field.
-func (_u *UserUpdate) SetName(v string) *UserUpdate {
-	_u.mutation.SetName(v)
+// SetPersonID sets the "person_id" field.
+func (_u *UserUpdate) SetPersonID(v uuid.UUID) *UserUpdate {
+	_u.mutation.SetPersonID(v)
 	return _u
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (_u *UserUpdate) SetNillableName(v *string) *UserUpdate {
+// SetNillablePersonID sets the "person_id" field if the given value is not nil.
+func (_u *UserUpdate) SetNillablePersonID(v *uuid.UUID) *UserUpdate {
 	if v != nil {
-		_u.SetName(*v)
-	}
-	return _u
-}
-
-// SetEmail sets the "email" field.
-func (_u *UserUpdate) SetEmail(v string) *UserUpdate {
-	_u.mutation.SetEmail(v)
-	return _u
-}
-
-// SetNillableEmail sets the "email" field if the given value is not nil.
-func (_u *UserUpdate) SetNillableEmail(v *string) *UserUpdate {
-	if v != nil {
-		_u.SetEmail(*v)
+		_u.SetPersonID(*v)
 	}
 	return _u
 }
@@ -66,26 +53,6 @@ func (_u *UserUpdate) SetNillablePassword(v *string) *UserUpdate {
 	if v != nil {
 		_u.SetPassword(*v)
 	}
-	return _u
-}
-
-// SetOrcidID sets the "orcid_id" field.
-func (_u *UserUpdate) SetOrcidID(v string) *UserUpdate {
-	_u.mutation.SetOrcidID(v)
-	return _u
-}
-
-// SetNillableOrcidID sets the "orcid_id" field if the given value is not nil.
-func (_u *UserUpdate) SetNillableOrcidID(v *string) *UserUpdate {
-	if v != nil {
-		_u.SetOrcidID(*v)
-	}
-	return _u
-}
-
-// ClearOrcidID clears the value of the "orcid_id" field.
-func (_u *UserUpdate) ClearOrcidID() *UserUpdate {
-	_u.mutation.ClearOrcidID()
 	return _u
 }
 
@@ -123,11 +90,6 @@ func (_u *UserUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *UserUpdate) check() error {
-	if v, ok := _u.mutation.Name(); ok {
-		if err := user.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "User.name": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Password(); ok {
 		if err := user.PasswordValidator(v); err != nil {
 			return &ValidationError{Name: "password", err: fmt.Errorf(`ent: validator failed for field "User.password": %w`, err)}
@@ -148,20 +110,11 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
-	if value, ok := _u.mutation.Name(); ok {
-		_spec.SetField(user.FieldName, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.Email(); ok {
-		_spec.SetField(user.FieldEmail, field.TypeString, value)
+	if value, ok := _u.mutation.PersonID(); ok {
+		_spec.SetField(user.FieldPersonID, field.TypeUUID, value)
 	}
 	if value, ok := _u.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.OrcidID(); ok {
-		_spec.SetField(user.FieldOrcidID, field.TypeString, value)
-	}
-	if _u.mutation.OrcidIDCleared() {
-		_spec.ClearField(user.FieldOrcidID, field.TypeString)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -183,30 +136,16 @@ type UserUpdateOne struct {
 	mutation *UserMutation
 }
 
-// SetName sets the "name" field.
-func (_u *UserUpdateOne) SetName(v string) *UserUpdateOne {
-	_u.mutation.SetName(v)
+// SetPersonID sets the "person_id" field.
+func (_u *UserUpdateOne) SetPersonID(v uuid.UUID) *UserUpdateOne {
+	_u.mutation.SetPersonID(v)
 	return _u
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (_u *UserUpdateOne) SetNillableName(v *string) *UserUpdateOne {
+// SetNillablePersonID sets the "person_id" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillablePersonID(v *uuid.UUID) *UserUpdateOne {
 	if v != nil {
-		_u.SetName(*v)
-	}
-	return _u
-}
-
-// SetEmail sets the "email" field.
-func (_u *UserUpdateOne) SetEmail(v string) *UserUpdateOne {
-	_u.mutation.SetEmail(v)
-	return _u
-}
-
-// SetNillableEmail sets the "email" field if the given value is not nil.
-func (_u *UserUpdateOne) SetNillableEmail(v *string) *UserUpdateOne {
-	if v != nil {
-		_u.SetEmail(*v)
+		_u.SetPersonID(*v)
 	}
 	return _u
 }
@@ -222,26 +161,6 @@ func (_u *UserUpdateOne) SetNillablePassword(v *string) *UserUpdateOne {
 	if v != nil {
 		_u.SetPassword(*v)
 	}
-	return _u
-}
-
-// SetOrcidID sets the "orcid_id" field.
-func (_u *UserUpdateOne) SetOrcidID(v string) *UserUpdateOne {
-	_u.mutation.SetOrcidID(v)
-	return _u
-}
-
-// SetNillableOrcidID sets the "orcid_id" field if the given value is not nil.
-func (_u *UserUpdateOne) SetNillableOrcidID(v *string) *UserUpdateOne {
-	if v != nil {
-		_u.SetOrcidID(*v)
-	}
-	return _u
-}
-
-// ClearOrcidID clears the value of the "orcid_id" field.
-func (_u *UserUpdateOne) ClearOrcidID() *UserUpdateOne {
-	_u.mutation.ClearOrcidID()
 	return _u
 }
 
@@ -292,11 +211,6 @@ func (_u *UserUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *UserUpdateOne) check() error {
-	if v, ok := _u.mutation.Name(); ok {
-		if err := user.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "User.name": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Password(); ok {
 		if err := user.PasswordValidator(v); err != nil {
 			return &ValidationError{Name: "password", err: fmt.Errorf(`ent: validator failed for field "User.password": %w`, err)}
@@ -334,20 +248,11 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			}
 		}
 	}
-	if value, ok := _u.mutation.Name(); ok {
-		_spec.SetField(user.FieldName, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.Email(); ok {
-		_spec.SetField(user.FieldEmail, field.TypeString, value)
+	if value, ok := _u.mutation.PersonID(); ok {
+		_spec.SetField(user.FieldPersonID, field.TypeUUID, value)
 	}
 	if value, ok := _u.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.OrcidID(); ok {
-		_spec.SetField(user.FieldOrcidID, field.TypeString, value)
-	}
-	if _u.mutation.OrcidIDCleared() {
-		_spec.ClearField(user.FieldOrcidID, field.TypeString)
 	}
 	_node = &User{config: _u.config}
 	_spec.Assign = _node.assignValues

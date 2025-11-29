@@ -65,6 +65,10 @@ func init() {
 	organisationchangedevent.DefaultID = organisationchangedeventDescID.Default.(func() uuid.UUID)
 	personFields := schema.Person{}.Fields()
 	_ = personFields
+	// personDescUserID is the schema descriptor for user_id field.
+	personDescUserID := personFields[1].Descriptor()
+	// person.DefaultUserID holds the default value on creation for the user_id field.
+	person.DefaultUserID = personDescUserID.Default.(func() uuid.UUID)
 	// personDescID is the schema descriptor for id field.
 	personDescID := personFields[0].Descriptor()
 	// person.DefaultID holds the default value on creation for the id field.
@@ -133,12 +137,12 @@ func init() {
 	titlechangedevent.DefaultID = titlechangedeventDescID.Default.(func() uuid.UUID)
 	userFields := schema.User{}.Fields()
 	_ = userFields
-	// userDescName is the schema descriptor for name field.
-	userDescName := userFields[1].Descriptor()
-	// user.NameValidator is a validator for the "name" field. It is called by the builders before save.
-	user.NameValidator = userDescName.Validators[0].(func(string) error)
+	// userDescPersonID is the schema descriptor for person_id field.
+	userDescPersonID := userFields[1].Descriptor()
+	// user.DefaultPersonID holds the default value on creation for the person_id field.
+	user.DefaultPersonID = userDescPersonID.Default.(func() uuid.UUID)
 	// userDescPassword is the schema descriptor for password field.
-	userDescPassword := userFields[3].Descriptor()
+	userDescPassword := userFields[2].Descriptor()
 	// user.PasswordValidator is a validator for the "password" field. It is called by the builders before save.
 	user.PasswordValidator = userDescPassword.Validators[0].(func(string) error)
 	// userDescID is the schema descriptor for id field.
