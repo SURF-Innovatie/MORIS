@@ -27,7 +27,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     const { mutateAsync: markAsReadMutation } = usePutNotificationsIdRead();
 
-    const unreadCount = notifications.filter((n) => !n.read).length;
+    const unreadCount = notifications?.filter((n) => !n.read).length ?? 0;
 
     const markAsRead = async (id: string) => {
         try {

@@ -94,21 +94,36 @@ func main() {
 		logrus.Fatalf("failed to hash password: %v", err)
 	}
 
-	//client.User.Delete().ExecX(ctx)
-	//testUser, err := client.User.
-	//	Create().
-	//	SetName("Test User").
-	//	SetEmail("test@example.com").
-	//	SetPassword(string(hashedPassword)).
-	//	Save(ctx)
-	//if err != nil {
-	//	logrus.Fatalf("failed creating test user: %v", err)
-	//}
+	personIDs := make(map[string]uuid.UUID)
+	organisationIDs := make(map[string]uuid.UUID)
 
-	//logrus.Infof("Successfully created test user with ID: %d", testUser.ID)
-	//logrus.Infof("Email: %s", testUser.Email)
-	//logrus.Infof("Name: %s", testUser.Name)
-	//logrus.Info("Password: testpassword123")
+	const testUserName = "Test User"
+	const testUserEmail = "test.user@example.com"
+	testUserAccountID := uuid.New()
+
+	testPerson, err := client.Person.
+		Create().
+		SetName(testUserName).
+		SetUserID(testUserAccountID).
+		SetEmail(testUserEmail).
+		Save(ctx)
+	if err != nil {
+		logrus.Fatalf("failed creating %s person: %v", testUserName, err)
+	}
+	testPersonID := testPerson.ID
+	personIDs[testUserName] = testPersonID
+	logrus.Infof("Created person %s (%s)", testUserName, testPersonID)
+
+	_, err = client.User.
+		Create().
+		SetID(testUserAccountID).
+		SetPersonID(testPersonID).
+		SetPassword(string(hashedPassword)).
+		Save(ctx)
+	if err != nil {
+		logrus.Fatalf("failed creating user for %s: %v", testUserName, err)
+	}
+	logrus.Infof("Created user for person %s", testUserName)
 
 	es := eventstore.NewEntStore(client)
 
@@ -207,8 +222,18 @@ func main() {
 		},
 	}
 
-	personIDs := make(map[string]uuid.UUID)
-	organisationIDs := make(map[string]uuid.UUID)
+	for i := range projects {
+		hasTestUser := false
+		for _, person := range projects[i].People {
+			if person == testUserName {
+				hasTestUser = true
+				break
+			}
+		}
+		if !hasTestUser {
+			projects[i].People = append(projects[i].People, testUserName)
+		}
+	}
 
 	for _, sp := range projects {
 		var authorIds []uuid.UUID
@@ -293,7 +318,7 @@ func main() {
 				ProjectID: projectID,
 				At:        time.Now().UTC(),
 			},
-			ProjectAdmin:   personIDs[sp.People[0]],
+			ProjectAdmin:   testPersonID,
 			Title:          sp.Title,
 			Description:    sp.Description,
 			StartDate:      sp.Start,
@@ -364,7 +389,8 @@ func main() {
 
 	// Add some sample notifications
 	logrus.Info("Seeding notifications...")
-	for _, name := range []string{"Dr. Elaine Carter", "Sarah Vos", "Dr. Mariam Bensaïd", "Niels van Bruggen", "Dr. Yara Mendes", "Emilio Vargas"} {
+	notificationRecipients := []string{"Dr. Elaine Carter", "Sarah Vos", "Dr. Mariam Bensaïd", "Niels van Bruggen", "Dr. Yara Mendes", "Emilio Vargas", testUserName}
+	for _, name := range notificationRecipients {
 		personID, ok := personIDs[name]
 		if !ok {
 			continue

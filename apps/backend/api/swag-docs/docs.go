@@ -1586,6 +1586,9 @@ const docTemplate = `{
         "github_com_SURF-Innovatie_MORIS_internal_api_notificationdto.Response": {
             "type": "object",
             "properties": {
+                "eventId": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
