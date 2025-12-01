@@ -20,6 +20,17 @@ func NewHandler(s personsvc.Service) *Handler {
 	return &Handler{svc: s}
 }
 
+// Create creates a new person
+// @Summary Create a new person
+// @Description Create a new person with the provided details
+// @Tags people
+// @Accept json
+// @Produce json
+// @Param request body persondto.Request true "Person details"
+// @Success 200 {object} persondto.Response
+// @Failure 400 {string} string "Invalid body or missing required fields"
+// @Failure 500 {string} string "Internal server error"
+// @Router /people [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	var req persondto.Request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -52,6 +63,16 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// Get retrieves a person by ID
+// @Summary Get a person
+// @Description Get a person by their ID
+// @Tags people
+// @Produce json
+// @Param id path string true "Person ID"
+// @Success 200 {object} persondto.Response
+// @Failure 400 {string} string "Invalid ID"
+// @Failure 404 {string} string "Person not found"
+// @Router /people/{id} [get]
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)

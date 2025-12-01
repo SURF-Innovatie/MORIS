@@ -12,6 +12,7 @@ type Notification struct {
 	User    *ent.User
 	Event   *ent.Event
 	Message string
+	Type    string
 	Read    bool
 	SentAt  time.Time
 }

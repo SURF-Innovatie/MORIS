@@ -14,6 +14,31 @@ definitions:
       event:
         type: string
     type: object
+  github_com_SURF-Innovatie_MORIS_internal_api_eventdto.Event:
+    properties:
+      at:
+        type: string
+      createdBy:
+        type: string
+      details:
+        description: Human readable description
+        type: string
+      id:
+        type: string
+      projectId:
+        type: string
+      status:
+        type: string
+      type:
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_internal_api_eventdto.Response:
+    properties:
+      events:
+        items:
+          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_eventdto.Event'
+        type: array
+    type: object
   github_com_SURF-Innovatie_MORIS_internal_api_notificationdto.Response:
     properties:
       id:
@@ -27,12 +52,29 @@ definitions:
         type: boolean
       sentAt:
         type: string
+      type:
+        type: string
     type: object
   github_com_SURF-Innovatie_MORIS_internal_api_organisationdto.Response:
     properties:
       id:
         type: string
       name:
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_internal_api_persondto.Request:
+    properties:
+      email:
+        type: string
+      familyName:
+        type: string
+      givenName:
+        type: string
+      name:
+        type: string
+      orcid:
+        type: string
+      user_id:
         type: string
     type: object
   github_com_SURF-Innovatie_MORIS_internal_api_persondto.Response:
@@ -415,6 +457,68 @@ paths:
       summary: Get ORCID authorization URL
       tags:
       - auth
+  /events/{id}/approve:
+    post:
+      consumes:
+      - application/json
+      description: Approves a pending event
+      parameters:
+      - description: Event ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: invalid event id
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Approve an event
+      tags:
+      - events
+  /events/{id}/reject:
+    post:
+      consumes:
+      - application/json
+      description: Rejects a pending event
+      parameters:
+      - description: Event ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: invalid event id
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Reject an event
+      tags:
+      - events
   /health:
     get:
       consumes:
@@ -514,6 +618,63 @@ paths:
       summary: Mark a notification as read
       tags:
       - notifications
+  /people:
+    post:
+      consumes:
+      - application/json
+      description: Create a new person with the provided details
+      parameters:
+      - description: Person details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_persondto.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_persondto.Response'
+        "400":
+          description: Invalid body or missing required fields
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Create a new person
+      tags:
+      - people
+  /people/{id}:
+    get:
+      description: Get a person by their ID
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_persondto.Response'
+        "400":
+          description: Invalid ID
+          schema:
+            type: string
+        "404":
+          description: Person not found
+          schema:
+            type: string
+      summary: Get a person
+      tags:
+      - people
   /products:
     get:
       description: Returns all products
@@ -833,6 +994,35 @@ paths:
           schema:
             type: string
       summary: Get change log for a project
+      tags:
+      - projects
+  /projects/{id}/pending-events:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of pending events for a specific project
+      parameters:
+      - description: Project ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_eventdto.Response'
+        "400":
+          description: invalid project id
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Get pending events for a project
       tags:
       - projects
   /projects/{id}/people/{personId}:

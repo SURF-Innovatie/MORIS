@@ -34,6 +34,10 @@ type Event struct {
 	Version int `json:"version,omitempty"`
 	// Type holds the value of the "type" field.
 	Type string `json:"type,omitempty"`
+	// Status holds the value of the "status" field.
+	Status event.Status `json:"status,omitempty"`
+	// CreatedBy holds the value of the "created_by" field.
+	CreatedBy uuid.UUID `json:"created_by,omitempty"`
 	// OccurredAt holds the value of the "occurred_at" field.
 	OccurredAt time.Time `json:"occurred_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -186,11 +190,11 @@ func (*Event) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case event.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case event.FieldType:
+		case event.FieldType, event.FieldStatus:
 			values[i] = new(sql.NullString)
 		case event.FieldOccurredAt:
 			values[i] = new(sql.NullTime)
-		case event.FieldID, event.FieldProjectID:
+		case event.FieldID, event.FieldProjectID, event.FieldCreatedBy:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -230,6 +234,18 @@ func (_m *Event) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field type", values[i])
 			} else if value.Valid {
 				_m.Type = value.String
+			}
+		case event.FieldStatus:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field status", values[i])
+			} else if value.Valid {
+				_m.Status = event.Status(value.String)
+			}
+		case event.FieldCreatedBy:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field created_by", values[i])
+			} else if value != nil {
+				_m.CreatedBy = *value
 			}
 		case event.FieldOccurredAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -331,6 +347,12 @@ func (_m *Event) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("type=")
 	builder.WriteString(_m.Type)
+	builder.WriteString(", ")
+	builder.WriteString("status=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Status))
+	builder.WriteString(", ")
+	builder.WriteString("created_by=")
+	builder.WriteString(fmt.Sprintf("%v", _m.CreatedBy))
 	builder.WriteString(", ")
 	builder.WriteString("occurred_at=")
 	builder.WriteString(_m.OccurredAt.Format(time.ANSIC))

@@ -44,7 +44,7 @@ func init() {
 	eventFields := schema.Event{}.Fields()
 	_ = eventFields
 	// eventDescOccurredAt is the schema descriptor for occurred_at field.
-	eventDescOccurredAt := eventFields[4].Descriptor()
+	eventDescOccurredAt := eventFields[6].Descriptor()
 	// event.DefaultOccurredAt holds the default value on creation for the occurred_at field.
 	event.DefaultOccurredAt = eventDescOccurredAt.Default.(func() time.Time)
 	// eventDescID is the schema descriptor for id field.
@@ -53,8 +53,12 @@ func init() {
 	event.DefaultID = eventDescID.Default.(func() uuid.UUID)
 	notificationFields := schema.Notification{}.Fields()
 	_ = notificationFields
+	// notificationDescRead is the schema descriptor for read field.
+	notificationDescRead := notificationFields[3].Descriptor()
+	// notification.DefaultRead holds the default value on creation for the read field.
+	notification.DefaultRead = notificationDescRead.Default.(bool)
 	// notificationDescSentAt is the schema descriptor for sent_at field.
-	notificationDescSentAt := notificationFields[3].Descriptor()
+	notificationDescSentAt := notificationFields[4].Descriptor()
 	// notification.DefaultSentAt holds the default value on creation for the sent_at field.
 	notification.DefaultSentAt = notificationDescSentAt.Default.(func() time.Time)
 	// notificationDescID is the schema descriptor for id field.

@@ -11,7 +11,9 @@ import (
 	en "github.com/SURF-Innovatie/MORIS/ent/event"
 	organisationent "github.com/SURF-Innovatie/MORIS/ent/organisation"
 	personent "github.com/SURF-Innovatie/MORIS/ent/person"
+	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
 	productent "github.com/SURF-Innovatie/MORIS/ent/product"
+	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
 	"github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/commands"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
@@ -35,12 +37,61 @@ type Service interface {
 	AddProduct(ctx context.Context, projectID uuid.UUID, productID uuid.UUID) (*entities.ProjectDetails, error)
 	RemoveProduct(ctx context.Context, projectID uuid.UUID, productID uuid.UUID) (*entities.ProjectDetails, error)
 	GetChangeLog(ctx context.Context, id uuid.UUID) (*entities.ChangeLog, error)
+	ApproveEvent(ctx context.Context, eventID uuid.UUID) error
+	RejectEvent(ctx context.Context, eventID uuid.UUID) error
+	GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.Event, error)
+}
+
+func (s *service) GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.Event, error) {
+	evts, _, err := s.es.Load(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	var pending []events.Event
+	for _, e := range evts {
+		if e.GetStatus() == "pending" {
+			pending = append(pending, e)
+		}
+	}
+
+	return pending, nil
 }
 
 type service struct {
 	cli      *ent.Client
 	es       eventstore.Store
 	notifier notification.Service
+}
+
+func (s *service) ApproveEvent(ctx context.Context, eventID uuid.UUID) error {
+	// 1. Update status
+	if err := s.es.UpdateEventStatus(ctx, eventID, "approved"); err != nil {
+		return err
+	}
+
+	// 2. Notify creator
+	event, err := s.es.LoadEvent(ctx, eventID)
+	if err != nil {
+		// Log error but don't fail the request?
+		// Or fail?
+		return err
+	}
+
+	return s.notifier.NotifyStatusUpdate(ctx, event, "approved")
+}
+
+func (s *service) RejectEvent(ctx context.Context, eventID uuid.UUID) error {
+	if err := s.es.UpdateEventStatus(ctx, eventID, "rejected"); err != nil {
+		return err
+	}
+
+	event, err := s.es.LoadEvent(ctx, eventID)
+	if err != nil {
+		return err
+	}
+
+	return s.notifier.NotifyStatusUpdate(ctx, event, "rejected")
 }
 
 type StartProjectParams struct {
@@ -81,11 +132,17 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 	projectID := uuid.New()
 	now := time.Now().UTC()
 
+	user, err := currentUser(ctx, s.cli)
+	if err != nil {
+		return nil, err
+	}
+
 	startEvent := events.ProjectStarted{
 		Base: events.Base{
 			ID:        uuid.New(),
 			ProjectID: projectID,
 			At:        now,
+			CreatedBy: user.ID,
 		},
 		ProjectAdmin:   params.ProjectAdmin,
 		Title:          params.Title,
@@ -99,10 +156,8 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 		return nil, err
 	}
 
-	user, err := currentUser(ctx, s.cli)
-	if err == nil {
-		_ = s.notifier.NotifyForEvents(ctx, user, startEvent)
-	}
+	// user is already fetched at the beginning of the function
+	_ = s.notifier.NotifyForEvents(ctx, user, startEvent)
 
 	proj := projection.Reduce(projectID, []events.Event{startEvent})
 	proj.Version = 1
@@ -121,37 +176,42 @@ func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params Update
 		return nil, err
 	}
 
+	user, err := currentUser(ctx, s.cli)
+	if err != nil {
+		return nil, err
+	}
+
 	var newEvents []events.Event
 
-	if evt, err := commands.ChangeTitle(id, proj, params.Title); err != nil {
+	if evt, err := commands.ChangeTitle(id, user.ID, proj, params.Title); err != nil {
 		return nil, err
 	} else if evt != nil {
 		newEvents = append(newEvents, evt)
 		projection.Apply(proj, evt)
 	}
 
-	if evt, err := commands.ChangeDescription(id, proj, params.Description); err != nil {
+	if evt, err := commands.ChangeDescription(id, user.ID, proj, params.Description); err != nil {
 		return nil, err
 	} else if evt != nil {
 		newEvents = append(newEvents, evt)
 		projection.Apply(proj, evt)
 	}
 
-	if evt, err := commands.ChangeStartDate(id, proj, params.StartDate); err != nil {
+	if evt, err := commands.ChangeStartDate(id, user.ID, proj, params.StartDate); err != nil {
 		return nil, err
 	} else if evt != nil {
 		newEvents = append(newEvents, evt)
 		projection.Apply(proj, evt)
 	}
 
-	if evt, err := commands.ChangeEndDate(id, proj, params.EndDate); err != nil {
+	if evt, err := commands.ChangeEndDate(id, user.ID, proj, params.EndDate); err != nil {
 		return nil, err
 	} else if evt != nil {
 		newEvents = append(newEvents, evt)
 		projection.Apply(proj, evt)
 	}
 
-	if evt, err := commands.SetOrganisation(id, proj, params.OrganisationID); err != nil {
+	if evt, err := commands.SetOrganisation(id, user.ID, proj, params.OrganisationID); err != nil {
 		return nil, err
 	} else if evt != nil {
 		newEvents = append(newEvents, evt)
@@ -183,20 +243,48 @@ func currentUser(ctx context.Context, cli *ent.Client) (*ent.User, error) {
 }
 
 func (s *service) GetAllProjects(ctx context.Context) ([]*entities.ProjectDetails, error) {
-	var ids []uuid.UUID
-	if err := s.cli.Event.
-		Query().
-		Unique(true).
-		Select(en.FieldProjectID).
-		Scan(ctx, &ids); err != nil {
+	user, err := currentUser(ctx, s.cli)
+	if err != nil {
 		return nil, err
 	}
 
-	projects := make([]*entities.ProjectDetails, 0, len(ids))
-	for _, id := range ids {
+	// 1. Projects where user is admin (ProjectStartedEvent)
+	var adminProjectIDs []uuid.UUID
+	if err := s.cli.ProjectStartedEvent.
+		Query().
+		Where(projectstartedevent.ProjectAdminEQ(user.PersonID)).
+		QueryEvent().
+		Select(en.FieldProjectID).
+		Scan(ctx, &adminProjectIDs); err != nil {
+		return nil, err
+	}
+
+	// 2. Projects where user is added (PersonAddedEvent)
+	var memberProjectIDs []uuid.UUID
+	if err := s.cli.PersonAddedEvent.
+		Query().
+		Where(personaddedevent.PersonIDEQ(user.PersonID)).
+		QueryEvent().
+		Select(en.FieldProjectID).
+		Scan(ctx, &memberProjectIDs); err != nil {
+		return nil, err
+	}
+
+	// Combine IDs
+	uniqueIDs := make(map[uuid.UUID]struct{})
+	for _, id := range adminProjectIDs {
+		uniqueIDs[id] = struct{}{}
+	}
+	for _, id := range memberProjectIDs {
+		uniqueIDs[id] = struct{}{}
+	}
+
+	projects := make([]*entities.ProjectDetails, 0, len(uniqueIDs))
+	for id := range uniqueIDs {
 		proj, err := s.fromDb(ctx, id)
 		if err != nil {
-			return nil, err
+			// Skip if not found (shouldn't happen if consistent)
+			continue
 		}
 
 		details, err := s.buildProjectDetails(ctx, proj)
@@ -206,6 +294,11 @@ func (s *service) GetAllProjects(ctx context.Context) ([]*entities.ProjectDetail
 
 		projects = append(projects, details)
 	}
+
+	// Sort by title for consistency
+	sort.Slice(projects, func(i, j int) bool {
+		return projects[i].Project.Title < projects[j].Project.Title
+	})
 
 	return projects, nil
 }
@@ -220,7 +313,12 @@ func (s *service) AddPerson(
 		return nil, err
 	}
 
-	evt, err := commands.AddPerson(projectID, proj, personId)
+	user, err := currentUser(ctx, s.cli)
+	if err != nil {
+		return nil, err
+	}
+
+	evt, err := commands.AddPerson(projectID, user.ID, proj, personId)
 	if err != nil {
 		return nil, err
 	}
@@ -236,6 +334,8 @@ func (s *service) AddPerson(
 	if err := s.es.Append(ctx, projectID, proj.Version, evt); err != nil {
 		return nil, err
 	}
+
+	_ = s.notifier.NotifyApprovers(ctx, evt)
 
 	projection.Apply(proj, evt)
 	proj.Version++
@@ -258,7 +358,12 @@ func (s *service) RemovePerson(
 		return nil, err
 	}
 
-	evt, err := commands.RemovePerson(projectID, proj, personID)
+	user, err := currentUser(ctx, s.cli)
+	if err != nil {
+		return nil, err
+	}
+
+	evt, err := commands.RemovePerson(projectID, user.ID, proj, personID)
 	if err != nil {
 		return nil, err
 	}
@@ -296,7 +401,12 @@ func (s *service) AddProduct(
 		return nil, err
 	}
 
-	evt, err := commands.AddProduct(projectID, proj, productID)
+	user, err := currentUser(ctx, s.cli)
+	if err != nil {
+		return nil, err
+	}
+
+	evt, err := commands.AddProduct(projectID, user.ID, proj, productID)
 	if err != nil {
 		return nil, err
 	}
@@ -334,7 +444,12 @@ func (s *service) RemoveProduct(
 		return nil, err
 	}
 
-	evt, err := commands.RemoveProduct(projectID, proj, productID)
+	user, err := currentUser(ctx, s.cli)
+	if err != nil {
+		return nil, err
+	}
+
+	evt, err := commands.RemoveProduct(projectID, user.ID, proj, productID)
 	if err != nil {
 		return nil, err
 	}

@@ -19,11 +19,12 @@ func Test_ProjectLifecycle(t *testing.T) {
 
 	start := time.Date(2025, 1, 2, 0, 0, 0, 0, time.UTC)
 	end := time.Date(2025, 2, 2, 0, 0, 0, 0, time.UTC)
-	org := entities.Organisation{Name: "Org"}
-	people := []entities.Person{{Name: "Ada"}}
+	org := uuid.New()
+	people := []uuid.UUID{uuid.New()}
+	actor := uuid.New()
 
 	// StartProject
-	ev, err := commands.StartProject(id, "Alpha", "First", start, end, people, org)
+	ev, err := commands.StartProject(id, actor, "Alpha", "First", start, end, people, org)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -48,7 +49,7 @@ func Test_ProjectLifecycle(t *testing.T) {
 	}
 
 	// ChangeTitle
-	ev, err = commands.ChangeTitle(id, cur, "Alpha v2")
+	ev, err = commands.ChangeTitle(id, actor, cur, "Alpha v2")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +64,7 @@ func Test_ProjectLifecycle(t *testing.T) {
 	}
 
 	// No-op ChangeTitle
-	ev, err = commands.ChangeTitle(id, cur, "Alpha v2")
+	ev, err = commands.ChangeTitle(id, actor, cur, "Alpha v2")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,7 +74,7 @@ func Test_ProjectLifecycle(t *testing.T) {
 
 	// ChangeStartDate
 	newStart := start.AddDate(0, 0, 1)
-	ev, err = commands.ChangeStartDate(id, cur, newStart)
+	ev, err = commands.ChangeStartDate(id, actor, cur, newStart)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,7 +88,8 @@ func Test_ProjectLifecycle(t *testing.T) {
 	}
 
 	// AddPerson + RemovePerson
-	ev, err = commands.AddPerson(id, cur, entities.Person{Name: "Grace"})
+	newPerson := uuid.New()
+	ev, err = commands.AddPerson(id, actor, cur, newPerson)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,7 +102,7 @@ func Test_ProjectLifecycle(t *testing.T) {
 		t.Fatalf("Grace not present")
 	}
 
-	ev, err = commands.RemovePerson(id, cur, "Grace")
+	ev, err = commands.RemovePerson(id, actor, cur, newPerson)
 	if err != nil {
 		t.Fatal(err)
 	}

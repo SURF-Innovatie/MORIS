@@ -139,7 +139,7 @@ func main() {
 			Title:        "Microbial Methane Capture for Sustainable Farms",
 			Description:  "Engineering microbial systems that reduce methane emission in agricultural environments.",
 			Organisation: "AgroTech Research Group",
-			People:       []string{"Sarah Vos", "Dr. Pieter de Louw", "Emilio Vargas"},
+			People:       []string{"Emilio Vargas", "Sarah Vos", "Dr. Pieter de Louw"},
 			Start:        time.Date(2024, 3, 12, 0, 0, 0, 0, time.UTC),
 			End:          time.Date(2025, 1, 3, 0, 0, 0, 0, time.UTC),
 			Products: []seedProduct{
@@ -397,4 +397,18 @@ func main() {
 		}
 	}
 	logrus.Info("Notifications seeded.")
+
+	// mark all events as approved
+	events, err := client.Event.Query().All(ctx)
+	if err != nil {
+		logrus.Fatalf("failed to query events: %v", err)
+	}
+	for _, e := range events {
+		_, err := client.Event.UpdateOne(e).
+			SetStatus("approved").
+			Save(ctx)
+		if err != nil {
+			logrus.Fatalf("failed to approve event %s: %v", e.ID, err)
+		}
+	}
 }

@@ -221,6 +221,116 @@
         ]
       }
     },
+    "/events/{id}/approve": {
+      "post": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Approve an event",
+        "description": "Approves a pending event",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Event ID (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid event id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/{id}/reject": {
+      "post": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Reject an event",
+        "description": "Rejects a pending event",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Event ID (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid event id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -390,6 +500,110 @@
         }
       }
     },
+    "/people": {
+      "post": {
+        "tags": [
+          "people"
+        ],
+        "summary": "Create a new person",
+        "description": "Create a new person with the provided details",
+        "requestBody": {
+          "description": "Person details",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_persondto.Request"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_persondto.Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body or missing required fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/people/{id}": {
+      "get": {
+        "tags": [
+          "people"
+        ],
+        "summary": "Get a person",
+        "description": "Get a person by their ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Person ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_persondto.Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Person not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/products": {
       "get": {
         "tags": [
@@ -489,7 +703,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Product"
+                    "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_productdto.Response"
                   }
                 }
               }
@@ -532,7 +746,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Product"
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_productdto.Response"
                 }
               }
             }
@@ -939,6 +1153,58 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.Changelog"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid project id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{id}/pending-events": {
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Get pending events for a project",
+        "description": "Retrieves a list of pending events for a specific project",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Project ID (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_eventdto.Response"
                 }
               }
             }
@@ -1553,6 +1819,19 @@
           "type": {
             "type": "string"
           },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ],
+            "default": "pending"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid"
+          },
           "occurred_at": {
             "type": "string",
             "format": "date-time"
@@ -1593,6 +1872,7 @@
           "project_id",
           "version",
           "type",
+          "status",
           "occurred_at"
         ]
       },
@@ -1605,6 +1885,15 @@
           },
           "message": {
             "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "info",
+              "approval_request",
+              "status_update"
+            ],
+            "default": "info"
           },
           "read": {
             "type": "boolean"
@@ -1623,6 +1912,7 @@
         "required": [
           "id",
           "message",
+          "type",
           "read",
           "sent_at"
         ]
@@ -1942,6 +2232,44 @@
           }
         }
       },
+      "github_com_SURF-Innovatie_MORIS_internal_api_eventdto.Event": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "details": {
+            "description": "Human readable description",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "github_com_SURF-Innovatie_MORIS_internal_api_eventdto.Response": {
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_eventdto.Event"
+            }
+          }
+        }
+      },
       "github_com_SURF-Innovatie_MORIS_internal_api_notificationdto.Response": {
         "type": "object",
         "properties": {
@@ -1960,6 +2288,9 @@
           },
           "sentAt": {
             "type": "string"
+          },
+          "type": {
+            "type": "string"
           }
         }
       },
@@ -1970,6 +2301,29 @@
             "type": "string"
           },
           "name": {
+            "type": "string"
+          }
+        }
+      },
+      "github_com_SURF-Innovatie_MORIS_internal_api_persondto.Request": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "familyName": {
+            "type": "string"
+          },
+          "givenName": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "orcid": {
+            "type": "string"
+          },
+          "user_id": {
             "type": "string"
           }
         }

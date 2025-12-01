@@ -7,6 +7,7 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/changelogdto"
 	_ "github.com/SURF-Innovatie/MORIS/internal/api/changelogdto"
+	"github.com/SURF-Innovatie/MORIS/internal/api/eventdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/organisationdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/persondto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/productdto"
@@ -422,4 +423,48 @@ func toProjectResponse(d *entities.ProjectDetails) projectdto.Response {
 		People:       peopleDTOs,
 		Products:     productDTOs,
 	}
+}
+
+// GetPendingEvents godoc
+// @Summary Get pending events for a project
+// @Description Retrieves a list of pending events for a specific project
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Param id path string true "Project ID (UUID)"
+// @Success 200 {object} eventdto.Response
+// @Failure 400 {string} string "invalid project id"
+// @Failure 500 {string} string "internal server error"
+// @Router /projects/{id}/pending-events [get]
+func (h *Handler) GetPendingEvents(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		http.Error(w, "invalid project id", http.StatusBadRequest)
+		return
+	}
+
+	events, err := h.svc.GetPendingEvents(r.Context(), id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	resp := eventdto.Response{
+		Events: make([]eventdto.Event, 0, len(events)),
+	}
+	for _, e := range events {
+		resp.Events = append(resp.Events, eventdto.Event{
+			ID:        e.GetID(),
+			ProjectID: e.AggregateID(),
+			Type:      e.Type(),
+			Status:    "pending",                                              // We filtered for pending
+			CreatedBy: e.(interface{ CreatedByID() uuid.UUID }).CreatedByID(), // Safe cast as Base has it
+			At:        e.OccurredAt(),
+			Details:   e.String(),
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(resp)
 }

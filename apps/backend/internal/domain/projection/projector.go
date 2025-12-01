@@ -18,6 +18,10 @@ func Reduce(id uuid.UUID, es []events.Event) *entities.Project {
 
 // Apply mutates the given Project based on one event.
 func Apply(p *entities.Project, e events.Event) {
+	if e.GetStatus() == "pending" || e.GetStatus() == "rejected" {
+		return
+	}
+
 	switch ev := e.(type) {
 	case events.ProjectStarted:
 		p.Title = ev.Title

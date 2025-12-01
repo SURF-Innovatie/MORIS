@@ -22,6 +22,8 @@ type Notification struct {
 	ID uuid.UUID `json:"id,omitempty"`
 	// Message holds the value of the "message" field.
 	Message string `json:"message,omitempty"`
+	// Type holds the value of the "type" field.
+	Type notification.Type `json:"type,omitempty"`
 	// Read holds the value of the "read" field.
 	Read bool `json:"read,omitempty"`
 	// SentAt holds the value of the "sent_at" field.
@@ -74,7 +76,7 @@ func (*Notification) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case notification.FieldRead:
 			values[i] = new(sql.NullBool)
-		case notification.FieldMessage:
+		case notification.FieldMessage, notification.FieldType:
 			values[i] = new(sql.NullString)
 		case notification.FieldSentAt:
 			values[i] = new(sql.NullTime)
@@ -110,6 +112,12 @@ func (_m *Notification) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field message", values[i])
 			} else if value.Valid {
 				_m.Message = value.String
+			}
+		case notification.FieldType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field type", values[i])
+			} else if value.Valid {
+				_m.Type = notification.Type(value.String)
 			}
 		case notification.FieldRead:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -185,6 +193,9 @@ func (_m *Notification) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("message=")
 	builder.WriteString(_m.Message)
+	builder.WriteString(", ")
+	builder.WriteString("type=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Type))
 	builder.WriteString(", ")
 	builder.WriteString("read=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Read))

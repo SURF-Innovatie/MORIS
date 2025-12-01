@@ -45,6 +45,20 @@ func (_u *NotificationUpdate) SetNillableMessage(v *string) *NotificationUpdate 
 	return _u
 }
 
+// SetType sets the "type" field.
+func (_u *NotificationUpdate) SetType(v notification.Type) *NotificationUpdate {
+	_u.mutation.SetType(v)
+	return _u
+}
+
+// SetNillableType sets the "type" field if the given value is not nil.
+func (_u *NotificationUpdate) SetNillableType(v *notification.Type) *NotificationUpdate {
+	if v != nil {
+		_u.SetType(*v)
+	}
+	return _u
+}
+
 // SetRead sets the "read" field.
 func (_u *NotificationUpdate) SetRead(v bool) *NotificationUpdate {
 	_u.mutation.SetRead(v)
@@ -155,7 +169,20 @@ func (_u *NotificationUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (_u *NotificationUpdate) check() error {
+	if v, ok := _u.mutation.GetType(); ok {
+		if err := notification.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Notification.type": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (_u *NotificationUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(notification.Table, notification.Columns, sqlgraph.NewFieldSpec(notification.FieldID, field.TypeUUID))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -166,6 +193,9 @@ func (_u *NotificationUpdate) sqlSave(ctx context.Context) (_node int, err error
 	}
 	if value, ok := _u.mutation.Message(); ok {
 		_spec.SetField(notification.FieldMessage, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.GetType(); ok {
+		_spec.SetField(notification.FieldType, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.Read(); ok {
 		_spec.SetField(notification.FieldRead, field.TypeBool, value)
@@ -261,6 +291,20 @@ func (_u *NotificationUpdateOne) SetMessage(v string) *NotificationUpdateOne {
 func (_u *NotificationUpdateOne) SetNillableMessage(v *string) *NotificationUpdateOne {
 	if v != nil {
 		_u.SetMessage(*v)
+	}
+	return _u
+}
+
+// SetType sets the "type" field.
+func (_u *NotificationUpdateOne) SetType(v notification.Type) *NotificationUpdateOne {
+	_u.mutation.SetType(v)
+	return _u
+}
+
+// SetNillableType sets the "type" field if the given value is not nil.
+func (_u *NotificationUpdateOne) SetNillableType(v *notification.Type) *NotificationUpdateOne {
+	if v != nil {
+		_u.SetType(*v)
 	}
 	return _u
 }
@@ -388,7 +432,20 @@ func (_u *NotificationUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (_u *NotificationUpdateOne) check() error {
+	if v, ok := _u.mutation.GetType(); ok {
+		if err := notification.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Notification.type": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (_u *NotificationUpdateOne) sqlSave(ctx context.Context) (_node *Notification, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(notification.Table, notification.Columns, sqlgraph.NewFieldSpec(notification.FieldID, field.TypeUUID))
 	id, ok := _u.mutation.ID()
 	if !ok {
@@ -416,6 +473,9 @@ func (_u *NotificationUpdateOne) sqlSave(ctx context.Context) (_node *Notificati
 	}
 	if value, ok := _u.mutation.Message(); ok {
 		_spec.SetField(notification.FieldMessage, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.GetType(); ok {
+		_spec.SetField(notification.FieldType, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.Read(); ok {
 		_spec.SetField(notification.FieldRead, field.TypeBool, value)

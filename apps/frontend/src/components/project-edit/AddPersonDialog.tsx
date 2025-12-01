@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, Plus } from "lucide-react";
-import axios from "axios";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +24,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { usePostProjectsIdPeoplePersonId } from "@api/moris";
+import { usePostPeople, usePostProjectsIdPeoplePersonId } from "@api/moris";
 
 const addPersonSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -43,10 +42,11 @@ export function AddPersonDialog({
 }: AddPersonDialogProps) {
     const [open, setOpen] = useState(false);
     const { toast } = useToast();
-    const [isCreatingPerson, setIsCreatingPerson] = useState(false);
 
     const { mutateAsync: addPersonToProject, isPending: isAddingToProject } =
         usePostProjectsIdPeoplePersonId();
+    const { mutateAsync: createPerson, isPending: isCreatingPerson } =
+        usePostPeople();
 
     const form = useForm<z.infer<typeof addPersonSchema>>({
         resolver: zodResolver(addPersonSchema),
@@ -60,20 +60,20 @@ export function AddPersonDialog({
 
     async function onSubmit(values: z.infer<typeof addPersonSchema>) {
         try {
-            setIsCreatingPerson(true);
             // 1. Create the person
-            // Manually call API because the hook is missing (likely due to missing Swagger comments)
             const nameParts = values.name.split(" ");
             const givenName = nameParts[0];
             const familyName = nameParts.slice(1).join(" ") || "Unknown";
 
-            const { data: person } = await axios.post("/api/people", {
-                name: values.name,
-                email: values.email,
-                givenName: givenName,
-                familyName: familyName,
+            const person = await createPerson({
+                data: {
+                    name: values.name,
+                    email: values.email,
+                    givenName: givenName,
+                    familyName: familyName,
+                    user_id: "00000000-0000-0000-0000-000000000000", // Placeholder, backend handles this or it should be optional
+                },
             });
-            setIsCreatingPerson(false);
 
             // 2. Add person to project
             if (person && person.id) {
@@ -93,7 +93,6 @@ export function AddPersonDialog({
             }
         } catch (error) {
             console.error(error);
-            setIsCreatingPerson(false);
             toast({
                 variant: "destructive",
                 title: "Error",

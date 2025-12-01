@@ -136,6 +136,26 @@ func MessageContainsFold(v string) predicate.Notification {
 	return predicate.Notification(sql.FieldContainsFold(FieldMessage, v))
 }
 
+// TypeEQ applies the EQ predicate on the "type" field.
+func TypeEQ(v Type) predicate.Notification {
+	return predicate.Notification(sql.FieldEQ(FieldType, v))
+}
+
+// TypeNEQ applies the NEQ predicate on the "type" field.
+func TypeNEQ(v Type) predicate.Notification {
+	return predicate.Notification(sql.FieldNEQ(FieldType, v))
+}
+
+// TypeIn applies the In predicate on the "type" field.
+func TypeIn(vs ...Type) predicate.Notification {
+	return predicate.Notification(sql.FieldIn(FieldType, vs...))
+}
+
+// TypeNotIn applies the NotIn predicate on the "type" field.
+func TypeNotIn(vs ...Type) predicate.Notification {
+	return predicate.Notification(sql.FieldNotIn(FieldType, vs...))
+}
+
 // ReadEQ applies the EQ predicate on the "read" field.
 func ReadEQ(v bool) predicate.Notification {
 	return predicate.Notification(sql.FieldEQ(FieldRead, v))

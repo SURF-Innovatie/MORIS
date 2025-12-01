@@ -13,5 +13,13 @@ func MountProjectRoutes(r chi.Router, h *Handler) {
 		r.Post("/{id}/products/{productID}", h.AddProduct)
 		r.Delete("/{id}/products/{productID}", h.RemoveProduct)
 		r.Get("/{id}/changelog", h.GetChangelog)
+		r.Get("/{id}/pending-events", h.GetPendingEvents)
+	})
+}
+
+func MountEventRoutes(r chi.Router, h *Handler) {
+	r.Route("/events", func(r chi.Router) {
+		r.Post("/{id}/approve", h.ApproveEvent)
+		r.Post("/{id}/reject", h.RejectEvent)
 	})
 }

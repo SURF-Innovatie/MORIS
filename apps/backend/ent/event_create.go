@@ -49,6 +49,34 @@ func (_c *EventCreate) SetType(v string) *EventCreate {
 	return _c
 }
 
+// SetStatus sets the "status" field.
+func (_c *EventCreate) SetStatus(v event.Status) *EventCreate {
+	_c.mutation.SetStatus(v)
+	return _c
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (_c *EventCreate) SetNillableStatus(v *event.Status) *EventCreate {
+	if v != nil {
+		_c.SetStatus(*v)
+	}
+	return _c
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (_c *EventCreate) SetCreatedBy(v uuid.UUID) *EventCreate {
+	_c.mutation.SetCreatedBy(v)
+	return _c
+}
+
+// SetNillableCreatedBy sets the "created_by" field if the given value is not nil.
+func (_c *EventCreate) SetNillableCreatedBy(v *uuid.UUID) *EventCreate {
+	if v != nil {
+		_c.SetCreatedBy(*v)
+	}
+	return _c
+}
+
 // SetOccurredAt sets the "occurred_at" field.
 func (_c *EventCreate) SetOccurredAt(v time.Time) *EventCreate {
 	_c.mutation.SetOccurredAt(v)
@@ -302,6 +330,10 @@ func (_c *EventCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *EventCreate) defaults() {
+	if _, ok := _c.mutation.Status(); !ok {
+		v := event.DefaultStatus
+		_c.mutation.SetStatus(v)
+	}
 	if _, ok := _c.mutation.OccurredAt(); !ok {
 		v := event.DefaultOccurredAt()
 		_c.mutation.SetOccurredAt(v)
@@ -322,6 +354,14 @@ func (_c *EventCreate) check() error {
 	}
 	if _, ok := _c.mutation.GetType(); !ok {
 		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "Event.type"`)}
+	}
+	if _, ok := _c.mutation.Status(); !ok {
+		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Event.status"`)}
+	}
+	if v, ok := _c.mutation.Status(); ok {
+		if err := event.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Event.status": %w`, err)}
+		}
 	}
 	if _, ok := _c.mutation.OccurredAt(); !ok {
 		return &ValidationError{Name: "occurred_at", err: errors.New(`ent: missing required field "Event.occurred_at"`)}
@@ -372,6 +412,14 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.GetType(); ok {
 		_spec.SetField(event.FieldType, field.TypeString, value)
 		_node.Type = value
+	}
+	if value, ok := _c.mutation.Status(); ok {
+		_spec.SetField(event.FieldStatus, field.TypeEnum, value)
+		_node.Status = value
+	}
+	if value, ok := _c.mutation.CreatedBy(); ok {
+		_spec.SetField(event.FieldCreatedBy, field.TypeUUID, value)
+		_node.CreatedBy = value
 	}
 	if value, ok := _c.mutation.OccurredAt(); ok {
 		_spec.SetField(event.FieldOccurredAt, field.TypeTime, value)

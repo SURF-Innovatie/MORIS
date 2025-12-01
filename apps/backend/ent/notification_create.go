@@ -29,9 +29,31 @@ func (_c *NotificationCreate) SetMessage(v string) *NotificationCreate {
 	return _c
 }
 
+// SetType sets the "type" field.
+func (_c *NotificationCreate) SetType(v notification.Type) *NotificationCreate {
+	_c.mutation.SetType(v)
+	return _c
+}
+
+// SetNillableType sets the "type" field if the given value is not nil.
+func (_c *NotificationCreate) SetNillableType(v *notification.Type) *NotificationCreate {
+	if v != nil {
+		_c.SetType(*v)
+	}
+	return _c
+}
+
 // SetRead sets the "read" field.
 func (_c *NotificationCreate) SetRead(v bool) *NotificationCreate {
 	_c.mutation.SetRead(v)
+	return _c
+}
+
+// SetNillableRead sets the "read" field if the given value is not nil.
+func (_c *NotificationCreate) SetNillableRead(v *bool) *NotificationCreate {
+	if v != nil {
+		_c.SetRead(*v)
+	}
 	return _c
 }
 
@@ -136,6 +158,14 @@ func (_c *NotificationCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *NotificationCreate) defaults() {
+	if _, ok := _c.mutation.GetType(); !ok {
+		v := notification.DefaultType
+		_c.mutation.SetType(v)
+	}
+	if _, ok := _c.mutation.Read(); !ok {
+		v := notification.DefaultRead
+		_c.mutation.SetRead(v)
+	}
 	if _, ok := _c.mutation.SentAt(); !ok {
 		v := notification.DefaultSentAt()
 		_c.mutation.SetSentAt(v)
@@ -150,6 +180,14 @@ func (_c *NotificationCreate) defaults() {
 func (_c *NotificationCreate) check() error {
 	if _, ok := _c.mutation.Message(); !ok {
 		return &ValidationError{Name: "message", err: errors.New(`ent: missing required field "Notification.message"`)}
+	}
+	if _, ok := _c.mutation.GetType(); !ok {
+		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "Notification.type"`)}
+	}
+	if v, ok := _c.mutation.GetType(); ok {
+		if err := notification.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Notification.type": %w`, err)}
+		}
 	}
 	if _, ok := _c.mutation.Read(); !ok {
 		return &ValidationError{Name: "read", err: errors.New(`ent: missing required field "Notification.read"`)}
@@ -195,6 +233,10 @@ func (_c *NotificationCreate) createSpec() (*Notification, *sqlgraph.CreateSpec)
 	if value, ok := _c.mutation.Message(); ok {
 		_spec.SetField(notification.FieldMessage, field.TypeString, value)
 		_node.Message = value
+	}
+	if value, ok := _c.mutation.GetType(); ok {
+		_spec.SetField(notification.FieldType, field.TypeEnum, value)
+		_node.Type = value
 	}
 	if value, ok := _c.mutation.Read(); ok {
 		_spec.SetField(notification.FieldRead, field.TypeBool, value)

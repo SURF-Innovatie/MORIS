@@ -116,6 +116,7 @@ func main() {
 		r.Group(func(r chi.Router) {
 			r.Use(auth.AuthMiddleware)
 			projecthandler.MountProjectRoutes(r, projHandler)
+			projecthandler.MountEventRoutes(r, projHandler)
 			personhandler.MountPersonRoutes(r, personHandler)
 			producthandler.MountProductRoutes(r, productHandler)
 			organisationhandler.MountOrganisationRoutes(r, organisationHandler)

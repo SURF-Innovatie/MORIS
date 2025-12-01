@@ -1,13 +1,28 @@
+import { useState } from "react";
 import { format } from "date-fns";
-import { Bell, CheckCircle2, Inbox, CheckCheck } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Bell, CheckCircle2, Inbox, CheckCheck, ClipboardCheck, Info } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNotifications } from "@/context/NotificationContext";
+import { ApprovalModal } from "@/components/project-edit/ApprovalModal";
+
+const getIcon = (type?: string) => {
+    switch (type) {
+        case 'approval_request':
+            return <ClipboardCheck className="h-5 w-5 text-blue-500" />;
+        case 'status_update':
+            return <Info className="h-5 w-5 text-green-500" />;
+        default:
+            return <Bell className="h-5 w-5 text-gray-500" />;
+    }
+};
 
 const InboxRoute = () => {
     const { notifications, unreadCount, markAsRead } = useNotifications();
+    const [selectedApproval, setSelectedApproval] = useState<{ projectId: string; eventId: string } | null>(null);
 
     const handleMarkAsRead = async (id: string) => {
         await markAsRead(id);
@@ -53,46 +68,89 @@ const InboxRoute = () => {
                         </div>
                     ) : (
                         <div className="divide-y divide-border">
-                            {notifications.map((notification) => (
-                                <div
-                                    key={notification.id}
-                                    className={`group flex items-start gap-4 p-4 transition-colors hover:bg-muted/50 ${!notification.read ? "bg-primary/5" : ""
-                                        }`}
-                                >
-                                    <div className="mt-1">
-                                        {!notification.read ? (
-                                            <div className="h-2.5 w-2.5 rounded-full bg-primary" />
-                                        ) : (
-                                            <div className="h-2.5 w-2.5 rounded-full bg-transparent" />
+                            {notifications.map((notification) => {
+                                const isApproval = notification.type === 'approval_request';
+
+                                const Content = (
+                                    <div
+                                        className={`group flex items-start gap-4 p-4 transition-colors hover:bg-muted/50 ${!notification.read ? "bg-primary/5" : ""
+                                            }`}
+                                    >
+                                        <div className="mt-1">
+                                            {getIcon(notification.type)}
+                                        </div>
+                                        <div className="flex-1 space-y-1">
+                                            <p className={`text-sm ${!notification.read ? "font-medium text-foreground" : "text-muted-foreground"}`}>
+                                                {notification.message}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground/70">
+                                                {notification.sentAt
+                                                    ? format(new Date(notification.sentAt), "MMM d, yyyy 'at' h:mm a")
+                                                    : "Just now"}
+                                            </p>
+                                        </div>
+                                        {!notification.read && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                                                title="Mark as read"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    handleMarkAsRead(notification.id!);
+                                                }}
+                                            >
+                                                <CheckCircle2 className="h-4 w-4" />
+                                            </Button>
                                         )}
                                     </div>
-                                    <div className="flex-1 space-y-1">
-                                        <p className={`text-sm ${!notification.read ? "font-medium text-foreground" : "text-muted-foreground"}`}>
-                                            {notification.message}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground/70">
-                                            {notification.sentAt
-                                                ? format(new Date(notification.sentAt), "MMM d, yyyy 'at' h:mm a")
-                                                : "Just now"}
-                                        </p>
-                                    </div>
-                                    {!notification.read && (
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                                            title="Mark as read"
-                                            onClick={() => handleMarkAsRead(notification.id!)}
+                                );
+
+                                if (isApproval && notification.projectId && notification.eventId) {
+                                    return (
+                                        <div
+                                            key={notification.id}
+                                            onClick={() => setSelectedApproval({
+                                                projectId: notification.projectId!,
+                                                eventId: notification.eventId!
+                                            })}
+                                            className="cursor-pointer"
                                         >
-                                            <CheckCircle2 className="h-4 w-4" />
-                                        </Button>
-                                    )}
-                                </div>
-                            ))}
+                                            {Content}
+                                        </div>
+                                    );
+                                }
+
+                                const linkTarget = notification.projectId
+                                    ? `/projects/${notification.projectId}`
+                                    : null;
+
+                                return (
+                                    <div key={notification.id}>
+                                        {linkTarget ? (
+                                            <Link to={linkTarget} className="block">
+                                                {Content}
+                                            </Link>
+                                        ) : (
+                                            Content
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </CardContent>
             </Card>
+
+            {selectedApproval && (
+                <ApprovalModal
+                    isOpen={!!selectedApproval}
+                    onClose={() => setSelectedApproval(null)}
+                    projectId={selectedApproval.projectId}
+                    eventId={selectedApproval.eventId}
+                />
+            )}
         </div>
     );
 };

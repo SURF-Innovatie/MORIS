@@ -20,6 +20,11 @@ func (Event) Fields() []ent.Field {
 		field.UUID("project_id", uuid.UUID{}),
 		field.Int("version"),
 		field.String("type"),
+		field.Enum("status").
+			Values("pending", "approved", "rejected").
+			Default("pending"),
+		field.UUID("created_by", uuid.UUID{}).
+			Optional(), // Optional for now to avoid breaking existing data, or we can set a default if we have a system user
 		field.Time("occurred_at").
 			Default(time.Now),
 	}

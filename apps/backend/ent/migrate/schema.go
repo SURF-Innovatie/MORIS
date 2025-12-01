@@ -54,6 +54,8 @@ var (
 		{Name: "project_id", Type: field.TypeUUID},
 		{Name: "version", Type: field.TypeInt},
 		{Name: "type", Type: field.TypeString},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "approved", "rejected"}, Default: "pending"},
+		{Name: "created_by", Type: field.TypeUUID, Nullable: true},
 		{Name: "occurred_at", Type: field.TypeTime},
 	}
 	// EventsTable holds the schema information for the "events" table.
@@ -66,7 +68,8 @@ var (
 	NotificationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "message", Type: field.TypeString},
-		{Name: "read", Type: field.TypeBool},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"info", "approval_request", "status_update"}, Default: "info"},
+		{Name: "read", Type: field.TypeBool, Default: false},
 		{Name: "sent_at", Type: field.TypeTime},
 		{Name: "notification_user", Type: field.TypeUUID, Nullable: true},
 		{Name: "notification_event", Type: field.TypeUUID, Nullable: true},
@@ -79,13 +82,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "notifications_users_user",
-				Columns:    []*schema.Column{NotificationsColumns[4]},
+				Columns:    []*schema.Column{NotificationsColumns[5]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "notifications_events_event",
-				Columns:    []*schema.Column{NotificationsColumns[5]},
+				Columns:    []*schema.Column{NotificationsColumns[6]},
 				RefColumns: []*schema.Column{EventsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

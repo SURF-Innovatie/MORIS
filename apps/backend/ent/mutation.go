@@ -866,6 +866,8 @@ type EventMutation struct {
 	version                     *int
 	addversion                  *int
 	_type                       *string
+	status                      *event.Status
+	created_by                  *uuid.UUID
 	occurred_at                 *time.Time
 	clearedFields               map[string]struct{}
 	project_started             *uuid.UUID
@@ -1123,6 +1125,91 @@ func (m *EventMutation) OldType(ctx context.Context) (v string, err error) {
 // ResetType resets all changes to the "type" field.
 func (m *EventMutation) ResetType() {
 	m._type = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *EventMutation) SetStatus(e event.Status) {
+	m.status = &e
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *EventMutation) Status() (r event.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the Event entity.
+// If the Event object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EventMutation) OldStatus(ctx context.Context) (v event.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *EventMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (m *EventMutation) SetCreatedBy(u uuid.UUID) {
+	m.created_by = &u
+}
+
+// CreatedBy returns the value of the "created_by" field in the mutation.
+func (m *EventMutation) CreatedBy() (r uuid.UUID, exists bool) {
+	v := m.created_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedBy returns the old "created_by" field's value of the Event entity.
+// If the Event object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EventMutation) OldCreatedBy(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedBy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedBy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedBy: %w", err)
+	}
+	return oldValue.CreatedBy, nil
+}
+
+// ClearCreatedBy clears the value of the "created_by" field.
+func (m *EventMutation) ClearCreatedBy() {
+	m.created_by = nil
+	m.clearedFields[event.FieldCreatedBy] = struct{}{}
+}
+
+// CreatedByCleared returns if the "created_by" field was cleared in this mutation.
+func (m *EventMutation) CreatedByCleared() bool {
+	_, ok := m.clearedFields[event.FieldCreatedBy]
+	return ok
+}
+
+// ResetCreatedBy resets all changes to the "created_by" field.
+func (m *EventMutation) ResetCreatedBy() {
+	m.created_by = nil
+	delete(m.clearedFields, event.FieldCreatedBy)
 }
 
 // SetOccurredAt sets the "occurred_at" field.
@@ -1585,7 +1672,7 @@ func (m *EventMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *EventMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 6)
 	if m.project_id != nil {
 		fields = append(fields, event.FieldProjectID)
 	}
@@ -1594,6 +1681,12 @@ func (m *EventMutation) Fields() []string {
 	}
 	if m._type != nil {
 		fields = append(fields, event.FieldType)
+	}
+	if m.status != nil {
+		fields = append(fields, event.FieldStatus)
+	}
+	if m.created_by != nil {
+		fields = append(fields, event.FieldCreatedBy)
 	}
 	if m.occurred_at != nil {
 		fields = append(fields, event.FieldOccurredAt)
@@ -1612,6 +1705,10 @@ func (m *EventMutation) Field(name string) (ent.Value, bool) {
 		return m.Version()
 	case event.FieldType:
 		return m.GetType()
+	case event.FieldStatus:
+		return m.Status()
+	case event.FieldCreatedBy:
+		return m.CreatedBy()
 	case event.FieldOccurredAt:
 		return m.OccurredAt()
 	}
@@ -1629,6 +1726,10 @@ func (m *EventMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldVersion(ctx)
 	case event.FieldType:
 		return m.OldType(ctx)
+	case event.FieldStatus:
+		return m.OldStatus(ctx)
+	case event.FieldCreatedBy:
+		return m.OldCreatedBy(ctx)
 	case event.FieldOccurredAt:
 		return m.OldOccurredAt(ctx)
 	}
@@ -1660,6 +1761,20 @@ func (m *EventMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetType(v)
+		return nil
+	case event.FieldStatus:
+		v, ok := value.(event.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case event.FieldCreatedBy:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedBy(v)
 		return nil
 	case event.FieldOccurredAt:
 		v, ok := value.(time.Time)
@@ -1712,7 +1827,11 @@ func (m *EventMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *EventMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(event.FieldCreatedBy) {
+		fields = append(fields, event.FieldCreatedBy)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -1725,6 +1844,11 @@ func (m *EventMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *EventMutation) ClearField(name string) error {
+	switch name {
+	case event.FieldCreatedBy:
+		m.ClearCreatedBy()
+		return nil
+	}
 	return fmt.Errorf("unknown Event nullable field %s", name)
 }
 
@@ -1740,6 +1864,12 @@ func (m *EventMutation) ResetField(name string) error {
 		return nil
 	case event.FieldType:
 		m.ResetType()
+		return nil
+	case event.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case event.FieldCreatedBy:
+		m.ResetCreatedBy()
 		return nil
 	case event.FieldOccurredAt:
 		m.ResetOccurredAt()
@@ -1991,6 +2121,7 @@ type NotificationMutation struct {
 	typ           string
 	id            *uuid.UUID
 	message       *string
+	_type         *notification.Type
 	read          *bool
 	sent_at       *time.Time
 	clearedFields map[string]struct{}
@@ -2141,6 +2272,42 @@ func (m *NotificationMutation) OldMessage(ctx context.Context) (v string, err er
 // ResetMessage resets all changes to the "message" field.
 func (m *NotificationMutation) ResetMessage() {
 	m.message = nil
+}
+
+// SetType sets the "type" field.
+func (m *NotificationMutation) SetType(n notification.Type) {
+	m._type = &n
+}
+
+// GetType returns the value of the "type" field in the mutation.
+func (m *NotificationMutation) GetType() (r notification.Type, exists bool) {
+	v := m._type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldType returns the old "type" field's value of the Notification entity.
+// If the Notification object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *NotificationMutation) OldType(ctx context.Context) (v notification.Type, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldType: %w", err)
+	}
+	return oldValue.Type, nil
+}
+
+// ResetType resets all changes to the "type" field.
+func (m *NotificationMutation) ResetType() {
+	m._type = nil
 }
 
 // SetRead sets the "read" field.
@@ -2327,9 +2494,12 @@ func (m *NotificationMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *NotificationMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
 	if m.message != nil {
 		fields = append(fields, notification.FieldMessage)
+	}
+	if m._type != nil {
+		fields = append(fields, notification.FieldType)
 	}
 	if m.read != nil {
 		fields = append(fields, notification.FieldRead)
@@ -2347,6 +2517,8 @@ func (m *NotificationMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case notification.FieldMessage:
 		return m.Message()
+	case notification.FieldType:
+		return m.GetType()
 	case notification.FieldRead:
 		return m.Read()
 	case notification.FieldSentAt:
@@ -2362,6 +2534,8 @@ func (m *NotificationMutation) OldField(ctx context.Context, name string) (ent.V
 	switch name {
 	case notification.FieldMessage:
 		return m.OldMessage(ctx)
+	case notification.FieldType:
+		return m.OldType(ctx)
 	case notification.FieldRead:
 		return m.OldRead(ctx)
 	case notification.FieldSentAt:
@@ -2381,6 +2555,13 @@ func (m *NotificationMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMessage(v)
+		return nil
+	case notification.FieldType:
+		v, ok := value.(notification.Type)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetType(v)
 		return nil
 	case notification.FieldRead:
 		v, ok := value.(bool)
@@ -2447,6 +2628,9 @@ func (m *NotificationMutation) ResetField(name string) error {
 	switch name {
 	case notification.FieldMessage:
 		m.ResetMessage()
+		return nil
+	case notification.FieldType:
+		m.ResetType()
 		return nil
 	case notification.FieldRead:
 		m.ResetRead()

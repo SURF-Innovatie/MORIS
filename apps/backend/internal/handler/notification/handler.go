@@ -49,14 +49,18 @@ func (h *Handler) GetNotifications(w http.ResponseWriter, r *http.Request) {
 	var dtos []notificationdto.Response
 	for _, n := range notifications {
 		projectId := uuid.Nil
+		eventId := uuid.Nil
 		if n.Event != nil {
 			projectId = n.Event.ProjectID
+			eventId = n.Event.ID
 		}
 		dtos = append(dtos, notificationdto.Response{
 			ID:        n.Id,
 			Message:   n.Message,
+			Type:      n.Type,
 			Read:      n.Read,
 			ProjectID: projectId,
+			EventID:   eventId,
 			SentAt:    n.SentAt,
 		})
 	}

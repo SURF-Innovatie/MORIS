@@ -3,6 +3,7 @@
 package notification
 
 import (
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -17,6 +18,8 @@ const (
 	FieldID = "id"
 	// FieldMessage holds the string denoting the message field in the database.
 	FieldMessage = "message"
+	// FieldType holds the string denoting the type field in the database.
+	FieldType = "type"
 	// FieldRead holds the string denoting the read field in the database.
 	FieldRead = "read"
 	// FieldSentAt holds the string denoting the sent_at field in the database.
@@ -47,6 +50,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldMessage,
+	FieldType,
 	FieldRead,
 	FieldSentAt,
 }
@@ -74,11 +78,40 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// DefaultRead holds the default value on creation for the "read" field.
+	DefaultRead bool
 	// DefaultSentAt holds the default value on creation for the "sent_at" field.
 	DefaultSentAt func() time.Time
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
+
+// Type defines the type for the "type" enum field.
+type Type string
+
+// TypeInfo is the default value of the Type enum.
+const DefaultType = TypeInfo
+
+// Type values.
+const (
+	TypeInfo            Type = "info"
+	TypeApprovalRequest Type = "approval_request"
+	TypeStatusUpdate    Type = "status_update"
+)
+
+func (_type Type) String() string {
+	return string(_type)
+}
+
+// TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
+func TypeValidator(_type Type) error {
+	switch _type {
+	case TypeInfo, TypeApprovalRequest, TypeStatusUpdate:
+		return nil
+	default:
+		return fmt.Errorf("notification: invalid enum value for type field: %q", _type)
+	}
+}
 
 // OrderOption defines the ordering options for the Notification queries.
 type OrderOption func(*sql.Selector)
@@ -91,6 +124,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByMessage orders the results by the message field.
 func ByMessage(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMessage, opts...).ToFunc()
+}
+
+// ByType orders the results by the type field.
+func ByType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldType, opts...).ToFunc()
 }
 
 // ByRead orders the results by the read field.

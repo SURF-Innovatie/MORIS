@@ -3,6 +3,7 @@
 package event
 
 import (
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -21,6 +22,10 @@ const (
 	FieldVersion = "version"
 	// FieldType holds the string denoting the type field in the database.
 	FieldType = "type"
+	// FieldStatus holds the string denoting the status field in the database.
+	FieldStatus = "status"
+	// FieldCreatedBy holds the string denoting the created_by field in the database.
+	FieldCreatedBy = "created_by"
 	// FieldOccurredAt holds the string denoting the occurred_at field in the database.
 	FieldOccurredAt = "occurred_at"
 	// EdgeProjectStarted holds the string denoting the project_started edge name in mutations.
@@ -123,6 +128,8 @@ var Columns = []string{
 	FieldProjectID,
 	FieldVersion,
 	FieldType,
+	FieldStatus,
+	FieldCreatedBy,
 	FieldOccurredAt,
 }
 
@@ -142,6 +149,33 @@ var (
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
+
+// Status defines the type for the "status" enum field.
+type Status string
+
+// StatusPending is the default value of the Status enum.
+const DefaultStatus = StatusPending
+
+// Status values.
+const (
+	StatusPending  Status = "pending"
+	StatusApproved Status = "approved"
+	StatusRejected Status = "rejected"
+)
+
+func (s Status) String() string {
+	return string(s)
+}
+
+// StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
+func StatusValidator(s Status) error {
+	switch s {
+	case StatusPending, StatusApproved, StatusRejected:
+		return nil
+	default:
+		return fmt.Errorf("event: invalid enum value for status field: %q", s)
+	}
+}
 
 // OrderOption defines the ordering options for the Event queries.
 type OrderOption func(*sql.Selector)
@@ -164,6 +198,16 @@ func ByVersion(opts ...sql.OrderTermOption) OrderOption {
 // ByType orders the results by the type field.
 func ByType(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldType, opts...).ToFunc()
+}
+
+// ByStatus orders the results by the status field.
+func ByStatus(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStatus, opts...).ToFunc()
+}
+
+// ByCreatedBy orders the results by the created_by field.
+func ByCreatedBy(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCreatedBy, opts...).ToFunc()
 }
 
 // ByOccurredAt orders the results by the occurred_at field.

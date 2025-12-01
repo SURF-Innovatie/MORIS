@@ -18,7 +18,10 @@ func (Notification) Fields() []ent.Field {
 		field.UUID("id", uuid.UUID{}).
 			Default(uuid.New),
 		field.String("message"),
-		field.Bool("read"),
+		field.Enum("type").
+			Values("info", "approval_request", "status_update").
+			Default("info"),
+		field.Bool("read").Default(false),
 		field.Time("sent_at").
 			Default(time.Now),
 	}

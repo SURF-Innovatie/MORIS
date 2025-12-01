@@ -88,6 +88,40 @@ func (_u *EventUpdate) SetNillableType(v *string) *EventUpdate {
 	return _u
 }
 
+// SetStatus sets the "status" field.
+func (_u *EventUpdate) SetStatus(v event.Status) *EventUpdate {
+	_u.mutation.SetStatus(v)
+	return _u
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (_u *EventUpdate) SetNillableStatus(v *event.Status) *EventUpdate {
+	if v != nil {
+		_u.SetStatus(*v)
+	}
+	return _u
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (_u *EventUpdate) SetCreatedBy(v uuid.UUID) *EventUpdate {
+	_u.mutation.SetCreatedBy(v)
+	return _u
+}
+
+// SetNillableCreatedBy sets the "created_by" field if the given value is not nil.
+func (_u *EventUpdate) SetNillableCreatedBy(v *uuid.UUID) *EventUpdate {
+	if v != nil {
+		_u.SetCreatedBy(*v)
+	}
+	return _u
+}
+
+// ClearCreatedBy clears the value of the "created_by" field.
+func (_u *EventUpdate) ClearCreatedBy() *EventUpdate {
+	_u.mutation.ClearCreatedBy()
+	return _u
+}
+
 // SetOccurredAt sets the "occurred_at" field.
 func (_u *EventUpdate) SetOccurredAt(v time.Time) *EventUpdate {
 	_u.mutation.SetOccurredAt(v)
@@ -384,7 +418,20 @@ func (_u *EventUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (_u *EventUpdate) check() error {
+	if v, ok := _u.mutation.Status(); ok {
+		if err := event.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Event.status": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (_u *EventUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(event.Table, event.Columns, sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -404,6 +451,15 @@ func (_u *EventUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.GetType(); ok {
 		_spec.SetField(event.FieldType, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Status(); ok {
+		_spec.SetField(event.FieldStatus, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.CreatedBy(); ok {
+		_spec.SetField(event.FieldCreatedBy, field.TypeUUID, value)
+	}
+	if _u.mutation.CreatedByCleared() {
+		_spec.ClearField(event.FieldCreatedBy, field.TypeUUID)
 	}
 	if value, ok := _u.mutation.OccurredAt(); ok {
 		_spec.SetField(event.FieldOccurredAt, field.TypeTime, value)
@@ -767,6 +823,40 @@ func (_u *EventUpdateOne) SetNillableType(v *string) *EventUpdateOne {
 	return _u
 }
 
+// SetStatus sets the "status" field.
+func (_u *EventUpdateOne) SetStatus(v event.Status) *EventUpdateOne {
+	_u.mutation.SetStatus(v)
+	return _u
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableStatus(v *event.Status) *EventUpdateOne {
+	if v != nil {
+		_u.SetStatus(*v)
+	}
+	return _u
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (_u *EventUpdateOne) SetCreatedBy(v uuid.UUID) *EventUpdateOne {
+	_u.mutation.SetCreatedBy(v)
+	return _u
+}
+
+// SetNillableCreatedBy sets the "created_by" field if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableCreatedBy(v *uuid.UUID) *EventUpdateOne {
+	if v != nil {
+		_u.SetCreatedBy(*v)
+	}
+	return _u
+}
+
+// ClearCreatedBy clears the value of the "created_by" field.
+func (_u *EventUpdateOne) ClearCreatedBy() *EventUpdateOne {
+	_u.mutation.ClearCreatedBy()
+	return _u
+}
+
 // SetOccurredAt sets the "occurred_at" field.
 func (_u *EventUpdateOne) SetOccurredAt(v time.Time) *EventUpdateOne {
 	_u.mutation.SetOccurredAt(v)
@@ -1076,7 +1166,20 @@ func (_u *EventUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (_u *EventUpdateOne) check() error {
+	if v, ok := _u.mutation.Status(); ok {
+		if err := event.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Event.status": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (_u *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(event.Table, event.Columns, sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID))
 	id, ok := _u.mutation.ID()
 	if !ok {
@@ -1113,6 +1216,15 @@ func (_u *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error)
 	}
 	if value, ok := _u.mutation.GetType(); ok {
 		_spec.SetField(event.FieldType, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Status(); ok {
+		_spec.SetField(event.FieldStatus, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.CreatedBy(); ok {
+		_spec.SetField(event.FieldCreatedBy, field.TypeUUID, value)
+	}
+	if _u.mutation.CreatedByCleared() {
+		_spec.ClearField(event.FieldCreatedBy, field.TypeUUID)
 	}
 	if value, ok := _u.mutation.OccurredAt(); ok {
 		_spec.SetField(event.FieldOccurredAt, field.TypeTime, value)
