@@ -5,6 +5,7 @@
   "scripts": {
     "build": "go build -o bin/server ./cmd/dev/main.go",
     "start": "./bin/server",
+    "reset": "pnpm run db:generate && pnpm run api:generate && pnpm run db:seed",
     "dev": "wgo run ./cmd/dev/main.go",
     "db:seed": "go run ./cmd/seed/main.go",
     "db:generate": "go generate ./ent/...",

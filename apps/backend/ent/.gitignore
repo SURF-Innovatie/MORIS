@@ -1,0 +1,7 @@
+# ignore all ent files except entc.go generate.go and schema/*
+
+*
+!entc.go
+!generate.go
+!schema/*
+!.gitignore
