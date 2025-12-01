@@ -3,17 +3,17 @@ import {
   useGetAuthOrcidUrl,
   useGetProfile,
   usePostAuthOrcidUnlink,
-} from "../api/generated-orval/moris";
-import { useToast } from "../hooks/use-toast";
-import { useAuth } from "../hooks/useAuth";
-import { Button } from "../components/ui/button";
+} from "@api/moris";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../components/ui/card";
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogClose,
-} from "../components/ui/dialog";
+} from "@/components/ui/dialog";
 import { Link, Unlink } from "lucide-react";
 
 const ProfileRoute = () => {
@@ -68,7 +68,22 @@ const ProfileRoute = () => {
       // Refetch profile to update UI
       const { data: updatedUser } = await refetchProfile();
       if (updatedUser) {
-        updateUser(updatedUser);
+        // Map UserResponse to UserAccount
+        updateUser({
+          user: {
+            id: updatedUser.id,
+            personID: updatedUser.person_id,
+          },
+          person: {
+            id: updatedUser.person_id,
+            email: updatedUser.email,
+            name: updatedUser.name,
+            givenName: updatedUser.givenName,
+            familyName: updatedUser.familyName,
+            orciD: updatedUser.orcid,
+            userID: updatedUser.id,
+          },
+        });
       }
     } catch (error) {
       toast({

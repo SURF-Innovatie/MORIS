@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useLogin } from '../hooks/useLogin';
-import { useAuth } from '../hooks/useAuth';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Card } from '../components/ui/card';
-import { useToast } from '../hooks/use-toast';
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useLogin } from "@/hooks/useLogin";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const { mutate: login, isPending } = useLogin();
   const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
@@ -18,7 +18,7 @@ export default function LoginPage() {
   // Redirect to dashboard if already authenticated
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      navigate('/dashboard', { replace: true });
+      navigate("/dashboard", { replace: true });
     }
   }, [isAuthenticated, isLoading, navigate]);
 
@@ -29,12 +29,12 @@ export default function LoginPage() {
       {
         onError: (error: any) => {
           toast({
-            title: 'Login Failed',
-            description: error.message || 'Invalid email or password',
-            variant: 'destructive',
+            title: "Login Failed",
+            description: error.message || "Invalid email or password",
+            variant: "destructive",
           });
         },
-      },
+      }
     );
   };
 
@@ -86,13 +86,16 @@ export default function LoginPage() {
           </div>
 
           <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending ? 'Signing in...' : 'Sign In'}
+            {isPending ? "Signing in..." : "Sign In"}
           </Button>
         </form>
 
         <div className="text-center text-sm">
           <span className="text-gray-600">Don't have an account? </span>
-          <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+          <Link
+            to="/register"
+            className="font-medium text-blue-600 hover:text-blue-500"
+          >
             Sign up
           </Link>
         </div>

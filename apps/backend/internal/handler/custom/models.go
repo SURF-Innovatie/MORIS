@@ -30,8 +30,8 @@ type LoginRequest struct {
 // LoginResponse swagger:model LoginResponse
 // Represents the response body for successful login.
 type LoginResponse struct {
-	Token string `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
-	User  *entities.UserAccount
+	Token string                `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
+	User  *entities.UserAccount `json:"user"`
 }
 
 // StatusResponse swagger:model StatusResponse

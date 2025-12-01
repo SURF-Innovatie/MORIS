@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { useState } from "react";
+import { Outlet } from "react-router-dom";
 
-import QueryIndicator from '../components/status/query-indicator';
-import { ExpandableNavbar } from '@/components/layout';
+import QueryIndicator from "@/components/status/query-indicator";
+import { ExpandableNavbar } from "@/components/layout";
 
 const RootLayout = () => {
   const [isNavExpanded, setIsNavExpanded] = useState(true);
@@ -10,11 +10,18 @@ const RootLayout = () => {
   return (
     <div className="min-h-screen bg-background">
       <ExpandableNavbar onExpandChange={setIsNavExpanded} />
-      
+
       {/* Main Content Area */}
-      <div 
+      <div
         className="transition-all duration-300 lg:ml-20"
-        style={{ marginLeft: typeof window !== 'undefined' && window.innerWidth >= 1024 ? (isNavExpanded ? '16rem' : '5rem') : '0' }}
+        style={{
+          marginLeft:
+            typeof window !== "undefined" && window.innerWidth >= 1024
+              ? isNavExpanded
+                ? "16rem"
+                : "5rem"
+              : "0",
+        }}
       >
         <div className="min-h-screen flex flex-col pt-16 lg:pt-0">
           <main className="flex-1 px-6 py-10 lg:px-10 lg:py-12">
@@ -31,7 +38,7 @@ const RootLayout = () => {
           </footer>
         </div>
       </div>
-      
+
       <QueryIndicator />
     </div>
   );

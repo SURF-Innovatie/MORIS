@@ -160,6 +160,23 @@ definitions:
         example: Bad Request
         type: string
     type: object
+  github_com_SURF-Innovatie_MORIS_internal_domain_entities.Person:
+    properties:
+      email:
+        type: string
+      familyName:
+        type: string
+      givenName:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      orciD:
+        type: string
+      userID:
+        type: string
+    type: object
   github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProductType:
     enum:
     - 0
@@ -224,6 +241,22 @@ definitions:
       user:
         $ref: '#/definitions/ent.User'
     type: object
+  github_com_SURF-Innovatie_MORIS_internal_domain_entities.User:
+    properties:
+      id:
+        type: string
+      password:
+        type: string
+      personID:
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_internal_domain_entities.UserAccount:
+    properties:
+      person:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Person'
+      user:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.User'
+    type: object
   internal_handler_custom.LinkORCIDRequest:
     properties:
       code:
@@ -245,7 +278,7 @@ definitions:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
       user:
-        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_userdto.Response'
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.UserAccount'
     type: object
   internal_handler_custom.ORCIDAuthURLResponse:
     properties:

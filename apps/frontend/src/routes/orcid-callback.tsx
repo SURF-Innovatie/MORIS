@@ -1,11 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import {
-  usePostAuthOrcidLink,
-  useGetProfile,
-} from "../api/generated-orval/moris";
-import { useToast } from "../hooks/use-toast";
-import { useAuth } from "../hooks/useAuth";
+import { usePostAuthOrcidLink, useGetProfile } from "@api/moris";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const OrcidCallbackRoute = () => {
   const [searchParams] = useSearchParams();
@@ -54,7 +51,21 @@ const OrcidCallbackRoute = () => {
         try {
           const { data: user } = await fetchProfile();
           if (user) {
-            updateUser(user);
+            updateUser({
+              user: {
+                id: user.id,
+                personID: user.person_id,
+              },
+              person: {
+                id: user.person_id,
+                email: user.email,
+                name: user.name,
+                givenName: user.givenName,
+                familyName: user.familyName,
+                orciD: user.orcid,
+                userID: user.id,
+              },
+            });
           }
         } catch (error) {
           console.error("Failed to update user context:", error);

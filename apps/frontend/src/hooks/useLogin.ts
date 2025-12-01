@@ -1,8 +1,8 @@
-import { useMutation } from '@tanstack/react-query';
-import { useAuth } from './useAuth';
-import { postLogin } from '../api/generated-orval/moris';
-import { LoginRequest } from '../api/generated-orval/model';
-import { useNavigate } from 'react-router-dom';
+import { useMutation } from "@tanstack/react-query";
+import { useAuth } from "./useAuth";
+import { postLogin } from "@api/moris";
+import { LoginRequest } from "@api/model";
+import { useNavigate } from "react-router-dom";
 
 export const useLogin = () => {
   const { login } = useAuth();
@@ -15,7 +15,7 @@ export const useLogin = () => {
       if (data.token && data.user) {
         login(data.token, data.user);
         // Navigate to dashboard
-        navigate('/dashboard');
+        navigate("/dashboard");
       }
     },
   });

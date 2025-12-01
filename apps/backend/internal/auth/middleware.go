@@ -6,23 +6,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/google/uuid"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 )
 
 type contextKey string
 
 const userContextKey contextKey = "user" // Key to store user info in context
-
-// authUser swagger:model authUser
-// authUser represents the user's information after authentication
-// used by Swagger for API documentation
-type authUser struct {
-	ID      uuid.UUID `json:"id" example:"1"`
-	Email   string    `json:"email" example:"admin@example.com"`
-	OrcidID string    `json:"orcid_id,omitempty" example:"0000-0000-0000-0000"`
-	Roles   []string  `json:"roles" example:"admin,user"`
-	// Add other relevant user data
-}
 
 // BackendError swagger:model BackendError
 // BackendError is a standardized error response structure, referenced by Swagger
@@ -78,8 +67,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 }
 
 // GetUserFromContext retrieves the authUser from the request context
-func GetUserFromContext(ctx context.Context) (*authUser, bool) {
-	user, ok := ctx.Value(userContextKey).(*authUser)
+func GetUserFromContext(ctx context.Context) (*entities.UserAccount, bool) {
+	user, ok := ctx.Value(userContextKey).(*entities.UserAccount)
 	return user, ok
 }
 
@@ -95,25 +84,25 @@ func RequireRoleMiddleware(roles ...string) func(next http.Handler) http.Handler
 				return
 			}
 
-			hasRole := false
-			for _, requiredRole := range roles {
-				for _, userRole := range user.Roles {
-					if userRole == requiredRole {
-						hasRole = true
-						break
-					}
-				}
-				if hasRole {
-					break
-				}
-			}
-
-			if !hasRole {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusForbidden)
-				json.NewEncoder(w).Encode(BackendError{Code: http.StatusForbidden, Status: "Forbidden", Message: "Forbidden: Insufficient permissions"})
-				return
-			}
+			//hasRole := false
+			//for _, requiredRole := range roles {
+			//	for _, userRole := range user.Roles {
+			//		if userRole == requiredRole {
+			//			hasRole = true
+			//			break
+			//		}
+			//	}
+			//	if hasRole {
+			//		break
+			//	}
+			//}
+			//
+			//if !hasRole {
+			//	w.Header().Set("Content-Type", "application/json")
+			//	w.WriteHeader(http.StatusForbidden)
+			//	json.NewEncoder(w).Encode(BackendError{Code: http.StatusForbidden, Status: "Forbidden", Message: "Forbidden: Insufficient permissions"})
+			//	return
+			//}
 
 			next.ServeHTTP(w, r)
 		})

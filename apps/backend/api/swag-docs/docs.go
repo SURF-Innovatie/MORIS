@@ -1464,6 +1464,32 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Person": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "familyName": {
+                    "type": "string"
+                },
+                "givenName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "orciD": {
+                    "type": "string"
+                },
+                "userID": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProductType": {
             "type": "integer",
             "enum": [
@@ -1552,6 +1578,31 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_SURF-Innovatie_MORIS_internal_domain_entities.User": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "personID": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_domain_entities.UserAccount": {
+            "type": "object",
+            "properties": {
+                "person": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Person"
+                },
+                "user": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.User"
+                }
+            }
+        },
         "internal_handler_custom.LinkORCIDRequest": {
             "type": "object",
             "properties": {
@@ -1582,7 +1633,7 @@ const docTemplate = `{
                     "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                 },
                 "user": {
-                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_userdto.Response"
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.UserAccount"
                 }
             }
         },

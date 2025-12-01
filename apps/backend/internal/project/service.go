@@ -178,7 +178,7 @@ func currentUser(ctx context.Context, cli *ent.Client) (*ent.User, error) {
 		return nil, fmt.Errorf("no authenticated user in context")
 	}
 
-	return cli.User.Get(ctx, authUser.ID)
+	return cli.User.Get(ctx, authUser.User.ID)
 }
 
 func (s *service) GetAllProjects(ctx context.Context) ([]*entities.ProjectDetails, error) {

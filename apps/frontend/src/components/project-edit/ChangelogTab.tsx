@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { History, Loader2 } from "lucide-react";
-import { useGetProjectsIdChangelog } from "../../api/generated-orval/moris";
+import { useGetProjectsIdChangelog } from "@api/moris";
 
 import {
   Card,
@@ -8,7 +8,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../../components/ui/card";
+} from "@/components/ui/card";
 
 interface ChangelogTabProps {
   projectId: string;

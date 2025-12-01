@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useRegister } from '../hooks/useRegister';
-import { useAuth } from '../hooks/useAuth';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Card } from '../components/ui/card';
-import { useToast } from '../hooks/use-toast';
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useRegister } from "@/hooks/useRegister";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 export default function RegisterPage() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const { mutate: register, isPending } = useRegister();
   const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
@@ -19,7 +19,7 @@ export default function RegisterPage() {
   // Redirect to dashboard if already authenticated
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      navigate('/dashboard', { replace: true });
+      navigate("/dashboard", { replace: true });
     }
   }, [isAuthenticated, isLoading, navigate]);
 
@@ -30,19 +30,19 @@ export default function RegisterPage() {
       {
         onSuccess: () => {
           toast({
-            title: 'Registration Successful',
-            description: 'You can now log in with your credentials',
+            title: "Registration Successful",
+            description: "You can now log in with your credentials",
           });
-          navigate('/');
+          navigate("/");
         },
         onError: (error: any) => {
           toast({
-            title: 'Registration Failed',
-            description: error.message || 'Failed to create account',
-            variant: 'destructive',
+            title: "Registration Failed",
+            description: error.message || "Failed to create account",
+            variant: "destructive",
           });
         },
-      },
+      }
     );
   };
 
@@ -110,13 +110,16 @@ export default function RegisterPage() {
           </div>
 
           <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending ? 'Creating account...' : 'Sign Up'}
+            {isPending ? "Creating account..." : "Sign Up"}
           </Button>
         </form>
 
         <div className="text-center text-sm">
           <span className="text-gray-600">Already have an account? </span>
-          <Link to="/" className="font-medium text-blue-600 hover:text-blue-500">
+          <Link
+            to="/"
+            className="font-medium text-blue-600 hover:text-blue-500"
+          >
             Sign in
           </Link>
         </div>

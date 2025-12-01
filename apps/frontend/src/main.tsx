@@ -1,15 +1,15 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { RouterProvider } from 'react-router-dom';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { RouterProvider } from "react-router-dom";
 
-import './index.css';
-import { createAppRouter } from './router';
-import { AuthProvider } from './contexts/AuthContext';
-import { BackendStatusProvider } from './contexts/BackendStatusContext';
-import { Toaster } from './components/ui/toaster';
-import { BackendOfflineAlert } from './components/status/BackendOfflineAlert';
+import "./index.css";
+import { createAppRouter } from "./router";
+import { AuthProvider } from "./contexts/AuthContext";
+import { BackendStatusProvider } from "./contexts/BackendStatusContext";
+import { Toaster } from "@/components/ui/toaster";
+import { BackendOfflineAlert } from "@/components/status/BackendOfflineAlert";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,9 +23,9 @@ const queryClient = new QueryClient({
 
 const router = createAppRouter();
 
-const rootElement = document.getElementById('root');
+const rootElement = document.getElementById("root");
 if (!rootElement) {
-  throw new Error('Root container missing in index.html');
+  throw new Error("Root container missing in index.html");
 }
 
 ReactDOM.createRoot(rootElement).render(
@@ -36,9 +36,12 @@ ReactDOM.createRoot(rootElement).render(
           <RouterProvider router={router} />
           <Toaster />
           <BackendOfflineAlert />
-          <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
+          <ReactQueryDevtools
+            initialIsOpen={false}
+            buttonPosition="bottom-right"
+          />
         </AuthProvider>
       </BackendStatusProvider>
     </QueryClientProvider>
-  </React.StrictMode>,
+  </React.StrictMode>
 );

@@ -171,7 +171,7 @@ func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch fresh user data from database
-	freshUser, err := h.userService.Get(r.Context(), userCtx.ID)
+	freshUser, err := h.userService.Get(r.Context(), userCtx.User.ID)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -227,7 +227,7 @@ func (h *Handler) GetORCIDAuthURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url, err := h.orcidService.GetAuthURL(r.Context(), u.ID)
+	url, err := h.orcidService.GetAuthURL(r.Context(), u.User.ID)
 	if err != nil {
 		statusCode := http.StatusInternalServerError
 		if errors.Is(err, orcid.ErrUnauthenticated) {
@@ -288,7 +288,7 @@ func (h *Handler) LinkORCID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.orcidService.Link(r.Context(), u.ID, req.Code)
+	err := h.orcidService.Link(r.Context(), u.User.ID, req.Code)
 	if err != nil {
 		statusCode := http.StatusInternalServerError
 		switch {
@@ -340,7 +340,7 @@ func (h *Handler) UnlinkORCID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.orcidService.Unlink(r.Context(), u.ID); err != nil {
+	if err := h.orcidService.Unlink(r.Context(), u.User.ID); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(auth.BackendError{

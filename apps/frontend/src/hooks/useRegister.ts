@@ -1,6 +1,6 @@
-import { useMutation } from '@tanstack/react-query';
-import { postRegister } from '../api/generated-orval/moris';
-import { RegisterRequest } from '@/api/generated-orval/model';
+import { useMutation } from "@tanstack/react-query";
+import { postRegister } from "@api/moris";
+import { RegisterRequest } from "@api/model";
 
 export const useRegister = () => {
   return useMutation({

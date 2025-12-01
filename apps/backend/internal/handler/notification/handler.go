@@ -34,7 +34,7 @@ func (h *Handler) GetNotifications(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	notifications, err := h.svc.ListForUser(r.Context(), user.ID)
+	notifications, err := h.svc.ListForUser(r.Context(), user.User.ID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

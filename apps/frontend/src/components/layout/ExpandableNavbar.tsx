@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 
 import { Button } from "../ui/button";
-import { useAuth } from "../../hooks/useAuth";
-import { useLogout } from "../../hooks/useLogout";
+import { useAuth } from "@/hooks/useAuth";
+import { useLogout } from "@/hooks/useLogout";
 
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard", icon: Grid },
@@ -107,7 +107,7 @@ export const ExpandableNavbar = ({ onExpandChange }: ExpandableNavbarProps) => {
                 <div className="px-4 py-2 text-sm text-muted-foreground">
                   Logged in as{" "}
                   <span className="font-medium text-foreground">
-                    {user.email}
+                    {user.person?.email}
                   </span>
                 </div>
               )}
@@ -210,7 +210,7 @@ export const ExpandableNavbar = ({ onExpandChange }: ExpandableNavbarProps) => {
         <div className="p-3 border-t border-white/10 space-y-2">
           {user && isExpanded && (
             <div className="px-3 py-2 text-sm text-muted-foreground truncate">
-              {user.email}
+              {user.person?.email}
             </div>
           )}
           <Button

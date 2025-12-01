@@ -6,7 +6,7 @@ import { z } from "zod";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
-import { Button } from "../components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -14,22 +14,22 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "../components/ui/form";
-import { Input } from "../components/ui/input";
-import { Textarea } from "../components/ui/textarea";
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "../components/ui/popover";
-import { Calendar } from "../components/ui/calendar";
-import { cn } from "../lib/utils";
-import { useToast } from "../hooks/use-toast";
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 import {
   useGetProjectsId,
   usePostProjects,
   usePutProjectsId,
-} from "../api/generated-orval/moris";
+} from "@api/moris";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),

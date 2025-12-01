@@ -2,7 +2,7 @@ import { UseFormReturn } from "react-hook-form";
 import { format } from "date-fns";
 import { CalendarIcon, Loader2, Save, Trash2, Building2 } from "lucide-react";
 
-import { Button } from "../../components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -11,25 +11,25 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from "../../components/ui/form";
-import { Input } from "../../components/ui/input";
-import { Textarea } from "../../components/ui/textarea";
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "../../components/ui/popover";
-import { Calendar } from "../../components/ui/calendar";
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../../components/ui/card";
+} from "@/components/ui/card";
 import { cn } from "../../lib/utils";
 import { ProjectFormValues } from "./schema";
-import { Project } from "../../api/generated-orval/model/project";
+import { Project } from "@api/model/project";
 
 interface GeneralTabProps {
   form: UseFormReturn<ProjectFormValues>;

@@ -5,23 +5,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, ArrowLeft } from "lucide-react";
 
-import { Button } from "../components/ui/button";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../components/ui/tabs";
-import { useToast } from "../hooks/use-toast";
-import {
-  useGetProjectsId,
-  usePutProjectsId,
-} from "../api/generated-orval/moris";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { useGetProjectsId, usePutProjectsId } from "@api/moris";
 
-import { GeneralTab } from "../components/project-edit/GeneralTab";
-import { PeopleTab } from "../components/project-edit/PeopleTab";
-import { ChangelogTab } from "../components/project-edit/ChangelogTab";
-import { projectFormSchema } from "../components/project-edit/schema";
+import { GeneralTab } from "@/components/project-edit/GeneralTab";
+import { PeopleTab } from "@/components/project-edit/PeopleTab";
+import { ChangelogTab } from "@/components/project-edit/ChangelogTab";
+import { projectFormSchema } from "@/components/project-edit/schema";
 
 // Mock data for People
 const MOCK_PEOPLE = [

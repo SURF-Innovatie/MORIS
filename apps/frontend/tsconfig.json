@@ -15,9 +15,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "paths": {
-      "@/*": ["src/*"]
-    },
+    "paths": { "@/*": ["src/*"], "@api/*": ["src/api/generated-orval/*"] },
 
     /* Linting */
     "strict": true,
