@@ -20,6 +20,7 @@ interface ApprovalModalProps {
     onClose: () => void;
     projectId: string;
     eventId: string;
+    notificationMessage?: string;
 }
 
 export function ApprovalModal({
@@ -27,6 +28,7 @@ export function ApprovalModal({
     onClose,
     projectId,
     eventId,
+    notificationMessage,
 }: ApprovalModalProps) {
     const queryClient = useQueryClient();
 
@@ -74,7 +76,9 @@ export function ApprovalModal({
                 <DialogHeader>
                     <DialogTitle>Approval Request</DialogTitle>
                     <DialogDescription>
-                        Review the details of this request before approving or rejecting.
+                        {event
+                            ? "Review the details of this request before approving or rejecting."
+                            : "This request has already been processed."}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -104,30 +108,40 @@ export function ApprovalModal({
                         </div>
                     </div>
                 ) : (
-                    <div className="py-8 text-center text-muted-foreground">
-                        Event not found or already processed.
+                    <div className="py-6 space-y-4">
+                        <div className="rounded-md bg-muted p-4">
+                            <p className="text-sm font-medium">Notification Message:</p>
+                            <p className="text-sm text-muted-foreground mt-1">{notificationMessage}</p>
+                        </div>
+                        <p className="text-center text-sm text-muted-foreground">
+                            This event is no longer pending approval. It may have been approved or rejected by another admin, or cancelled.
+                        </p>
                     </div>
                 )}
 
                 <DialogFooter>
                     <Button variant="outline" onClick={onClose} disabled={isApproving || isRejecting}>
-                        Cancel
+                        Close
                     </Button>
-                    <Button
-                        variant="destructive"
-                        onClick={handleReject}
-                        disabled={isApproving || isRejecting || !event}
-                    >
-                        {isRejecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Reject
-                    </Button>
-                    <Button
-                        onClick={handleApprove}
-                        disabled={isApproving || isRejecting || !event}
-                    >
-                        {isApproving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Approve
-                    </Button>
+                    {event && (
+                        <>
+                            <Button
+                                variant="destructive"
+                                onClick={handleReject}
+                                disabled={isApproving || isRejecting}
+                            >
+                                {isRejecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Reject
+                            </Button>
+                            <Button
+                                onClick={handleApprove}
+                                disabled={isApproving || isRejecting}
+                            >
+                                {isApproving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Approve
+                            </Button>
+                        </>
+                    )}
                 </DialogFooter>
             </DialogContent>
         </Dialog>
