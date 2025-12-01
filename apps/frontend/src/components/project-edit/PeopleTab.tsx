@@ -20,17 +20,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AddPersonDialog } from "./AddPersonDialog";
 
-export interface Person {
-  id: string;
-  name: string;
-  email: string;
-  role?: string; // Role might be optional or coming from a different place
-  avatar?: string | null;
-}
+import { PersonResponse } from "@api/model";
 
 interface PeopleTabProps {
   projectId: string;
-  people: Person[];
+  people: PersonResponse[];
   adminId?: string;
   onRefresh: () => void;
 }
@@ -60,32 +54,36 @@ export function PeopleTab({
               className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors"
             >
               <div className="flex items-center gap-4">
-                <Avatar>
-                  <AvatarImage src={person.avatar || undefined} />
-                  <AvatarFallback>
-                    {person.name
+                <Avatar className="h-10 w-10 border">
+                  <AvatarImage src={undefined} />
+                  <AvatarFallback className="font-semibold text-primary">
+                    {(person.name || "Unknown")
                       .split(" ")
                       .map((n) => n[0])
-                      .join("")}
+                      .join("")
+                      .toUpperCase()
+                      .slice(0, 2)}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="font-medium leading-none">{person.name}</p>
+                    <p className="font-semibold leading-none">{person.name || "Unknown"}</p>
                     {adminId === person.id && (
-                      <Crown className="h-3 w-3 text-yellow-500" />
+                      <Crown className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
                     )}
+                    <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-normal">
+                      Collaborator
+                    </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground mt-1">
                     {person.email}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                {person.role && <Badge variant="outline">{person.role}</Badge>}
+              <div className="flex items-center gap-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>

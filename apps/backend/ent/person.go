@@ -28,8 +28,29 @@ type Person struct {
 	// FamilyName holds the value of the "family_name" field.
 	FamilyName *string `json:"family_name,omitempty"`
 	// Email holds the value of the "email" field.
-	Email        string `json:"email,omitempty"`
+	Email string `json:"email,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the PersonQuery when eager-loading is set.
+	Edges        PersonEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// PersonEdges holds the relations/edges for other nodes in the graph.
+type PersonEdges struct {
+	// Products holds the value of the products edge.
+	Products []*Product `json:"products,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// ProductsOrErr returns the Products value or an error if the edge
+// was not loaded in eager-loading.
+func (e PersonEdges) ProductsOrErr() ([]*Product, error) {
+	if e.loadedTypes[0] {
+		return e.Products, nil
+	}
+	return nil, &NotLoadedError{edge: "products"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -111,6 +132,11 @@ func (_m *Person) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *Person) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryProducts queries the "products" edge of the Person entity.
+func (_m *Person) QueryProducts() *ProductQuery {
+	return NewPersonClient(_m.config).QueryProducts(_m)
 }
 
 // Update returns a builder for updating this Person.

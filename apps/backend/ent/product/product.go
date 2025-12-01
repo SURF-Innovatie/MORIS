@@ -4,6 +4,7 @@ package product
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -20,8 +21,15 @@ const (
 	FieldType = "type"
 	// FieldDoi holds the string denoting the doi field in the database.
 	FieldDoi = "doi"
+	// EdgeAuthor holds the string denoting the author edge name in mutations.
+	EdgeAuthor = "author"
 	// Table holds the table name of the product in the database.
 	Table = "products"
+	// AuthorTable is the table that holds the author relation/edge. The primary key declared below.
+	AuthorTable = "person_products"
+	// AuthorInverseTable is the table name for the Person entity.
+	// It exists in this package in order to avoid circular dependency with the "person" package.
+	AuthorInverseTable = "persons"
 )
 
 // Columns holds all SQL columns for product fields.
@@ -32,6 +40,12 @@ var Columns = []string{
 	FieldType,
 	FieldDoi,
 }
+
+var (
+	// AuthorPrimaryKey and AuthorColumn2 are the table columns denoting the
+	// primary key for the author relation (M2M).
+	AuthorPrimaryKey = []string{"person_id", "product_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -74,4 +88,25 @@ func ByType(opts ...sql.OrderTermOption) OrderOption {
 // ByDoi orders the results by the doi field.
 func ByDoi(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDoi, opts...).ToFunc()
+}
+
+// ByAuthorCount orders the results by author count.
+func ByAuthorCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAuthorStep(), opts...)
+	}
+}
+
+// ByAuthor orders the results by author terms.
+func ByAuthor(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAuthorStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newAuthorStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AuthorInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, AuthorTable, AuthorPrimaryKey...),
+	)
 }

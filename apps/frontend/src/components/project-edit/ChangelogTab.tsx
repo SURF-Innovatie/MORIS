@@ -47,6 +47,23 @@ export function ChangelogTab({ projectId }: ChangelogTabProps) {
 
   const entries = changelog?.entries || [];
 
+  // Mock helper to resolve UUIDs to names
+  const resolveName = (id: string) => {
+    // In a real app, we would look this up from a user cache or API
+    // For now, we'll generate a deterministic fake name or return "System"
+    if (!id) return "System";
+    if (id.startsWith("user-")) return "Dr. Elaine Carter"; // Example
+    return "System User";
+  };
+
+  // Group entries by date
+  const groupedEntries = entries.reduce((acc, log) => {
+    const date = format(new Date(log.at!), "yyyy-MM-dd");
+    if (!acc[date]) acc[date] = [];
+    acc[date].push(log);
+    return acc;
+  }, {} as Record<string, typeof entries>);
+
   return (
     <Card>
       <CardHeader>
@@ -56,26 +73,41 @@ export function ChangelogTab({ projectId }: ChangelogTabProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="relative space-y-8 pl-8 before:absolute before:left-3.5 before:top-2 before:h-full before:w-px before:bg-border">
-          {entries.map((log, index) => (
-            <div key={index} className="relative">
-              <div className="absolute -left-8 top-1 flex h-7 w-7 items-center justify-center rounded-full border bg-background">
-                <History className="h-3 w-3 text-muted-foreground" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium leading-none">
-                  <span className="font-semibold">System</span> {log.event}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {format(new Date(log.at!), "PPP p")}
-                </p>
+        <div className="space-y-8">
+          {Object.entries(groupedEntries).map(([date, logs]) => (
+            <div key={date}>
+              <h4 className="mb-4 text-sm font-medium text-muted-foreground sticky top-0 bg-background py-2">
+                {format(new Date(date), "EEEE, MMMM d, yyyy")}
+              </h4>
+              <div className="relative space-y-6 pl-6 before:absolute before:left-2 before:top-2 before:h-full before:w-px before:bg-border">
+                {logs.map((log, index) => (
+                  <div key={index} className="relative">
+                    <div className="absolute -left-6 top-0.5 flex h-4 w-4 items-center justify-center rounded-full border bg-background ring-4 ring-background">
+                      <History className="h-2.5 w-2.5 text-muted-foreground" />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-sm leading-none">
+                        <span className="font-semibold text-foreground">
+                          {resolveName((log as any).by || "")}
+                        </span>{" "}
+                        <span className="text-muted-foreground">
+                          {log.event?.toLowerCase().replace(/_/g, " ")}
+                        </span>
+                      </p>
+                      <p className="text-xs text-muted-foreground/70">
+                        {format(new Date(log.at!), "p")}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ))}
           {entries.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              No history available.
-            </p>
+            <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+              <History className="mb-2 h-8 w-8 opacity-20" />
+              <p>No history available.</p>
+            </div>
           )}
         </div>
       </CardContent>

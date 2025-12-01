@@ -33,10 +33,11 @@ type seedProject struct {
 }
 
 type seedProduct struct {
-	Type     entities.ProductType
-	Language string
-	Name     string
-	DOI      string
+	Type        entities.ProductType
+	Language    string
+	Name        string
+	DOI         string
+	AuthorNames []string
 }
 
 func main() {
@@ -210,8 +211,11 @@ func main() {
 	organisationIDs := make(map[string]uuid.UUID)
 
 	for _, sp := range projects {
+		var authorIds []uuid.UUID
+
 		for _, name := range sp.People {
 			if _, exists := personIDs[name]; exists {
+				authorIds = append(authorIds, personIDs[name])
 				continue
 			}
 
@@ -226,6 +230,7 @@ func main() {
 			if err != nil {
 				logrus.Fatalf("failed creating person %q: %v", name, err)
 			}
+			authorIds = append(authorIds, row.ID)
 
 			personIDs[name] = row.ID
 			logrus.Infof("Created person %s (%s)", name, row.ID)
@@ -250,6 +255,7 @@ func main() {
 				SetType(int(prod.Type)).
 				SetLanguage(prod.Language).
 				SetDoi(prod.DOI).
+				AddAuthorIDs(authorIds...).
 				Save(ctx)
 			if err != nil {
 				logrus.Fatalf("failed creating product %q: %v", prod.Name, err)

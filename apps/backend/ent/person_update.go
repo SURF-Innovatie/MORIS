@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/SURF-Innovatie/MORIS/ent/person"
 	"github.com/SURF-Innovatie/MORIS/ent/predicate"
+	"github.com/SURF-Innovatie/MORIS/ent/product"
 	"github.com/google/uuid"
 )
 
@@ -136,9 +137,45 @@ func (_u *PersonUpdate) SetNillableEmail(v *string) *PersonUpdate {
 	return _u
 }
 
+// AddProductIDs adds the "products" edge to the Product entity by IDs.
+func (_u *PersonUpdate) AddProductIDs(ids ...uuid.UUID) *PersonUpdate {
+	_u.mutation.AddProductIDs(ids...)
+	return _u
+}
+
+// AddProducts adds the "products" edges to the Product entity.
+func (_u *PersonUpdate) AddProducts(v ...*Product) *PersonUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddProductIDs(ids...)
+}
+
 // Mutation returns the PersonMutation object of the builder.
 func (_u *PersonUpdate) Mutation() *PersonMutation {
 	return _u.mutation
+}
+
+// ClearProducts clears all "products" edges to the Product entity.
+func (_u *PersonUpdate) ClearProducts() *PersonUpdate {
+	_u.mutation.ClearProducts()
+	return _u
+}
+
+// RemoveProductIDs removes the "products" edge to Product entities by IDs.
+func (_u *PersonUpdate) RemoveProductIDs(ids ...uuid.UUID) *PersonUpdate {
+	_u.mutation.RemoveProductIDs(ids...)
+	return _u
+}
+
+// RemoveProducts removes "products" edges to Product entities.
+func (_u *PersonUpdate) RemoveProducts(v ...*Product) *PersonUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveProductIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -206,6 +243,51 @@ func (_u *PersonUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.Email(); ok {
 		_spec.SetField(person.FieldEmail, field.TypeString, value)
+	}
+	if _u.mutation.ProductsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   person.ProductsTable,
+			Columns: person.ProductsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedProductsIDs(); len(nodes) > 0 && !_u.mutation.ProductsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   person.ProductsTable,
+			Columns: person.ProductsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ProductsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   person.ProductsTable,
+			Columns: person.ProductsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -335,9 +417,45 @@ func (_u *PersonUpdateOne) SetNillableEmail(v *string) *PersonUpdateOne {
 	return _u
 }
 
+// AddProductIDs adds the "products" edge to the Product entity by IDs.
+func (_u *PersonUpdateOne) AddProductIDs(ids ...uuid.UUID) *PersonUpdateOne {
+	_u.mutation.AddProductIDs(ids...)
+	return _u
+}
+
+// AddProducts adds the "products" edges to the Product entity.
+func (_u *PersonUpdateOne) AddProducts(v ...*Product) *PersonUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddProductIDs(ids...)
+}
+
 // Mutation returns the PersonMutation object of the builder.
 func (_u *PersonUpdateOne) Mutation() *PersonMutation {
 	return _u.mutation
+}
+
+// ClearProducts clears all "products" edges to the Product entity.
+func (_u *PersonUpdateOne) ClearProducts() *PersonUpdateOne {
+	_u.mutation.ClearProducts()
+	return _u
+}
+
+// RemoveProductIDs removes the "products" edge to Product entities by IDs.
+func (_u *PersonUpdateOne) RemoveProductIDs(ids ...uuid.UUID) *PersonUpdateOne {
+	_u.mutation.RemoveProductIDs(ids...)
+	return _u
+}
+
+// RemoveProducts removes "products" edges to Product entities.
+func (_u *PersonUpdateOne) RemoveProducts(v ...*Product) *PersonUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveProductIDs(ids...)
 }
 
 // Where appends a list predicates to the PersonUpdate builder.
@@ -435,6 +553,51 @@ func (_u *PersonUpdateOne) sqlSave(ctx context.Context) (_node *Person, err erro
 	}
 	if value, ok := _u.mutation.Email(); ok {
 		_spec.SetField(person.FieldEmail, field.TypeString, value)
+	}
+	if _u.mutation.ProductsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   person.ProductsTable,
+			Columns: person.ProductsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedProductsIDs(); len(nodes) > 0 && !_u.mutation.ProductsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   person.ProductsTable,
+			Columns: person.ProductsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ProductsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   person.ProductsTable,
+			Columns: person.ProductsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Person{config: _u.config}
 	_spec.Assign = _node.assignValues

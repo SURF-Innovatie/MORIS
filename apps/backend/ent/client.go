@@ -1478,6 +1478,22 @@ func (c *PersonClient) GetX(ctx context.Context, id uuid.UUID) *Person {
 	return obj
 }
 
+// QueryProducts queries the products edge of a Person.
+func (c *PersonClient) QueryProducts(_m *Person) *ProductQuery {
+	query := (&ProductClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(person.Table, person.FieldID, id),
+			sqlgraph.To(product.Table, product.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, person.ProductsTable, person.ProductsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *PersonClient) Hooks() []Hook {
 	return c.hooks.Person
@@ -1907,6 +1923,22 @@ func (c *ProductClient) GetX(ctx context.Context, id uuid.UUID) *Product {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryAuthor queries the author edge of a Product.
+func (c *ProductClient) QueryAuthor(_m *Product) *PersonQuery {
+	query := (&PersonClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(product.Table, product.FieldID, id),
+			sqlgraph.To(person.Table, person.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, product.AuthorTable, product.AuthorPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.

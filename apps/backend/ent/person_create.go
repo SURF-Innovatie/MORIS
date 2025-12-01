@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/SURF-Innovatie/MORIS/ent/person"
+	"github.com/SURF-Innovatie/MORIS/ent/product"
 	"github.com/google/uuid"
 )
 
@@ -100,6 +101,21 @@ func (_c *PersonCreate) SetNillableID(v *uuid.UUID) *PersonCreate {
 		_c.SetID(*v)
 	}
 	return _c
+}
+
+// AddProductIDs adds the "products" edge to the Product entity by IDs.
+func (_c *PersonCreate) AddProductIDs(ids ...uuid.UUID) *PersonCreate {
+	_c.mutation.AddProductIDs(ids...)
+	return _c
+}
+
+// AddProducts adds the "products" edges to the Product entity.
+func (_c *PersonCreate) AddProducts(v ...*Product) *PersonCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddProductIDs(ids...)
 }
 
 // Mutation returns the PersonMutation object of the builder.
@@ -213,6 +229,22 @@ func (_c *PersonCreate) createSpec() (*Person, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Email(); ok {
 		_spec.SetField(person.FieldEmail, field.TypeString, value)
 		_node.Email = value
+	}
+	if nodes := _c.mutation.ProductsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   person.ProductsTable,
+			Columns: person.ProductsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

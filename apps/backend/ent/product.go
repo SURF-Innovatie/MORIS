@@ -24,8 +24,29 @@ type Product struct {
 	// Type holds the value of the "Type" field.
 	Type int `json:"Type,omitempty"`
 	// Doi holds the value of the "doi" field.
-	Doi          *string `json:"doi,omitempty"`
+	Doi *string `json:"doi,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the ProductQuery when eager-loading is set.
+	Edges        ProductEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// ProductEdges holds the relations/edges for other nodes in the graph.
+type ProductEdges struct {
+	// Author holds the value of the author edge.
+	Author []*Person `json:"author,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// AuthorOrErr returns the Author value or an error if the edge
+// was not loaded in eager-loading.
+func (e ProductEdges) AuthorOrErr() ([]*Person, error) {
+	if e.loadedTypes[0] {
+		return e.Author, nil
+	}
+	return nil, &NotLoadedError{edge: "author"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -97,6 +118,11 @@ func (_m *Product) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *Product) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryAuthor queries the "author" edge of the Product entity.
+func (_m *Product) QueryAuthor() *PersonQuery {
+	return NewProductClient(_m.config).QueryAuthor(_m)
 }
 
 // Update returns a builder for updating this Product.

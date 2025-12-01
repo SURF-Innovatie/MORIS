@@ -309,6 +309,31 @@ var (
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 	}
+	// PersonProductsColumns holds the columns for the "person_products" table.
+	PersonProductsColumns = []*schema.Column{
+		{Name: "person_id", Type: field.TypeUUID},
+		{Name: "product_id", Type: field.TypeUUID},
+	}
+	// PersonProductsTable holds the schema information for the "person_products" table.
+	PersonProductsTable = &schema.Table{
+		Name:       "person_products",
+		Columns:    PersonProductsColumns,
+		PrimaryKey: []*schema.Column{PersonProductsColumns[0], PersonProductsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "person_products_person_id",
+				Columns:    []*schema.Column{PersonProductsColumns[0]},
+				RefColumns: []*schema.Column{PersonsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "person_products_product_id",
+				Columns:    []*schema.Column{PersonProductsColumns[1]},
+				RefColumns: []*schema.Column{ProductsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		DescriptionChangedEventsTable,
@@ -327,6 +352,7 @@ var (
 		StartDateChangedEventsTable,
 		TitleChangedEventsTable,
 		UsersTable,
+		PersonProductsTable,
 	}
 )
 
@@ -343,4 +369,6 @@ func init() {
 	ProjectStartedEventsTable.ForeignKeys[0].RefTable = EventsTable
 	StartDateChangedEventsTable.ForeignKeys[0].RefTable = EventsTable
 	TitleChangedEventsTable.ForeignKeys[0].RefTable = EventsTable
+	PersonProductsTable.ForeignKeys[0].RefTable = PersonsTable
+	PersonProductsTable.ForeignKeys[1].RefTable = ProductsTable
 }

@@ -374,7 +374,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_productdto.Response"
+                                "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Product"
                             }
                         }
                     },
@@ -420,6 +420,35 @@ const docTemplate = `{
                         "description": "invalid body",
                         "schema": {
                             "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/me": {
+            "get": {
+                "description": "Returns products associated with the current user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "List products for current user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_productdto.Response"
+                            }
                         }
                     },
                     "500": {
@@ -1539,6 +1568,27 @@ const docTemplate = `{
                 },
                 "userID": {
                     "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Product": {
+            "type": "object",
+            "properties": {
+                "doi": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "language": {
+                    "description": "TODO: Make language comply with spec IETF BCP 47, see: https://openaire-guidelines-for-cris-managers.readthedocs.io/en/v1.2.0/cerif_xml_product_entity.html",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProductType"
                 }
             }
         },

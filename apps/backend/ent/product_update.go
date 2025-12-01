@@ -10,8 +10,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/SURF-Innovatie/MORIS/ent/person"
 	"github.com/SURF-Innovatie/MORIS/ent/predicate"
 	"github.com/SURF-Innovatie/MORIS/ent/product"
+	"github.com/google/uuid"
 )
 
 // ProductUpdate is the builder for updating Product entities.
@@ -108,9 +110,45 @@ func (_u *ProductUpdate) ClearDoi() *ProductUpdate {
 	return _u
 }
 
+// AddAuthorIDs adds the "author" edge to the Person entity by IDs.
+func (_u *ProductUpdate) AddAuthorIDs(ids ...uuid.UUID) *ProductUpdate {
+	_u.mutation.AddAuthorIDs(ids...)
+	return _u
+}
+
+// AddAuthor adds the "author" edges to the Person entity.
+func (_u *ProductUpdate) AddAuthor(v ...*Person) *ProductUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAuthorIDs(ids...)
+}
+
 // Mutation returns the ProductMutation object of the builder.
 func (_u *ProductUpdate) Mutation() *ProductMutation {
 	return _u.mutation
+}
+
+// ClearAuthor clears all "author" edges to the Person entity.
+func (_u *ProductUpdate) ClearAuthor() *ProductUpdate {
+	_u.mutation.ClearAuthor()
+	return _u
+}
+
+// RemoveAuthorIDs removes the "author" edge to Person entities by IDs.
+func (_u *ProductUpdate) RemoveAuthorIDs(ids ...uuid.UUID) *ProductUpdate {
+	_u.mutation.RemoveAuthorIDs(ids...)
+	return _u
+}
+
+// RemoveAuthor removes "author" edges to Person entities.
+func (_u *ProductUpdate) RemoveAuthor(v ...*Person) *ProductUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAuthorIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -172,6 +210,51 @@ func (_u *ProductUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.DoiCleared() {
 		_spec.ClearField(product.FieldDoi, field.TypeString)
+	}
+	if _u.mutation.AuthorCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   product.AuthorTable,
+			Columns: product.AuthorPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(person.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAuthorIDs(); len(nodes) > 0 && !_u.mutation.AuthorCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   product.AuthorTable,
+			Columns: product.AuthorPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(person.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AuthorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   product.AuthorTable,
+			Columns: product.AuthorPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(person.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -274,9 +357,45 @@ func (_u *ProductUpdateOne) ClearDoi() *ProductUpdateOne {
 	return _u
 }
 
+// AddAuthorIDs adds the "author" edge to the Person entity by IDs.
+func (_u *ProductUpdateOne) AddAuthorIDs(ids ...uuid.UUID) *ProductUpdateOne {
+	_u.mutation.AddAuthorIDs(ids...)
+	return _u
+}
+
+// AddAuthor adds the "author" edges to the Person entity.
+func (_u *ProductUpdateOne) AddAuthor(v ...*Person) *ProductUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAuthorIDs(ids...)
+}
+
 // Mutation returns the ProductMutation object of the builder.
 func (_u *ProductUpdateOne) Mutation() *ProductMutation {
 	return _u.mutation
+}
+
+// ClearAuthor clears all "author" edges to the Person entity.
+func (_u *ProductUpdateOne) ClearAuthor() *ProductUpdateOne {
+	_u.mutation.ClearAuthor()
+	return _u
+}
+
+// RemoveAuthorIDs removes the "author" edge to Person entities by IDs.
+func (_u *ProductUpdateOne) RemoveAuthorIDs(ids ...uuid.UUID) *ProductUpdateOne {
+	_u.mutation.RemoveAuthorIDs(ids...)
+	return _u
+}
+
+// RemoveAuthor removes "author" edges to Person entities.
+func (_u *ProductUpdateOne) RemoveAuthor(v ...*Person) *ProductUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAuthorIDs(ids...)
 }
 
 // Where appends a list predicates to the ProductUpdate builder.
@@ -368,6 +487,51 @@ func (_u *ProductUpdateOne) sqlSave(ctx context.Context) (_node *Product, err er
 	}
 	if _u.mutation.DoiCleared() {
 		_spec.ClearField(product.FieldDoi, field.TypeString)
+	}
+	if _u.mutation.AuthorCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   product.AuthorTable,
+			Columns: product.AuthorPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(person.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAuthorIDs(); len(nodes) > 0 && !_u.mutation.AuthorCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   product.AuthorTable,
+			Columns: product.AuthorPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(person.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AuthorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   product.AuthorTable,
+			Columns: product.AuthorPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(person.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Product{config: _u.config}
 	_spec.Assign = _node.assignValues

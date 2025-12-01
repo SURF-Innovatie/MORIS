@@ -4,6 +4,7 @@ package product
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/SURF-Innovatie/MORIS/ent/predicate"
 	"github.com/google/uuid"
 )
@@ -336,6 +337,29 @@ func DoiEqualFold(v string) predicate.Product {
 // DoiContainsFold applies the ContainsFold predicate on the "doi" field.
 func DoiContainsFold(v string) predicate.Product {
 	return predicate.Product(sql.FieldContainsFold(FieldDoi, v))
+}
+
+// HasAuthor applies the HasEdge predicate on the "author" edge.
+func HasAuthor() predicate.Product {
+	return predicate.Product(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, AuthorTable, AuthorPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAuthorWith applies the HasEdge predicate on the "author" edge with a given conditions (other predicates).
+func HasAuthorWith(preds ...predicate.Person) predicate.Product {
+	return predicate.Product(func(s *sql.Selector) {
+		step := newAuthorStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

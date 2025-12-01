@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/productdto"
+	"github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	productsvc "github.com/SURF-Innovatie/MORIS/internal/product"
 	"github.com/go-chi/chi/v5"
@@ -66,7 +67,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Description Returns all products
 // @Tags products
 // @Produce json
-// @Success 200 {array} productdto.Response
+// @Success 200 {array} entities.Product
 // @Failure 500 {string} string "internal server error"
 // @Router /products [get]
 func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
@@ -76,6 +77,47 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, products)
+}
+
+// GetMe godoc
+// @Summary List products for current user
+// @Description Returns products associated with the current user
+// @Tags products
+// @Produce json
+// @Success 200 {array} productdto.Response
+// @Failure 500 {string} string "internal server error"
+// @Router /products/me [get]
+func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
+	userCtx, ok := auth.GetUserFromContext(r.Context())
+	if !ok || userCtx == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(auth.BackendError{
+			Code:    http.StatusUnauthorized,
+			Status:  "Unauthorized",
+			Message: "User not authenticated or found in context",
+		})
+		return
+	}
+
+	products, err := h.svc.GetAllForUser(r.Context(), userCtx.User.PersonID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	dtos := make([]productdto.Response, 0, len(products))
+	for _, p := range products {
+		dtos = append(dtos, productdto.Response{
+			ID:       p.Id,
+			Name:     p.Name,
+			DOI:      p.DOI,
+			Language: p.Language,
+			Type:     p.Type,
+		})
+	}
+
+	writeJSON(w, dtos)
 }
 
 // Get godoc

@@ -182,6 +182,20 @@ definitions:
       userID:
         type: string
     type: object
+  github_com_SURF-Innovatie_MORIS_internal_domain_entities.Product:
+    properties:
+      doi:
+        type: string
+      id:
+        type: string
+      language:
+        description: 'TODO: Make language comply with spec IETF BCP 47, see: https://openaire-guidelines-for-cris-managers.readthedocs.io/en/v1.2.0/cerif_xml_product_entity.html'
+        type: string
+      name:
+        type: string
+      type:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProductType'
+    type: object
   github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProductType:
     enum:
     - 0
@@ -510,7 +524,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_productdto.Response'
+              $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Product'
             type: array
         "500":
           description: internal server error
@@ -633,6 +647,25 @@ paths:
           schema:
             type: string
       summary: Update a product
+      tags:
+      - products
+  /products/me:
+    get:
+      description: Returns products associated with the current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_productdto.Response'
+            type: array
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: List products for current user
       tags:
       - products
   /profile:

@@ -30,8 +30,6 @@ import { usePostProjectsIdPeoplePersonId } from "@api/moris";
 const addPersonSchema = z.object({
     name: z.string().min(1, "Name is required"),
     email: z.string().email("Invalid email address"),
-    givenName: z.string().min(1, "Given name is required"),
-    familyName: z.string().min(1, "Family name is required"),
 });
 
 interface AddPersonDialogProps {
@@ -55,8 +53,6 @@ export function AddPersonDialog({
         defaultValues: {
             name: "",
             email: "",
-            givenName: "",
-            familyName: "",
         },
     });
 
@@ -67,11 +63,15 @@ export function AddPersonDialog({
             setIsCreatingPerson(true);
             // 1. Create the person
             // Manually call API because the hook is missing (likely due to missing Swagger comments)
+            const nameParts = values.name.split(" ");
+            const givenName = nameParts[0];
+            const familyName = nameParts.slice(1).join(" ") || "Unknown";
+
             const { data: person } = await axios.post("/api/people", {
                 name: values.name,
                 email: values.email,
-                givenName: values.givenName,
-                familyName: values.familyName,
+                givenName: givenName,
+                familyName: familyName,
             });
             setIsCreatingPerson(false);
 
@@ -132,34 +132,6 @@ export function AddPersonDialog({
                                 </FormItem>
                             )}
                         />
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="givenName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Given Name</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="John" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="familyName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Family Name</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Doe" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
                         <FormField
                             control={form.control}
                             name="email"

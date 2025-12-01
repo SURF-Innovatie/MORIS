@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useGetProjectsId, usePutProjectsId } from "@api/moris";
 
 import { GeneralTab } from "@/components/project-edit/GeneralTab";
-import { PeopleTab, Person } from "@/components/project-edit/PeopleTab";
+import { PeopleTab } from "@/components/project-edit/PeopleTab";
 import { ChangelogTab } from "@/components/project-edit/ChangelogTab";
 import { projectFormSchema } from "@/components/project-edit/schema";
 
@@ -62,7 +62,7 @@ export default function ProjectEditRoute() {
         startDate: project.startDate ? new Date(project.startDate) : undefined,
         endDate: project.endDate ? new Date(project.endDate) : undefined,
         organisationID:
-          project.organisation || "00000000-0000-0000-0000-000000000000",
+          project.organization?.id || "00000000-0000-0000-0000-000000000000",
       });
     }
   }, [project, form]);
@@ -154,7 +154,7 @@ export default function ProjectEditRoute() {
           <TabsContent value="people">
             <PeopleTab
               projectId={id!}
-              people={(project?.people as unknown as Person[]) || []}
+              people={project?.people || []}
               adminId={project?.projectAdmin}
               onRefresh={refetchProject}
             />

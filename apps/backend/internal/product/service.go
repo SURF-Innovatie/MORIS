@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
+	"github.com/SURF-Innovatie/MORIS/ent/person"
 	"github.com/SURF-Innovatie/MORIS/ent/product"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
@@ -12,6 +13,7 @@ import (
 type Service interface {
 	Get(ctx context.Context, id uuid.UUID) (*entities.Product, error)
 	GetAll(context.Context) ([]*entities.Product, error)
+	GetAllForUser(ctx context.Context, personId uuid.UUID) ([]*entities.Product, error)
 	Create(ctx context.Context, product entities.Product) (*entities.Product, error)
 	Update(ctx context.Context, id uuid.UUID, product entities.Product) (*entities.Product, error)
 	Delete(ctx context.Context, id uuid.UUID) error
@@ -80,6 +82,23 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, p entities.Product) 
 	}
 
 	return mapRow(row), nil
+}
+
+func (s *service) GetAllForUser(ctx context.Context, personId uuid.UUID) ([]*entities.Product, error) {
+	rows, err := s.cli.Person.Query().
+		Where(person.IDEQ(personId)).
+		QueryProducts().
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	products := make([]*entities.Product, 0)
+	for _, row := range rows {
+		products = append(products, mapRow(row))
+	}
+
+	return products, nil
 }
 
 func mapRow(row *ent.Product) *entities.Product {

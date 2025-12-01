@@ -309,7 +309,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Notification"
+                    "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_notificationdto.Response"
                   }
                 }
               }
@@ -405,7 +405,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_productdto.Response"
+                    "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Product"
                   }
                 }
               }
@@ -474,6 +474,40 @@
         }
       }
     },
+    "/products/me": {
+      "get": {
+        "tags": [
+          "products"
+        ],
+        "summary": "List products for current user",
+        "description": "Returns products associated with the current user",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Product"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/products/{id}": {
       "get": {
         "tags": [
@@ -498,7 +532,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_productdto.Response"
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Product"
                 }
               }
             }
@@ -1655,6 +1689,12 @@
           },
           "email": {
             "type": "string"
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Product"
+            }
           }
         },
         "required": [
@@ -1721,6 +1761,12 @@
           },
           "doi": {
             "type": "string"
+          },
+          "author": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Person"
+            }
           }
         },
         "required": [
@@ -1874,497 +1920,6 @@
           "password"
         ]
       },
-      "ent.DescriptionChangedEvent": {
-        "type": "object",
-        "properties": {
-          "description": {
-            "description": "Description holds the value of the \"description\" field.",
-            "type": "string"
-          },
-          "edges": {
-            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the DescriptionChangedEventQuery when eager-loading is set.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.DescriptionChangedEventEdges"
-              }
-            ]
-          },
-          "id": {
-            "description": "ID of the ent.",
-            "type": "string"
-          }
-        }
-      },
-      "ent.DescriptionChangedEventEdges": {
-        "type": "object",
-        "properties": {
-          "event": {
-            "description": "Event holds the value of the event edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.Event"
-              }
-            ]
-          }
-        }
-      },
-      "ent.EndDateChangedEvent": {
-        "type": "object",
-        "properties": {
-          "edges": {
-            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the EndDateChangedEventQuery when eager-loading is set.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.EndDateChangedEventEdges"
-              }
-            ]
-          },
-          "end_date": {
-            "description": "EndDate holds the value of the \"end_date\" field.",
-            "type": "string"
-          },
-          "id": {
-            "description": "ID of the ent.",
-            "type": "string"
-          }
-        }
-      },
-      "ent.EndDateChangedEventEdges": {
-        "type": "object",
-        "properties": {
-          "event": {
-            "description": "Event holds the value of the event edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.Event"
-              }
-            ]
-          }
-        }
-      },
-      "ent.Event": {
-        "type": "object",
-        "properties": {
-          "edges": {
-            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the EventQuery when eager-loading is set.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.EventEdges"
-              }
-            ]
-          },
-          "id": {
-            "description": "ID of the ent.",
-            "type": "string"
-          },
-          "occurred_at": {
-            "description": "OccurredAt holds the value of the \"occurred_at\" field.",
-            "type": "string"
-          },
-          "project_id": {
-            "description": "ProjectID holds the value of the \"project_id\" field.",
-            "type": "string"
-          },
-          "type": {
-            "description": "Type holds the value of the \"type\" field.",
-            "type": "string"
-          },
-          "version": {
-            "description": "Version holds the value of the \"version\" field.",
-            "type": "integer"
-          }
-        }
-      },
-      "ent.EventEdges": {
-        "type": "object",
-        "properties": {
-          "description_changed": {
-            "description": "DescriptionChanged holds the value of the description_changed edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.DescriptionChangedEvent"
-              }
-            ]
-          },
-          "end_date_changed": {
-            "description": "EndDateChanged holds the value of the end_date_changed edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.EndDateChangedEvent"
-              }
-            ]
-          },
-          "organisation_changed": {
-            "description": "OrganisationChanged holds the value of the organisation_changed edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.OrganisationChangedEvent"
-              }
-            ]
-          },
-          "person_added": {
-            "description": "PersonAdded holds the value of the person_added edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.PersonAddedEvent"
-              }
-            ]
-          },
-          "person_removed": {
-            "description": "PersonRemoved holds the value of the person_removed edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.PersonRemovedEvent"
-              }
-            ]
-          },
-          "product_added": {
-            "description": "ProductAdded holds the value of the product_added edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.ProductAddedEvent"
-              }
-            ]
-          },
-          "product_removed": {
-            "description": "ProductRemoved holds the value of the product_removed edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.ProductRemovedEvent"
-              }
-            ]
-          },
-          "project_started": {
-            "description": "ProjectStarted holds the value of the project_started edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.ProjectStartedEvent"
-              }
-            ]
-          },
-          "start_date_changed": {
-            "description": "StartDateChanged holds the value of the start_date_changed edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.StartDateChangedEvent"
-              }
-            ]
-          },
-          "title_changed": {
-            "description": "TitleChanged holds the value of the title_changed edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.TitleChangedEvent"
-              }
-            ]
-          }
-        }
-      },
-      "ent.OrganisationChangedEvent": {
-        "type": "object",
-        "properties": {
-          "edges": {
-            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the OrganisationChangedEventQuery when eager-loading is set.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.OrganisationChangedEventEdges"
-              }
-            ]
-          },
-          "id": {
-            "description": "ID of the ent.",
-            "type": "string"
-          },
-          "organisation_id": {
-            "description": "OrganisationID holds the value of the \"organisation_id\" field.",
-            "type": "string"
-          }
-        }
-      },
-      "ent.OrganisationChangedEventEdges": {
-        "type": "object",
-        "properties": {
-          "event": {
-            "description": "Event holds the value of the event edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.Event"
-              }
-            ]
-          }
-        }
-      },
-      "ent.PersonAddedEvent": {
-        "type": "object",
-        "properties": {
-          "edges": {
-            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the PersonAddedEventQuery when eager-loading is set.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.PersonAddedEventEdges"
-              }
-            ]
-          },
-          "id": {
-            "description": "ID of the ent.",
-            "type": "integer"
-          },
-          "person_id": {
-            "description": "PersonID holds the value of the \"person_id\" field.",
-            "type": "string"
-          }
-        }
-      },
-      "ent.PersonAddedEventEdges": {
-        "type": "object",
-        "properties": {
-          "event": {
-            "description": "Event holds the value of the event edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.Event"
-              }
-            ]
-          }
-        }
-      },
-      "ent.PersonRemovedEvent": {
-        "type": "object",
-        "properties": {
-          "edges": {
-            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the PersonRemovedEventQuery when eager-loading is set.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.PersonRemovedEventEdges"
-              }
-            ]
-          },
-          "id": {
-            "description": "ID of the ent.",
-            "type": "integer"
-          },
-          "person_id": {
-            "description": "PersonID holds the value of the \"person_id\" field.",
-            "type": "string"
-          }
-        }
-      },
-      "ent.PersonRemovedEventEdges": {
-        "type": "object",
-        "properties": {
-          "event": {
-            "description": "Event holds the value of the event edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.Event"
-              }
-            ]
-          }
-        }
-      },
-      "ent.ProductAddedEvent": {
-        "type": "object",
-        "properties": {
-          "edges": {
-            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the ProductAddedEventQuery when eager-loading is set.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.ProductAddedEventEdges"
-              }
-            ]
-          },
-          "id": {
-            "description": "ID of the ent.",
-            "type": "integer"
-          },
-          "product_id": {
-            "description": "ProductID holds the value of the \"product_id\" field.",
-            "type": "string"
-          }
-        }
-      },
-      "ent.ProductAddedEventEdges": {
-        "type": "object",
-        "properties": {
-          "event": {
-            "description": "Event holds the value of the event edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.Event"
-              }
-            ]
-          }
-        }
-      },
-      "ent.ProductRemovedEvent": {
-        "type": "object",
-        "properties": {
-          "edges": {
-            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the ProductRemovedEventQuery when eager-loading is set.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.ProductRemovedEventEdges"
-              }
-            ]
-          },
-          "id": {
-            "description": "ID of the ent.",
-            "type": "integer"
-          },
-          "product_id": {
-            "description": "ProductID holds the value of the \"product_id\" field.",
-            "type": "string"
-          }
-        }
-      },
-      "ent.ProductRemovedEventEdges": {
-        "type": "object",
-        "properties": {
-          "event": {
-            "description": "Event holds the value of the event edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.Event"
-              }
-            ]
-          }
-        }
-      },
-      "ent.ProjectStartedEvent": {
-        "type": "object",
-        "properties": {
-          "description": {
-            "description": "Description holds the value of the \"description\" field.",
-            "type": "string"
-          },
-          "edges": {
-            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the ProjectStartedEventQuery when eager-loading is set.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.ProjectStartedEventEdges"
-              }
-            ]
-          },
-          "end_date": {
-            "description": "EndDate holds the value of the \"end_date\" field.",
-            "type": "string"
-          },
-          "id": {
-            "description": "ID of the ent.",
-            "type": "string"
-          },
-          "organisation_id": {
-            "description": "OrganisationID holds the value of the \"organisation_id\" field.",
-            "type": "string"
-          },
-          "project_admin": {
-            "description": "ProjectAdmin holds the value of the \"project_admin\" field.",
-            "type": "string"
-          },
-          "start_date": {
-            "description": "StartDate holds the value of the \"start_date\" field.",
-            "type": "string"
-          },
-          "title": {
-            "description": "Title holds the value of the \"title\" field.",
-            "type": "string"
-          }
-        }
-      },
-      "ent.ProjectStartedEventEdges": {
-        "type": "object",
-        "properties": {
-          "event": {
-            "description": "Event holds the value of the event edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.Event"
-              }
-            ]
-          }
-        }
-      },
-      "ent.StartDateChangedEvent": {
-        "type": "object",
-        "properties": {
-          "edges": {
-            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the StartDateChangedEventQuery when eager-loading is set.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.StartDateChangedEventEdges"
-              }
-            ]
-          },
-          "id": {
-            "description": "ID of the ent.",
-            "type": "string"
-          },
-          "start_date": {
-            "description": "StartDate holds the value of the \"start_date\" field.",
-            "type": "string"
-          }
-        }
-      },
-      "ent.StartDateChangedEventEdges": {
-        "type": "object",
-        "properties": {
-          "event": {
-            "description": "Event holds the value of the event edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.Event"
-              }
-            ]
-          }
-        }
-      },
-      "ent.TitleChangedEvent": {
-        "type": "object",
-        "properties": {
-          "edges": {
-            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the TitleChangedEventQuery when eager-loading is set.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.TitleChangedEventEdges"
-              }
-            ]
-          },
-          "id": {
-            "description": "ID of the ent.",
-            "type": "string"
-          },
-          "title": {
-            "description": "Title holds the value of the \"title\" field.",
-            "type": "string"
-          }
-        }
-      },
-      "ent.TitleChangedEventEdges": {
-        "type": "object",
-        "properties": {
-          "event": {
-            "description": "Event holds the value of the event edge.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ent.Event"
-              }
-            ]
-          }
-        }
-      },
-      "ent.User": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "description": "ID of the ent.",
-            "type": "string"
-          },
-          "person_id": {
-            "description": "PersonID holds the value of the \"person_id\" field.",
-            "type": "string"
-          }
-        }
-      },
       "github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.Changelog": {
         "type": "object",
         "properties": {
@@ -2383,6 +1938,27 @@
             "type": "string"
           },
           "event": {
+            "type": "string"
+          }
+        }
+      },
+      "github_com_SURF-Innovatie_MORIS_internal_api_notificationdto.Response": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "projectId": {
+            "description": "TODO: communicate information about the event",
+            "type": "string"
+          },
+          "read": {
+            "type": "boolean"
+          },
+          "sentAt": {
             "type": "string"
           }
         }
@@ -2591,29 +2167,6 @@
           }
         }
       },
-      "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Notification": {
-        "type": "object",
-        "properties": {
-          "event": {
-            "$ref": "#/components/schemas/ent.Event"
-          },
-          "id": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          },
-          "read": {
-            "type": "boolean"
-          },
-          "sentAt": {
-            "type": "string"
-          },
-          "user": {
-            "$ref": "#/components/schemas/ent.User"
-          }
-        }
-      },
       "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Person": {
         "type": "object",
         "properties": {
@@ -2637,6 +2190,27 @@
           },
           "userID": {
             "type": "string"
+          }
+        }
+      },
+      "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Product": {
+        "type": "object",
+        "properties": {
+          "doi": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "language": {
+            "description": "TODO: Make language comply with spec IETF BCP 47, see: https://openaire-guidelines-for-cris-managers.readthedocs.io/en/v1.2.0/cerif_xml_product_entity.html",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProductType"
           }
         }
       },

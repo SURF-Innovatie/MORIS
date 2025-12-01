@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/SURF-Innovatie/MORIS/ent/person"
 	"github.com/SURF-Innovatie/MORIS/ent/product"
 	"github.com/google/uuid"
 )
@@ -80,6 +81,21 @@ func (_c *ProductCreate) SetNillableID(v *uuid.UUID) *ProductCreate {
 		_c.SetID(*v)
 	}
 	return _c
+}
+
+// AddAuthorIDs adds the "author" edge to the Person entity by IDs.
+func (_c *ProductCreate) AddAuthorIDs(ids ...uuid.UUID) *ProductCreate {
+	_c.mutation.AddAuthorIDs(ids...)
+	return _c
+}
+
+// AddAuthor adds the "author" edges to the Person entity.
+func (_c *ProductCreate) AddAuthor(v ...*Person) *ProductCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddAuthorIDs(ids...)
 }
 
 // Mutation returns the ProductMutation object of the builder.
@@ -178,6 +194,22 @@ func (_c *ProductCreate) createSpec() (*Product, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Doi(); ok {
 		_spec.SetField(product.FieldDoi, field.TypeString, value)
 		_node.Doi = &value
+	}
+	if nodes := _c.mutation.AuthorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   product.AuthorTable,
+			Columns: product.AuthorPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(person.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

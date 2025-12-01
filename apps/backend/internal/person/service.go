@@ -94,6 +94,7 @@ func mapRow(r *ent.Person) *entities.Person {
 	return &entities.Person{
 		Id:         r.ID,
 		Name:       r.Name,
+		ORCiD:      &r.OrcidID,
 		GivenName:  r.GivenName,
 		FamilyName: r.FamilyName,
 		Email:      r.Email,
