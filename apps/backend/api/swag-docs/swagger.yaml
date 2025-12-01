@@ -1,14 +1,5 @@
 basePath: /api
 definitions:
-  ent.User:
-    properties:
-      id:
-        description: ID of the ent.
-        type: string
-      person_id:
-        description: PersonID holds the value of the "person_id" field.
-        type: string
-    type: object
   github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.Changelog:
     properties:
       entries:
@@ -21,6 +12,20 @@ definitions:
       at:
         type: string
       event:
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_internal_api_notificationdto.Response:
+    properties:
+      id:
+        type: string
+      message:
+        type: string
+      projectId:
+        description: 'TODO: communicate information about the event'
+        type: string
+      read:
+        type: boolean
+      sentAt:
         type: string
     type: object
   github_com_SURF-Innovatie_MORIS_internal_api_organisationdto.Response:
@@ -201,46 +206,6 @@ definitions:
     - Sound
     - Trademark
     - Workflow
-  github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project:
-    properties:
-      description:
-        type: string
-      endDate:
-        type: string
-      id:
-        type: string
-      organisation:
-        type: string
-      people:
-        items:
-          type: string
-        type: array
-      products:
-        items:
-          type: string
-        type: array
-      projectAdmin:
-        type: string
-      startDate:
-        type: string
-      title:
-        type: string
-      version:
-        type: integer
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProjectNotification:
-    properties:
-      id:
-        type: string
-      message:
-        type: string
-      projectId:
-        type: string
-      sentAt:
-        type: string
-      user:
-        $ref: '#/definitions/ent.User'
-    type: object
   github_com_SURF-Innovatie_MORIS_internal_domain_entities.User:
     properties:
       id:
@@ -493,7 +458,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProjectNotification'
+              $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_notificationdto.Response'
             type: array
         "401":
           description: unauthorized
@@ -504,6 +469,35 @@ paths:
           schema:
             type: string
       summary: Get notifications for the logged-in user
+      tags:
+      - notifications
+  /notifications/{id}/read:
+    put:
+      consumes:
+      - application/json
+      description: Marks a specific notification as read
+      parameters:
+      - description: Notification ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Mark a notification as read
       tags:
       - notifications
   /products:
@@ -674,7 +668,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project'
+              $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response'
             type: array
         "500":
           description: internal server error
@@ -700,7 +694,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response'
         "400":
           description: invalid body or date format
           schema:
@@ -729,7 +723,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response'
         "400":
           description: invalid project id
           schema:
@@ -763,7 +757,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response'
         "400":
           description: invalid body, id or date format
           schema:
@@ -863,7 +857,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response'
         "400":
           description: invalid project id or body
           schema:

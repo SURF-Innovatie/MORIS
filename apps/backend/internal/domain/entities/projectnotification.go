@@ -7,10 +7,11 @@ import (
 	"github.com/google/uuid"
 )
 
-type ProjectNotification struct {
-	Id        uuid.UUID
-	User      *ent.User
-	Message   string
-	SentAt    time.Time
-	ProjectId uuid.UUID
+type Notification struct {
+	Id      uuid.UUID
+	User    *ent.User
+	Event   *ent.Event
+	Message string
+	Read    bool
+	SentAt  time.Time
 }

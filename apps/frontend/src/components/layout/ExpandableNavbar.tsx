@@ -15,6 +15,7 @@ import {
 import { Button } from "../ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogout } from "@/hooks/useLogout";
+import { NotificationBell } from "../notification-bell";
 
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard", icon: Grid },
@@ -140,9 +141,8 @@ export const ExpandableNavbar = ({ onExpandChange }: ExpandableNavbarProps) => {
 
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden lg:flex fixed left-0 top-0 bottom-0 z-40 flex-col bg-background border-r border-white/10 transition-all duration-300 ${
-          isExpanded ? "w-64" : "w-20"
-        }`}
+        className={`hidden lg:flex fixed left-0 top-0 bottom-0 z-40 flex-col bg-background border-r border-white/10 transition-all duration-300 ${isExpanded ? "w-64" : "w-20"
+          }`}
       >
         {/* Logo Section */}
         <div className="flex items-center justify-between p-4 border-b border-white/10">
@@ -168,6 +168,13 @@ export const ExpandableNavbar = ({ onExpandChange }: ExpandableNavbarProps) => {
             </NavLink>
           )}
         </div>
+
+        {/* Notification Bell */}
+        {isExpanded && (
+          <div className="px-4 py-2">
+            <NotificationBell />
+          </div>
+        )}
 
         {/* Toggle Button */}
         <button

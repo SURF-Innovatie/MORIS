@@ -10,38 +10,39 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/SURF-Innovatie/MORIS/ent/projectnotification"
+	"github.com/SURF-Innovatie/MORIS/ent/event"
+	"github.com/SURF-Innovatie/MORIS/ent/notification"
 	"github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/google/uuid"
 )
 
-// ProjectNotificationCreate is the builder for creating a ProjectNotification entity.
-type ProjectNotificationCreate struct {
+// NotificationCreate is the builder for creating a Notification entity.
+type NotificationCreate struct {
 	config
-	mutation *ProjectNotificationMutation
+	mutation *NotificationMutation
 	hooks    []Hook
 }
 
-// SetProjectID sets the "project_id" field.
-func (_c *ProjectNotificationCreate) SetProjectID(v uuid.UUID) *ProjectNotificationCreate {
-	_c.mutation.SetProjectID(v)
-	return _c
-}
-
 // SetMessage sets the "message" field.
-func (_c *ProjectNotificationCreate) SetMessage(v string) *ProjectNotificationCreate {
+func (_c *NotificationCreate) SetMessage(v string) *NotificationCreate {
 	_c.mutation.SetMessage(v)
 	return _c
 }
 
+// SetRead sets the "read" field.
+func (_c *NotificationCreate) SetRead(v bool) *NotificationCreate {
+	_c.mutation.SetRead(v)
+	return _c
+}
+
 // SetSentAt sets the "sent_at" field.
-func (_c *ProjectNotificationCreate) SetSentAt(v time.Time) *ProjectNotificationCreate {
+func (_c *NotificationCreate) SetSentAt(v time.Time) *NotificationCreate {
 	_c.mutation.SetSentAt(v)
 	return _c
 }
 
 // SetNillableSentAt sets the "sent_at" field if the given value is not nil.
-func (_c *ProjectNotificationCreate) SetNillableSentAt(v *time.Time) *ProjectNotificationCreate {
+func (_c *NotificationCreate) SetNillableSentAt(v *time.Time) *NotificationCreate {
 	if v != nil {
 		_c.SetSentAt(*v)
 	}
@@ -49,13 +50,13 @@ func (_c *ProjectNotificationCreate) SetNillableSentAt(v *time.Time) *ProjectNot
 }
 
 // SetID sets the "id" field.
-func (_c *ProjectNotificationCreate) SetID(v uuid.UUID) *ProjectNotificationCreate {
+func (_c *NotificationCreate) SetID(v uuid.UUID) *NotificationCreate {
 	_c.mutation.SetID(v)
 	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (_c *ProjectNotificationCreate) SetNillableID(v *uuid.UUID) *ProjectNotificationCreate {
+func (_c *NotificationCreate) SetNillableID(v *uuid.UUID) *NotificationCreate {
 	if v != nil {
 		_c.SetID(*v)
 	}
@@ -63,13 +64,13 @@ func (_c *ProjectNotificationCreate) SetNillableID(v *uuid.UUID) *ProjectNotific
 }
 
 // SetUserID sets the "user" edge to the User entity by ID.
-func (_c *ProjectNotificationCreate) SetUserID(id uuid.UUID) *ProjectNotificationCreate {
+func (_c *NotificationCreate) SetUserID(id uuid.UUID) *NotificationCreate {
 	_c.mutation.SetUserID(id)
 	return _c
 }
 
 // SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (_c *ProjectNotificationCreate) SetNillableUserID(id *uuid.UUID) *ProjectNotificationCreate {
+func (_c *NotificationCreate) SetNillableUserID(id *uuid.UUID) *NotificationCreate {
 	if id != nil {
 		_c = _c.SetUserID(*id)
 	}
@@ -77,23 +78,42 @@ func (_c *ProjectNotificationCreate) SetNillableUserID(id *uuid.UUID) *ProjectNo
 }
 
 // SetUser sets the "user" edge to the User entity.
-func (_c *ProjectNotificationCreate) SetUser(v *User) *ProjectNotificationCreate {
+func (_c *NotificationCreate) SetUser(v *User) *NotificationCreate {
 	return _c.SetUserID(v.ID)
 }
 
-// Mutation returns the ProjectNotificationMutation object of the builder.
-func (_c *ProjectNotificationCreate) Mutation() *ProjectNotificationMutation {
+// SetEventID sets the "event" edge to the Event entity by ID.
+func (_c *NotificationCreate) SetEventID(id uuid.UUID) *NotificationCreate {
+	_c.mutation.SetEventID(id)
+	return _c
+}
+
+// SetNillableEventID sets the "event" edge to the Event entity by ID if the given value is not nil.
+func (_c *NotificationCreate) SetNillableEventID(id *uuid.UUID) *NotificationCreate {
+	if id != nil {
+		_c = _c.SetEventID(*id)
+	}
+	return _c
+}
+
+// SetEvent sets the "event" edge to the Event entity.
+func (_c *NotificationCreate) SetEvent(v *Event) *NotificationCreate {
+	return _c.SetEventID(v.ID)
+}
+
+// Mutation returns the NotificationMutation object of the builder.
+func (_c *NotificationCreate) Mutation() *NotificationMutation {
 	return _c.mutation
 }
 
-// Save creates the ProjectNotification in the database.
-func (_c *ProjectNotificationCreate) Save(ctx context.Context) (*ProjectNotification, error) {
+// Save creates the Notification in the database.
+func (_c *NotificationCreate) Save(ctx context.Context) (*Notification, error) {
 	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (_c *ProjectNotificationCreate) SaveX(ctx context.Context) *ProjectNotification {
+func (_c *NotificationCreate) SaveX(ctx context.Context) *Notification {
 	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -102,45 +122,45 @@ func (_c *ProjectNotificationCreate) SaveX(ctx context.Context) *ProjectNotifica
 }
 
 // Exec executes the query.
-func (_c *ProjectNotificationCreate) Exec(ctx context.Context) error {
+func (_c *NotificationCreate) Exec(ctx context.Context) error {
 	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_c *ProjectNotificationCreate) ExecX(ctx context.Context) {
+func (_c *NotificationCreate) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *ProjectNotificationCreate) defaults() {
+func (_c *NotificationCreate) defaults() {
 	if _, ok := _c.mutation.SentAt(); !ok {
-		v := projectnotification.DefaultSentAt()
+		v := notification.DefaultSentAt()
 		_c.mutation.SetSentAt(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
-		v := projectnotification.DefaultID()
+		v := notification.DefaultID()
 		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (_c *ProjectNotificationCreate) check() error {
-	if _, ok := _c.mutation.ProjectID(); !ok {
-		return &ValidationError{Name: "project_id", err: errors.New(`ent: missing required field "ProjectNotification.project_id"`)}
-	}
+func (_c *NotificationCreate) check() error {
 	if _, ok := _c.mutation.Message(); !ok {
-		return &ValidationError{Name: "message", err: errors.New(`ent: missing required field "ProjectNotification.message"`)}
+		return &ValidationError{Name: "message", err: errors.New(`ent: missing required field "Notification.message"`)}
+	}
+	if _, ok := _c.mutation.Read(); !ok {
+		return &ValidationError{Name: "read", err: errors.New(`ent: missing required field "Notification.read"`)}
 	}
 	if _, ok := _c.mutation.SentAt(); !ok {
-		return &ValidationError{Name: "sent_at", err: errors.New(`ent: missing required field "ProjectNotification.sent_at"`)}
+		return &ValidationError{Name: "sent_at", err: errors.New(`ent: missing required field "Notification.sent_at"`)}
 	}
 	return nil
 }
 
-func (_c *ProjectNotificationCreate) sqlSave(ctx context.Context) (*ProjectNotification, error) {
+func (_c *NotificationCreate) sqlSave(ctx context.Context) (*Notification, error) {
 	if err := _c.check(); err != nil {
 		return nil, err
 	}
@@ -163,33 +183,33 @@ func (_c *ProjectNotificationCreate) sqlSave(ctx context.Context) (*ProjectNotif
 	return _node, nil
 }
 
-func (_c *ProjectNotificationCreate) createSpec() (*ProjectNotification, *sqlgraph.CreateSpec) {
+func (_c *NotificationCreate) createSpec() (*Notification, *sqlgraph.CreateSpec) {
 	var (
-		_node = &ProjectNotification{config: _c.config}
-		_spec = sqlgraph.NewCreateSpec(projectnotification.Table, sqlgraph.NewFieldSpec(projectnotification.FieldID, field.TypeUUID))
+		_node = &Notification{config: _c.config}
+		_spec = sqlgraph.NewCreateSpec(notification.Table, sqlgraph.NewFieldSpec(notification.FieldID, field.TypeUUID))
 	)
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := _c.mutation.ProjectID(); ok {
-		_spec.SetField(projectnotification.FieldProjectID, field.TypeUUID, value)
-		_node.ProjectID = value
-	}
 	if value, ok := _c.mutation.Message(); ok {
-		_spec.SetField(projectnotification.FieldMessage, field.TypeString, value)
+		_spec.SetField(notification.FieldMessage, field.TypeString, value)
 		_node.Message = value
 	}
+	if value, ok := _c.mutation.Read(); ok {
+		_spec.SetField(notification.FieldRead, field.TypeBool, value)
+		_node.Read = value
+	}
 	if value, ok := _c.mutation.SentAt(); ok {
-		_spec.SetField(projectnotification.FieldSentAt, field.TypeTime, value)
+		_spec.SetField(notification.FieldSentAt, field.TypeTime, value)
 		_node.SentAt = value
 	}
 	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
-			Table:   projectnotification.UserTable,
-			Columns: []string{projectnotification.UserColumn},
+			Table:   notification.UserTable,
+			Columns: []string{notification.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
@@ -198,33 +218,50 @@ func (_c *ProjectNotificationCreate) createSpec() (*ProjectNotification, *sqlgra
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.project_notification_user = &nodes[0]
+		_node.notification_user = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.EventIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   notification.EventTable,
+			Columns: []string{notification.EventColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.notification_event = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }
 
-// ProjectNotificationCreateBulk is the builder for creating many ProjectNotification entities in bulk.
-type ProjectNotificationCreateBulk struct {
+// NotificationCreateBulk is the builder for creating many Notification entities in bulk.
+type NotificationCreateBulk struct {
 	config
 	err      error
-	builders []*ProjectNotificationCreate
+	builders []*NotificationCreate
 }
 
-// Save creates the ProjectNotification entities in the database.
-func (_c *ProjectNotificationCreateBulk) Save(ctx context.Context) ([]*ProjectNotification, error) {
+// Save creates the Notification entities in the database.
+func (_c *NotificationCreateBulk) Save(ctx context.Context) ([]*Notification, error) {
 	if _c.err != nil {
 		return nil, _c.err
 	}
 	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
-	nodes := make([]*ProjectNotification, len(_c.builders))
+	nodes := make([]*Notification, len(_c.builders))
 	mutators := make([]Mutator, len(_c.builders))
 	for i := range _c.builders {
 		func(i int, root context.Context) {
 			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-				mutation, ok := m.(*ProjectNotificationMutation)
+				mutation, ok := m.(*NotificationMutation)
 				if !ok {
 					return nil, fmt.Errorf("unexpected mutation type %T", m)
 				}
@@ -267,7 +304,7 @@ func (_c *ProjectNotificationCreateBulk) Save(ctx context.Context) ([]*ProjectNo
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (_c *ProjectNotificationCreateBulk) SaveX(ctx context.Context) []*ProjectNotification {
+func (_c *NotificationCreateBulk) SaveX(ctx context.Context) []*Notification {
 	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -276,13 +313,13 @@ func (_c *ProjectNotificationCreateBulk) SaveX(ctx context.Context) []*ProjectNo
 }
 
 // Exec executes the query.
-func (_c *ProjectNotificationCreateBulk) Exec(ctx context.Context) error {
+func (_c *NotificationCreateBulk) Exec(ctx context.Context) error {
 	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_c *ProjectNotificationCreateBulk) ExecX(ctx context.Context) {
+func (_c *NotificationCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}

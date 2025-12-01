@@ -17,8 +17,8 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
+	notification "github.com/SURF-Innovatie/MORIS/internal/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/platform/eventstore"
-	notification "github.com/SURF-Innovatie/MORIS/internal/projectnotification"
 	"github.com/google/uuid"
 )
 
@@ -83,6 +83,7 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 
 	startEvent := events.ProjectStarted{
 		Base: events.Base{
+			ID:        uuid.New(),
 			ProjectID: projectID,
 			At:        now,
 		},
@@ -100,7 +101,7 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 
 	user, err := currentUser(ctx, s.cli)
 	if err == nil {
-		_ = s.notifier.NotifyForEvents(ctx, user, projectID, startEvent)
+		_ = s.notifier.NotifyForEvents(ctx, user, startEvent)
 	}
 
 	proj := projection.Reduce(projectID, []events.Event{startEvent})

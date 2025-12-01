@@ -10,6 +10,7 @@ type Event interface {
 	isEvent()
 	AggregateID() uuid.UUID
 	OccurredAt() time.Time
+	GetID() uuid.UUID
 	Type() string
 	String() string
 }
@@ -28,9 +29,11 @@ const (
 )
 
 type Base struct {
+	ID        uuid.UUID `json:"id"`
 	ProjectID uuid.UUID `json:"projectId"`
 	At        time.Time `json:"at"`
 }
 
 func (b Base) AggregateID() uuid.UUID { return b.ProjectID }
 func (b Base) OccurredAt() time.Time  { return b.At }
+func (b Base) GetID() uuid.UUID       { return b.ID }

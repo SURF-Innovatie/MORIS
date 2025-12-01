@@ -309,8 +309,60 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProjectNotification"
+                    "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Notification"
                   }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/{id}/read": {
+      "put": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Mark a notification as read",
+        "description": "Marks a specific notification as read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Notification ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
                 }
               }
             }
@@ -598,7 +650,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser"
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_userdto.Response"
                 }
               }
             }
@@ -636,7 +688,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                    "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response"
                   }
                 }
               }
@@ -677,7 +729,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response"
                 }
               }
             }
@@ -729,7 +781,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response"
                 }
               }
             }
@@ -790,7 +842,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response"
                 }
               }
             }
@@ -913,7 +965,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response"
                 }
               }
             }
@@ -1144,7 +1196,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.RegisterResponse"
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_userdto.Response"
                 }
               }
             }
@@ -1193,50 +1245,217 @@
         }
       }
     },
-    "/users/count": {
+    "/users": {
       "get": {
         "tags": [
           "users"
         ],
-        "summary": "Get total user count",
-        "description": "Returns the total number of registered users",
+        "summary": "Get a user by ID",
+        "description": "Retrieves a single user by its ID, provided as the `id` query parameter.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "User ID (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/internal_handler_custom.TotalUsersResponse"
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_userdto.Response"
                 }
               }
             }
           },
-          "401": {
-            "description": "User not authenticated",
+          "400": {
+            "description": "invalid id",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                  "type": "string"
                 }
               }
             }
           },
           "500": {
-            "description": "Internal server error",
+            "description": "internal server error",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                  "type": "string"
                 }
               }
             }
           }
-        },
-        "security": [
+        }
+      },
+      "put": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Update a user",
+        "description": "Updates an existing user's person reference and/or password based on the given ID and request body.",
+        "parameters": [
           {
-            "BearerAuth": []
+            "name": "id",
+            "in": "query",
+            "description": "User ID (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
-        ]
+        ],
+        "requestBody": {
+          "description": "User update payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_userdto.Request"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_userdto.Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid id or request body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Create a new user",
+        "description": "Creates a new user account for an existing person using the provided person ID and password.",
+        "requestBody": {
+          "description": "User creation payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_userdto.Request"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_userdto.Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid request body or missing person ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Delete a user",
+        "description": "Deletes a user by its ID, provided as the `id` query parameter.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "User ID (UUID)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "no content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
       }
     }
   },
@@ -1341,6 +1560,37 @@
           "version",
           "type",
           "occurred_at"
+        ]
+      },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "message": {
+            "type": "string"
+          },
+          "read": {
+            "type": "boolean"
+          },
+          "sent_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "event": {
+            "$ref": "#/components/schemas/Event"
+          }
+        },
+        "required": [
+          "id",
+          "message",
+          "read",
+          "sent_at"
         ]
       },
       "Organisation": {
@@ -1518,35 +1768,6 @@
           "event"
         ]
       },
-      "ProjectNotification": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "project_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "message": {
-            "type": "string"
-          },
-          "sent_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "user": {
-            "$ref": "#/components/schemas/User"
-          }
-        },
-        "required": [
-          "id",
-          "project_id",
-          "message",
-          "sent_at"
-        ]
-      },
       "ProjectStartedEvent": {
         "type": "object",
         "properties": {
@@ -1653,23 +1874,493 @@
           "password"
         ]
       },
-      "ent.User": {
+      "ent.DescriptionChangedEvent": {
         "type": "object",
         "properties": {
-          "email": {
-            "description": "Email holds the value of the \"email\" field.",
+          "description": {
+            "description": "Description holds the value of the \"description\" field.",
+            "type": "string"
+          },
+          "edges": {
+            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the DescriptionChangedEventQuery when eager-loading is set.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.DescriptionChangedEventEdges"
+              }
+            ]
+          },
+          "id": {
+            "description": "ID of the ent.",
+            "type": "string"
+          }
+        }
+      },
+      "ent.DescriptionChangedEventEdges": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "description": "Event holds the value of the event edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.Event"
+              }
+            ]
+          }
+        }
+      },
+      "ent.EndDateChangedEvent": {
+        "type": "object",
+        "properties": {
+          "edges": {
+            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the EndDateChangedEventQuery when eager-loading is set.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.EndDateChangedEventEdges"
+              }
+            ]
+          },
+          "end_date": {
+            "description": "EndDate holds the value of the \"end_date\" field.",
+            "type": "string"
+          },
+          "id": {
+            "description": "ID of the ent.",
+            "type": "string"
+          }
+        }
+      },
+      "ent.EndDateChangedEventEdges": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "description": "Event holds the value of the event edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.Event"
+              }
+            ]
+          }
+        }
+      },
+      "ent.Event": {
+        "type": "object",
+        "properties": {
+          "edges": {
+            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the EventQuery when eager-loading is set.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.EventEdges"
+              }
+            ]
+          },
+          "id": {
+            "description": "ID of the ent.",
+            "type": "string"
+          },
+          "occurred_at": {
+            "description": "OccurredAt holds the value of the \"occurred_at\" field.",
+            "type": "string"
+          },
+          "project_id": {
+            "description": "ProjectID holds the value of the \"project_id\" field.",
+            "type": "string"
+          },
+          "type": {
+            "description": "Type holds the value of the \"type\" field.",
+            "type": "string"
+          },
+          "version": {
+            "description": "Version holds the value of the \"version\" field.",
+            "type": "integer"
+          }
+        }
+      },
+      "ent.EventEdges": {
+        "type": "object",
+        "properties": {
+          "description_changed": {
+            "description": "DescriptionChanged holds the value of the description_changed edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.DescriptionChangedEvent"
+              }
+            ]
+          },
+          "end_date_changed": {
+            "description": "EndDateChanged holds the value of the end_date_changed edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.EndDateChangedEvent"
+              }
+            ]
+          },
+          "organisation_changed": {
+            "description": "OrganisationChanged holds the value of the organisation_changed edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.OrganisationChangedEvent"
+              }
+            ]
+          },
+          "person_added": {
+            "description": "PersonAdded holds the value of the person_added edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.PersonAddedEvent"
+              }
+            ]
+          },
+          "person_removed": {
+            "description": "PersonRemoved holds the value of the person_removed edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.PersonRemovedEvent"
+              }
+            ]
+          },
+          "product_added": {
+            "description": "ProductAdded holds the value of the product_added edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.ProductAddedEvent"
+              }
+            ]
+          },
+          "product_removed": {
+            "description": "ProductRemoved holds the value of the product_removed edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.ProductRemovedEvent"
+              }
+            ]
+          },
+          "project_started": {
+            "description": "ProjectStarted holds the value of the project_started edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.ProjectStartedEvent"
+              }
+            ]
+          },
+          "start_date_changed": {
+            "description": "StartDateChanged holds the value of the start_date_changed edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.StartDateChangedEvent"
+              }
+            ]
+          },
+          "title_changed": {
+            "description": "TitleChanged holds the value of the title_changed edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.TitleChangedEvent"
+              }
+            ]
+          }
+        }
+      },
+      "ent.OrganisationChangedEvent": {
+        "type": "object",
+        "properties": {
+          "edges": {
+            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the OrganisationChangedEventQuery when eager-loading is set.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.OrganisationChangedEventEdges"
+              }
+            ]
+          },
+          "id": {
+            "description": "ID of the ent.",
+            "type": "string"
+          },
+          "organisation_id": {
+            "description": "OrganisationID holds the value of the \"organisation_id\" field.",
+            "type": "string"
+          }
+        }
+      },
+      "ent.OrganisationChangedEventEdges": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "description": "Event holds the value of the event edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.Event"
+              }
+            ]
+          }
+        }
+      },
+      "ent.PersonAddedEvent": {
+        "type": "object",
+        "properties": {
+          "edges": {
+            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the PersonAddedEventQuery when eager-loading is set.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.PersonAddedEventEdges"
+              }
+            ]
+          },
+          "id": {
+            "description": "ID of the ent.",
+            "type": "integer"
+          },
+          "person_id": {
+            "description": "PersonID holds the value of the \"person_id\" field.",
+            "type": "string"
+          }
+        }
+      },
+      "ent.PersonAddedEventEdges": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "description": "Event holds the value of the event edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.Event"
+              }
+            ]
+          }
+        }
+      },
+      "ent.PersonRemovedEvent": {
+        "type": "object",
+        "properties": {
+          "edges": {
+            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the PersonRemovedEventQuery when eager-loading is set.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.PersonRemovedEventEdges"
+              }
+            ]
+          },
+          "id": {
+            "description": "ID of the ent.",
+            "type": "integer"
+          },
+          "person_id": {
+            "description": "PersonID holds the value of the \"person_id\" field.",
+            "type": "string"
+          }
+        }
+      },
+      "ent.PersonRemovedEventEdges": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "description": "Event holds the value of the event edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.Event"
+              }
+            ]
+          }
+        }
+      },
+      "ent.ProductAddedEvent": {
+        "type": "object",
+        "properties": {
+          "edges": {
+            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the ProductAddedEventQuery when eager-loading is set.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.ProductAddedEventEdges"
+              }
+            ]
+          },
+          "id": {
+            "description": "ID of the ent.",
+            "type": "integer"
+          },
+          "product_id": {
+            "description": "ProductID holds the value of the \"product_id\" field.",
+            "type": "string"
+          }
+        }
+      },
+      "ent.ProductAddedEventEdges": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "description": "Event holds the value of the event edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.Event"
+              }
+            ]
+          }
+        }
+      },
+      "ent.ProductRemovedEvent": {
+        "type": "object",
+        "properties": {
+          "edges": {
+            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the ProductRemovedEventQuery when eager-loading is set.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.ProductRemovedEventEdges"
+              }
+            ]
+          },
+          "id": {
+            "description": "ID of the ent.",
+            "type": "integer"
+          },
+          "product_id": {
+            "description": "ProductID holds the value of the \"product_id\" field.",
+            "type": "string"
+          }
+        }
+      },
+      "ent.ProductRemovedEventEdges": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "description": "Event holds the value of the event edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.Event"
+              }
+            ]
+          }
+        }
+      },
+      "ent.ProjectStartedEvent": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "description": "Description holds the value of the \"description\" field.",
+            "type": "string"
+          },
+          "edges": {
+            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the ProjectStartedEventQuery when eager-loading is set.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.ProjectStartedEventEdges"
+              }
+            ]
+          },
+          "end_date": {
+            "description": "EndDate holds the value of the \"end_date\" field.",
             "type": "string"
           },
           "id": {
             "description": "ID of the ent.",
             "type": "string"
           },
-          "name": {
-            "description": "Name holds the value of the \"name\" field.",
+          "organisation_id": {
+            "description": "OrganisationID holds the value of the \"organisation_id\" field.",
             "type": "string"
           },
-          "orcid_id": {
-            "description": "OrcidID holds the value of the \"orcid_id\" field.",
+          "project_admin": {
+            "description": "ProjectAdmin holds the value of the \"project_admin\" field.",
+            "type": "string"
+          },
+          "start_date": {
+            "description": "StartDate holds the value of the \"start_date\" field.",
+            "type": "string"
+          },
+          "title": {
+            "description": "Title holds the value of the \"title\" field.",
+            "type": "string"
+          }
+        }
+      },
+      "ent.ProjectStartedEventEdges": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "description": "Event holds the value of the event edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.Event"
+              }
+            ]
+          }
+        }
+      },
+      "ent.StartDateChangedEvent": {
+        "type": "object",
+        "properties": {
+          "edges": {
+            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the StartDateChangedEventQuery when eager-loading is set.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.StartDateChangedEventEdges"
+              }
+            ]
+          },
+          "id": {
+            "description": "ID of the ent.",
+            "type": "string"
+          },
+          "start_date": {
+            "description": "StartDate holds the value of the \"start_date\" field.",
+            "type": "string"
+          }
+        }
+      },
+      "ent.StartDateChangedEventEdges": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "description": "Event holds the value of the event edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.Event"
+              }
+            ]
+          }
+        }
+      },
+      "ent.TitleChangedEvent": {
+        "type": "object",
+        "properties": {
+          "edges": {
+            "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the TitleChangedEventQuery when eager-loading is set.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.TitleChangedEventEdges"
+              }
+            ]
+          },
+          "id": {
+            "description": "ID of the ent.",
+            "type": "string"
+          },
+          "title": {
+            "description": "Title holds the value of the \"title\" field.",
+            "type": "string"
+          }
+        }
+      },
+      "ent.TitleChangedEventEdges": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "description": "Event holds the value of the event edge.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ent.Event"
+              }
+            ]
+          }
+        }
+      },
+      "ent.User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "ID of the ent.",
+            "type": "string"
+          },
+          "person_id": {
+            "description": "PersonID holds the value of the \"person_id\" field.",
             "type": "string"
           }
         }
@@ -1723,6 +2414,12 @@
             "type": "string"
           },
           "name": {
+            "type": "string"
+          },
+          "orcid": {
+            "type": "string"
+          },
+          "user_id": {
             "type": "string"
           }
         }
@@ -1778,6 +2475,9 @@
           "organisationID": {
             "type": "string"
           },
+          "projectAdmin": {
+            "type": "string"
+          },
           "startDate": {
             "type": "string",
             "example": "2025-01-01T00:00:00Z"
@@ -1817,6 +2517,9 @@
               "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_api_productdto.Response"
             }
           },
+          "projectAdmin": {
+            "type": "string"
+          },
           "startDate": {
             "type": "string",
             "example": "2025-01-01T00:00:00Z"
@@ -1830,30 +2533,40 @@
           }
         }
       },
-      "github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser": {
+      "github_com_SURF-Innovatie_MORIS_internal_api_userdto.Request": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string"
+          },
+          "person_id": {
+            "type": "string"
+          }
+        }
+      },
+      "github_com_SURF-Innovatie_MORIS_internal_api_userdto.Response": {
         "type": "object",
         "properties": {
           "email": {
-            "type": "string",
-            "example": "admin@example.com"
+            "type": "string"
+          },
+          "familyName": {
+            "type": "string"
+          },
+          "givenName": {
+            "type": "string"
           },
           "id": {
-            "type": "string",
-            "example": "1"
+            "type": "string"
           },
-          "orcid_id": {
-            "type": "string",
-            "example": "0000-0000-0000-0000"
+          "name": {
+            "type": "string"
           },
-          "roles": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "example": [
-              "admin",
-              "user"
-            ]
+          "orcid": {
+            "type": "string"
+          },
+          "person_id": {
+            "type": "string"
           }
         }
       },
@@ -1878,6 +2591,55 @@
           }
         }
       },
+      "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Notification": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/ent.Event"
+          },
+          "id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "read": {
+            "type": "boolean"
+          },
+          "sentAt": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/ent.User"
+          }
+        }
+      },
+      "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Person": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "familyName": {
+            "type": "string"
+          },
+          "givenName": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "orciD": {
+            "type": "string"
+          },
+          "userID": {
+            "type": "string"
+          }
+        }
+      },
       "github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProductType": {
         "type": "integer",
         "enum": [
@@ -1893,61 +2655,28 @@
           9
         ]
       },
-      "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project": {
+      "github_com_SURF-Innovatie_MORIS_internal_domain_entities.User": {
         "type": "object",
         "properties": {
-          "description": {
-            "type": "string"
-          },
-          "endDate": {
-            "type": "string"
-          },
           "id": {
             "type": "string"
           },
-          "organisation": {
+          "password": {
             "type": "string"
           },
-          "people": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "products": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "startDate": {
+          "personID": {
             "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "version": {
-            "type": "integer"
           }
         }
       },
-      "github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProjectNotification": {
+      "github_com_SURF-Innovatie_MORIS_internal_domain_entities.UserAccount": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          },
-          "projectId": {
-            "type": "string"
-          },
-          "sentAt": {
-            "type": "string"
+          "person": {
+            "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Person"
           },
           "user": {
-            "$ref": "#/components/schemas/ent.User"
+            "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.User"
           }
         }
       },
@@ -1981,26 +2710,7 @@
             "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
           },
           "user": {
-            "type": "object",
-            "properties": {
-              "email": {
-                "type": "string",
-                "example": "user@example.com"
-              },
-              "id": {
-                "type": "string",
-                "example": "1"
-              },
-              "roles": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "example": [
-                  "user"
-                ]
-              }
-            }
+            "$ref": "#/components/schemas/github_com_SURF-Innovatie_MORIS_internal_domain_entities.UserAccount"
           }
         }
       },
@@ -2030,23 +2740,6 @@
           }
         }
       },
-      "internal_handler_custom.RegisterResponse": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "example": "user@example.com"
-          },
-          "id": {
-            "type": "string",
-            "example": "1"
-          },
-          "name": {
-            "type": "string",
-            "example": "John Doe"
-          }
-        }
-      },
       "internal_handler_custom.StatusResponse": {
         "type": "object",
         "properties": {
@@ -2057,15 +2750,6 @@
           "timestamp": {
             "type": "string",
             "example": "2025-11-12T10:00:00Z"
-          }
-        }
-      },
-      "internal_handler_custom.TotalUsersResponse": {
-        "type": "object",
-        "properties": {
-          "total_users": {
-            "type": "integer",
-            "example": 123
           }
         }
       }

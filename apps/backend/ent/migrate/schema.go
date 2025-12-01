@@ -62,6 +62,35 @@ var (
 		Columns:    EventsColumns,
 		PrimaryKey: []*schema.Column{EventsColumns[0]},
 	}
+	// NotificationsColumns holds the columns for the "notifications" table.
+	NotificationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "message", Type: field.TypeString},
+		{Name: "read", Type: field.TypeBool},
+		{Name: "sent_at", Type: field.TypeTime},
+		{Name: "notification_user", Type: field.TypeUUID, Nullable: true},
+		{Name: "notification_event", Type: field.TypeUUID, Nullable: true},
+	}
+	// NotificationsTable holds the schema information for the "notifications" table.
+	NotificationsTable = &schema.Table{
+		Name:       "notifications",
+		Columns:    NotificationsColumns,
+		PrimaryKey: []*schema.Column{NotificationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "notifications_users_user",
+				Columns:    []*schema.Column{NotificationsColumns[4]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "notifications_events_event",
+				Columns:    []*schema.Column{NotificationsColumns[5]},
+				RefColumns: []*schema.Column{EventsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// OrganisationsColumns holds the columns for the "organisations" table.
 	OrganisationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -203,28 +232,6 @@ var (
 			},
 		},
 	}
-	// ProjectNotificationsColumns holds the columns for the "project_notifications" table.
-	ProjectNotificationsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUUID},
-		{Name: "project_id", Type: field.TypeUUID},
-		{Name: "message", Type: field.TypeString},
-		{Name: "sent_at", Type: field.TypeTime},
-		{Name: "project_notification_user", Type: field.TypeUUID, Nullable: true},
-	}
-	// ProjectNotificationsTable holds the schema information for the "project_notifications" table.
-	ProjectNotificationsTable = &schema.Table{
-		Name:       "project_notifications",
-		Columns:    ProjectNotificationsColumns,
-		PrimaryKey: []*schema.Column{ProjectNotificationsColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "project_notifications_users_user",
-				Columns:    []*schema.Column{ProjectNotificationsColumns[4]},
-				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-		},
-	}
 	// ProjectStartedEventsColumns holds the columns for the "project_started_events" table.
 	ProjectStartedEventsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -307,6 +314,7 @@ var (
 		DescriptionChangedEventsTable,
 		EndDateChangedEventsTable,
 		EventsTable,
+		NotificationsTable,
 		OrganisationsTable,
 		OrganisationChangedEventsTable,
 		PersonsTable,
@@ -315,7 +323,6 @@ var (
 		ProductsTable,
 		ProductAddedEventsTable,
 		ProductRemovedEventsTable,
-		ProjectNotificationsTable,
 		ProjectStartedEventsTable,
 		StartDateChangedEventsTable,
 		TitleChangedEventsTable,
@@ -326,12 +333,13 @@ var (
 func init() {
 	DescriptionChangedEventsTable.ForeignKeys[0].RefTable = EventsTable
 	EndDateChangedEventsTable.ForeignKeys[0].RefTable = EventsTable
+	NotificationsTable.ForeignKeys[0].RefTable = UsersTable
+	NotificationsTable.ForeignKeys[1].RefTable = EventsTable
 	OrganisationChangedEventsTable.ForeignKeys[0].RefTable = EventsTable
 	PersonAddedEventsTable.ForeignKeys[0].RefTable = EventsTable
 	PersonRemovedEventsTable.ForeignKeys[0].RefTable = EventsTable
 	ProductAddedEventsTable.ForeignKeys[0].RefTable = EventsTable
 	ProductRemovedEventsTable.ForeignKeys[0].RefTable = EventsTable
-	ProjectNotificationsTable.ForeignKeys[0].RefTable = UsersTable
 	ProjectStartedEventsTable.ForeignKeys[0].RefTable = EventsTable
 	StartDateChangedEventsTable.ForeignKeys[0].RefTable = EventsTable
 	TitleChangedEventsTable.ForeignKeys[0].RefTable = EventsTable

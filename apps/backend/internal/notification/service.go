@@ -1,13 +1,13 @@
-package projectnotification
+package notification
 
 import (
 	"context"
 	"fmt"
 	"time"
 
+	"github.com/SURF-Innovatie/MORIS/ent/notification"
 	"github.com/SURF-Innovatie/MORIS/ent/organisation"
 	"github.com/SURF-Innovatie/MORIS/ent/person"
-	"github.com/SURF-Innovatie/MORIS/ent/projectnotification"
 	"github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
@@ -17,12 +17,13 @@ import (
 )
 
 type Service interface {
-	Create(ctx context.Context, p entities.ProjectNotification) (*entities.ProjectNotification, error)
-	Get(ctx context.Context, id uuid.UUID) (*entities.ProjectNotification, error)
-	Update(ctx context.Context, id uuid.UUID, p entities.ProjectNotification) (*entities.ProjectNotification, error)
-	List(ctx context.Context) ([]entities.ProjectNotification, error)
-	ListForUser(ctx context.Context, userID uuid.UUID) ([]entities.ProjectNotification, error)
-	NotifyForEvents(ctx context.Context, user *ent.User, projectID uuid.UUID, evts ...events.Event) error
+	Create(ctx context.Context, p entities.Notification) (*entities.Notification, error)
+	Get(ctx context.Context, id uuid.UUID) (*entities.Notification, error)
+	Update(ctx context.Context, id uuid.UUID, p entities.Notification) (*entities.Notification, error)
+	List(ctx context.Context) ([]entities.Notification, error)
+	ListForUser(ctx context.Context, userID uuid.UUID) ([]entities.Notification, error)
+	NotifyForEvents(ctx context.Context, user *ent.User, evts ...events.Event) error
+	MarkAsRead(ctx context.Context, id uuid.UUID) error
 }
 
 type service struct {
@@ -33,24 +34,24 @@ func NewService(cli *ent.Client) Service {
 	return &service{cli: cli}
 }
 
-func (s *service) Create(ctx context.Context, p entities.ProjectNotification) (*entities.ProjectNotification, error) {
-	row, err := s.cli.ProjectNotification.
+func (s *service) Create(ctx context.Context, p entities.Notification) (*entities.Notification, error) {
+	row, err := s.cli.Notification.
 		Create().
 		SetMessage(p.Message).
 		SetUser(p.User).
-		SetProjectID(p.ProjectId).
+		SetEvent(p.Event).
 		Save(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return mapRow(row, p.User), nil
+	return mapRow(row, p.User, p.Event), nil
 }
 
-func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.ProjectNotification, error) {
-	row, err := s.cli.ProjectNotification.
+func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.Notification, error) {
+	row, err := s.cli.Notification.
 		Query().
-		Where(projectnotification.IDEQ(id)).
+		Where(notification.IDEQ(id)).
 		Only(ctx)
 	if err != nil {
 		return nil, err
@@ -60,72 +61,84 @@ func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.ProjectNotif
 	if err != nil {
 		return nil, err
 	}
-	return mapRow(row, user), nil
+
+	event, _ := row.QueryEvent().Only(ctx)
+
+	return mapRow(row, user, event), nil
 }
 
-func (s *service) Update(ctx context.Context, id uuid.UUID, p entities.ProjectNotification) (*entities.ProjectNotification, error) {
-	row, err := s.cli.ProjectNotification.
+func (s *service) Update(ctx context.Context, id uuid.UUID, p entities.Notification) (*entities.Notification, error) {
+	row, err := s.cli.Notification.
 		UpdateOneID(id).
 		SetMessage(p.Message).
 		SetUser(p.User).
-		SetProjectID(p.ProjectId).
+		SetEvent(p.Event).
 		Save(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return mapRow(row, p.User), nil
+	return mapRow(row, p.User, p.Event), nil
 }
 
-func (s *service) List(ctx context.Context) ([]entities.ProjectNotification, error) {
-	rows, err := s.cli.ProjectNotification.
+func (s *service) List(ctx context.Context) ([]entities.Notification, error) {
+	rows, err := s.cli.Notification.
 		Query().
 		All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]entities.ProjectNotification, 0, len(rows))
+	out := make([]entities.Notification, 0, len(rows))
 	for _, r := range rows {
 		user, err := r.QueryUser().Only(ctx)
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, *mapRow(r, user))
+
+		event, _ := r.QueryEvent().Only(ctx)
+
+		out = append(out, *mapRow(r, user, event))
 	}
+
 	return out, nil
 }
 
-func (s *service) ListForUser(ctx context.Context, userID uuid.UUID) ([]entities.ProjectNotification, error) {
-	rows, err := s.cli.ProjectNotification.
+func (s *service) ListForUser(ctx context.Context, userID uuid.UUID) ([]entities.Notification, error) {
+	rows, err := s.cli.Notification.
 		Query().
-		Where(projectnotification.HasUserWith(user.IDEQ(userID))).
+		Where(notification.HasUserWith(user.IDEQ(userID))).
 		All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]entities.ProjectNotification, 0, len(rows))
+
+	out := make([]entities.Notification, 0, len(rows))
 	for _, r := range rows {
-		user, err := r.QueryUser().Only(ctx)
+		u, err := r.QueryUser().Only(ctx)
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, *mapRow(r, user))
+
+		// event can be empty
+		event, _ := r.QueryEvent().Only(ctx)
+
+		out = append(out, *mapRow(r, u, event))
 	}
 	return out, nil
 }
 
-func mapRow(r *ent.ProjectNotification, u *ent.User) *entities.ProjectNotification {
-	return &entities.ProjectNotification{
-		Id:        r.ID,
-		ProjectId: r.ProjectID,
-		Message:   r.Message,
-		User:      u,
+func mapRow(r *ent.Notification, u *ent.User, e *ent.Event) *entities.Notification {
+	return &entities.Notification{
+		Id:      r.ID,
+		Message: r.Message,
+		Read:    r.Read,
+		User:    u,
+		Event:   e,
 	}
 }
 
 func (s *service) NotifyForEvents(
 	ctx context.Context,
 	user *ent.User,
-	projectID uuid.UUID,
 	evts ...events.Event,
 ) error {
 	if user == nil {
@@ -144,13 +157,13 @@ func (s *service) NotifyForEvents(
 		}
 
 		// Create a notification row
-		_, err = s.cli.ProjectNotification.
+		_, err = s.cli.Notification.
 			Create().
 			SetID(uuid.New()). // optional if schema has Default(uuid.New)
-			SetProjectID(projectID).
 			SetMessage(msg).
 			SetSentAt(time.Now().UTC()). // optional if schema already defaults
 			SetUser(user).
+			SetEventID(e.GetID()).
 			Save(ctx)
 		if err != nil {
 			return err
@@ -158,6 +171,11 @@ func (s *service) NotifyForEvents(
 	}
 
 	return nil
+}
+
+func (s *service) MarkAsRead(ctx context.Context, id uuid.UUID) error {
+	_, err := s.cli.Notification.UpdateOneID(id).SetRead(true).Save(ctx)
+	return err
 }
 
 func (s *service) buildMessageFromEvent(ctx context.Context, e events.Event) (string, error) {

@@ -15,6 +15,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/descriptionchangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/enddatechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/event"
+	"github.com/SURF-Innovatie/MORIS/ent/notification"
 	"github.com/SURF-Innovatie/MORIS/ent/organisation"
 	"github.com/SURF-Innovatie/MORIS/ent/organisationchangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/person"
@@ -23,7 +24,6 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/product"
 	"github.com/SURF-Innovatie/MORIS/ent/productaddedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/productremovedevent"
-	"github.com/SURF-Innovatie/MORIS/ent/projectnotification"
 	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/startdatechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/titlechangedevent"
@@ -91,6 +91,7 @@ func checkColumn(t, c string) error {
 			descriptionchangedevent.Table:  descriptionchangedevent.ValidColumn,
 			enddatechangedevent.Table:      enddatechangedevent.ValidColumn,
 			event.Table:                    event.ValidColumn,
+			notification.Table:             notification.ValidColumn,
 			organisation.Table:             organisation.ValidColumn,
 			organisationchangedevent.Table: organisationchangedevent.ValidColumn,
 			person.Table:                   person.ValidColumn,
@@ -99,7 +100,6 @@ func checkColumn(t, c string) error {
 			product.Table:                  product.ValidColumn,
 			productaddedevent.Table:        productaddedevent.ValidColumn,
 			productremovedevent.Table:      productremovedevent.ValidColumn,
-			projectnotification.Table:      projectnotification.ValidColumn,
 			projectstartedevent.Table:      projectstartedevent.ValidColumn,
 			startdatechangedevent.Table:    startdatechangedevent.ValidColumn,
 			titlechangedevent.Table:        titlechangedevent.ValidColumn,

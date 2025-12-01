@@ -158,5 +158,5 @@ func RemoveProduct(id uuid.UUID, cur *entities.Project, productID uuid.UUID) (ev
 }
 
 func base(id uuid.UUID) events.Base {
-	return events.Base{ProjectID: id, At: time.Now().UTC()}
+	return events.Base{ProjectID: id, At: time.Now().UTC(), ID: uuid.New()}
 }

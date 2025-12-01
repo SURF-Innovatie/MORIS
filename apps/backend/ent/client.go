@@ -19,6 +19,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/descriptionchangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/enddatechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/event"
+	"github.com/SURF-Innovatie/MORIS/ent/notification"
 	"github.com/SURF-Innovatie/MORIS/ent/organisation"
 	"github.com/SURF-Innovatie/MORIS/ent/organisationchangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/person"
@@ -27,7 +28,6 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/product"
 	"github.com/SURF-Innovatie/MORIS/ent/productaddedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/productremovedevent"
-	"github.com/SURF-Innovatie/MORIS/ent/projectnotification"
 	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/startdatechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/titlechangedevent"
@@ -45,6 +45,8 @@ type Client struct {
 	EndDateChangedEvent *EndDateChangedEventClient
 	// Event is the client for interacting with the Event builders.
 	Event *EventClient
+	// Notification is the client for interacting with the Notification builders.
+	Notification *NotificationClient
 	// Organisation is the client for interacting with the Organisation builders.
 	Organisation *OrganisationClient
 	// OrganisationChangedEvent is the client for interacting with the OrganisationChangedEvent builders.
@@ -61,8 +63,6 @@ type Client struct {
 	ProductAddedEvent *ProductAddedEventClient
 	// ProductRemovedEvent is the client for interacting with the ProductRemovedEvent builders.
 	ProductRemovedEvent *ProductRemovedEventClient
-	// ProjectNotification is the client for interacting with the ProjectNotification builders.
-	ProjectNotification *ProjectNotificationClient
 	// ProjectStartedEvent is the client for interacting with the ProjectStartedEvent builders.
 	ProjectStartedEvent *ProjectStartedEventClient
 	// StartDateChangedEvent is the client for interacting with the StartDateChangedEvent builders.
@@ -85,6 +85,7 @@ func (c *Client) init() {
 	c.DescriptionChangedEvent = NewDescriptionChangedEventClient(c.config)
 	c.EndDateChangedEvent = NewEndDateChangedEventClient(c.config)
 	c.Event = NewEventClient(c.config)
+	c.Notification = NewNotificationClient(c.config)
 	c.Organisation = NewOrganisationClient(c.config)
 	c.OrganisationChangedEvent = NewOrganisationChangedEventClient(c.config)
 	c.Person = NewPersonClient(c.config)
@@ -93,7 +94,6 @@ func (c *Client) init() {
 	c.Product = NewProductClient(c.config)
 	c.ProductAddedEvent = NewProductAddedEventClient(c.config)
 	c.ProductRemovedEvent = NewProductRemovedEventClient(c.config)
-	c.ProjectNotification = NewProjectNotificationClient(c.config)
 	c.ProjectStartedEvent = NewProjectStartedEventClient(c.config)
 	c.StartDateChangedEvent = NewStartDateChangedEventClient(c.config)
 	c.TitleChangedEvent = NewTitleChangedEventClient(c.config)
@@ -193,6 +193,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		DescriptionChangedEvent:  NewDescriptionChangedEventClient(cfg),
 		EndDateChangedEvent:      NewEndDateChangedEventClient(cfg),
 		Event:                    NewEventClient(cfg),
+		Notification:             NewNotificationClient(cfg),
 		Organisation:             NewOrganisationClient(cfg),
 		OrganisationChangedEvent: NewOrganisationChangedEventClient(cfg),
 		Person:                   NewPersonClient(cfg),
@@ -201,7 +202,6 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Product:                  NewProductClient(cfg),
 		ProductAddedEvent:        NewProductAddedEventClient(cfg),
 		ProductRemovedEvent:      NewProductRemovedEventClient(cfg),
-		ProjectNotification:      NewProjectNotificationClient(cfg),
 		ProjectStartedEvent:      NewProjectStartedEventClient(cfg),
 		StartDateChangedEvent:    NewStartDateChangedEventClient(cfg),
 		TitleChangedEvent:        NewTitleChangedEventClient(cfg),
@@ -228,6 +228,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		DescriptionChangedEvent:  NewDescriptionChangedEventClient(cfg),
 		EndDateChangedEvent:      NewEndDateChangedEventClient(cfg),
 		Event:                    NewEventClient(cfg),
+		Notification:             NewNotificationClient(cfg),
 		Organisation:             NewOrganisationClient(cfg),
 		OrganisationChangedEvent: NewOrganisationChangedEventClient(cfg),
 		Person:                   NewPersonClient(cfg),
@@ -236,7 +237,6 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Product:                  NewProductClient(cfg),
 		ProductAddedEvent:        NewProductAddedEventClient(cfg),
 		ProductRemovedEvent:      NewProductRemovedEventClient(cfg),
-		ProjectNotification:      NewProjectNotificationClient(cfg),
 		ProjectStartedEvent:      NewProjectStartedEventClient(cfg),
 		StartDateChangedEvent:    NewStartDateChangedEventClient(cfg),
 		TitleChangedEvent:        NewTitleChangedEventClient(cfg),
@@ -270,9 +270,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.DescriptionChangedEvent, c.EndDateChangedEvent, c.Event, c.Organisation,
-		c.OrganisationChangedEvent, c.Person, c.PersonAddedEvent, c.PersonRemovedEvent,
-		c.Product, c.ProductAddedEvent, c.ProductRemovedEvent, c.ProjectNotification,
+		c.DescriptionChangedEvent, c.EndDateChangedEvent, c.Event, c.Notification,
+		c.Organisation, c.OrganisationChangedEvent, c.Person, c.PersonAddedEvent,
+		c.PersonRemovedEvent, c.Product, c.ProductAddedEvent, c.ProductRemovedEvent,
 		c.ProjectStartedEvent, c.StartDateChangedEvent, c.TitleChangedEvent, c.User,
 	} {
 		n.Use(hooks...)
@@ -283,9 +283,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.DescriptionChangedEvent, c.EndDateChangedEvent, c.Event, c.Organisation,
-		c.OrganisationChangedEvent, c.Person, c.PersonAddedEvent, c.PersonRemovedEvent,
-		c.Product, c.ProductAddedEvent, c.ProductRemovedEvent, c.ProjectNotification,
+		c.DescriptionChangedEvent, c.EndDateChangedEvent, c.Event, c.Notification,
+		c.Organisation, c.OrganisationChangedEvent, c.Person, c.PersonAddedEvent,
+		c.PersonRemovedEvent, c.Product, c.ProductAddedEvent, c.ProductRemovedEvent,
 		c.ProjectStartedEvent, c.StartDateChangedEvent, c.TitleChangedEvent, c.User,
 	} {
 		n.Intercept(interceptors...)
@@ -301,6 +301,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.EndDateChangedEvent.mutate(ctx, m)
 	case *EventMutation:
 		return c.Event.mutate(ctx, m)
+	case *NotificationMutation:
+		return c.Notification.mutate(ctx, m)
 	case *OrganisationMutation:
 		return c.Organisation.mutate(ctx, m)
 	case *OrganisationChangedEventMutation:
@@ -317,8 +319,6 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.ProductAddedEvent.mutate(ctx, m)
 	case *ProductRemovedEventMutation:
 		return c.ProductRemovedEvent.mutate(ctx, m)
-	case *ProjectNotificationMutation:
-		return c.ProjectNotification.mutate(ctx, m)
 	case *ProjectStartedEventMutation:
 		return c.ProjectStartedEvent.mutate(ctx, m)
 	case *StartDateChangedEventMutation:
@@ -920,6 +920,171 @@ func (c *EventClient) mutate(ctx context.Context, m *EventMutation) (Value, erro
 		return (&EventDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Event mutation op: %q", m.Op())
+	}
+}
+
+// NotificationClient is a client for the Notification schema.
+type NotificationClient struct {
+	config
+}
+
+// NewNotificationClient returns a client for the Notification from the given config.
+func NewNotificationClient(c config) *NotificationClient {
+	return &NotificationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `notification.Hooks(f(g(h())))`.
+func (c *NotificationClient) Use(hooks ...Hook) {
+	c.hooks.Notification = append(c.hooks.Notification, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `notification.Intercept(f(g(h())))`.
+func (c *NotificationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Notification = append(c.inters.Notification, interceptors...)
+}
+
+// Create returns a builder for creating a Notification entity.
+func (c *NotificationClient) Create() *NotificationCreate {
+	mutation := newNotificationMutation(c.config, OpCreate)
+	return &NotificationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Notification entities.
+func (c *NotificationClient) CreateBulk(builders ...*NotificationCreate) *NotificationCreateBulk {
+	return &NotificationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *NotificationClient) MapCreateBulk(slice any, setFunc func(*NotificationCreate, int)) *NotificationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &NotificationCreateBulk{err: fmt.Errorf("calling to NotificationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*NotificationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &NotificationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Notification.
+func (c *NotificationClient) Update() *NotificationUpdate {
+	mutation := newNotificationMutation(c.config, OpUpdate)
+	return &NotificationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *NotificationClient) UpdateOne(_m *Notification) *NotificationUpdateOne {
+	mutation := newNotificationMutation(c.config, OpUpdateOne, withNotification(_m))
+	return &NotificationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *NotificationClient) UpdateOneID(id uuid.UUID) *NotificationUpdateOne {
+	mutation := newNotificationMutation(c.config, OpUpdateOne, withNotificationID(id))
+	return &NotificationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Notification.
+func (c *NotificationClient) Delete() *NotificationDelete {
+	mutation := newNotificationMutation(c.config, OpDelete)
+	return &NotificationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *NotificationClient) DeleteOne(_m *Notification) *NotificationDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *NotificationClient) DeleteOneID(id uuid.UUID) *NotificationDeleteOne {
+	builder := c.Delete().Where(notification.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &NotificationDeleteOne{builder}
+}
+
+// Query returns a query builder for Notification.
+func (c *NotificationClient) Query() *NotificationQuery {
+	return &NotificationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeNotification},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Notification entity by its id.
+func (c *NotificationClient) Get(ctx context.Context, id uuid.UUID) (*Notification, error) {
+	return c.Query().Where(notification.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *NotificationClient) GetX(ctx context.Context, id uuid.UUID) *Notification {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a Notification.
+func (c *NotificationClient) QueryUser(_m *Notification) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(notification.Table, notification.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, notification.UserTable, notification.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEvent queries the event edge of a Notification.
+func (c *NotificationClient) QueryEvent(_m *Notification) *EventQuery {
+	query := (&EventClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(notification.Table, notification.FieldID, id),
+			sqlgraph.To(event.Table, event.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, notification.EventTable, notification.EventColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *NotificationClient) Hooks() []Hook {
+	return c.hooks.Notification
+}
+
+// Interceptors returns the client interceptors.
+func (c *NotificationClient) Interceptors() []Interceptor {
+	return c.inters.Notification
+}
+
+func (c *NotificationClient) mutate(ctx context.Context, m *NotificationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&NotificationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&NotificationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&NotificationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&NotificationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Notification mutation op: %q", m.Op())
 	}
 }
 
@@ -2067,155 +2232,6 @@ func (c *ProductRemovedEventClient) mutate(ctx context.Context, m *ProductRemove
 	}
 }
 
-// ProjectNotificationClient is a client for the ProjectNotification schema.
-type ProjectNotificationClient struct {
-	config
-}
-
-// NewProjectNotificationClient returns a client for the ProjectNotification from the given config.
-func NewProjectNotificationClient(c config) *ProjectNotificationClient {
-	return &ProjectNotificationClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `projectnotification.Hooks(f(g(h())))`.
-func (c *ProjectNotificationClient) Use(hooks ...Hook) {
-	c.hooks.ProjectNotification = append(c.hooks.ProjectNotification, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `projectnotification.Intercept(f(g(h())))`.
-func (c *ProjectNotificationClient) Intercept(interceptors ...Interceptor) {
-	c.inters.ProjectNotification = append(c.inters.ProjectNotification, interceptors...)
-}
-
-// Create returns a builder for creating a ProjectNotification entity.
-func (c *ProjectNotificationClient) Create() *ProjectNotificationCreate {
-	mutation := newProjectNotificationMutation(c.config, OpCreate)
-	return &ProjectNotificationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of ProjectNotification entities.
-func (c *ProjectNotificationClient) CreateBulk(builders ...*ProjectNotificationCreate) *ProjectNotificationCreateBulk {
-	return &ProjectNotificationCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *ProjectNotificationClient) MapCreateBulk(slice any, setFunc func(*ProjectNotificationCreate, int)) *ProjectNotificationCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &ProjectNotificationCreateBulk{err: fmt.Errorf("calling to ProjectNotificationClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*ProjectNotificationCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &ProjectNotificationCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for ProjectNotification.
-func (c *ProjectNotificationClient) Update() *ProjectNotificationUpdate {
-	mutation := newProjectNotificationMutation(c.config, OpUpdate)
-	return &ProjectNotificationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *ProjectNotificationClient) UpdateOne(_m *ProjectNotification) *ProjectNotificationUpdateOne {
-	mutation := newProjectNotificationMutation(c.config, OpUpdateOne, withProjectNotification(_m))
-	return &ProjectNotificationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *ProjectNotificationClient) UpdateOneID(id uuid.UUID) *ProjectNotificationUpdateOne {
-	mutation := newProjectNotificationMutation(c.config, OpUpdateOne, withProjectNotificationID(id))
-	return &ProjectNotificationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for ProjectNotification.
-func (c *ProjectNotificationClient) Delete() *ProjectNotificationDelete {
-	mutation := newProjectNotificationMutation(c.config, OpDelete)
-	return &ProjectNotificationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *ProjectNotificationClient) DeleteOne(_m *ProjectNotification) *ProjectNotificationDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *ProjectNotificationClient) DeleteOneID(id uuid.UUID) *ProjectNotificationDeleteOne {
-	builder := c.Delete().Where(projectnotification.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &ProjectNotificationDeleteOne{builder}
-}
-
-// Query returns a query builder for ProjectNotification.
-func (c *ProjectNotificationClient) Query() *ProjectNotificationQuery {
-	return &ProjectNotificationQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeProjectNotification},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a ProjectNotification entity by its id.
-func (c *ProjectNotificationClient) Get(ctx context.Context, id uuid.UUID) (*ProjectNotification, error) {
-	return c.Query().Where(projectnotification.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *ProjectNotificationClient) GetX(ctx context.Context, id uuid.UUID) *ProjectNotification {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// QueryUser queries the user edge of a ProjectNotification.
-func (c *ProjectNotificationClient) QueryUser(_m *ProjectNotification) *UserQuery {
-	query := (&UserClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(projectnotification.Table, projectnotification.FieldID, id),
-			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, projectnotification.UserTable, projectnotification.UserColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// Hooks returns the client hooks.
-func (c *ProjectNotificationClient) Hooks() []Hook {
-	return c.hooks.ProjectNotification
-}
-
-// Interceptors returns the client interceptors.
-func (c *ProjectNotificationClient) Interceptors() []Interceptor {
-	return c.inters.ProjectNotification
-}
-
-func (c *ProjectNotificationClient) mutate(ctx context.Context, m *ProjectNotificationMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&ProjectNotificationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&ProjectNotificationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&ProjectNotificationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&ProjectNotificationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown ProjectNotification mutation op: %q", m.Op())
-	}
-}
-
 // ProjectStartedEventClient is a client for the ProjectStartedEvent schema.
 type ProjectStartedEventClient struct {
 	config
@@ -2799,16 +2815,15 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		DescriptionChangedEvent, EndDateChangedEvent, Event, Organisation,
+		DescriptionChangedEvent, EndDateChangedEvent, Event, Notification, Organisation,
 		OrganisationChangedEvent, Person, PersonAddedEvent, PersonRemovedEvent,
-		Product, ProductAddedEvent, ProductRemovedEvent, ProjectNotification,
-		ProjectStartedEvent, StartDateChangedEvent, TitleChangedEvent, User []ent.Hook
+		Product, ProductAddedEvent, ProductRemovedEvent, ProjectStartedEvent,
+		StartDateChangedEvent, TitleChangedEvent, User []ent.Hook
 	}
 	inters struct {
-		DescriptionChangedEvent, EndDateChangedEvent, Event, Organisation,
+		DescriptionChangedEvent, EndDateChangedEvent, Event, Notification, Organisation,
 		OrganisationChangedEvent, Person, PersonAddedEvent, PersonRemovedEvent,
-		Product, ProductAddedEvent, ProductRemovedEvent, ProjectNotification,
-		ProjectStartedEvent, StartDateChangedEvent, TitleChangedEvent,
-		User []ent.Interceptor
+		Product, ProductAddedEvent, ProductRemovedEvent, ProjectStartedEvent,
+		StartDateChangedEvent, TitleChangedEvent, User []ent.Interceptor
 	}
 )

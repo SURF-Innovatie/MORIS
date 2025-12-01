@@ -11,59 +11,61 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/SURF-Innovatie/MORIS/ent/event"
+	"github.com/SURF-Innovatie/MORIS/ent/notification"
 	"github.com/SURF-Innovatie/MORIS/ent/predicate"
-	"github.com/SURF-Innovatie/MORIS/ent/projectnotification"
 	"github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/google/uuid"
 )
 
-// ProjectNotificationQuery is the builder for querying ProjectNotification entities.
-type ProjectNotificationQuery struct {
+// NotificationQuery is the builder for querying Notification entities.
+type NotificationQuery struct {
 	config
 	ctx        *QueryContext
-	order      []projectnotification.OrderOption
+	order      []notification.OrderOption
 	inters     []Interceptor
-	predicates []predicate.ProjectNotification
+	predicates []predicate.Notification
 	withUser   *UserQuery
+	withEvent  *EventQuery
 	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the ProjectNotificationQuery builder.
-func (_q *ProjectNotificationQuery) Where(ps ...predicate.ProjectNotification) *ProjectNotificationQuery {
+// Where adds a new predicate for the NotificationQuery builder.
+func (_q *NotificationQuery) Where(ps ...predicate.Notification) *NotificationQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *ProjectNotificationQuery) Limit(limit int) *ProjectNotificationQuery {
+func (_q *NotificationQuery) Limit(limit int) *NotificationQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *ProjectNotificationQuery) Offset(offset int) *ProjectNotificationQuery {
+func (_q *NotificationQuery) Offset(offset int) *NotificationQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *ProjectNotificationQuery) Unique(unique bool) *ProjectNotificationQuery {
+func (_q *NotificationQuery) Unique(unique bool) *NotificationQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *ProjectNotificationQuery) Order(o ...projectnotification.OrderOption) *ProjectNotificationQuery {
+func (_q *NotificationQuery) Order(o ...notification.OrderOption) *NotificationQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
 // QueryUser chains the current query on the "user" edge.
-func (_q *ProjectNotificationQuery) QueryUser() *UserQuery {
+func (_q *NotificationQuery) QueryUser() *UserQuery {
 	query := (&UserClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -74,9 +76,9 @@ func (_q *ProjectNotificationQuery) QueryUser() *UserQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(projectnotification.Table, projectnotification.FieldID, selector),
+			sqlgraph.From(notification.Table, notification.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, projectnotification.UserTable, projectnotification.UserColumn),
+			sqlgraph.Edge(sqlgraph.M2O, false, notification.UserTable, notification.UserColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -84,21 +86,43 @@ func (_q *ProjectNotificationQuery) QueryUser() *UserQuery {
 	return query
 }
 
-// First returns the first ProjectNotification entity from the query.
-// Returns a *NotFoundError when no ProjectNotification was found.
-func (_q *ProjectNotificationQuery) First(ctx context.Context) (*ProjectNotification, error) {
+// QueryEvent chains the current query on the "event" edge.
+func (_q *NotificationQuery) QueryEvent() *EventQuery {
+	query := (&EventClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(notification.Table, notification.FieldID, selector),
+			sqlgraph.To(event.Table, event.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, notification.EventTable, notification.EventColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// First returns the first Notification entity from the query.
+// Returns a *NotFoundError when no Notification was found.
+func (_q *NotificationQuery) First(ctx context.Context) (*Notification, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{projectnotification.Label}
+		return nil, &NotFoundError{notification.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *ProjectNotificationQuery) FirstX(ctx context.Context) *ProjectNotification {
+func (_q *NotificationQuery) FirstX(ctx context.Context) *Notification {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -106,22 +130,22 @@ func (_q *ProjectNotificationQuery) FirstX(ctx context.Context) *ProjectNotifica
 	return node
 }
 
-// FirstID returns the first ProjectNotification ID from the query.
-// Returns a *NotFoundError when no ProjectNotification ID was found.
-func (_q *ProjectNotificationQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+// FirstID returns the first Notification ID from the query.
+// Returns a *NotFoundError when no Notification ID was found.
+func (_q *NotificationQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{projectnotification.Label}
+		err = &NotFoundError{notification.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *ProjectNotificationQuery) FirstIDX(ctx context.Context) uuid.UUID {
+func (_q *NotificationQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -129,10 +153,10 @@ func (_q *ProjectNotificationQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// Only returns a single ProjectNotification entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one ProjectNotification entity is found.
-// Returns a *NotFoundError when no ProjectNotification entities are found.
-func (_q *ProjectNotificationQuery) Only(ctx context.Context) (*ProjectNotification, error) {
+// Only returns a single Notification entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one Notification entity is found.
+// Returns a *NotFoundError when no Notification entities are found.
+func (_q *NotificationQuery) Only(ctx context.Context) (*Notification, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -141,14 +165,14 @@ func (_q *ProjectNotificationQuery) Only(ctx context.Context) (*ProjectNotificat
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{projectnotification.Label}
+		return nil, &NotFoundError{notification.Label}
 	default:
-		return nil, &NotSingularError{projectnotification.Label}
+		return nil, &NotSingularError{notification.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *ProjectNotificationQuery) OnlyX(ctx context.Context) *ProjectNotification {
+func (_q *NotificationQuery) OnlyX(ctx context.Context) *Notification {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -156,10 +180,10 @@ func (_q *ProjectNotificationQuery) OnlyX(ctx context.Context) *ProjectNotificat
 	return node
 }
 
-// OnlyID is like Only, but returns the only ProjectNotification ID in the query.
-// Returns a *NotSingularError when more than one ProjectNotification ID is found.
+// OnlyID is like Only, but returns the only Notification ID in the query.
+// Returns a *NotSingularError when more than one Notification ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *ProjectNotificationQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *NotificationQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -168,15 +192,15 @@ func (_q *ProjectNotificationQuery) OnlyID(ctx context.Context) (id uuid.UUID, e
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{projectnotification.Label}
+		err = &NotFoundError{notification.Label}
 	default:
-		err = &NotSingularError{projectnotification.Label}
+		err = &NotSingularError{notification.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *ProjectNotificationQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+func (_q *NotificationQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -184,18 +208,18 @@ func (_q *ProjectNotificationQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// All executes the query and returns a list of ProjectNotifications.
-func (_q *ProjectNotificationQuery) All(ctx context.Context) ([]*ProjectNotification, error) {
+// All executes the query and returns a list of Notifications.
+func (_q *NotificationQuery) All(ctx context.Context) ([]*Notification, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*ProjectNotification, *ProjectNotificationQuery]()
-	return withInterceptors[[]*ProjectNotification](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*Notification, *NotificationQuery]()
+	return withInterceptors[[]*Notification](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *ProjectNotificationQuery) AllX(ctx context.Context) []*ProjectNotification {
+func (_q *NotificationQuery) AllX(ctx context.Context) []*Notification {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -203,20 +227,20 @@ func (_q *ProjectNotificationQuery) AllX(ctx context.Context) []*ProjectNotifica
 	return nodes
 }
 
-// IDs executes the query and returns a list of ProjectNotification IDs.
-func (_q *ProjectNotificationQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+// IDs executes the query and returns a list of Notification IDs.
+func (_q *NotificationQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(projectnotification.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(notification.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *ProjectNotificationQuery) IDsX(ctx context.Context) []uuid.UUID {
+func (_q *NotificationQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -225,16 +249,16 @@ func (_q *ProjectNotificationQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (_q *ProjectNotificationQuery) Count(ctx context.Context) (int, error) {
+func (_q *NotificationQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*ProjectNotificationQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*NotificationQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *ProjectNotificationQuery) CountX(ctx context.Context) int {
+func (_q *NotificationQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -243,7 +267,7 @@ func (_q *ProjectNotificationQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *ProjectNotificationQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *NotificationQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -256,7 +280,7 @@ func (_q *ProjectNotificationQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *ProjectNotificationQuery) ExistX(ctx context.Context) bool {
+func (_q *NotificationQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -264,19 +288,20 @@ func (_q *ProjectNotificationQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the ProjectNotificationQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the NotificationQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *ProjectNotificationQuery) Clone() *ProjectNotificationQuery {
+func (_q *NotificationQuery) Clone() *NotificationQuery {
 	if _q == nil {
 		return nil
 	}
-	return &ProjectNotificationQuery{
+	return &NotificationQuery{
 		config:     _q.config,
 		ctx:        _q.ctx.Clone(),
-		order:      append([]projectnotification.OrderOption{}, _q.order...),
+		order:      append([]notification.OrderOption{}, _q.order...),
 		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.ProjectNotification{}, _q.predicates...),
+		predicates: append([]predicate.Notification{}, _q.predicates...),
 		withUser:   _q.withUser.Clone(),
+		withEvent:  _q.withEvent.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -285,12 +310,23 @@ func (_q *ProjectNotificationQuery) Clone() *ProjectNotificationQuery {
 
 // WithUser tells the query-builder to eager-load the nodes that are connected to
 // the "user" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *ProjectNotificationQuery) WithUser(opts ...func(*UserQuery)) *ProjectNotificationQuery {
+func (_q *NotificationQuery) WithUser(opts ...func(*UserQuery)) *NotificationQuery {
 	query := (&UserClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
 	_q.withUser = query
+	return _q
+}
+
+// WithEvent tells the query-builder to eager-load the nodes that are connected to
+// the "event" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *NotificationQuery) WithEvent(opts ...func(*EventQuery)) *NotificationQuery {
+	query := (&EventClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withEvent = query
 	return _q
 }
 
@@ -300,19 +336,19 @@ func (_q *ProjectNotificationQuery) WithUser(opts ...func(*UserQuery)) *ProjectN
 // Example:
 //
 //	var v []struct {
-//		ProjectID uuid.UUID `json:"project_id,omitempty"`
+//		Message string `json:"message,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.ProjectNotification.Query().
-//		GroupBy(projectnotification.FieldProjectID).
+//	client.Notification.Query().
+//		GroupBy(notification.FieldMessage).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *ProjectNotificationQuery) GroupBy(field string, fields ...string) *ProjectNotificationGroupBy {
+func (_q *NotificationQuery) GroupBy(field string, fields ...string) *NotificationGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &ProjectNotificationGroupBy{build: _q}
+	grbuild := &NotificationGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = projectnotification.Label
+	grbuild.label = notification.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -323,26 +359,26 @@ func (_q *ProjectNotificationQuery) GroupBy(field string, fields ...string) *Pro
 // Example:
 //
 //	var v []struct {
-//		ProjectID uuid.UUID `json:"project_id,omitempty"`
+//		Message string `json:"message,omitempty"`
 //	}
 //
-//	client.ProjectNotification.Query().
-//		Select(projectnotification.FieldProjectID).
+//	client.Notification.Query().
+//		Select(notification.FieldMessage).
 //		Scan(ctx, &v)
-func (_q *ProjectNotificationQuery) Select(fields ...string) *ProjectNotificationSelect {
+func (_q *NotificationQuery) Select(fields ...string) *NotificationSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &ProjectNotificationSelect{ProjectNotificationQuery: _q}
-	sbuild.label = projectnotification.Label
+	sbuild := &NotificationSelect{NotificationQuery: _q}
+	sbuild.label = notification.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a ProjectNotificationSelect configured with the given aggregations.
-func (_q *ProjectNotificationQuery) Aggregate(fns ...AggregateFunc) *ProjectNotificationSelect {
+// Aggregate returns a NotificationSelect configured with the given aggregations.
+func (_q *NotificationQuery) Aggregate(fns ...AggregateFunc) *NotificationSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *ProjectNotificationQuery) prepareQuery(ctx context.Context) error {
+func (_q *NotificationQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -354,7 +390,7 @@ func (_q *ProjectNotificationQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !projectnotification.ValidColumn(f) {
+		if !notification.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -368,26 +404,27 @@ func (_q *ProjectNotificationQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *ProjectNotificationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*ProjectNotification, error) {
+func (_q *NotificationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Notification, error) {
 	var (
-		nodes       = []*ProjectNotification{}
+		nodes       = []*Notification{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			_q.withUser != nil,
+			_q.withEvent != nil,
 		}
 	)
-	if _q.withUser != nil {
+	if _q.withUser != nil || _q.withEvent != nil {
 		withFKs = true
 	}
 	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, projectnotification.ForeignKeys...)
+		_spec.Node.Columns = append(_spec.Node.Columns, notification.ForeignKeys...)
 	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*ProjectNotification).scanValues(nil, columns)
+		return (*Notification).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &ProjectNotification{config: _q.config}
+		node := &Notification{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -403,21 +440,27 @@ func (_q *ProjectNotificationQuery) sqlAll(ctx context.Context, hooks ...queryHo
 	}
 	if query := _q.withUser; query != nil {
 		if err := _q.loadUser(ctx, query, nodes, nil,
-			func(n *ProjectNotification, e *User) { n.Edges.User = e }); err != nil {
+			func(n *Notification, e *User) { n.Edges.User = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withEvent; query != nil {
+		if err := _q.loadEvent(ctx, query, nodes, nil,
+			func(n *Notification, e *Event) { n.Edges.Event = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *ProjectNotificationQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*ProjectNotification, init func(*ProjectNotification), assign func(*ProjectNotification, *User)) error {
+func (_q *NotificationQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Notification, init func(*Notification), assign func(*Notification, *User)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*ProjectNotification)
+	nodeids := make(map[uuid.UUID][]*Notification)
 	for i := range nodes {
-		if nodes[i].project_notification_user == nil {
+		if nodes[i].notification_user == nil {
 			continue
 		}
-		fk := *nodes[i].project_notification_user
+		fk := *nodes[i].notification_user
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -434,7 +477,39 @@ func (_q *ProjectNotificationQuery) loadUser(ctx context.Context, query *UserQue
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "project_notification_user" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "notification_user" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (_q *NotificationQuery) loadEvent(ctx context.Context, query *EventQuery, nodes []*Notification, init func(*Notification), assign func(*Notification, *Event)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Notification)
+	for i := range nodes {
+		if nodes[i].notification_event == nil {
+			continue
+		}
+		fk := *nodes[i].notification_event
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(event.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "notification_event" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -443,7 +518,7 @@ func (_q *ProjectNotificationQuery) loadUser(ctx context.Context, query *UserQue
 	return nil
 }
 
-func (_q *ProjectNotificationQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *NotificationQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -452,8 +527,8 @@ func (_q *ProjectNotificationQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *ProjectNotificationQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(projectnotification.Table, projectnotification.Columns, sqlgraph.NewFieldSpec(projectnotification.FieldID, field.TypeUUID))
+func (_q *NotificationQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(notification.Table, notification.Columns, sqlgraph.NewFieldSpec(notification.FieldID, field.TypeUUID))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -462,9 +537,9 @@ func (_q *ProjectNotificationQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, projectnotification.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, notification.FieldID)
 		for i := range fields {
-			if fields[i] != projectnotification.FieldID {
+			if fields[i] != notification.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
@@ -492,12 +567,12 @@ func (_q *ProjectNotificationQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *ProjectNotificationQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *NotificationQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(projectnotification.Table)
+	t1 := builder.Table(notification.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = projectnotification.Columns
+		columns = notification.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -524,28 +599,28 @@ func (_q *ProjectNotificationQuery) sqlQuery(ctx context.Context) *sql.Selector 
 	return selector
 }
 
-// ProjectNotificationGroupBy is the group-by builder for ProjectNotification entities.
-type ProjectNotificationGroupBy struct {
+// NotificationGroupBy is the group-by builder for Notification entities.
+type NotificationGroupBy struct {
 	selector
-	build *ProjectNotificationQuery
+	build *NotificationQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *ProjectNotificationGroupBy) Aggregate(fns ...AggregateFunc) *ProjectNotificationGroupBy {
+func (_g *NotificationGroupBy) Aggregate(fns ...AggregateFunc) *NotificationGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *ProjectNotificationGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *NotificationGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*ProjectNotificationQuery, *ProjectNotificationGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*NotificationQuery, *NotificationGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *ProjectNotificationGroupBy) sqlScan(ctx context.Context, root *ProjectNotificationQuery, v any) error {
+func (_g *NotificationGroupBy) sqlScan(ctx context.Context, root *NotificationQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -572,28 +647,28 @@ func (_g *ProjectNotificationGroupBy) sqlScan(ctx context.Context, root *Project
 	return sql.ScanSlice(rows, v)
 }
 
-// ProjectNotificationSelect is the builder for selecting fields of ProjectNotification entities.
-type ProjectNotificationSelect struct {
-	*ProjectNotificationQuery
+// NotificationSelect is the builder for selecting fields of Notification entities.
+type NotificationSelect struct {
+	*NotificationQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *ProjectNotificationSelect) Aggregate(fns ...AggregateFunc) *ProjectNotificationSelect {
+func (_s *NotificationSelect) Aggregate(fns ...AggregateFunc) *NotificationSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *ProjectNotificationSelect) Scan(ctx context.Context, v any) error {
+func (_s *NotificationSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*ProjectNotificationQuery, *ProjectNotificationSelect](ctx, _s.ProjectNotificationQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*NotificationQuery, *NotificationSelect](ctx, _s.NotificationQuery, _s, _s.inters, v)
 }
 
-func (_s *ProjectNotificationSelect) sqlScan(ctx context.Context, root *ProjectNotificationQuery, v any) error {
+func (_s *NotificationSelect) sqlScan(ctx context.Context, root *NotificationQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

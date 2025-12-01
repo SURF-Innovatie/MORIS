@@ -9,23 +9,24 @@ import (
 	"github.com/google/uuid"
 )
 
-type ProjectNotification struct {
+type Notification struct {
 	ent.Schema
 }
 
-func (ProjectNotification) Fields() []ent.Field {
+func (Notification) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).
 			Default(uuid.New),
-		field.UUID("project_id", uuid.UUID{}),
 		field.String("message"),
+		field.Bool("read"),
 		field.Time("sent_at").
 			Default(time.Now),
 	}
 }
 
-func (ProjectNotification) Edges() []ent.Edge {
+func (Notification) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("user", User.Type).Unique(),
+		edge.To("event", Event.Type).Unique(),
 	}
 }

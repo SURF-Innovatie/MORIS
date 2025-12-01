@@ -295,8 +295,52 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProjectNotification"
+                                "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_notificationdto.Response"
                             }
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications/{id}/read": {
+            "put": {
+                "description": "Marks a specific notification as read",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Mark a notification as read",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Notification ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
                         }
                     },
                     "401": {
@@ -571,7 +615,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                                "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response"
                             }
                         }
                     },
@@ -610,7 +654,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response"
                         }
                     },
                     "400": {
@@ -654,7 +698,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response"
                         }
                     },
                     "400": {
@@ -705,7 +749,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response"
                         }
                     },
                     "400": {
@@ -806,7 +850,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.Response"
                         }
                     },
                     "400": {
@@ -1225,19 +1269,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "ent.User": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "description": "ID of the ent.",
-                    "type": "string"
-                },
-                "person_id": {
-                    "description": "PersonID holds the value of the \"person_id\" field.",
-                    "type": "string"
-                }
-            }
-        },
         "github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.Changelog": {
             "type": "object",
             "properties": {
@@ -1256,6 +1287,27 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "event": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_notificationdto.Response": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "projectId": {
+                    "description": "TODO: communicate information about the event",
+                    "type": "string"
+                },
+                "read": {
+                    "type": "boolean"
+                },
+                "sentAt": {
                     "type": "string"
                 }
             }
@@ -1516,67 +1568,6 @@ const docTemplate = `{
                 "Trademark",
                 "Workflow"
             ]
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "endDate": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "organisation": {
-                    "type": "string"
-                },
-                "people": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "products": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "projectAdmin": {
-                    "type": "string"
-                },
-                "startDate": {
-                    "type": "string"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "integer"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProjectNotification": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "projectId": {
-                    "type": "string"
-                },
-                "sentAt": {
-                    "type": "string"
-                },
-                "user": {
-                    "$ref": "#/definitions/ent.User"
-                }
-            }
         },
         "github_com_SURF-Innovatie_MORIS_internal_domain_entities.User": {
             "type": "object",

@@ -10,9 +10,11 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
+	"github.com/joho/godotenv"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
+	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/platform/eventstore"
 	_ "github.com/lib/pq"
@@ -38,6 +40,11 @@ type seedProduct struct {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		logrus.Warnf("Error loading .env file: %v", err)
+	}
+
 	dbHost := os.Getenv("DB_HOST")
 	dbUser := os.Getenv("DB_USER")
 	dbPassword := os.Getenv("DB_PASSWORD")
@@ -276,6 +283,7 @@ func main() {
 
 		startEvent := events.ProjectStarted{
 			Base: events.Base{
+				ID:        uuid.New(),
 				ProjectID: projectID,
 				At:        time.Now().UTC(),
 			},
@@ -347,4 +355,40 @@ func main() {
 	}
 
 	logrus.Info("Seeding done.")
+
+	// Add some sample notifications
+	logrus.Info("Seeding notifications...")
+	for _, name := range []string{"Dr. Elaine Carter", "Sarah Vos", "Dr. Mariam Bensaïd", "Niels van Bruggen", "Dr. Yara Mendes", "Emilio Vargas"} {
+		personID, ok := personIDs[name]
+		if !ok {
+			continue
+		}
+		// Find user ID for this person
+		u, err := client.User.Query().Where(entuser.PersonIDEQ(personID)).Only(ctx)
+		if err != nil {
+			logrus.Errorf("failed to find user for person %s: %v", name, err)
+			continue
+		}
+
+		_, err = client.Notification.Create().
+			SetUser(u).
+			SetMessage("Welcome to MORIS! This is a sample notification.").
+			SetRead(false).
+			SetSentAt(time.Now().Add(-24 * time.Hour)).
+			Save(ctx)
+		if err != nil {
+			logrus.Errorf("failed to create notification for %s: %v", name, err)
+		}
+
+		_, err = client.Notification.Create().
+			SetUser(u).
+			SetMessage("Your project 'Quantum-Resistant Cryptography Benchmarking' has been started.").
+			SetRead(true).
+			SetSentAt(time.Now().Add(-48 * time.Hour)).
+			Save(ctx)
+		if err != nil {
+			logrus.Errorf("failed to create notification for %s: %v", name, err)
+		}
+	}
+	logrus.Info("Notifications seeded.")
 }

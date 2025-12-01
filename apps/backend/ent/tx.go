@@ -18,6 +18,8 @@ type Tx struct {
 	EndDateChangedEvent *EndDateChangedEventClient
 	// Event is the client for interacting with the Event builders.
 	Event *EventClient
+	// Notification is the client for interacting with the Notification builders.
+	Notification *NotificationClient
 	// Organisation is the client for interacting with the Organisation builders.
 	Organisation *OrganisationClient
 	// OrganisationChangedEvent is the client for interacting with the OrganisationChangedEvent builders.
@@ -34,8 +36,6 @@ type Tx struct {
 	ProductAddedEvent *ProductAddedEventClient
 	// ProductRemovedEvent is the client for interacting with the ProductRemovedEvent builders.
 	ProductRemovedEvent *ProductRemovedEventClient
-	// ProjectNotification is the client for interacting with the ProjectNotification builders.
-	ProjectNotification *ProjectNotificationClient
 	// ProjectStartedEvent is the client for interacting with the ProjectStartedEvent builders.
 	ProjectStartedEvent *ProjectStartedEventClient
 	// StartDateChangedEvent is the client for interacting with the StartDateChangedEvent builders.
@@ -178,6 +178,7 @@ func (tx *Tx) init() {
 	tx.DescriptionChangedEvent = NewDescriptionChangedEventClient(tx.config)
 	tx.EndDateChangedEvent = NewEndDateChangedEventClient(tx.config)
 	tx.Event = NewEventClient(tx.config)
+	tx.Notification = NewNotificationClient(tx.config)
 	tx.Organisation = NewOrganisationClient(tx.config)
 	tx.OrganisationChangedEvent = NewOrganisationChangedEventClient(tx.config)
 	tx.Person = NewPersonClient(tx.config)
@@ -186,7 +187,6 @@ func (tx *Tx) init() {
 	tx.Product = NewProductClient(tx.config)
 	tx.ProductAddedEvent = NewProductAddedEventClient(tx.config)
 	tx.ProductRemovedEvent = NewProductRemovedEventClient(tx.config)
-	tx.ProjectNotification = NewProjectNotificationClient(tx.config)
 	tx.ProjectStartedEvent = NewProjectStartedEventClient(tx.config)
 	tx.StartDateChangedEvent = NewStartDateChangedEventClient(tx.config)
 	tx.TitleChangedEvent = NewTitleChangedEventClient(tx.config)

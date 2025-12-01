@@ -8,6 +8,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/descriptionchangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/enddatechangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/event"
+	"github.com/SURF-Innovatie/MORIS/ent/notification"
 	"github.com/SURF-Innovatie/MORIS/ent/organisation"
 	"github.com/SURF-Innovatie/MORIS/ent/organisationchangedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/person"
@@ -16,7 +17,6 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/product"
 	"github.com/SURF-Innovatie/MORIS/ent/productaddedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/productremovedevent"
-	"github.com/SURF-Innovatie/MORIS/ent/projectnotification"
 	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/schema"
 	"github.com/SURF-Innovatie/MORIS/ent/startdatechangedevent"
@@ -51,6 +51,16 @@ func init() {
 	eventDescID := eventFields[0].Descriptor()
 	// event.DefaultID holds the default value on creation for the id field.
 	event.DefaultID = eventDescID.Default.(func() uuid.UUID)
+	notificationFields := schema.Notification{}.Fields()
+	_ = notificationFields
+	// notificationDescSentAt is the schema descriptor for sent_at field.
+	notificationDescSentAt := notificationFields[3].Descriptor()
+	// notification.DefaultSentAt holds the default value on creation for the sent_at field.
+	notification.DefaultSentAt = notificationDescSentAt.Default.(func() time.Time)
+	// notificationDescID is the schema descriptor for id field.
+	notificationDescID := notificationFields[0].Descriptor()
+	// notification.DefaultID holds the default value on creation for the id field.
+	notification.DefaultID = notificationDescID.Default.(func() uuid.UUID)
 	organisationFields := schema.Organisation{}.Fields()
 	_ = organisationFields
 	// organisationDescID is the schema descriptor for id field.
@@ -103,16 +113,6 @@ func init() {
 	productremovedeventDescProductID := productremovedeventFields[0].Descriptor()
 	// productremovedevent.DefaultProductID holds the default value on creation for the product_id field.
 	productremovedevent.DefaultProductID = productremovedeventDescProductID.Default.(func() uuid.UUID)
-	projectnotificationFields := schema.ProjectNotification{}.Fields()
-	_ = projectnotificationFields
-	// projectnotificationDescSentAt is the schema descriptor for sent_at field.
-	projectnotificationDescSentAt := projectnotificationFields[3].Descriptor()
-	// projectnotification.DefaultSentAt holds the default value on creation for the sent_at field.
-	projectnotification.DefaultSentAt = projectnotificationDescSentAt.Default.(func() time.Time)
-	// projectnotificationDescID is the schema descriptor for id field.
-	projectnotificationDescID := projectnotificationFields[0].Descriptor()
-	// projectnotification.DefaultID holds the default value on creation for the id field.
-	projectnotification.DefaultID = projectnotificationDescID.Default.(func() uuid.UUID)
 	projectstartedeventFields := schema.ProjectStartedEvent{}.Fields()
 	_ = projectstartedeventFields
 	// projectstartedeventDescProjectAdmin is the schema descriptor for project_admin field.

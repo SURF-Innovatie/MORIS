@@ -61,13 +61,17 @@ func (s *EntStore) Append(
 	for _, e := range list {
 		version++
 
-		switch v := e.(type) {
+		id := e.GetID()
+		if id == uuid.Nil {
+			id = uuid.New()
+		}
 
+		switch v := e.(type) {
 		case events.ProjectStarted:
 			// 1) create base Event row
 			evRow, err := tx.Event.
 				Create().
-				SetID(uuid.New()).
+				SetID(id).
 				SetProjectID(projectID).
 				SetVersion(version).
 				SetType(events.ProjectStartedType).
@@ -366,6 +370,7 @@ func (s *EntStore) Load(
 
 	for _, r := range rows {
 		base := events.Base{
+			ID:        r.ID,
 			ProjectID: projectID,
 			At:        r.OccurredAt,
 		}
