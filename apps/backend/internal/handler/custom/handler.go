@@ -171,7 +171,7 @@ func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch fresh user data from database
-	freshUser, err := h.userService.Get(r.Context(), userCtx.User.ID)
+	freshUser, err := h.userService.GetAccount(r.Context(), userCtx.User.ID)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -183,8 +183,18 @@ func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	dto := userdto.Response{
+		ID:         freshUser.User.ID,
+		PersonID:   freshUser.User.PersonID,
+		ORCiD:      freshUser.Person.ORCiD,
+		Name:       freshUser.Person.Name,
+		GivenName:  freshUser.Person.GivenName,
+		FamilyName: freshUser.Person.FamilyName,
+		Email:      freshUser.Person.Email,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(freshUser)
+	_ = json.NewEncoder(w).Encode(dto)
 }
 
 // AdminUserList godoc

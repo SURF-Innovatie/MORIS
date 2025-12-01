@@ -34,7 +34,7 @@ func NewHandler(svc project.Service) *Handler {
 // @Accept json
 // @Produce json
 // @Param id path string true "Project ID (UUID)"
-// @Success 200 {object} entities.Project
+// @Success 200 {object} projectdto.Response
 // @Failure 400 {string} string "invalid project id"
 // @Failure 404 {string} string "project not found"
 // @Router /projects/{id} [get]
@@ -61,7 +61,7 @@ func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param project body projectdto.Request true "Project details"
-// @Success 200 {object} entities.Project
+// @Success 200 {object} projectdto.Response
 // @Failure 400 {string} string "invalid body or date format"
 // @Failure 500 {string} string "internal server error"
 // @Router /projects [post]
@@ -112,7 +112,7 @@ func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path string true "Project ID (UUID)"
 // @Param project body projectdto.Request true "Project details"
-// @Success 200 {object} entities.Project
+// @Success 200 {object} projectdto.Response
 // @Failure 400 {string} string "invalid body, id or date format"
 // @Failure 404 {string} string "project not found"
 // @Failure 500 {string} string "internal server error"
@@ -171,7 +171,7 @@ func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 // @Tags projects
 // @Accept json
 // @Produce json
-// @Success 200 {array} entities.Project
+// @Success 200 {array} projectdto.Response
 // @Failure 500 {string} string "internal server error"
 // @Router /projects [get]
 func (h *Handler) GetAllProjects(w http.ResponseWriter, r *http.Request) {
@@ -196,7 +196,7 @@ func (h *Handler) GetAllProjects(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path string true "Project ID (UUID)"
 // @Param personId path string true "Person ID (UUID)"
-// @Success 200 {object} entities.Project
+// @Success 200 {object} projectdto.Response
 // @Failure 400 {string} string "invalid project id or body"
 // @Failure 500 {string} string "internal server error"
 // @Router /projects/{id}/people/{personId} [post]

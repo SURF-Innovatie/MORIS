@@ -113,12 +113,15 @@ func main() {
 
 	r.Route("/api", func(r chi.Router) {
 		custom.MountCustomHandlers(r, customHandler)
-		projecthandler.MountProjectRoutes(r, projHandler)
-		personhandler.MountPersonRoutes(r, personHandler)
-		producthandler.MountProductRoutes(r, productHandler)
-		organisationhandler.MountOrganisationRoutes(r, organisationHandler)
-		notificationhandler.MountNotificationRoutes(r, notificationHandler)
-		userhandler.MountUserRoutes(r, userHandler)
+		r.Group(func(r chi.Router) {
+			r.Use(auth.AuthMiddleware)
+			projecthandler.MountProjectRoutes(r, projHandler)
+			personhandler.MountPersonRoutes(r, personHandler)
+			producthandler.MountProductRoutes(r, productHandler)
+			organisationhandler.MountOrganisationRoutes(r, organisationHandler)
+			notificationhandler.MountNotificationRoutes(r, notificationHandler)
+			userhandler.MountUserRoutes(r, userHandler)
+		})
 	})
 
 	port := os.Getenv("PORT")

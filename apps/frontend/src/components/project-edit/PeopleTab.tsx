@@ -1,4 +1,4 @@
-import { Plus, MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Crown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,21 +18,29 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AddPersonDialog } from "./AddPersonDialog";
 
 export interface Person {
   id: string;
   name: string;
   email: string;
-  role: string;
-  avatar: string | null;
+  role?: string; // Role might be optional or coming from a different place
+  avatar?: string | null;
 }
 
 interface PeopleTabProps {
+  projectId: string;
   people: Person[];
-  onAddMember: () => void;
+  adminId?: string;
+  onRefresh: () => void;
 }
 
-export function PeopleTab({ people, onAddMember }: PeopleTabProps) {
+export function PeopleTab({
+  projectId,
+  people,
+  adminId,
+  onRefresh,
+}: PeopleTabProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -42,10 +50,7 @@ export function PeopleTab({ people, onAddMember }: PeopleTabProps) {
             Manage who has access to this project.
           </CardDescription>
         </div>
-        <Button size="sm" onClick={onAddMember}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Member
-        </Button>
+        <AddPersonDialog projectId={projectId} onPersonAdded={onRefresh} />
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -65,14 +70,19 @@ export function PeopleTab({ people, onAddMember }: PeopleTabProps) {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium leading-none">{person.name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium leading-none">{person.name}</p>
+                    {adminId === person.id && (
+                      <Crown className="h-3 w-3 text-yellow-500" />
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground">
                     {person.email}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <Badge variant="outline">{person.role}</Badge>
+                {person.role && <Badge variant="outline">{person.role}</Badge>}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">

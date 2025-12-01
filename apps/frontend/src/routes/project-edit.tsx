@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -11,56 +11,32 @@ import { useToast } from "@/hooks/use-toast";
 import { useGetProjectsId, usePutProjectsId } from "@api/moris";
 
 import { GeneralTab } from "@/components/project-edit/GeneralTab";
-import { PeopleTab } from "@/components/project-edit/PeopleTab";
+import { PeopleTab, Person } from "@/components/project-edit/PeopleTab";
 import { ChangelogTab } from "@/components/project-edit/ChangelogTab";
 import { projectFormSchema } from "@/components/project-edit/schema";
-
-// Mock data for People
-const MOCK_PEOPLE = [
-  {
-    id: "1",
-    name: "Alice Johnson",
-    email: "alice@example.com",
-    role: "Admin",
-    avatar: null,
-  },
-  {
-    id: "2",
-    name: "Bob Smith",
-    email: "bob@example.com",
-    role: "Member",
-    avatar: null,
-  },
-  {
-    id: "3",
-    name: "Charlie Brown",
-    email: "charlie@example.com",
-    role: "Viewer",
-    avatar: null,
-  },
-];
 
 export default function ProjectEditRoute() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // State for mock features
-  const [activeTab, setActiveTab] = useState("general");
-  const [people, setPeople] = useState(MOCK_PEOPLE);
-
-  const handleAddMember = () => {
-    const newMember = {
-      id: Math.random().toString(),
-      name: "New Member",
-      email: "new@example.com",
-      role: "Viewer",
-      avatar: null,
-    };
-    setPeople([...people, newMember]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "general";
+  const setActiveTab = (tab: string) => {
+    setSearchParams(
+      (prev) => {
+        prev.set("tab", tab);
+        return prev;
+      },
+      { replace: true }
+    );
   };
 
-  const { data: project, isLoading: isLoadingProject } = useGetProjectsId(id!, {
+  const {
+    data: project,
+    isLoading: isLoadingProject,
+    refetch: refetchProject,
+  } = useGetProjectsId(id!, {
     query: {
       enabled: !!id,
     },
@@ -176,7 +152,12 @@ export default function ProjectEditRoute() {
           </TabsContent>
 
           <TabsContent value="people">
-            <PeopleTab people={people} onAddMember={handleAddMember} />
+            <PeopleTab
+              projectId={id!}
+              people={(project?.people as unknown as Person[]) || []}
+              adminId={project?.projectAdmin}
+              onRefresh={refetchProject}
+            />
           </TabsContent>
 
           <TabsContent value="changelog">

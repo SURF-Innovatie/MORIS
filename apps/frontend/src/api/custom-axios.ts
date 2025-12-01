@@ -29,12 +29,10 @@ AXIOS_INSTANCE.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response) {
-      // Check if 401 and clear token
+      // Check if 401 and dispatch session expired event
       if (error.response.status === 401) {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
-        // Optionally redirect to login or dispatch an event
-        window.dispatchEvent(new CustomEvent('auth:logout'));
+        // Do not clear token immediately, let the user decide when to log out via the dialog
+        window.dispatchEvent(new CustomEvent('auth:session-expired'));
       }
 
       const backendError = error.response.data as Partial<BackendError>;

@@ -10,6 +10,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { BackendStatusProvider } from "./contexts/BackendStatusContext";
 import { Toaster } from "@/components/ui/toaster";
 import { BackendOfflineAlert } from "@/components/status/BackendOfflineAlert";
+import { SessionExpiredAlert } from "@/components/status/SessionExpiredAlert";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,6 +37,7 @@ ReactDOM.createRoot(rootElement).render(
           <RouterProvider router={router} />
           <Toaster />
           <BackendOfflineAlert />
+          <SessionExpiredAlert />
           <ReactQueryDevtools
             initialIsOpen={false}
             buttonPosition="bottom-right"
