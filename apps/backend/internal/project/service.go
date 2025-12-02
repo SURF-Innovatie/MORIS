@@ -146,7 +146,7 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 			Status:    string(en.StatusApproved),
 			CreatedBy: user.ID,
 		},
-		ProjectAdmin:   params.ProjectAdmin,
+		ProjectAdmin:   user.PersonID,
 		Title:          params.Title,
 		Description:    params.Description,
 		StartDate:      params.StartDate,
@@ -158,11 +158,22 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 		return nil, err
 	}
 
-	// user is already fetched at the beginning of the function
-	_ = s.notifier.NotifyForEvents(ctx, user, startEvent)
-
 	proj := projection.Reduce(projectID, []events.Event{startEvent})
 	proj.Version = 1
+
+	ev, err := commands.AddPerson(projectID, user.ID, proj, user.PersonID, en.StatusApproved)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.es.Append(ctx, projectID, proj.Version, ev); err != nil {
+		return nil, err
+	}
+
+	projection.Apply(proj, ev)
+
+	// user is already fetched at the beginning of the function
+	_ = s.notifier.NotifyForEvents(ctx, user, startEvent)
 
 	resp, err := s.buildProjectDetails(ctx, proj)
 	if err != nil {
