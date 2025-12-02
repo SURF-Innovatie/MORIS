@@ -179,7 +179,7 @@ export default function ProjectDetailsRoute() {
                         </Avatar>
                         <div className="space-y-0.5">
                           <p className="text-sm font-medium leading-none">
-                            {person.givenName} {person.familyName}
+                            {person.name}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {person.email}

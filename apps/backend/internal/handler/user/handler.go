@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/SURF-Innovatie/MORIS/internal/api/eventdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -147,7 +149,54 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
+	if err := h.svc.Delete(r.Context(), id); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// GetApprovedEvents godoc
+// @Summary Get approved events for a user
+// @Description Retrieves all approved events created by the user with the given ID.
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID (UUID)"
+// @Success 200 {object} eventdto.Response
+// @Failure 400 {string} string "invalid id"
+// @Failure 500 {string} string "internal server error"
+// @Router /users/{id}/events/approved [get]
+func (h *Handler) GetApprovedEvents(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	events, err := h.svc.GetApprovedEvents(r.Context(), id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Map to DTO
+	dtos := make([]eventdto.Event, 0, len(events))
+	for _, e := range events {
+		dtos = append(dtos, eventdto.Event{
+			ID:        e.GetID(),
+			ProjectID: e.AggregateID(),
+			Type:      e.Type(),
+			Status:    e.GetStatus(),
+			CreatedBy: e.CreatedByID(),
+			At:        e.OccurredAt(),
+			Details:   e.String(),
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(eventdto.Response{Events: dtos})
 }
 
 func writeJSON(w http.ResponseWriter, acc *entities.UserAccount) {

@@ -22,6 +22,9 @@ type Store interface {
 
 	// LoadEvent loads a single event by ID.
 	LoadEvent(ctx context.Context, eventID uuid.UUID) (events.Event, error)
+
+	// LoadUserApprovedEvents loads all approved events created by a user.
+	LoadUserApprovedEvents(ctx context.Context, userID uuid.UUID) ([]events.Event, error)
 }
 
 var ErrConcurrency = errors.New("concurrency conflict")

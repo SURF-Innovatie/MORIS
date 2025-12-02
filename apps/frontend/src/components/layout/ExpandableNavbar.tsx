@@ -11,9 +11,6 @@ import {
   Inbox,
   Calendar,
   Folder,
-  BookOpen,
-  Database,
-  Key,
   Package,
 } from "lucide-react";
 
@@ -120,7 +117,10 @@ export const ExpandableNavbar = () => {
                       <Icon className="h-5 w-5" aria-hidden />
                       <span className="font-medium">{label}</span>
                       {showBadge && unreadCount > 0 && (
-                        <Badge variant="secondary" className="ml-auto h-5 px-1.5 text-[10px]">
+                        <Badge
+                          variant="secondary"
+                          className="ml-auto h-5 px-1.5 text-[10px]"
+                        >
                           {unreadCount}
                         </Badge>
                       )}
@@ -167,9 +167,7 @@ export const ExpandableNavbar = () => {
       )}
 
       {/* Desktop Sidebar */}
-      <aside
-        className="hidden lg:flex fixed left-0 top-0 bottom-0 z-40 flex-col bg-background border-r border-black/10 w-64"
-      >
+      <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 z-40 flex-col bg-background border-r border-black/10 w-64">
         {/* Logo Section */}
         <div className="flex items-center justify-between p-4 border-b border-black/10">
           <NavLink to="/dashboard" className="flex items-center gap-3">
@@ -205,7 +203,10 @@ export const ExpandableNavbar = () => {
                   <Icon className="h-5 w-5 flex-shrink-0" aria-hidden />
                   <span className="font-medium flex-1">{label}</span>
                   {showBadge && unreadCount > 0 && (
-                    <Badge variant="secondary" className="ml-auto h-5 px-1.5 text-[10px]">
+                    <Badge
+                      variant="secondary"
+                      className="ml-auto h-5 px-1.5 text-[10px]"
+                    >
                       {unreadCount}
                     </Badge>
                   )}
@@ -232,10 +233,7 @@ export const ExpandableNavbar = () => {
             className="w-full justify-start"
             onClick={handleLogout}
           >
-            <LogOut
-              className="h-4 w-4 mr-2"
-              aria-hidden
-            />
+            <LogOut className="h-4 w-4 mr-2" aria-hidden />
             Logout
           </Button>
         </div>

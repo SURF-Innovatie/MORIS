@@ -7,7 +7,9 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/person"
+	"github.com/SURF-Innovatie/MORIS/internal/platform/eventstore"
 	"github.com/google/uuid"
 )
 
@@ -19,15 +21,17 @@ type Service interface {
 
 	GetAccount(ctx context.Context, id uuid.UUID) (*entities.UserAccount, error)
 	GetAccountByEmail(ctx context.Context, email string) (*entities.UserAccount, error)
+	GetApprovedEvents(ctx context.Context, userID uuid.UUID) ([]events.Event, error)
 }
 
 type service struct {
 	cli       *ent.Client
 	personSvc person.Service
+	es        eventstore.Store
 }
 
-func NewService(cli *ent.Client, personSvc person.Service) Service {
-	return &service{cli: cli, personSvc: personSvc}
+func NewService(cli *ent.Client, personSvc person.Service, es eventstore.Store) Service {
+	return &service{cli: cli, personSvc: personSvc, es: es}
 }
 
 func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.User, error) {
@@ -148,4 +152,8 @@ func (s *service) mapRow(ctx context.Context, row *ent.User) (*userdto.Response,
 		GivenName:  per.GivenName,
 		FamilyName: per.FamilyName,
 	}, nil
+}
+
+func (s *service) GetApprovedEvents(ctx context.Context, userID uuid.UUID) ([]events.Event, error) {
+	return s.es.LoadUserApprovedEvents(ctx, userID)
 }

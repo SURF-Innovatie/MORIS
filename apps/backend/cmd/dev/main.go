@@ -79,8 +79,9 @@ func main() {
 	}
 
 	// Create services
+	esStore := eventstore.NewEntStore(client)
 	personSvc := person.NewService(client)
-	userSvc := user.NewService(client, personSvc)
+	userSvc := user.NewService(client, personSvc, esStore)
 	authSvc := auth.NewService(client, userSvc)
 	orcidSvc := orcid.NewService(client, userSvc)
 
@@ -109,7 +110,6 @@ func main() {
 
 	userHandler := userhandler.NewHandler(userSvc)
 
-	esStore := eventstore.NewEntStore(client)
 	projSvc := project.NewService(esStore, client, notifierSvc)
 	projHandler := projecthandler.NewHandler(projSvc)
 

@@ -14,5 +14,5 @@ type ProductAdded struct {
 func (ProductAdded) isEvent()     {}
 func (ProductAdded) Type() string { return ProductAddedType }
 func (e ProductAdded) String() string {
-	return fmt.Sprintf("Person added: %s", e.ProductID)
+	return fmt.Sprintf("Product added: %s", e.ProductID)
 }

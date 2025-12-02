@@ -7,6 +7,8 @@ func MountUserRoutes(r chi.Router, h *Handler) {
 		r.Post("/", h.CreateUser)
 		r.Get("/{id}", h.GetUser)
 		r.Put("/{id}", h.UpdateUser)
+
 		r.Delete("/{id}", h.DeleteUser)
+		r.Get("/{id}/events/approved", h.GetApprovedEvents)
 	})
 }

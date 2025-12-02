@@ -1,6 +1,6 @@
 import { UseFormReturn } from "react-hook-form";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2, Save, Trash2, Building2 } from "lucide-react";
+import { CalendarIcon, Loader2, Save, Building2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -63,7 +63,10 @@ export function GeneralTab({
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
                 <FormField
                   control={form.control}
                   name="title"
@@ -204,7 +207,9 @@ export function GeneralTab({
         <Card>
           <CardHeader>
             <CardTitle>Event Log</CardTitle>
-            <CardDescription>Recent events and pending approvals.</CardDescription>
+            <CardDescription>
+              Recent events and pending approvals.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <PendingEventsList isAdmin={isAdmin} />

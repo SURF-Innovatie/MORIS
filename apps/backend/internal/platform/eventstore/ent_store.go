@@ -562,3 +562,40 @@ func (s *EntStore) mapEventRow(r *ent.Event) (events.Event, error) {
 		return nil, nil
 	}
 }
+
+func (s *EntStore) LoadUserApprovedEvents(ctx context.Context, userID uuid.UUID) ([]events.Event, error) {
+	rows, err := s.cli.Event.
+		Query().
+		Where(
+			en.CreatedByEQ(userID),
+			en.StatusEQ(en.StatusApproved),
+		).
+		Order(ent.Desc(en.FieldOccurredAt)).
+		WithProjectStarted().
+		WithTitleChanged().
+		WithDescriptionChanged().
+		WithStartDateChanged().
+		WithEndDateChanged().
+		WithOrganisationChanged().
+		WithPersonAdded().
+		WithPersonRemoved().
+		WithProductAdded().
+		WithProductRemoved().
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]events.Event, 0, len(rows))
+	for _, r := range rows {
+		evt, err := s.mapEventRow(r)
+		if err != nil {
+			return nil, err
+		}
+		if evt != nil {
+			out = append(out, evt)
+		}
+	}
+
+	return out, nil
+}
