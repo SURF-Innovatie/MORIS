@@ -143,6 +143,7 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 			ID:        uuid.New(),
 			ProjectID: projectID,
 			At:        now,
+			Status:    string(en.StatusApproved),
 			CreatedBy: user.ID,
 		},
 		ProjectAdmin:   params.ProjectAdmin,
