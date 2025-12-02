@@ -39,18 +39,12 @@ interface GeneralTabProps {
   project?: ProjectResponse;
 }
 
-import { useAuth } from "@/hooks/useAuth";
-import { PendingEventsList } from "./PendingEventsList";
-
 export function GeneralTab({
   form,
   onSubmit,
   isUpdating,
   project,
 }: GeneralTabProps) {
-  const { user } = useAuth();
-  const isAdmin = user?.user?.id === project?.projectAdmin;
-
   return (
     <div className="grid gap-8 lg:grid-cols-3">
       <div className="lg:col-span-2 space-y-8">
@@ -201,18 +195,6 @@ export function GeneralTab({
                 </div>
               </form>
             </Form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Event Log</CardTitle>
-            <CardDescription>
-              Recent events and pending approvals.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <PendingEventsList isAdmin={isAdmin} />
           </CardContent>
         </Card>
       </div>
