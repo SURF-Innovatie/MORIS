@@ -58,6 +58,8 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, p entities.Person) (
 		SetNillableGivenName(p.GivenName).
 		SetNillableFamilyName(p.FamilyName).
 		SetEmail(p.Email).
+		SetNillableAvatarURL(p.AvatarUrl).
+		SetNillableDescription(p.Description).
 		Save(ctx)
 	if err != nil {
 		return nil, err
@@ -92,11 +94,13 @@ func (s *service) GetByEmail(ctx context.Context, email string) (*entities.Perso
 
 func mapRow(r *ent.Person) *entities.Person {
 	return &entities.Person{
-		Id:         r.ID,
-		Name:       r.Name,
-		ORCiD:      &r.OrcidID,
-		GivenName:  r.GivenName,
-		FamilyName: r.FamilyName,
-		Email:      r.Email,
+		Id:          r.ID,
+		Name:        r.Name,
+		ORCiD:       &r.OrcidID,
+		GivenName:   r.GivenName,
+		FamilyName:  r.FamilyName,
+		Email:       r.Email,
+		AvatarUrl:   r.AvatarURL,
+		Description: r.Description,
 	}
 }

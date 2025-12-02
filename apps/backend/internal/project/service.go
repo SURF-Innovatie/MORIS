@@ -493,13 +493,15 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Projec
 	people := make([]entities.Person, 0, len(peopleRows))
 	for _, p := range peopleRows {
 		people = append(people, entities.Person{
-			Id:         p.ID,
-			UserID:     p.UserID,
-			Name:       p.Name,
-			GivenName:  p.GivenName,
-			FamilyName: p.FamilyName,
-			Email:      p.Email,
-			ORCiD:      &p.OrcidID,
+			Id:          p.ID,
+			UserID:      p.UserID,
+			Name:        p.Name,
+			GivenName:   p.GivenName,
+			FamilyName:  p.FamilyName,
+			Email:       p.Email,
+			ORCiD:       &p.OrcidID,
+			AvatarUrl:   p.AvatarURL,
+			Description: p.Description,
 		})
 	}
 

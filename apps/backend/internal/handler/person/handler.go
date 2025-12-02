@@ -95,7 +95,59 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// List / Update implementations omitted for brevity; same pattern.
+// Update updates a person
+// @Summary Update a person
+// @Description Update a person's details
+// @Tags people
+// @Accept json
+// @Produce json
+// @Param id path string true "Person ID"
+// @Param request body persondto.Request true "Person details"
+// @Success 200 {object} persondto.Response
+// @Failure 400 {string} string "Invalid body or ID"
+// @Failure 404 {string} string "Person not found"
+// @Failure 500 {string} string "Internal server error"
+// @Router /people/{id} [put]
+func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	var req persondto.Request
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+
+	p, err := h.svc.Update(r.Context(), id, entities.Person{
+		Name:        req.Name,
+		GivenName:   req.GivenName,
+		FamilyName:  req.FamilyName,
+		Email:       req.Email,
+		AvatarUrl:   req.AvatarUrl,
+		Description: req.Description,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, persondto.Response{
+		ID:          p.Id,
+		UserID:      p.UserID,
+		Name:        p.Name,
+		GivenName:   p.GivenName,
+		FamilyName:  p.FamilyName,
+		Email:       p.Email,
+		AvatarUrl:   p.AvatarUrl,
+		Description: p.Description,
+	})
+}
+
+// List implementation omitted for brevity.
 
 func writeJSON(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")

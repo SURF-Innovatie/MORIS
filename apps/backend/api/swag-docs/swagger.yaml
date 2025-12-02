@@ -66,6 +66,10 @@ definitions:
     type: object
   github_com_SURF-Innovatie_MORIS_internal_api_persondto.Request:
     properties:
+      avatar_url:
+        type: string
+      description:
+        type: string
       email:
         type: string
       familyName:
@@ -81,6 +85,10 @@ definitions:
     type: object
   github_com_SURF-Innovatie_MORIS_internal_api_persondto.Response:
     properties:
+      avatar_url:
+        type: string
+      description:
+        type: string
       email:
         type: string
       familyName:
@@ -179,6 +187,10 @@ definitions:
     type: object
   github_com_SURF-Innovatie_MORIS_internal_api_userdto.Response:
     properties:
+      avatarUrl:
+        type: string
+      description:
+        type: string
       email:
         type: string
       familyName:
@@ -211,6 +223,10 @@ definitions:
     type: object
   github_com_SURF-Innovatie_MORIS_internal_domain_entities.Person:
     properties:
+      avatarUrl:
+        type: string
+      description:
+        type: string
       email:
         type: string
       familyName:
@@ -675,6 +691,44 @@ paths:
           schema:
             type: string
       summary: Get a person
+      tags:
+      - people
+    put:
+      consumes:
+      - application/json
+      description: Update a person's details
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Person details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_persondto.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_persondto.Response'
+        "400":
+          description: Invalid body or ID
+          schema:
+            type: string
+        "404":
+          description: Person not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Update a person
       tags:
       - people
   /products:

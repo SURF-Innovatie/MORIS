@@ -99,6 +99,8 @@ func main() {
 
 	const testUserName = "Test User"
 	const testUserEmail = "test.user@example.com"
+	const avatarUrl = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
+	const defaultBio = "This is a test user account created during seeding."
 	testUserAccountID := uuid.New()
 
 	testPerson, err := client.Person.
@@ -106,6 +108,8 @@ func main() {
 		SetName(testUserName).
 		SetUserID(testUserAccountID).
 		SetEmail(testUserEmail).
+		SetAvatarURL(avatarUrl).
+		SetDescription(defaultBio).
 		Save(ctx)
 	if err != nil {
 		logrus.Fatalf("failed creating %s person: %v", testUserName, err)
@@ -250,6 +254,8 @@ func main() {
 				Create().
 				SetName(name).
 				SetUserID(userID).
+				SetAvatarURL(avatarUrl).
+				SetDescription(defaultBio).
 				SetEmail(strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(name, ".", ""), " ", ".")) + "@example.com").
 				Save(ctx)
 			if err != nil {

@@ -3,6 +3,7 @@ import {
   useGetAuthOrcidUrl,
   useGetProfile,
   usePostAuthOrcidUnlink,
+  usePutPeopleId,
 } from "@api/moris";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,12 +26,17 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
-import { Link, Unlink } from "lucide-react";
+import { Link, Unlink, Pencil } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 const ProfileRoute = () => {
   const { updateUser } = useAuth();
   const { toast } = useToast();
   const [isUnlinkDialogOpen, setIsUnlinkDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const { data: user, isLoading, refetch: refetchProfile } = useGetProfile();
 
@@ -42,6 +48,14 @@ const ProfileRoute = () => {
 
   const { mutateAsync: unlinkORCID, isPending: isUnlinking } =
     usePostAuthOrcidUnlink();
+
+  const { mutateAsync: updatePerson, isPending: isUpdating } = usePutPeopleId();
+
+  const [editForm, setEditForm] = useState({
+    name: "",
+    avatarUrl: "",
+    description: "",
+  });
 
   const handleLinkORCID = async () => {
     try {
@@ -95,6 +109,48 @@ const ProfileRoute = () => {
     }
   };
 
+  const handleEditOpen = () => {
+    if (user) {
+      setEditForm({
+        name: user.name || "",
+        avatarUrl: user.avatarUrl || "",
+        description: user.description || "",
+      });
+      setIsEditDialogOpen(true);
+    }
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    try {
+      await updatePerson({
+        id: user.person_id!,
+        data: {
+          name: editForm.name,
+          email: user.email, // Email cannot be changed
+          avatar_url: editForm.avatarUrl || undefined,
+          description: editForm.description || undefined,
+          user_id: user.id,
+        },
+      });
+
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      });
+      setIsEditDialogOpen(false);
+      refetchProfile();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading && !user) {
     return <div>Loading...</div>;
   }
@@ -108,11 +164,30 @@ const ProfileRoute = () => {
       {/* Left Column: Personal Info & Integrations */}
       <div className="lg:col-span-1 space-y-8">
         <Card>
-          <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
-            <CardDescription>Manage your personal details</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div className="space-y-1">
+              <CardTitle>Personal Information</CardTitle>
+              <CardDescription>Manage your personal details</CardDescription>
+            </div>
+            <Button variant="ghost" size="icon" onClick={handleEditOpen}>
+              <Pencil className="h-4 w-4" />
+            </Button>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 pt-4">
+            <div className="flex flex-col items-center gap-4">
+              <Avatar className="h-24 w-24">
+                <AvatarImage src={user.avatarUrl || ""} alt={user.name} />
+                <AvatarFallback className="text-2xl">
+                  {user.name
+                    ?.split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .toUpperCase()
+                    .slice(0, 2)}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Full Name
@@ -125,6 +200,16 @@ const ProfileRoute = () => {
               </label>
               <p className="font-medium">{user.email}</p>
             </div>
+            {user.description && (
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Description
+                </label>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {user.description}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -142,7 +227,10 @@ const ProfileRoute = () => {
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-sm">ORCID iD</h3>
                     {user.orcid && (
-                      <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20">
+                      <Badge
+                        variant="secondary"
+                        className="h-5 px-1.5 text-[10px] bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20"
+                      >
                         Verified
                       </Badge>
                     )}
@@ -161,7 +249,11 @@ const ProfileRoute = () => {
                     onOpenChange={setIsUnlinkDialogOpen}
                   >
                     <DialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      >
                         <Unlink className="h-4 w-4" />
                       </Button>
                     </DialogTrigger>
@@ -169,8 +261,8 @@ const ProfileRoute = () => {
                       <DialogHeader>
                         <DialogTitle>Unlink ORCID?</DialogTitle>
                         <DialogDescription>
-                          Are you sure you want to unlink your ORCID account? This
-                          action cannot be undone easily.
+                          Are you sure you want to unlink your ORCID account?
+                          This action cannot be undone easily.
                         </DialogDescription>
                       </DialogHeader>
                       <DialogFooter>
@@ -220,11 +312,77 @@ const ProfileRoute = () => {
             </div>
             <p className="font-medium">No recent activity</p>
             <p className="text-sm mt-1 max-w-xs mx-auto">
-              Once you start working on projects or publishing research, your activity will appear here.
+              Once you start working on projects or publishing research, your
+              activity will appear here.
             </p>
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogDescription>
+              Update your personal information.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                value={editForm.name}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, name: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" value={user.email} disabled />
+              <p className="text-[0.8rem] text-muted-foreground">
+                Email cannot be changed at this time.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="avatarUrl">Avatar URL</Label>
+              <Input
+                id="avatarUrl"
+                value={editForm.avatarUrl}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, avatarUrl: e.target.value })
+                }
+                placeholder="https://example.com/avatar.jpg"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={editForm.description}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, description: e.target.value })
+                }
+                placeholder="Tell us about yourself..."
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isUpdating}>
+                {isUpdating ? "Saving..." : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

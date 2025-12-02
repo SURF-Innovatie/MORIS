@@ -381,12 +381,15 @@ func toOrganisationDTO(org entities.Organisation) organisationdto.Response {
 
 func toPersonDTO(p entities.Person) persondto.Response {
 	return persondto.Response{
-		ID:         p.Id,
-		UserID:     p.UserID,
-		Name:       p.Name,
-		GivenName:  p.GivenName,
-		FamilyName: p.FamilyName,
-		Email:      p.Email,
+		ID:          p.Id,
+		UserID:      p.UserID,
+		Name:        p.Name,
+		GivenName:   p.GivenName,
+		FamilyName:  p.FamilyName,
+		Email:       p.Email,
+		AvatarUrl:   p.AvatarUrl,
+		ORCiD:       p.ORCiD,
+		Description: p.Description,
 	}
 }
 

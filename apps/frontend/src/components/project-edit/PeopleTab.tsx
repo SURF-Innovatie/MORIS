@@ -55,7 +55,7 @@ export function PeopleTab({
             >
               <div className="flex items-center gap-4">
                 <Avatar className="h-10 w-10 border">
-                  <AvatarImage src={undefined} />
+                  <AvatarImage src={person.avatar_url} />
                   <AvatarFallback className="font-semibold text-primary">
                     {(person.name || "Unknown")
                       .split(" ")
@@ -67,11 +67,16 @@ export function PeopleTab({
                 </Avatar>
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold leading-none">{person.name || "Unknown"}</p>
+                    <p className="font-semibold leading-none">
+                      {person.name || "Unknown"}
+                    </p>
                     {adminId === person.id && (
                       <Crown className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
                     )}
-                    <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-normal">
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] h-5 px-1.5 font-normal"
+                    >
                       Collaborator
                     </Badge>
                   </div>

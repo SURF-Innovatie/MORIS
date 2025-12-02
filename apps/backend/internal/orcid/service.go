@@ -68,7 +68,7 @@ func (s *service) Link(ctx context.Context, userID uuid.UUID, code string) error
 	if err != nil {
 		return fmt.Errorf("failed to get user: %w", err)
 	}
-	if usr.Person.ORCiD != nil {
+	if usr.Person.ORCiD != nil && *usr.Person.ORCiD != "" {
 		return ErrAlreadyLinked
 	}
 

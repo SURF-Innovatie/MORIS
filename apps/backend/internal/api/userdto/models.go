@@ -8,11 +8,13 @@ type Request struct {
 }
 
 type Response struct {
-	ID         uuid.UUID `json:"id"`
-	PersonID   uuid.UUID `json:"person_id"`
-	ORCiD      *string   `json:"orcid"`
-	Name       string    `json:"name"`
-	GivenName  *string   `json:"givenName"`
-	FamilyName *string   `json:"familyName"`
-	Email      string    `json:"email"`
+	ID          uuid.UUID `json:"id"`
+	PersonID    uuid.UUID `json:"person_id"`
+	ORCiD       *string   `json:"orcid"`
+	Name        string    `json:"name"`
+	GivenName   *string   `json:"givenName"`
+	FamilyName  *string   `json:"familyName"`
+	Email       string    `json:"email"`
+	AvatarURL   *string   `json:"avatarUrl"`
+	Description *string   `json:"description"`
 }

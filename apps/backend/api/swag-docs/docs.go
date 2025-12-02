@@ -537,6 +537,63 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "put": {
+                "description": "Update a person's details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "people"
+                ],
+                "summary": "Update a person",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Person ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Person details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_persondto.Request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_persondto.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid body or ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Person not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
             }
         },
         "/products": {
@@ -1624,6 +1681,12 @@ const docTemplate = `{
         "github_com_SURF-Innovatie_MORIS_internal_api_persondto.Request": {
             "type": "object",
             "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
                 "email": {
                     "type": "string"
                 },
@@ -1647,6 +1710,12 @@ const docTemplate = `{
         "github_com_SURF-Innovatie_MORIS_internal_api_persondto.Response": {
             "type": "object",
             "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
                 "email": {
                     "type": "string"
                 },
@@ -1793,6 +1862,12 @@ const docTemplate = `{
         "github_com_SURF-Innovatie_MORIS_internal_api_userdto.Response": {
             "type": "object",
             "properties": {
+                "avatarUrl": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
                 "email": {
                     "type": "string"
                 },
@@ -1840,6 +1915,12 @@ const docTemplate = `{
         "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Person": {
             "type": "object",
             "properties": {
+                "avatarUrl": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
                 "email": {
                     "type": "string"
                 },

@@ -184,13 +184,15 @@ func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dto := userdto.Response{
-		ID:         freshUser.User.ID,
-		PersonID:   freshUser.User.PersonID,
-		ORCiD:      freshUser.Person.ORCiD,
-		Name:       freshUser.Person.Name,
-		GivenName:  freshUser.Person.GivenName,
-		FamilyName: freshUser.Person.FamilyName,
-		Email:      freshUser.Person.Email,
+		ID:          freshUser.User.ID,
+		PersonID:    freshUser.User.PersonID,
+		ORCiD:       freshUser.Person.ORCiD,
+		Name:        freshUser.Person.Name,
+		GivenName:   freshUser.Person.GivenName,
+		FamilyName:  freshUser.Person.FamilyName,
+		Email:       freshUser.Person.Email,
+		AvatarURL:   freshUser.Person.AvatarUrl,
+		Description: freshUser.Person.Description,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

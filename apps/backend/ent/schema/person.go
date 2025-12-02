@@ -26,6 +26,11 @@ func (Person) Fields() []ent.Field {
 			Optional().
 			Nillable(),
 		field.String("email").Unique(),
+		field.String("avatar_url").Optional().
+			Nillable(),
+		field.String("description").
+			Optional().
+			Nillable(),
 	}
 }
 
