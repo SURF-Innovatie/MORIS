@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Eye } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +13,7 @@ import { useGetProjectsId, usePutProjectsId } from "@api/moris";
 import { GeneralTab } from "@/components/project-edit/GeneralTab";
 import { PeopleTab } from "@/components/project-edit/PeopleTab";
 import { ChangelogTab } from "@/components/project-edit/ChangelogTab";
+import { ProductsTab } from "@/components/project-edit/ProductsTab";
 import { projectFormSchema } from "@/components/project-edit/schema";
 
 export default function ProjectEditRoute() {
@@ -123,7 +124,13 @@ export default function ProjectEditRoute() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {/* Status badge placeholder */}
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/projects/${id}`)}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              View Page
+            </Button>
           </div>
         </div>
       </header>
@@ -135,9 +142,10 @@ export default function ProjectEditRoute() {
           className="space-y-8"
         >
           <div className="flex items-center justify-between">
-            <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsList className="grid w-full max-w-md grid-cols-4">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="people">People</TabsTrigger>
+              <TabsTrigger value="products">Products</TabsTrigger>
               <TabsTrigger value="changelog">Changelog</TabsTrigger>
             </TabsList>
           </div>
@@ -156,6 +164,14 @@ export default function ProjectEditRoute() {
               projectId={id!}
               people={project?.people || []}
               adminId={project?.projectAdmin}
+              onRefresh={refetchProject}
+            />
+          </TabsContent>
+
+          <TabsContent value="products">
+            <ProductsTab
+              projectId={id!}
+              products={project?.products || []}
               onRefresh={refetchProject}
             />
           </TabsContent>

@@ -27,6 +27,7 @@ type Service interface {
 	NotifyApprovers(ctx context.Context, evts ...events.Event) error
 	NotifyStatusUpdate(ctx context.Context, event events.Event, status string) error
 	MarkAsRead(ctx context.Context, id uuid.UUID) error
+	NotifyOfEvent(ctx context.Context, userId uuid.UUID, e events.Event) error
 }
 
 type service struct {
@@ -232,14 +233,33 @@ func (s *service) NotifyApprovers(ctx context.Context, evts ...events.Event) err
 			SetMessage(msg).
 			SetUser(adminUser).
 			SetEventID(e.GetID()).
-			SetType("approval_request").
+			SetType(notification.TypeApprovalRequest).
 			Save(ctx)
 		if err != nil {
-			logrus.Errorf("NotifyApprovers: Failed to create notification: %v", err)
-			return err
 		}
 	}
 	return nil
+}
+
+func (s *service) NotifyOfEvent(ctx context.Context, userId uuid.UUID, e events.Event) error {
+	msg, err := s.buildMessageFromEvent(ctx, e)
+	if err != nil {
+		return err
+	}
+
+	if msg == "" {
+		// nothing to send for this event type
+		return nil
+	}
+
+	_, err = s.cli.Notification.
+		Create().
+		SetMessage(msg).
+		SetUserID(userId).
+		SetEventID(e.GetID()).
+		SetType(notification.TypeInfo).
+		Save(ctx)
+	return err
 }
 
 func (s *service) NotifyStatusUpdate(ctx context.Context, event events.Event, status string) error {
@@ -261,7 +281,7 @@ func (s *service) NotifyStatusUpdate(ctx context.Context, event events.Event, st
 		SetMessage(msg).
 		SetUser(user).
 		SetEventID(event.GetID()).
-		SetType("status_update").
+		SetType(notification.TypeStatusUpdate).
 		Save(ctx)
 
 	return err
@@ -320,6 +340,11 @@ func (s *service) buildMessageFromEvent(ctx context.Context, e events.Event) (st
 		}
 		return fmt.Sprintf("Person %s was removed from the project.", per.Name), nil
 
+	case events.ProductAdded:
+		return "A new product has been added to the project.", nil
+
+	case events.ProductRemoved:
+		return "A product has been removed from the project.", nil
 	default:
 		// unknown or uninteresting event type
 		return "", nil

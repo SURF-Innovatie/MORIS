@@ -14,6 +14,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
 	productent "github.com/SURF-Innovatie/MORIS/ent/product"
 	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
+	userent "github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/commands"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
@@ -183,35 +184,35 @@ func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params Update
 
 	var newEvents []events.Event
 
-	if evt, err := commands.ChangeTitle(id, user.ID, proj, params.Title); err != nil {
+	if evt, err := commands.ChangeTitle(id, user.ID, proj, params.Title, en.StatusApproved); err != nil {
 		return nil, err
 	} else if evt != nil {
 		newEvents = append(newEvents, evt)
 		projection.Apply(proj, evt)
 	}
 
-	if evt, err := commands.ChangeDescription(id, user.ID, proj, params.Description); err != nil {
+	if evt, err := commands.ChangeDescription(id, user.ID, proj, params.Description, en.StatusApproved); err != nil {
 		return nil, err
 	} else if evt != nil {
 		newEvents = append(newEvents, evt)
 		projection.Apply(proj, evt)
 	}
 
-	if evt, err := commands.ChangeStartDate(id, user.ID, proj, params.StartDate); err != nil {
+	if evt, err := commands.ChangeStartDate(id, user.ID, proj, params.StartDate, en.StatusApproved); err != nil {
 		return nil, err
 	} else if evt != nil {
 		newEvents = append(newEvents, evt)
 		projection.Apply(proj, evt)
 	}
 
-	if evt, err := commands.ChangeEndDate(id, user.ID, proj, params.EndDate); err != nil {
+	if evt, err := commands.ChangeEndDate(id, user.ID, proj, params.EndDate, en.StatusApproved); err != nil {
 		return nil, err
 	} else if evt != nil {
 		newEvents = append(newEvents, evt)
 		projection.Apply(proj, evt)
 	}
 
-	if evt, err := commands.SetOrganisation(id, user.ID, proj, params.OrganisationID); err != nil {
+	if evt, err := commands.SetOrganisation(id, user.ID, proj, params.OrganisationID, en.StatusApproved); err != nil {
 		return nil, err
 	} else if evt != nil {
 		newEvents = append(newEvents, evt)
@@ -318,7 +319,7 @@ func (s *service) AddPerson(
 		return nil, err
 	}
 
-	evt, err := commands.AddPerson(projectID, user.ID, proj, personId)
+	evt, err := commands.AddPerson(projectID, user.ID, proj, personId, en.StatusPending)
 	if err != nil {
 		return nil, err
 	}
@@ -363,7 +364,7 @@ func (s *service) RemovePerson(
 		return nil, err
 	}
 
-	evt, err := commands.RemovePerson(projectID, user.ID, proj, personID)
+	evt, err := commands.RemovePerson(projectID, user.ID, proj, personID, en.StatusApproved)
 	if err != nil {
 		return nil, err
 	}
@@ -406,7 +407,7 @@ func (s *service) AddProduct(
 		return nil, err
 	}
 
-	evt, err := commands.AddProduct(projectID, user.ID, proj, productID)
+	evt, err := commands.AddProduct(projectID, user.ID, proj, productID, en.StatusApproved)
 	if err != nil {
 		return nil, err
 	}
@@ -425,6 +426,19 @@ func (s *service) AddProduct(
 
 	projection.Apply(proj, evt)
 	proj.Version += 1
+
+	// notify all users about the new product (temporary for demo)
+	for _, personID := range proj.People {
+		// get user by personID
+		user, err = s.cli.User.Query().
+			Select(userent.FieldID).
+			Where(userent.PersonIDEQ(personID)).
+			Only(ctx)
+		if err != nil {
+			continue
+		}
+		_ = s.notifier.NotifyOfEvent(ctx, user.ID, evt)
+	}
 
 	resp, err := s.buildProjectDetails(ctx, proj)
 	if err != nil {
@@ -449,7 +463,7 @@ func (s *service) RemoveProduct(
 		return nil, err
 	}
 
-	evt, err := commands.RemoveProduct(projectID, user.ID, proj, productID)
+	evt, err := commands.RemoveProduct(projectID, user.ID, proj, productID, en.StatusApproved)
 	if err != nil {
 		return nil, err
 	}

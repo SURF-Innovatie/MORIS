@@ -6,6 +6,7 @@ import { Bell, CheckCircle2, ClipboardCheck, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/context/NotificationContext";
 import { ApprovalModal } from "@/components/project-edit/ApprovalModal";
+import { EMPTY_UUID } from "@/lib/utils";
 
 interface NotificationListProps {
   limit?: number;
@@ -119,9 +120,10 @@ export function NotificationList({ limit }: NotificationListProps) {
             );
           }
 
-          const linkTarget = notification.projectId
-            ? `/projects/${notification.projectId}`
-            : null;
+          const linkTarget =
+            notification.projectId && notification.projectId != EMPTY_UUID
+              ? `/projects/${notification.projectId}`
+              : null;
 
           return (
             <div key={notification.id}>

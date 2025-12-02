@@ -323,6 +323,7 @@ func main() {
 				ID:        uuid.New(),
 				ProjectID: projectID,
 				At:        time.Now().UTC(),
+				Status:    "approved",
 			},
 			ProjectAdmin:   testPersonID,
 			Title:          sp.Title,
@@ -347,6 +348,7 @@ func main() {
 				Base: events.Base{
 					ProjectID: projectID,
 					At:        time.Now().UTC(),
+					Status:    "approved",
 				},
 				PersonId: personID,
 			}
@@ -377,6 +379,7 @@ func main() {
 				Base: events.Base{
 					ProjectID: projectID,
 					At:        time.Now().UTC(),
+					Status:    "approved",
 				},
 				ProductID: productID,
 			}
@@ -429,18 +432,4 @@ func main() {
 		}
 	}
 	logrus.Info("Notifications seeded.")
-
-	// mark all events as approved
-	events, err := client.Event.Query().All(ctx)
-	if err != nil {
-		logrus.Fatalf("failed to query events: %v", err)
-	}
-	for _, e := range events {
-		_, err := client.Event.UpdateOne(e).
-			SetStatus("approved").
-			Save(ctx)
-		if err != nil {
-			logrus.Fatalf("failed to approve event %s: %v", e.ID, err)
-		}
-	}
 }

@@ -10,6 +10,8 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	"github.com/SURF-Innovatie/MORIS/internal/auth"
+	"github.com/SURF-Innovatie/MORIS/internal/crossref"
+	crossrefhandler "github.com/SURF-Innovatie/MORIS/internal/handler/crossref"
 	"github.com/SURF-Innovatie/MORIS/internal/handler/custom"
 	notificationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/notification"
 	organisationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/organisation"
@@ -89,6 +91,14 @@ func main() {
 	organisationSvc := organisation.NewService(client)
 	organisationHandler := organisationhandler.NewHandler(organisationSvc)
 
+	crossrefConfig := &crossref.Config{
+		BaseURL:   "https://api.crossref.org",
+		UserAgent: "MORIS/1.0 (mailto:support@moris.org)",
+		Mailto:    "support@moris.org",
+	}
+	crossrefSvc := crossref.NewService(crossrefConfig)
+	crossrefHandler := crossrefhandler.NewHandler(crossrefSvc)
+
 	notifierSvc := notification.NewService(client)
 
 	// Set auth service for middleware
@@ -122,6 +132,7 @@ func main() {
 			organisationhandler.MountOrganisationRoutes(r, organisationHandler)
 			notificationhandler.MountNotificationRoutes(r, notificationHandler)
 			userhandler.MountUserRoutes(r, userHandler)
+			crossrefhandler.MountCrossrefRoutes(r, crossrefHandler)
 		})
 	})
 

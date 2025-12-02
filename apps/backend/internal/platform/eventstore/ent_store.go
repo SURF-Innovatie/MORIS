@@ -75,6 +75,7 @@ func (s *EntStore) Append(
 				SetProjectID(projectID).
 				SetVersion(version).
 				SetType(events.ProjectStartedType).
+				SetStatus(en.Status(e.GetStatus())).
 				SetOccurredAt(now).
 				SetCreatedBy(v.CreatedBy). // Added
 				Save(ctx)
@@ -108,6 +109,7 @@ func (s *EntStore) Append(
 				SetProjectID(projectID).
 				SetVersion(version).
 				SetType(events.TitleChangedType).
+				SetStatus(en.Status(e.GetStatus())).
 				SetOccurredAt(now).
 				SetCreatedBy(v.CreatedBy). // Added
 				Save(ctx)
@@ -135,6 +137,7 @@ func (s *EntStore) Append(
 				SetProjectID(projectID).
 				SetVersion(version).
 				SetType(events.DescriptionChangedType).
+				SetStatus(en.Status(e.GetStatus())).
 				SetOccurredAt(now).
 				SetCreatedBy(v.CreatedBy). // Added
 				Save(ctx)
@@ -163,6 +166,7 @@ func (s *EntStore) Append(
 				SetVersion(version).
 				SetType(events.StartDateChangedType).
 				SetOccurredAt(now).
+				SetStatus(en.Status(e.GetStatus())).
 				SetCreatedBy(v.CreatedBy). // Added
 				Save(ctx)
 			if err != nil {
@@ -190,6 +194,7 @@ func (s *EntStore) Append(
 				SetVersion(version).
 				SetType(events.EndDateChangedType).
 				SetOccurredAt(now).
+				SetStatus(en.Status(e.GetStatus())).
 				SetCreatedBy(v.CreatedBy). // Added
 				Save(ctx)
 			if err != nil {
@@ -217,6 +222,7 @@ func (s *EntStore) Append(
 				SetVersion(version).
 				SetType(events.OrganisationChangedType).
 				SetOccurredAt(now).
+				SetStatus(en.Status(e.GetStatus())).
 				SetCreatedBy(v.CreatedBy). // Added
 				Save(ctx)
 			if err != nil {
@@ -244,6 +250,7 @@ func (s *EntStore) Append(
 				SetVersion(version).
 				SetType(events.PersonAddedType).
 				SetOccurredAt(now).
+				SetStatus(en.Status(e.GetStatus())).
 				SetCreatedBy(v.CreatedBy). // Added
 				Save(ctx)
 			if err != nil {
@@ -271,6 +278,7 @@ func (s *EntStore) Append(
 				SetVersion(version).
 				SetType(events.PersonRemovedType).
 				SetOccurredAt(now).
+				SetStatus(en.Status(e.GetStatus())).
 				SetCreatedBy(v.CreatedBy). // Added
 				Save(ctx)
 			if err != nil {
@@ -298,6 +306,7 @@ func (s *EntStore) Append(
 				SetVersion(version).
 				SetType(events.ProductAddedType).
 				SetOccurredAt(now).
+				SetStatus(en.Status(e.GetStatus())).
 				SetCreatedBy(v.CreatedBy). // Added
 				Save(ctx)
 			if err != nil {
@@ -325,6 +334,7 @@ func (s *EntStore) Append(
 				SetVersion(version).
 				SetType(events.ProductRemovedType).
 				SetOccurredAt(now).
+				SetStatus(en.Status(e.GetStatus())).
 				SetCreatedBy(v.CreatedBy). // Added
 				Save(ctx)
 			if err != nil {

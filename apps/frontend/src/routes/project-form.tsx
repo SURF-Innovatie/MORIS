@@ -74,7 +74,7 @@ export default function ProjectFormRoute() {
         startDate: project.startDate ? new Date(project.startDate) : undefined,
         endDate: project.endDate ? new Date(project.endDate) : undefined,
         organisationID:
-          project.organisation || "00000000-0000-0000-0000-000000000000",
+          project.organization?.id || "00000000-0000-0000-0000-000000000000",
       });
     }
   }, [project, form]);
