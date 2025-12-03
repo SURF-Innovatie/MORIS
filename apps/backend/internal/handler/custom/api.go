@@ -1,7 +1,7 @@
 package custom
 
 import (
-	"github.com/SURF-Innovatie/MORIS/internal/auth"
+	"github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -13,7 +13,7 @@ func MountCustomHandlers(r chi.Router, h *Handler) {
 	r.Post("/login", h.Login)
 
 	r.Group(func(r chi.Router) {
-		r.Use(auth.AuthMiddleware)
+		r.Use(middleware.AuthMiddleware)
 
 		r.Get("/profile", h.Profile)
 
@@ -23,7 +23,7 @@ func MountCustomHandlers(r chi.Router, h *Handler) {
 		r.Post("/auth/orcid/unlink", h.UnlinkORCID)
 
 		r.Group(func(r chi.Router) {
-			r.Use(auth.RequireRoleMiddleware("admin"))
+			r.Use(middleware.RequireRoleMiddleware("admin"))
 			r.Get("/admin/users/list", h.AdminUserList)
 		})
 	})

@@ -8,8 +8,8 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	"github.com/SURF-Innovatie/MORIS/internal/person"
-	"github.com/SURF-Innovatie/MORIS/internal/platform/eventstore"
 	"github.com/google/uuid"
 )
 

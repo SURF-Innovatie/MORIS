@@ -7,18 +7,19 @@ import (
 	"time"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
-	"github.com/SURF-Innovatie/MORIS/internal/auth"
-	"github.com/SURF-Innovatie/MORIS/internal/orcid"
+	domainAuth "github.com/SURF-Innovatie/MORIS/internal/auth"
+	"github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/external/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
 )
 
 type Handler struct {
 	userService  user.Service
-	authService  auth.Service
+	authService  domainAuth.Service
 	orcidService orcid.Service
 }
 
-func NewHandler(userService user.Service, authService auth.Service, orcidService orcid.Service) *Handler {
+func NewHandler(userService user.Service, authService domainAuth.Service, orcidService orcid.Service) *Handler {
 	return &Handler{
 		userService:  userService,
 		authService:  authService,
@@ -76,7 +77,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(auth.BackendError{
+		json.NewEncoder(w).Encode(middleware.BackendError{
 			Code:    http.StatusBadRequest,
 			Status:  "Bad Request",
 			Message: "Invalid request body",
@@ -89,7 +90,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(auth.BackendError{
+		json.NewEncoder(w).Encode(middleware.BackendError{
 			Code:    http.StatusInternalServerError,
 			Status:  "Internal Server Error",
 			Message: err.Error(),
@@ -119,7 +120,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(auth.BackendError{
+		json.NewEncoder(w).Encode(middleware.BackendError{
 			Code:    http.StatusBadRequest,
 			Status:  "Bad Request",
 			Message: "Invalid request body",
@@ -131,7 +132,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(auth.BackendError{
+		json.NewEncoder(w).Encode(middleware.BackendError{
 			Code:    http.StatusUnauthorized,
 			Status:  "Unauthorized",
 			Message: "Invalid credentials",
@@ -158,11 +159,11 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} auth.BackendError "User not authenticated"
 // @Router /profile [get]
 func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
-	userCtx, ok := auth.GetUserFromContext(r.Context())
+	userCtx, ok := middleware.GetUserFromContext(r.Context())
 	if !ok || userCtx == nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(auth.BackendError{
+		json.NewEncoder(w).Encode(middleware.BackendError{
 			Code:    http.StatusUnauthorized,
 			Status:  "Unauthorized",
 			Message: "User not authenticated or found in context",
@@ -175,7 +176,7 @@ func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(auth.BackendError{
+		json.NewEncoder(w).Encode(middleware.BackendError{
 			Code:    http.StatusInternalServerError,
 			Status:  "Internal Server Error",
 			Message: "Failed to fetch user profile",
@@ -227,11 +228,11 @@ func (h *Handler) AdminUserList(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} auth.BackendError "Internal server error"
 // @Router /auth/orcid/url [get]
 func (h *Handler) GetORCIDAuthURL(w http.ResponseWriter, r *http.Request) {
-	u, ok := auth.GetUserFromContext(r.Context())
+	u, ok := middleware.GetUserFromContext(r.Context())
 	if !ok {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(auth.BackendError{
+		json.NewEncoder(w).Encode(middleware.BackendError{
 			Code:    http.StatusUnauthorized,
 			Status:  "Unauthorized",
 			Message: "User not authenticated",
@@ -248,7 +249,7 @@ func (h *Handler) GetORCIDAuthURL(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(statusCode)
-		json.NewEncoder(w).Encode(auth.BackendError{
+		json.NewEncoder(w).Encode(middleware.BackendError{
 			Code:    statusCode,
 			Status:  http.StatusText(statusCode),
 			Message: err.Error(),
@@ -276,11 +277,11 @@ func (h *Handler) GetORCIDAuthURL(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} auth.BackendError "Internal server error"
 // @Router /auth/orcid/link [post]
 func (h *Handler) LinkORCID(w http.ResponseWriter, r *http.Request) {
-	u, ok := auth.GetUserFromContext(r.Context())
+	u, ok := middleware.GetUserFromContext(r.Context())
 	if !ok {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(auth.BackendError{
+		json.NewEncoder(w).Encode(middleware.BackendError{
 			Code:    http.StatusUnauthorized,
 			Status:  "Unauthorized",
 			Message: "User not authenticated",
@@ -292,7 +293,7 @@ func (h *Handler) LinkORCID(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(auth.BackendError{
+		json.NewEncoder(w).Encode(middleware.BackendError{
 			Code:    http.StatusBadRequest,
 			Status:  "Bad Request",
 			Message: "Invalid request body",
@@ -312,7 +313,7 @@ func (h *Handler) LinkORCID(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(statusCode)
-		json.NewEncoder(w).Encode(auth.BackendError{
+		json.NewEncoder(w).Encode(middleware.BackendError{
 			Code:    statusCode,
 			Status:  http.StatusText(statusCode),
 			Message: err.Error(),
@@ -340,11 +341,11 @@ func (h *Handler) LinkORCID(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} auth.BackendError "Internal server error"
 // @Router /auth/orcid/unlink [post]
 func (h *Handler) UnlinkORCID(w http.ResponseWriter, r *http.Request) {
-	u, ok := auth.GetUserFromContext(r.Context())
+	u, ok := middleware.GetUserFromContext(r.Context())
 	if !ok {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(auth.BackendError{
+		json.NewEncoder(w).Encode(middleware.BackendError{
 			Code:    http.StatusUnauthorized,
 			Status:  "Unauthorized",
 			Message: "User not authenticated",
@@ -355,7 +356,7 @@ func (h *Handler) UnlinkORCID(w http.ResponseWriter, r *http.Request) {
 	if err := h.orcidService.Unlink(r.Context(), u.User.ID); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(auth.BackendError{
+		json.NewEncoder(w).Encode(middleware.BackendError{
 			Code:    http.StatusInternalServerError,
 			Status:  "Internal Server Error",
 			Message: err.Error(),

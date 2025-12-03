@@ -1,4 +1,4 @@
-package auth
+package middleware
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	domainAuth "github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 )
 
@@ -23,10 +24,10 @@ type BackendError struct {
 	Message string      `json:"message,omitempty" example:"Detailed error description"` // Custom message
 }
 
-var authService Service
+var authService domainAuth.Service
 
 // SetAuthService sets the auth service for middleware to use
-func SetAuthService(svc Service) {
+func SetAuthService(svc domainAuth.Service) {
 	authService = svc
 }
 

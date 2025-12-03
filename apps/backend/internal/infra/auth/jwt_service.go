@@ -9,6 +9,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	userent "github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
+	"github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
 	"github.com/golang-jwt/jwt/v5"
@@ -16,23 +17,17 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type Service interface {
-	Register(ctx context.Context, req userdto.Request) (*entities.UserAccount, error)
-	Login(ctx context.Context, email, password string) (string, *entities.UserAccount, error)
-	ValidateToken(tokenString string) (*entities.UserAccount, error)
-}
-
-type service struct {
+type jwtService struct {
 	client  *ent.Client
 	userSvc user.Service
 }
 
-func NewService(client *ent.Client, userSvc user.Service) Service {
-	return &service{client: client, userSvc: userSvc}
+func NewJWTService(client *ent.Client, userSvc user.Service) auth.Service {
+	return &jwtService{client: client, userSvc: userSvc}
 }
 
 // Register creates a new user with hashed password
-func (s *service) Register(ctx context.Context, req userdto.Request) (*entities.UserAccount, error) {
+func (s *jwtService) Register(ctx context.Context, req userdto.Request) (*entities.UserAccount, error) {
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -54,7 +49,7 @@ func (s *service) Register(ctx context.Context, req userdto.Request) (*entities.
 }
 
 // Login authenticates a user and returns a JWT token
-func (s *service) Login(ctx context.Context, email, password string) (string, *entities.UserAccount, error) {
+func (s *jwtService) Login(ctx context.Context, email, password string) (string, *entities.UserAccount, error) {
 	// Find user by email
 	usr, err := s.userSvc.GetAccountByEmail(ctx, email)
 
@@ -89,7 +84,7 @@ func (s *service) Login(ctx context.Context, email, password string) (string, *e
 }
 
 // generateJWT creates a JWT token for the user
-func (s *service) generateJWT(usr *entities.UserAccount) (string, error) {
+func (s *jwtService) generateJWT(usr *entities.UserAccount) (string, error) {
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		jwtSecret = "your-secret-key-change-this-in-production" // Fallback for development
@@ -113,7 +108,7 @@ func (s *service) generateJWT(usr *entities.UserAccount) (string, error) {
 }
 
 // ValidateToken validates a JWT token and returns the user info
-func (s *service) ValidateToken(tokenString string) (*entities.UserAccount, error) {
+func (s *jwtService) ValidateToken(tokenString string) (*entities.UserAccount, error) {
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		jwtSecret = "your-secret-key-change-this-in-production"

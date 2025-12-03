@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/productdto"
-	"github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
 	productsvc "github.com/SURF-Innovatie/MORIS/internal/product"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -88,11 +88,11 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /products/me [get]
 func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
-	userCtx, ok := auth.GetUserFromContext(r.Context())
+	userCtx, ok := middleware.GetUserFromContext(r.Context())
 	if !ok || userCtx == nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(auth.BackendError{
+		json.NewEncoder(w).Encode(middleware.BackendError{
 			Code:    http.StatusUnauthorized,
 			Status:  "Unauthorized",
 			Message: "User not authenticated or found in context",

@@ -9,21 +9,22 @@ import (
 	_ "github.com/SURF-Innovatie/MORIS/api/swag-docs"
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
-	"github.com/SURF-Innovatie/MORIS/internal/auth"
-	"github.com/SURF-Innovatie/MORIS/internal/crossref"
 	crossrefhandler "github.com/SURF-Innovatie/MORIS/internal/handler/crossref"
 	"github.com/SURF-Innovatie/MORIS/internal/handler/custom"
+	authMiddleware "github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
 	notificationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/notification"
 	organisationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/organisation"
 	personhandler "github.com/SURF-Innovatie/MORIS/internal/handler/person"
 	producthandler "github.com/SURF-Innovatie/MORIS/internal/handler/product"
 	projecthandler "github.com/SURF-Innovatie/MORIS/internal/handler/project"
 	userhandler "github.com/SURF-Innovatie/MORIS/internal/handler/user"
+	auth2 "github.com/SURF-Innovatie/MORIS/internal/infra/auth"
+	crossref2 "github.com/SURF-Innovatie/MORIS/internal/infra/external/crossref"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/external/orcid"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	notification "github.com/SURF-Innovatie/MORIS/internal/notification"
-	"github.com/SURF-Innovatie/MORIS/internal/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/organisation"
 	"github.com/SURF-Innovatie/MORIS/internal/person"
-	"github.com/SURF-Innovatie/MORIS/internal/platform/eventstore"
 	"github.com/SURF-Innovatie/MORIS/internal/product"
 	"github.com/SURF-Innovatie/MORIS/internal/project"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
@@ -82,7 +83,7 @@ func main() {
 	esStore := eventstore.NewEntStore(client)
 	personSvc := person.NewService(client)
 	userSvc := user.NewService(client, personSvc, esStore)
-	authSvc := auth.NewService(client, userSvc)
+	authSvc := auth2.NewJWTService(client, userSvc)
 	orcidSvc := orcid.NewService(client, userSvc)
 
 	personHandler := personhandler.NewHandler(personSvc)
@@ -92,18 +93,18 @@ func main() {
 	organisationSvc := organisation.NewService(client)
 	organisationHandler := organisationhandler.NewHandler(organisationSvc)
 
-	crossrefConfig := &crossref.Config{
+	crossrefConfig := &crossref2.Config{
 		BaseURL:   "https://api.crossref.org",
 		UserAgent: "MORIS/1.0 (mailto:support@moris.org)",
 		Mailto:    "support@moris.org",
 	}
-	crossrefSvc := crossref.NewService(crossrefConfig)
+	crossrefSvc := crossref2.NewService(crossrefConfig)
 	crossrefHandler := crossrefhandler.NewHandler(crossrefSvc)
 
 	notifierSvc := notification.NewService(client)
 
 	// Set auth service for middleware
-	auth.SetAuthService(authSvc)
+	authMiddleware.SetAuthService(authSvc)
 
 	// Create HTTP handler/controller
 	customHandler := custom.NewHandler(userSvc, authSvc, orcidSvc)
@@ -124,7 +125,7 @@ func main() {
 	r.Route("/api", func(r chi.Router) {
 		custom.MountCustomHandlers(r, customHandler)
 		r.Group(func(r chi.Router) {
-			r.Use(auth.AuthMiddleware)
+			r.Use(authMiddleware.AuthMiddleware)
 			projecthandler.MountProjectRoutes(r, projHandler)
 			projecthandler.MountEventRoutes(r, projHandler)
 			personhandler.MountPersonRoutes(r, personHandler)

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/SURF-Innovatie/MORIS/internal/crossref"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/external/crossref"
 )
 
 type Handler struct {

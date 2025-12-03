@@ -15,13 +15,13 @@ import (
 	productent "github.com/SURF-Innovatie/MORIS/ent/product"
 	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
 	userent "github.com/SURF-Innovatie/MORIS/ent/user"
-	"github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/commands"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
+	"github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	notification "github.com/SURF-Innovatie/MORIS/internal/notification"
-	"github.com/SURF-Innovatie/MORIS/internal/platform/eventstore"
 	"github.com/google/uuid"
 )
 
@@ -247,7 +247,7 @@ func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params Update
 
 // TODO, instead of a helper function there should be a currentUserService
 func currentUser(ctx context.Context, cli *ent.Client) (*ent.User, error) {
-	authUser, ok := auth.GetUserFromContext(ctx)
+	authUser, ok := middleware.GetUserFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("no authenticated user in context")
 	}

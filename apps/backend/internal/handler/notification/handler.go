@@ -5,11 +5,11 @@ import (
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/notificationdto"
+	"github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
-	"github.com/SURF-Innovatie/MORIS/internal/auth"
 	_ "github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/notification"
 )
@@ -33,7 +33,7 @@ func NewHandler(svc notification.Service) *Handler {
 // @Failure 500 {string} string "internal server error"
 // @Router /notifications [get]
 func (h *Handler) GetNotifications(w http.ResponseWriter, r *http.Request) {
-	user, ok := auth.GetUserFromContext(r.Context())
+	user, ok := middleware.GetUserFromContext(r.Context())
 	if !ok || user == nil {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
@@ -81,7 +81,7 @@ func (h *Handler) GetNotifications(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /notifications/{id}/read [put]
 func (h *Handler) MarkNotificationAsRead(w http.ResponseWriter, r *http.Request) {
-	user, ok := auth.GetUserFromContext(r.Context())
+	user, ok := middleware.GetUserFromContext(r.Context())
 	if !ok || user == nil {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
