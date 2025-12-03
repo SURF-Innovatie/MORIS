@@ -9,8 +9,10 @@ import (
 	_ "github.com/SURF-Innovatie/MORIS/api/swag-docs"
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
+	"github.com/SURF-Innovatie/MORIS/internal/event"
 	crossrefhandler "github.com/SURF-Innovatie/MORIS/internal/handler/crossref"
 	"github.com/SURF-Innovatie/MORIS/internal/handler/custom"
+	eventHandler "github.com/SURF-Innovatie/MORIS/internal/handler/event"
 	authMiddleware "github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
 	notificationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/notification"
 	organisationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/organisation"
@@ -22,7 +24,7 @@ import (
 	crossref2 "github.com/SURF-Innovatie/MORIS/internal/infra/external/crossref"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/external/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
-	notification "github.com/SURF-Innovatie/MORIS/internal/notification"
+	"github.com/SURF-Innovatie/MORIS/internal/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/organisation"
 	"github.com/SURF-Innovatie/MORIS/internal/person"
 	"github.com/SURF-Innovatie/MORIS/internal/product"
@@ -114,6 +116,9 @@ func main() {
 	projSvc := project.NewService(esStore, client, notifierSvc)
 	projHandler := projecthandler.NewHandler(projSvc)
 
+	eventSvc := event.NewService(esStore, client, notifierSvc)
+	evtHandler := eventHandler.NewHandler(eventSvc)
+
 	notificationHandler := notificationhandler.NewHandler(notifierSvc)
 
 	// Router
@@ -127,7 +132,7 @@ func main() {
 		r.Group(func(r chi.Router) {
 			r.Use(authMiddleware.AuthMiddleware)
 			projecthandler.MountProjectRoutes(r, projHandler)
-			projecthandler.MountEventRoutes(r, projHandler)
+			eventHandler.MountEventRoutes(r, evtHandler)
 			personhandler.MountPersonRoutes(r, personHandler)
 			producthandler.MountProductRoutes(r, productHandler)
 			organisationhandler.MountOrganisationRoutes(r, organisationHandler)

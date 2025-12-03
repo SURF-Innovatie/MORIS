@@ -1,12 +1,21 @@
-package project
+package event
 
 import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/SURF-Innovatie/MORIS/internal/event"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
+
+type Handler struct {
+	svc event.Service
+}
+
+func NewHandler(svc event.Service) *Handler {
+	return &Handler{svc: svc}
+}
 
 // ApproveEvent godoc
 // @Summary Approve an event

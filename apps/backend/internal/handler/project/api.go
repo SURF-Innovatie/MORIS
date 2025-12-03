@@ -16,10 +16,3 @@ func MountProjectRoutes(r chi.Router, h *Handler) {
 		r.Get("/{id}/pending-events", h.GetPendingEvents)
 	})
 }
-
-func MountEventRoutes(r chi.Router, h *Handler) {
-	r.Route("/events", func(r chi.Router) {
-		r.Post("/{id}/approve", h.ApproveEvent)
-		r.Post("/{id}/reject", h.RejectEvent)
-	})
-}

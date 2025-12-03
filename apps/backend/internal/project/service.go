@@ -38,61 +38,13 @@ type Service interface {
 	AddProduct(ctx context.Context, projectID uuid.UUID, productID uuid.UUID) (*entities.ProjectDetails, error)
 	RemoveProduct(ctx context.Context, projectID uuid.UUID, productID uuid.UUID) (*entities.ProjectDetails, error)
 	GetChangeLog(ctx context.Context, id uuid.UUID) (*entities.ChangeLog, error)
-	ApproveEvent(ctx context.Context, eventID uuid.UUID) error
-	RejectEvent(ctx context.Context, eventID uuid.UUID) error
 	GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.Event, error)
-}
-
-func (s *service) GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.Event, error) {
-	evts, _, err := s.es.Load(ctx, projectID)
-	if err != nil {
-		return nil, err
-	}
-
-	var pending []events.Event
-	for _, e := range evts {
-		if e.GetStatus() == "pending" {
-			pending = append(pending, e)
-		}
-	}
-
-	return pending, nil
 }
 
 type service struct {
 	cli      *ent.Client
 	es       eventstore.Store
 	notifier notification.Service
-}
-
-func (s *service) ApproveEvent(ctx context.Context, eventID uuid.UUID) error {
-	// 1. Update status
-	if err := s.es.UpdateEventStatus(ctx, eventID, "approved"); err != nil {
-		return err
-	}
-
-	// 2. Notify creator
-	event, err := s.es.LoadEvent(ctx, eventID)
-	if err != nil {
-		// Log error but don't fail the request?
-		// Or fail?
-		return err
-	}
-
-	return s.notifier.NotifyStatusUpdate(ctx, event, "approved")
-}
-
-func (s *service) RejectEvent(ctx context.Context, eventID uuid.UUID) error {
-	if err := s.es.UpdateEventStatus(ctx, eventID, "rejected"); err != nil {
-		return err
-	}
-
-	event, err := s.es.LoadEvent(ctx, eventID)
-	if err != nil {
-		return err
-	}
-
-	return s.notifier.NotifyStatusUpdate(ctx, event, "rejected")
 }
 
 type StartProjectParams struct {
@@ -314,6 +266,22 @@ func (s *service) GetAllProjects(ctx context.Context) ([]*entities.ProjectDetail
 	})
 
 	return projects, nil
+}
+
+func (s *service) GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.Event, error) {
+	evts, _, err := s.es.Load(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	var pending []events.Event
+	for _, e := range evts {
+		if e.GetStatus() == "pending" {
+			pending = append(pending, e)
+		}
+	}
+
+	return pending, nil
 }
 
 func (s *service) AddPerson(
