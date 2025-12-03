@@ -1,4 +1,4 @@
-package custom
+package customdto
 
 import (
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"

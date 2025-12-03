@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SURF-Innovatie/MORIS/internal/api/customdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
 	domainAuth "github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
@@ -37,7 +38,7 @@ func NewHandler(userService user.Service, authService domainAuth.Service, orcidS
 // @Router /status [get]
 func (h *Handler) Status(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	resp := StatusResponse{
+	resp := customdto.StatusResponse{
 		Status:    "ok",
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
@@ -54,7 +55,7 @@ func (h *Handler) Status(w http.ResponseWriter, r *http.Request) {
 // @Router /health [get]
 func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	resp := StatusResponse{
+	resp := customdto.StatusResponse{
 		Status:    "ok",
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
@@ -73,7 +74,8 @@ func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} auth.BackendError "Internal server error"
 // @Router /register [post]
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
-	var req RegisterRequest
+	//TODO: Make sure that user is linked with person upon registering, either by making a new person, or by looking at the ORCid(/Mail?)
+	var req customdto.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
@@ -85,8 +87,8 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var usrReq userdto.Request
-	usr, err := h.authService.Register(r.Context(), usrReq)
+	var domainReq domainAuth.RegisterRequest
+	usr, err := h.authService.Register(r.Context(), domainReq)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -116,7 +118,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} auth.BackendError "Invalid credentials"
 // @Router /login [post]
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
-	var req LoginRequest
+	var req customdto.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
@@ -141,7 +143,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	resp := LoginResponse{
+	resp := customdto.LoginResponse{
 		Token: token,
 		User:  authUser,
 	}
@@ -258,7 +260,7 @@ func (h *Handler) GetORCIDAuthURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	resp := ORCIDAuthURLResponse{URL: url}
+	resp := customdto.ORCIDAuthURLResponse{URL: url}
 	_ = json.NewEncoder(w).Encode(resp)
 }
 
@@ -289,7 +291,7 @@ func (h *Handler) LinkORCID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req LinkORCIDRequest
+	var req customdto.LinkORCIDRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
@@ -322,7 +324,7 @@ func (h *Handler) LinkORCID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	resp := StatusResponse{
+	resp := customdto.StatusResponse{
 		Status:    "ok",
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
@@ -365,7 +367,7 @@ func (h *Handler) UnlinkORCID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	resp := StatusResponse{
+	resp := customdto.StatusResponse{
 		Status:    "ok",
 		Timestamp: time.Now().Format(time.RFC3339),
 	}

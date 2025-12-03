@@ -8,7 +8,6 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	userent "github.com/SURF-Innovatie/MORIS/ent/user"
-	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
 	"github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
@@ -27,7 +26,7 @@ func NewJWTService(client *ent.Client, userSvc user.Service) auth.Service {
 }
 
 // Register creates a new user with hashed password
-func (s *jwtService) Register(ctx context.Context, req userdto.Request) (*entities.UserAccount, error) {
+func (s *jwtService) Register(ctx context.Context, req auth.RegisterRequest) (*entities.UserAccount, error) {
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
