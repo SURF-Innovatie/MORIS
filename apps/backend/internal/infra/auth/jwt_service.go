@@ -8,6 +8,7 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	userent "github.com/SURF-Innovatie/MORIS/ent/user"
+	coreauth "github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
 	"github.com/golang-jwt/jwt/v5"
@@ -15,28 +16,22 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type RegisterRequest struct {
-	PersonID uuid.UUID
-	Password string
-}
-
-type Service interface {
-	Register(ctx context.Context, req RegisterRequest) (*entities.UserAccount, error)
-	Login(ctx context.Context, email, password string) (string, *entities.UserAccount, error)
-	ValidateToken(tokenString string) (*entities.UserAccount, error)
-}
-
 type service struct {
-	client  *ent.Client
-	userSvc user.Service
+	client    *ent.Client
+	userSvc   user.Service
+	jwtSecret string
 }
 
-func NewJWTService(client *ent.Client, userSvc user.Service) Service {
-	return &service{client: client, userSvc: userSvc}
+func NewJWTService(client *ent.Client, userSvc user.Service, jwtSecret string) coreauth.Service {
+	return &service{
+		client:    client,
+		userSvc:   userSvc,
+		jwtSecret: jwtSecret,
+	}
 }
 
 // Register creates a new user with hashed password
-func (s *service) Register(ctx context.Context, req RegisterRequest) (*entities.UserAccount, error) {
+func (s *service) Register(ctx context.Context, req coreauth.RegisterRequest) (*entities.UserAccount, error) {
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
