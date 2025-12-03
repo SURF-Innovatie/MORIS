@@ -2,18 +2,19 @@ package custom
 
 import (
 	"github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/auth"
 	"github.com/go-chi/chi/v5"
 )
 
 // MountCustomHandlers mounts all custom API endpoints
-func MountCustomHandlers(r chi.Router, h *Handler) {
+func MountCustomHandlers(r chi.Router, authSvc auth.Service, h *Handler) {
 	r.Get("/health", h.Health)
 	r.Get("/status", h.Status)
 	r.Post("/register", h.Register)
 	r.Post("/login", h.Login)
 
 	r.Group(func(r chi.Router) {
-		r.Use(middleware.AuthMiddleware)
+		r.Use(middleware.AuthMiddleware(authSvc))
 
 		r.Get("/profile", h.Profile)
 

@@ -8,8 +8,8 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/customdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
-	domainAuth "github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
+	domainAuth "github.com/SURF-Innovatie/MORIS/internal/infra/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/external/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
 )

@@ -13,14 +13,14 @@ import (
 	crossrefhandler "github.com/SURF-Innovatie/MORIS/internal/handler/crossref"
 	"github.com/SURF-Innovatie/MORIS/internal/handler/custom"
 	eventHandler "github.com/SURF-Innovatie/MORIS/internal/handler/event"
-	authMiddleware "github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
+	authmiddleware "github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
 	notificationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/notification"
 	organisationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/organisation"
 	personhandler "github.com/SURF-Innovatie/MORIS/internal/handler/person"
 	producthandler "github.com/SURF-Innovatie/MORIS/internal/handler/product"
 	projecthandler "github.com/SURF-Innovatie/MORIS/internal/handler/project"
 	userhandler "github.com/SURF-Innovatie/MORIS/internal/handler/user"
-	auth2 "github.com/SURF-Innovatie/MORIS/internal/infra/auth"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/auth"
 	crossref2 "github.com/SURF-Innovatie/MORIS/internal/infra/external/crossref"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/external/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
@@ -85,7 +85,7 @@ func main() {
 	esStore := eventstore.NewEntStore(client)
 	personSvc := person.NewService(client)
 	userSvc := user.NewService(client, personSvc, esStore)
-	authSvc := auth2.NewJWTService(client, userSvc)
+	authSvc := auth.NewJWTService(client, userSvc)
 	orcidSvc := orcid.NewService(client, userSvc)
 
 	personHandler := personhandler.NewHandler(personSvc)
@@ -104,9 +104,6 @@ func main() {
 	crossrefHandler := crossrefhandler.NewHandler(crossrefSvc)
 
 	notifierSvc := notification.NewService(client)
-
-	// Set auth service for middleware
-	authMiddleware.SetAuthService(authSvc)
 
 	// Create HTTP handler/controller
 	customHandler := custom.NewHandler(userSvc, authSvc, orcidSvc)
@@ -128,9 +125,9 @@ func main() {
 	r.Use(middleware.Recoverer)
 
 	r.Route("/api", func(r chi.Router) {
-		custom.MountCustomHandlers(r, customHandler)
+		custom.MountCustomHandlers(r, authSvc, customHandler)
 		r.Group(func(r chi.Router) {
-			r.Use(authMiddleware.AuthMiddleware)
+			r.Use(authmiddleware.AuthMiddleware(authSvc))
 			projecthandler.MountProjectRoutes(r, projHandler)
 			eventHandler.MountEventRoutes(r, evtHandler)
 			personhandler.MountPersonRoutes(r, personHandler)

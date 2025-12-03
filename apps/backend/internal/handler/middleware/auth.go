@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	domainAuth "github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	domainAuth "github.com/SURF-Innovatie/MORIS/internal/infra/auth"
 )
 
 type contextKey string
@@ -24,47 +24,42 @@ type BackendError struct {
 	Message string      `json:"message,omitempty" example:"Detailed error description"` // Custom message
 }
 
-var authService domainAuth.Service
-
-// SetAuthService sets the auth service for middleware to use
-func SetAuthService(svc domainAuth.Service) {
-	authService = svc
-}
-
 // AuthMiddleware extracts and validates a JWT token from the Authorization header.
-func AuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(BackendError{Code: http.StatusUnauthorized, Status: "Unauthorized", Message: "Authorization header required"})
-			return
-		}
+func AuthMiddleware(authSvc domainAuth.Service) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusUnauthorized)
+				json.NewEncoder(w).Encode(BackendError{Code: http.StatusUnauthorized, Status: "Unauthorized", Message: "Authorization header required"})
+				return
+			}
 
-		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(BackendError{Code: http.StatusUnauthorized, Status: "Unauthorized", Message: "Authorization header must be in 'Bearer <token>' format"})
-			return
-		}
-		token := parts[1]
+			parts := strings.SplitN(authHeader, " ", 2)
+			if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusUnauthorized)
+				json.NewEncoder(w).Encode(BackendError{Code: http.StatusUnauthorized, Status: "Unauthorized", Message: "Authorization header must be in 'Bearer <token>' format"})
+				return
+			}
+			token := parts[1]
 
-		user, err := authService.ValidateToken(token)
-		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(BackendError{Code: http.StatusUnauthorized, Status: "Unauthorized", Message: "Invalid or expired token"})
-			return
-		}
+			user, err := authSvc.ValidateToken(token)
+			if err != nil {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusUnauthorized)
+				json.NewEncoder(w).Encode(BackendError{Code: http.StatusUnauthorized, Status: "Unauthorized", Message: "Invalid or expired token"})
+				return
+			}
 
-		// Store the authenticated user in the request context
-		ctx := context.WithValue(r.Context(), userContextKey, user)
-		r = r.WithContext(ctx)
+			// Store the authenticated user in the request context
+			ctx := context.WithValue(r.Context(), userContextKey, user)
+			r = r.WithContext(ctx)
 
-		next.ServeHTTP(w, r)
-	})
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 // GetUserFromContext retrieves the authUser from the request context

@@ -8,7 +8,6 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	userent "github.com/SURF-Innovatie/MORIS/ent/user"
-	"github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
 	"github.com/golang-jwt/jwt/v5"
@@ -16,17 +15,28 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type jwtService struct {
+type RegisterRequest struct {
+	PersonID uuid.UUID
+	Password string
+}
+
+type Service interface {
+	Register(ctx context.Context, req RegisterRequest) (*entities.UserAccount, error)
+	Login(ctx context.Context, email, password string) (string, *entities.UserAccount, error)
+	ValidateToken(tokenString string) (*entities.UserAccount, error)
+}
+
+type service struct {
 	client  *ent.Client
 	userSvc user.Service
 }
 
-func NewJWTService(client *ent.Client, userSvc user.Service) auth.Service {
-	return &jwtService{client: client, userSvc: userSvc}
+func NewJWTService(client *ent.Client, userSvc user.Service) Service {
+	return &service{client: client, userSvc: userSvc}
 }
 
 // Register creates a new user with hashed password
-func (s *jwtService) Register(ctx context.Context, req auth.RegisterRequest) (*entities.UserAccount, error) {
+func (s *service) Register(ctx context.Context, req RegisterRequest) (*entities.UserAccount, error) {
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -48,7 +58,7 @@ func (s *jwtService) Register(ctx context.Context, req auth.RegisterRequest) (*e
 }
 
 // Login authenticates a user and returns a JWT token
-func (s *jwtService) Login(ctx context.Context, email, password string) (string, *entities.UserAccount, error) {
+func (s *service) Login(ctx context.Context, email, password string) (string, *entities.UserAccount, error) {
 	// Find user by email
 	usr, err := s.userSvc.GetAccountByEmail(ctx, email)
 
@@ -83,7 +93,7 @@ func (s *jwtService) Login(ctx context.Context, email, password string) (string,
 }
 
 // generateJWT creates a JWT token for the user
-func (s *jwtService) generateJWT(usr *entities.UserAccount) (string, error) {
+func (s *service) generateJWT(usr *entities.UserAccount) (string, error) {
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		jwtSecret = "your-secret-key-change-this-in-production" // Fallback for development
@@ -107,7 +117,7 @@ func (s *jwtService) generateJWT(usr *entities.UserAccount) (string, error) {
 }
 
 // ValidateToken validates a JWT token and returns the user info
-func (s *jwtService) ValidateToken(tokenString string) (*entities.UserAccount, error) {
+func (s *service) ValidateToken(tokenString string) (*entities.UserAccount, error) {
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		jwtSecret = "your-secret-key-change-this-in-production"
