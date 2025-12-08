@@ -3,7 +3,7 @@ package crossref
 import (
 	"net/http"
 
-	"github.com/SURF-Innovatie/MORIS/internal/infra/external/crossref"
+	"github.com/SURF-Innovatie/MORIS/external/crossref"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 )
 
