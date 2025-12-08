@@ -2,27 +2,17 @@ package middleware
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strings"
 
 	coreauth "github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 )
 
 type contextKey string
 
 const userContextKey contextKey = "user" // Key to store user info in context
-
-// BackendError swagger:model BackendError
-// BackendError is a standardized error response structure, referenced by Swagger
-// used by Swagger for API documentation
-type BackendError struct {
-	Code    int         `json:"code" example:"400"`
-	Status  string      `json:"status" example:"Bad Request"`
-	Errors  interface{} `json:"errors,omitempty"`                                       // Can be map[string]string or []string or null
-	Message string      `json:"message,omitempty" example:"Detailed error description"` // Custom message
-}
 
 // AuthMiddleware extracts and validates a JWT token from the Authorization header.
 func AuthMiddleware(authSvc coreauth.Service) func(http.Handler) http.Handler {
@@ -30,26 +20,20 @@ func AuthMiddleware(authSvc coreauth.Service) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusUnauthorized)
-				json.NewEncoder(w).Encode(BackendError{Code: http.StatusUnauthorized, Status: "Unauthorized", Message: "Authorization header required"})
+				httputil.WriteError(w, http.StatusUnauthorized, "Authorization header required", nil)
 				return
 			}
 
 			parts := strings.SplitN(authHeader, " ", 2)
 			if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusUnauthorized)
-				json.NewEncoder(w).Encode(BackendError{Code: http.StatusUnauthorized, Status: "Unauthorized", Message: "Authorization header must be in 'Bearer <token>' format"})
+				httputil.WriteError(w, http.StatusUnauthorized, "Authorization header must be in 'Bearer <token>' format", nil)
 				return
 			}
 			token := parts[1]
 
 			user, err := authSvc.ValidateToken(token)
 			if err != nil {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusUnauthorized)
-				json.NewEncoder(w).Encode(BackendError{Code: http.StatusUnauthorized, Status: "Unauthorized", Message: "Invalid or expired token"})
+				httputil.WriteError(w, http.StatusUnauthorized, "Invalid or expired token", nil)
 				return
 			}
 
@@ -74,9 +58,7 @@ func RequireRoleMiddleware(roles ...string) func(next http.Handler) http.Handler
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			user, ok := GetUserFromContext(r.Context())
 			if !ok || user == nil {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusUnauthorized)
-				json.NewEncoder(w).Encode(BackendError{Code: http.StatusUnauthorized, Status: "Unauthorized", Message: "Unauthorized: User not found in context"})
+				httputil.WriteError(w, http.StatusUnauthorized, "Unauthorized: User not found in context", nil)
 				return
 			}
 

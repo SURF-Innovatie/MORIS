@@ -1,6 +1,9 @@
 package user
 
-import "github.com/go-chi/chi/v5"
+import (
+	"github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
+	"github.com/go-chi/chi/v5"
+)
 
 func MountUserRoutes(r chi.Router, h *Handler) {
 	r.Route("/users", func(r chi.Router) {
@@ -10,5 +13,10 @@ func MountUserRoutes(r chi.Router, h *Handler) {
 
 		r.Delete("/{id}", h.DeleteUser)
 		r.Get("/{id}/events/approved", h.GetApprovedEvents)
+	})
+
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.RequireRoleMiddleware("admin"))
+		r.Get("/admin/users/list", h.ListUsers)
 	})
 }

@@ -210,3 +210,19 @@ func toUserResponse(acc *entities.UserAccount) userdto.Response {
 		FamilyName: p.FamilyName,
 	}
 }
+
+// ListUsers godoc
+// @Summary Get all users (Admin only)
+// @Description Returns a list of all users - requires admin role
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {string} string "Admin user list"
+// @Failure 401 {object} httputil.BackendError "User not authenticated"
+// @Failure 403 {object} httputil.BackendError "Insufficient permissions"
+// @Router /admin/users/list [get]
+func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write([]byte(`{"message": "Admin-only user list!", "users": [{"id":1,"name":"Admin User"}]}`))
+}

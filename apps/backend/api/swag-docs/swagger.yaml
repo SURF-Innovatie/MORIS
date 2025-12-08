@@ -337,6 +337,47 @@ definitions:
       primary:
         $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Primary'
     type: object
+  github_com_SURF-Innovatie_MORIS_internal_api_authdto.LinkORCIDRequest:
+    properties:
+      code:
+        example: authentication_code_from_orcid
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_internal_api_authdto.LoginRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: secretpassword
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_internal_api_authdto.LoginResponse:
+    properties:
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      user:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.UserAccount'
+    type: object
+  github_com_SURF-Innovatie_MORIS_internal_api_authdto.ORCIDAuthURLResponse:
+    properties:
+      url:
+        example: https://orcid.org/oauth/authorize?...
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_internal_api_authdto.RegisterRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      name:
+        example: John Doe
+        type: string
+      password:
+        example: secretpassword
+        type: string
+    type: object
   github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.Changelog:
     properties:
       entries:
@@ -349,56 +390,6 @@ definitions:
       at:
         type: string
       event:
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_api_customdto.LinkORCIDRequest:
-    properties:
-      code:
-        example: authentication_code_from_orcid
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_api_customdto.LoginRequest:
-    properties:
-      email:
-        example: user@example.com
-        type: string
-      password:
-        example: secretpassword
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_api_customdto.LoginResponse:
-    properties:
-      token:
-        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-        type: string
-      user:
-        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.UserAccount'
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_api_customdto.ORCIDAuthURLResponse:
-    properties:
-      url:
-        example: https://orcid.org/oauth/authorize?...
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_api_customdto.RegisterRequest:
-    properties:
-      email:
-        example: user@example.com
-        type: string
-      name:
-        example: John Doe
-        type: string
-      password:
-        example: secretpassword
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_api_customdto.StatusResponse:
-    properties:
-      status:
-        example: ok
-        type: string
-      timestamp:
-        example: "2025-11-12T10:00:00Z"
         type: string
     type: object
   github_com_SURF-Innovatie_MORIS_internal_api_eventdto.Event:
@@ -668,7 +659,7 @@ definitions:
       user:
         $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.User'
     type: object
-  github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError:
+  github_com_SURF-Innovatie_MORIS_internal_infra_httputil.BackendError:
     properties:
       code:
         example: 400
@@ -681,6 +672,15 @@ definitions:
         type: string
       status:
         example: Bad Request
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_internal_infra_httputil.StatusResponse:
+    properties:
+      status:
+        example: ok
+        type: string
+      timestamp:
+        example: "2025-11-12T10:00:00Z"
         type: string
     type: object
 host: localhost:8080
@@ -712,11 +712,11 @@ paths:
         "401":
           description: User not authenticated
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_infra_httputil.BackendError'
         "403":
           description: Insufficient permissions
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_infra_httputil.BackendError'
       security:
       - BearerAuth: []
       summary: Get all users (Admin only)
@@ -733,30 +733,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.LinkORCIDRequest'
+          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_authdto.LinkORCIDRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.StatusResponse'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_infra_httputil.StatusResponse'
         "400":
           description: Invalid request
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_infra_httputil.BackendError'
         "401":
           description: User not authenticated
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_infra_httputil.BackendError'
         "409":
           description: ORCID ID already linked
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_infra_httputil.BackendError'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_infra_httputil.BackendError'
       security:
       - BearerAuth: []
       summary: Link ORCID ID
@@ -773,15 +773,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.StatusResponse'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_infra_httputil.StatusResponse'
         "401":
           description: User not authenticated
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_infra_httputil.BackendError'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_infra_httputil.BackendError'
       security:
       - BearerAuth: []
       summary: Unlink ORCID ID
@@ -798,15 +798,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.ORCIDAuthURLResponse'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_authdto.ORCIDAuthURLResponse'
         "401":
           description: User not authenticated
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_infra_httputil.BackendError'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_infra_httputil.BackendError'
       security:
       - BearerAuth: []
       summary: Get ORCID authorization URL
@@ -918,7 +918,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.StatusResponse'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_infra_httputil.StatusResponse'
       summary: Health check
       tags:
       - status
@@ -933,22 +933,22 @@ paths:
         name: credentials
         required: true
         schema:
-          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.LoginRequest'
+          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_authdto.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.LoginResponse'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_authdto.LoginResponse'
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_infra_httputil.BackendError'
         "401":
           description: Invalid credentials
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_infra_httputil.BackendError'
       summary: Login user
       tags:
       - auth
@@ -1270,7 +1270,7 @@ paths:
         "401":
           description: User not authenticated
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_infra_httputil.BackendError'
       security:
       - BearerAuth: []
       summary: Get user profile
@@ -1596,7 +1596,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.RegisterRequest'
+          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_authdto.RegisterRequest'
       produces:
       - application/json
       responses:
@@ -1607,11 +1607,11 @@ paths:
         "400":
           description: Invalid request body or missing fields
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_infra_httputil.BackendError'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_infra_httputil.BackendError'
       summary: Register a new user
       tags:
       - auth
@@ -1626,7 +1626,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.StatusResponse'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_infra_httputil.StatusResponse'
       summary: Check API status
       tags:
       - status

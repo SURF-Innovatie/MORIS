@@ -88,11 +88,7 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 	userCtx, ok := middleware.GetUserFromContext(r.Context())
 	if !ok || userCtx == nil {
-		_ = httputil.WriteJSON(w, http.StatusUnauthorized, middleware.BackendError{
-			Code:    http.StatusUnauthorized,
-			Status:  "Unauthorized",
-			Message: "User not authenticated or found in context",
-		})
+		httputil.WriteError(w, http.StatusUnauthorized, "User not authenticated or found in context", nil)
 		return
 	}
 

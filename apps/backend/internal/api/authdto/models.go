@@ -1,4 +1,4 @@
-package customdto
+package authdto
 
 import (
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
@@ -32,13 +32,6 @@ type LoginRequest struct {
 type LoginResponse struct {
 	Token string                `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
 	User  *entities.UserAccount `json:"user"`
-}
-
-// StatusResponse swagger:model StatusResponse
-// Represents the /status endpoint response payload.
-type StatusResponse struct {
-	Status    string `json:"status" example:"ok"`
-	Timestamp string `json:"timestamp" example:"2025-11-12T10:00:00Z"`
 }
 
 // ORCIDAuthURLResponse swagger:model ORCIDAuthURLResponse

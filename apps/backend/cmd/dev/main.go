@@ -12,8 +12,8 @@ import (
 	crossref2 "github.com/SURF-Innovatie/MORIS/external/crossref"
 	"github.com/SURF-Innovatie/MORIS/external/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
+	authhandler "github.com/SURF-Innovatie/MORIS/internal/handler/auth"
 	crossrefhandler "github.com/SURF-Innovatie/MORIS/internal/handler/crossref"
-	"github.com/SURF-Innovatie/MORIS/internal/handler/custom"
 	eventHandler "github.com/SURF-Innovatie/MORIS/internal/handler/event"
 	authmiddleware "github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
 	notificationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/notification"
@@ -21,6 +21,7 @@ import (
 	personhandler "github.com/SURF-Innovatie/MORIS/internal/handler/person"
 	producthandler "github.com/SURF-Innovatie/MORIS/internal/handler/product"
 	projecthandler "github.com/SURF-Innovatie/MORIS/internal/handler/project"
+	systemhandler "github.com/SURF-Innovatie/MORIS/internal/handler/system"
 	userhandler "github.com/SURF-Innovatie/MORIS/internal/handler/user"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
@@ -106,7 +107,8 @@ func main() {
 	notifierSvc := notification.NewService(client)
 
 	// Create HTTP handler/controller
-	customHandler := custom.NewHandler(userSvc, authSvc, orcidSvc)
+	authHandler := authhandler.NewHandler(userSvc, authSvc, orcidSvc)
+	systemHandler := systemhandler.NewHandler()
 
 	userHandler := userhandler.NewHandler(userSvc)
 
@@ -125,7 +127,8 @@ func main() {
 	r.Use(middleware.Recoverer)
 
 	r.Route("/api", func(r chi.Router) {
-		custom.MountCustomHandlers(r, authSvc, customHandler)
+		authhandler.MountRoutes(r, authSvc, authHandler)
+		systemhandler.MountRoutes(r, systemHandler)
 		r.Group(func(r chi.Router) {
 			r.Use(authmiddleware.AuthMiddleware(authSvc))
 			projecthandler.MountProjectRoutes(r, projHandler)

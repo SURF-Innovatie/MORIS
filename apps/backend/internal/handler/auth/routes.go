@@ -1,4 +1,4 @@
-package custom
+package auth
 
 import (
 	coreauth "github.com/SURF-Innovatie/MORIS/internal/auth"
@@ -6,10 +6,8 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// MountCustomHandlers mounts all custom API endpoints
-func MountCustomHandlers(r chi.Router, authSvc coreauth.Service, h *Handler) {
-	r.Get("/health", h.Health)
-	r.Get("/status", h.Status)
+// MountRoutes mounts all auth API endpoints
+func MountRoutes(r chi.Router, authSvc coreauth.Service, h *Handler) {
 	r.Post("/register", h.Register)
 	r.Post("/login", h.Login)
 
@@ -22,10 +20,5 @@ func MountCustomHandlers(r chi.Router, authSvc coreauth.Service, h *Handler) {
 		r.Get("/auth/orcid/url", h.GetORCIDAuthURL)
 		r.Post("/auth/orcid/link", h.LinkORCID)
 		r.Post("/auth/orcid/unlink", h.UnlinkORCID)
-
-		r.Group(func(r chi.Router) {
-			r.Use(middleware.RequireRoleMiddleware("admin"))
-			r.Get("/admin/users/list", h.AdminUserList)
-		})
 	})
 }
