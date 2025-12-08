@@ -7,3 +7,4 @@ generated-orval
 dist
 .orval
 .agent
+apps/backend/api/swag-docs
