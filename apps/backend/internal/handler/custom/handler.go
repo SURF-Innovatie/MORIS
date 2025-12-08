@@ -8,19 +8,20 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/customdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
+	coreauth "github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
-	domainAuth "github.com/SURF-Innovatie/MORIS/internal/infra/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/external/orcid"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
 )
 
 type Handler struct {
 	userService  user.Service
-	authService  domainAuth.Service
+	authService  coreauth.Service
 	orcidService orcid.Service
 }
 
-func NewHandler(userService user.Service, authService domainAuth.Service, orcidService orcid.Service) *Handler {
+func NewHandler(userService user.Service, authService coreauth.Service, orcidService orcid.Service) *Handler {
 	return &Handler{
 		userService:  userService,
 		authService:  authService,
@@ -37,12 +38,11 @@ func NewHandler(userService user.Service, authService domainAuth.Service, orcidS
 // @Success 200 {object} StatusResponse
 // @Router /status [get]
 func (h *Handler) Status(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
 	resp := customdto.StatusResponse{
 		Status:    "ok",
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
-	_ = json.NewEncoder(w).Encode(resp)
+	_ = httputil.WriteJSON(w, http.StatusOK, resp)
 }
 
 // Health godoc
@@ -54,12 +54,11 @@ func (h *Handler) Status(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} StatusResponse
 // @Router /health [get]
 func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
 	resp := customdto.StatusResponse{
 		Status:    "ok",
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
-	_ = json.NewEncoder(w).Encode(resp)
+	_ = httputil.WriteJSON(w, http.StatusOK, resp)
 }
 
 // Register godoc
@@ -74,25 +73,15 @@ func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} auth.BackendError "Internal server error"
 // @Router /register [post]
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
-	//TODO: Make sure that user is linked with person upon registering, either by making a new person, or by looking at the ORCid(/Mail?)
 	var req customdto.RegisterRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(middleware.BackendError{
-			Code:    http.StatusBadRequest,
-			Status:  "Bad Request",
-			Message: "Invalid request body",
-		})
+	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
 
-	var domainReq domainAuth.RegisterRequest
+	var domainReq coreauth.RegisterRequest
 	usr, err := h.authService.Register(r.Context(), domainReq)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(middleware.BackendError{
+		_ = httputil.WriteJSON(w, http.StatusInternalServerError, middleware.BackendError{
 			Code:    http.StatusInternalServerError,
 			Status:  "Internal Server Error",
 			Message: err.Error(),
@@ -100,10 +89,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-
-	_ = json.NewEncoder(w).Encode(usr)
+	_ = httputil.WriteJSON(w, http.StatusCreated, usr)
 }
 
 // Login godoc
@@ -119,22 +105,13 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 // @Router /login [post]
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var req customdto.LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(middleware.BackendError{
-			Code:    http.StatusBadRequest,
-			Status:  "Bad Request",
-			Message: "Invalid request body",
-		})
+	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
 
 	token, authUser, err := h.authService.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(middleware.BackendError{
+		_ = httputil.WriteJSON(w, http.StatusUnauthorized, middleware.BackendError{
 			Code:    http.StatusUnauthorized,
 			Status:  "Unauthorized",
 			Message: "Invalid credentials",
@@ -142,12 +119,11 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	resp := customdto.LoginResponse{
 		Token: token,
 		User:  authUser,
 	}
-	_ = json.NewEncoder(w).Encode(resp)
+	_ = httputil.WriteJSON(w, http.StatusOK, resp)
 }
 
 // Profile godoc

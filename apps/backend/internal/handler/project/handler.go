@@ -1,7 +1,6 @@
 package project
 
 import (
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -15,8 +14,8 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	_ "github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 
+	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/SURF-Innovatie/MORIS/internal/project"
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -40,8 +39,7 @@ func NewHandler(svc project.Service) *Handler {
 // @Failure 404 {string} string "project not found"
 // @Router /projects/{id} [get]
 func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		http.Error(w, "invalid project id", http.StatusBadRequest)
 		return
@@ -51,8 +49,7 @@ func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(toProjectResponse(proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, toProjectResponse(proj))
 }
 
 // StartProject godoc
@@ -68,9 +65,7 @@ func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 // @Router /projects [post]
 func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
 	req := projectdto.Request{}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid body", http.StatusBadRequest)
+	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
 
@@ -101,8 +96,7 @@ func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(toProjectResponse(proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, toProjectResponse(proj))
 }
 
 // UpdateProject godoc
@@ -119,16 +113,14 @@ func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /projects/{id} [put]
 func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		http.Error(w, "invalid project id", http.StatusBadRequest)
 		return
 	}
 
 	req := projectdto.Request{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid body", http.StatusBadRequest)
+	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
 
@@ -162,8 +154,7 @@ func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(toProjectResponse(proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, toProjectResponse(proj))
 }
 
 // GetAllProjects godoc
@@ -182,12 +173,11 @@ func (h *Handler) GetAllProjects(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
 	resps := make([]projectdto.Response, 0, len(projs))
 	for _, p := range projs {
 		resps = append(resps, toProjectResponse(p))
 	}
-	_ = json.NewEncoder(w).Encode(resps)
+	_ = httputil.WriteJSON(w, http.StatusOK, resps)
 }
 
 // AddPerson godoc
@@ -203,23 +193,24 @@ func (h *Handler) GetAllProjects(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /projects/{id}/people/{personId} [post]
 func (h *Handler) AddPerson(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		http.Error(w, "invalid project id", http.StatusBadRequest)
 		return
 	}
 
-	personIDstr := chi.URLParam(r, "personId")
-	personID, err := uuid.Parse(personIDstr)
+	personID, err := httputil.ParseUUIDParam(r, "personId")
+	if err != nil {
+		http.Error(w, "invalid person id", http.StatusBadRequest)
+		return
+	}
 
 	proj, err := h.svc.AddPerson(r.Context(), id, personID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(toProjectResponse(proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, toProjectResponse(proj))
 }
 
 // RemovePerson godoc
@@ -235,15 +226,13 @@ func (h *Handler) AddPerson(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /projects/{id}/people/{personId} [delete]
 func (h *Handler) RemovePerson(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		http.Error(w, "invalid project id", http.StatusBadRequest)
 		return
 	}
 
-	personIdStr := chi.URLParam(r, "personId")
-	personId, err := uuid.Parse(personIdStr)
+	personId, err := httputil.ParseUUIDParam(r, "personId")
 	if err != nil {
 		http.Error(w, "invalid personId", http.StatusBadRequest)
 		return
@@ -255,8 +244,7 @@ func (h *Handler) RemovePerson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(toProjectResponse(proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, toProjectResponse(proj))
 }
 
 // AddProduct godoc
@@ -272,15 +260,13 @@ func (h *Handler) RemovePerson(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /projects/{id}/products/{productID} [post]
 func (h *Handler) AddProduct(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		http.Error(w, "invalid project id", http.StatusBadRequest)
 		return
 	}
 
-	productIDStr := chi.URLParam(r, "productID")
-	productID, err := uuid.Parse(productIDStr)
+	productID, err := httputil.ParseUUIDParam(r, "productID")
 	if err != nil {
 		http.Error(w, "invalid productID", http.StatusBadRequest)
 		return
@@ -292,8 +278,7 @@ func (h *Handler) AddProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(toProjectResponse(proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, toProjectResponse(proj))
 }
 
 // RemoveProduct godoc
@@ -309,15 +294,13 @@ func (h *Handler) AddProduct(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /projects/{id}/products/{productID} [delete]
 func (h *Handler) RemoveProduct(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		http.Error(w, "invalid project id", http.StatusBadRequest)
 		return
 	}
 
-	productIDStr := chi.URLParam(r, "productID")
-	productID, err := uuid.Parse(productIDStr)
+	productID, err := httputil.ParseUUIDParam(r, "productID")
 	if err != nil {
 		http.Error(w, "invalid productID", http.StatusBadRequest)
 		return
@@ -329,8 +312,7 @@ func (h *Handler) RemoveProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(toProjectResponse(proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, toProjectResponse(proj))
 }
 
 // GetChangelog godoc
@@ -345,8 +327,7 @@ func (h *Handler) RemoveProduct(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /projects/{id}/changelog [get]
 func (h *Handler) GetChangelog(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		http.Error(w, "invalid project id", http.StatusBadRequest)
 		return
@@ -368,8 +349,7 @@ func (h *Handler) GetChangelog(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(changeDto)
+	_ = httputil.WriteJSON(w, http.StatusOK, changeDto)
 }
 
 func toOrganisationDTO(org entities.Organisation) organisationdto.Response {
@@ -440,8 +420,7 @@ func toProjectResponse(d *entities.ProjectDetails) projectdto.Response {
 // @Failure 500 {string} string "internal server error"
 // @Router /projects/{id}/pending-events [get]
 func (h *Handler) GetPendingEvents(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		http.Error(w, "invalid project id", http.StatusBadRequest)
 		return
@@ -468,6 +447,5 @@ func (h *Handler) GetPendingEvents(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(resp)
+	_ = httputil.WriteJSON(w, http.StatusOK, resp)
 }

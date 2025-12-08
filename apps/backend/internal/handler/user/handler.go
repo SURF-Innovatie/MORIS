@@ -1,14 +1,13 @@
 package user
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/eventdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -33,13 +32,13 @@ func NewHandler(svc user.Service) *Handler {
 // @Router /users [post]
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var req userdto.Request
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
 
 	if req.PersonID == uuid.Nil {
 		http.Error(w, "person ID is required", http.StatusBadRequest)
+		return
 	}
 
 	u, err := h.svc.Create(r.Context(), entities.User{
@@ -54,9 +53,10 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	acc, err := h.svc.GetAccount(r.Context(), u.ID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	writeJSON(w, acc)
+	_ = httputil.WriteJSON(w, http.StatusOK, toUserResponse(acc))
 }
 
 // GetUser godoc
@@ -71,18 +71,19 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /users [get]
 func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDQuery(r, "id")
 	if err != nil {
 		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
 	}
 
 	acc, err := h.svc.GetAccount(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	writeJSON(w, acc)
+	_ = httputil.WriteJSON(w, http.StatusOK, toUserResponse(acc))
 }
 
 // UpdateUser godoc
@@ -98,15 +99,14 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /users [put]
 func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDQuery(r, "id")
 	if err != nil {
 		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
 	}
 
 	var req userdto.Request
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
 
@@ -117,14 +117,16 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	acc, err := h.svc.GetAccount(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	writeJSON(w, acc)
+	_ = httputil.WriteJSON(w, http.StatusOK, toUserResponse(acc))
 }
 
 // DeleteUser godoc
@@ -139,18 +141,15 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /users [delete]
 func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDQuery(r, "id")
 	if err != nil {
 		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
 	}
 
 	if err := h.svc.Delete(r.Context(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
-	if err := h.svc.Delete(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
@@ -168,8 +167,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /users/{id}/events/approved [get]
 func (h *Handler) GetApprovedEvents(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
@@ -195,13 +193,7 @@ func (h *Handler) GetApprovedEvents(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(eventdto.Response{Events: dtos})
-}
-
-func writeJSON(w http.ResponseWriter, acc *entities.UserAccount) {
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(toUserResponse(acc))
+	_ = httputil.WriteJSON(w, http.StatusOK, eventdto.Response{Events: dtos})
 }
 
 func toUserResponse(acc *entities.UserAccount) userdto.Response {

@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	coreauth "github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	domainAuth "github.com/SURF-Innovatie/MORIS/internal/infra/auth"
 )
 
 type contextKey string
@@ -25,7 +25,7 @@ type BackendError struct {
 }
 
 // AuthMiddleware extracts and validates a JWT token from the Authorization header.
-func AuthMiddleware(authSvc domainAuth.Service) func(http.Handler) http.Handler {
+func AuthMiddleware(authSvc coreauth.Service) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")

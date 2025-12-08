@@ -1,10 +1,10 @@
 package crossref
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/infra/external/crossref"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 )
 
 type Handler struct {
@@ -42,8 +42,5 @@ func (h *Handler) GetWork(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(work); err != nil {
-		http.Error(w, "failed to encode response", http.StatusInternalServerError)
-	}
+	_ = httputil.WriteJSON(w, http.StatusOK, work)
 }

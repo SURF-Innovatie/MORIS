@@ -5,8 +5,7 @@ import (
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/event"
-	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 )
 
 type Handler struct {
@@ -30,8 +29,7 @@ func NewHandler(svc event.Service) *Handler {
 // @Router /events/{id}/approve [post]
 func (h *Handler) ApproveEvent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		http.Error(w, "invalid event id", http.StatusBadRequest)
 		return
@@ -60,8 +58,7 @@ func (h *Handler) ApproveEvent(w http.ResponseWriter, r *http.Request) {
 // @Router /events/{id}/reject [post]
 func (h *Handler) RejectEvent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		http.Error(w, "invalid event id", http.StatusBadRequest)
 		return

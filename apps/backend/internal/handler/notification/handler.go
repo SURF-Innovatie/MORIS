@@ -1,17 +1,14 @@
 package notification
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/notificationdto"
 	"github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
-	"github.com/go-chi/chi/v5"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
+	"github.com/SURF-Innovatie/MORIS/internal/notification"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-
-	_ "github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/notification"
 )
 
 type Handler struct {
@@ -65,8 +62,7 @@ func (h *Handler) GetNotifications(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(dtos)
+	_ = httputil.WriteJSON(w, http.StatusOK, dtos)
 }
 
 // MarkNotificationAsRead godoc
@@ -87,8 +83,7 @@ func (h *Handler) MarkNotificationAsRead(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		http.Error(w, "invalid id", http.StatusBadRequest)
 		return

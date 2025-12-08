@@ -1,15 +1,13 @@
 package product
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/productdto"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	productsvc "github.com/SURF-Innovatie/MORIS/internal/product"
-	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -33,13 +31,13 @@ func NewHandler(svc productsvc.Service) *Handler {
 // @Router /products [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	var req productdto.Request
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
 
 	if req.Name == "" {
 		http.Error(w, "name is required", http.StatusBadRequest)
+		return
 	}
 
 	p, err := h.svc.Create(r.Context(), entities.Product{
@@ -53,7 +51,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, productdto.Response{
+	_ = httputil.WriteJSON(w, http.StatusOK, productdto.Response{
 		ID:       p.Id,
 		Name:     p.Name,
 		DOI:      p.DOI,
@@ -76,7 +74,7 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, products)
+	_ = httputil.WriteJSON(w, http.StatusOK, products)
 }
 
 // GetMe godoc
@@ -90,9 +88,7 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 	userCtx, ok := middleware.GetUserFromContext(r.Context())
 	if !ok || userCtx == nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(middleware.BackendError{
+		_ = httputil.WriteJSON(w, http.StatusUnauthorized, middleware.BackendError{
 			Code:    http.StatusUnauthorized,
 			Status:  "Unauthorized",
 			Message: "User not authenticated or found in context",
@@ -117,7 +113,7 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	writeJSON(w, dtos)
+	_ = httputil.WriteJSON(w, http.StatusOK, dtos)
 }
 
 // Get godoc
@@ -131,8 +127,7 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /products/{id} [get]
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
@@ -142,7 +137,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, productdto.Response{
+	_ = httputil.WriteJSON(w, http.StatusOK, productdto.Response{
 		ID:       p.Id,
 		Name:     p.Name,
 		DOI:      p.DOI,
@@ -164,18 +159,19 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /products/{id} [put]
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
 	}
 
 	var req productdto.Request
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if !httputil.ReadJSON(w, r, &req) {
+		return
 	}
 	if req.Name == "" {
 		http.Error(w, "name is required", http.StatusBadRequest)
+		return
 	}
 	p, err := h.svc.Update(r.Context(), id, entities.Product{
 		Name:     req.Name,
@@ -187,7 +183,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, productdto.Response{
+	_ = httputil.WriteJSON(w, http.StatusOK, productdto.Response{
 		ID:       p.Id,
 		Name:     p.Name,
 		DOI:      p.DOI,
@@ -207,10 +203,10 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /products/{id} [delete]
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
 	}
 	if err := h.svc.Delete(r.Context(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -218,9 +214,4 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-}
-
-func writeJSON(w http.ResponseWriter, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(v)
 }

@@ -85,7 +85,7 @@ func main() {
 	esStore := eventstore.NewEntStore(client)
 	personSvc := person.NewService(client)
 	userSvc := user.NewService(client, personSvc, esStore)
-	authSvc := auth.NewJWTService(client, userSvc)
+	authSvc := auth.NewJWTService(client, userSvc, os.Getenv("JWT_SECRET"))
 	orcidSvc := orcid.NewService(client, userSvc)
 
 	personHandler := personhandler.NewHandler(personSvc)

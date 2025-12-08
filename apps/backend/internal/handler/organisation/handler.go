@@ -1,14 +1,11 @@
 package organisation
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/organisationdto"
-	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
-
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	organisationsvc "github.com/SURF-Innovatie/MORIS/internal/organisation"
 )
 
@@ -22,8 +19,7 @@ func NewHandler(s organisationsvc.Service) *Handler {
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	var req organisationdto.CreateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid body", http.StatusBadRequest)
+	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
 	if req.Name == "" {
@@ -39,15 +35,14 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, organisationdto.Response{
+	_ = httputil.WriteJSON(w, http.StatusOK, organisationdto.Response{
 		ID:   p.Id,
 		Name: p.Name,
 	})
 }
 
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
@@ -57,15 +52,10 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	writeJSON(w, organisationdto.Response{
+	_ = httputil.WriteJSON(w, http.StatusOK, organisationdto.Response{
 		ID:   p.Id,
 		Name: p.Name,
 	})
 }
 
 // List / Update implementations omitted for brevity; same pattern.
-
-func writeJSON(w http.ResponseWriter, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(v)
-}

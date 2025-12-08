@@ -1,14 +1,11 @@
 package person
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/persondto"
-	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
-
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	personsvc "github.com/SURF-Innovatie/MORIS/internal/person"
 )
 
@@ -33,8 +30,7 @@ func NewHandler(s personsvc.Service) *Handler {
 // @Router /people [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	var req persondto.Request
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid body", http.StatusBadRequest)
+	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
 	if req.Name == "" {
@@ -53,7 +49,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, persondto.Response{
+	_ = httputil.WriteJSON(w, http.StatusOK, persondto.Response{
 		ID:         p.Id,
 		UserID:     p.UserID,
 		Name:       p.Name,
@@ -74,8 +70,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {string} string "Person not found"
 // @Router /people/{id} [get]
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
@@ -85,7 +80,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	writeJSON(w, persondto.Response{
+	_ = httputil.WriteJSON(w, http.StatusOK, persondto.Response{
 		ID:         p.Id,
 		UserID:     p.UserID,
 		Name:       p.Name,
@@ -109,16 +104,14 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Internal server error"
 // @Router /people/{id} [put]
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
 	}
 
 	var req persondto.Request
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid body", http.StatusBadRequest)
+	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
 
@@ -135,7 +128,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, persondto.Response{
+	_ = httputil.WriteJSON(w, http.StatusOK, persondto.Response{
 		ID:          p.Id,
 		UserID:      p.UserID,
 		Name:        p.Name,
@@ -148,8 +141,3 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 // List implementation omitted for brevity.
-
-func writeJSON(w http.ResponseWriter, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(v)
-}
