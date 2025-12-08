@@ -7,7 +7,7 @@ import {
   Card,
   CardContent,
 } from "@/components/ui/card";
-import { useNotifications } from "@/context/NotificationContext";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { ProjectList } from "@/components/projects/ProjectList";
 import { NotificationList } from "@/components/notifications/NotificationList";
 

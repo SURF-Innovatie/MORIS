@@ -31,13 +31,8 @@ import {
   usePutProjectsId,
 } from "@api/moris";
 
-const formSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
-  startDate: z.date(),
-  endDate: z.date(),
-  organisationID: z.string().uuid("Invalid organisation ID"),
-});
+import { projectFormSchema } from "@/lib/schemas/project";
+
 
 export default function ProjectFormRoute() {
   const { id } = useParams();
@@ -56,8 +51,8 @@ export default function ProjectFormRoute() {
   const { mutateAsync: updateProject, isPending: isUpdating } =
     usePutProjectsId();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof projectFormSchema>>({
+    resolver: zodResolver(projectFormSchema),
     defaultValues: {
       title: "",
       description: "",
@@ -79,7 +74,7 @@ export default function ProjectFormRoute() {
     }
   }, [project, form]);
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof projectFormSchema>) {
     try {
       if (isEditing) {
         await updateProject({

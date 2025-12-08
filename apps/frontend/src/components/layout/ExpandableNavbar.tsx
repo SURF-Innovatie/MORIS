@@ -18,7 +18,7 @@ import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogout } from "@/hooks/useLogout";
-import { useNotifications } from "@/context/NotificationContext";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 const NAV_GROUPS = [
   {

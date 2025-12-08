@@ -3,7 +3,7 @@ import { CheckCheck, Inbox } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useNotifications } from "@/context/NotificationContext";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { NotificationList } from "@/components/notifications/NotificationList";
 
 const InboxRoute = () => {

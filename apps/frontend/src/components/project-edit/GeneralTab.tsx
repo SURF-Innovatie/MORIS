@@ -28,7 +28,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "../../lib/utils";
-import { ProjectFormValues } from "./schema";
+import { ProjectFormValues } from "@/lib/schemas/project";
 
 import { ProjectResponse } from "@api/model";
 

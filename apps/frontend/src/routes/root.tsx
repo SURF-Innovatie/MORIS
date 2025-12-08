@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 import QueryIndicator from "@/components/status/query-indicator";
 import { ExpandableNavbar } from "@/components/layout";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { NotificationProvider } from "@/context/NotificationContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 
 const RootLayout = () => {
   return (

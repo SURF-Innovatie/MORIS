@@ -14,7 +14,7 @@ import { GeneralTab } from "@/components/project-edit/GeneralTab";
 import { PeopleTab } from "@/components/project-edit/PeopleTab";
 import { ChangelogTab } from "@/components/project-edit/ChangelogTab";
 import { ProductsTab } from "@/components/project-edit/ProductsTab";
-import { projectFormSchema } from "@/components/project-edit/schema";
+import { projectFormSchema } from "@/lib/schemas/project";
 
 export default function ProjectEditRoute() {
   const { id } = useParams();

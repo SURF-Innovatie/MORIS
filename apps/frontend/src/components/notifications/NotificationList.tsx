@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Bell, CheckCircle2, ClipboardCheck, Info } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { useNotifications } from "@/context/NotificationContext";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { ApprovalModal } from "@/components/project-edit/ApprovalModal";
 import { EMPTY_UUID } from "@/lib/utils";
 
@@ -61,9 +61,8 @@ export function NotificationList({ limit }: NotificationListProps) {
 
           const Content = (
             <div
-              className={`group flex items-start gap-4 p-4 transition-colors hover:bg-muted/50 ${
-                !notification.read ? "bg-primary/5" : ""
-              } ${index === 0 ? "rounded-t-xl" : ""} ${index === notifications.length - 1 ? "rounded-b-xl" : ""}`}
+              className={`group flex items-start gap-4 p-4 transition-colors hover:bg-muted/50 ${!notification.read ? "bg-primary/5" : ""
+                } ${index === 0 ? "rounded-t-xl" : ""} ${index === notifications.length - 1 ? "rounded-b-xl" : ""}`}
             >
               <div className="mt-1">{getIcon(notification.type)}</div>
               <div className="flex-1 space-y-1">
@@ -75,9 +74,9 @@ export function NotificationList({ limit }: NotificationListProps) {
                 <p className="text-xs text-muted-foreground/70">
                   {notification.sentAt
                     ? format(
-                        new Date(notification.sentAt),
-                        "MMM d, yyyy 'at' h:mm a"
-                      )
+                      new Date(notification.sentAt),
+                      "MMM d, yyyy 'at' h:mm a"
+                    )
                     : "Just now"}
                 </p>
               </div>
