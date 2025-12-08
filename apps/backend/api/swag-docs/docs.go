@@ -52,13 +52,13 @@ const docTemplate = `{
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError"
                         }
                     },
                     "403": {
                         "description": "Insufficient permissions",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError"
                         }
                     }
                 }
@@ -89,7 +89,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.LinkORCIDRequest"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.LinkORCIDRequest"
                         }
                     }
                 ],
@@ -97,31 +97,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.StatusResponse"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.StatusResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError"
                         }
                     },
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError"
                         }
                     },
                     "409": {
                         "description": "ORCID ID already linked",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError"
                         }
                     }
                 }
@@ -149,19 +149,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.StatusResponse"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.StatusResponse"
                         }
                     },
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError"
                         }
                     }
                 }
@@ -189,19 +189,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.ORCIDAuthURLResponse"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.ORCIDAuthURLResponse"
                         }
                     },
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError"
                         }
                     }
                 }
@@ -233,7 +233,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Work"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Work"
                         }
                     },
                     "400": {
@@ -368,7 +368,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.StatusResponse"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.StatusResponse"
                         }
                     }
                 }
@@ -394,7 +394,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.LoginRequest"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.LoginRequest"
                         }
                     }
                 ],
@@ -402,19 +402,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.LoginResponse"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.LoginResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError"
                         }
                     },
                     "401": {
                         "description": "Invalid credentials",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError"
                         }
                     }
                 }
@@ -907,7 +907,7 @@ const docTemplate = `{
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError"
                         }
                     }
                 }
@@ -1398,7 +1398,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.RegisterRequest"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.RegisterRequest"
                         }
                     }
                 ],
@@ -1412,13 +1412,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request body or missing fields",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError"
                         }
                     }
                 }
@@ -1441,7 +1441,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.StatusResponse"
+                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.StatusResponse"
                         }
                     }
                 }
@@ -1674,6 +1674,522 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "github_com_SURF-Innovatie_MORIS_external_crossref.Assertion": {
+            "type": "object",
+            "properties": {
+                "URL": {
+                    "type": "string"
+                },
+                "group": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Group"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "order": {
+                    "type": "integer"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.Author": {
+            "type": "object",
+            "properties": {
+                "affiliation": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.AuthorAffiliation"
+                    }
+                },
+                "family": {
+                    "type": "string"
+                },
+                "given": {
+                    "type": "string"
+                },
+                "sequence": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.AuthorAffiliation": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.ContentDomain": {
+            "type": "object",
+            "properties": {
+                "crossmark-restriction": {
+                    "type": "boolean"
+                },
+                "domain": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.Created": {
+            "type": "object",
+            "properties": {
+                "date-parts": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "date-time": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.DateParts": {
+            "type": "object",
+            "properties": {
+                "date-parts": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "date-time": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.Deposited": {
+            "type": "object",
+            "properties": {
+                "date-parts": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "date-time": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.Group": {
+            "type": "object",
+            "properties": {
+                "label": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.ISSNType": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.Indexed": {
+            "type": "object",
+            "properties": {
+                "date-parts": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "date-time": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.Issued": {
+            "type": "object",
+            "properties": {
+                "date-parts": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.JournalIssue": {
+            "type": "object",
+            "properties": {
+                "issue": {
+                    "type": "string"
+                },
+                "published-online": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.PublishedOnline"
+                },
+                "published-print": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.PublishedPrint"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.License": {
+            "type": "object",
+            "properties": {
+                "URL": {
+                    "type": "string"
+                },
+                "content-version": {
+                    "type": "string"
+                },
+                "delay-in-days": {
+                    "type": "integer"
+                },
+                "start": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.DateParts"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.Link": {
+            "type": "object",
+            "properties": {
+                "URL": {
+                    "type": "string"
+                },
+                "content-type": {
+                    "type": "string"
+                },
+                "content-version": {
+                    "type": "string"
+                },
+                "intended-application": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.Primary": {
+            "type": "object",
+            "properties": {
+                "URL": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.Published": {
+            "type": "object",
+            "properties": {
+                "date-parts": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.PublishedOnline": {
+            "type": "object",
+            "properties": {
+                "date-parts": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.PublishedPrint": {
+            "type": "object",
+            "properties": {
+                "date-parts": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.Reference": {
+            "type": "object",
+            "properties": {
+                "DOI": {
+                    "type": "string"
+                },
+                "ISBN": {
+                    "type": "string"
+                },
+                "ISSN": {
+                    "type": "string"
+                },
+                "article-title": {
+                    "type": "string"
+                },
+                "author": {
+                    "type": "string"
+                },
+                "component": {
+                    "type": "string"
+                },
+                "doi-asserted-by": {
+                    "type": "string"
+                },
+                "edition": {
+                    "type": "string"
+                },
+                "first-page": {
+                    "type": "string"
+                },
+                "issn-type": {
+                    "type": "string"
+                },
+                "issue": {
+                    "type": "string"
+                },
+                "journal-title": {
+                    "type": "string"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "series-title": {
+                    "type": "string"
+                },
+                "standard-designator": {
+                    "type": "string"
+                },
+                "standards-body": {
+                    "type": "string"
+                },
+                "unstructured": {
+                    "type": "string"
+                },
+                "volume": {
+                    "type": "string"
+                },
+                "volume-title": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.Work": {
+            "type": "object",
+            "properties": {
+                "DOI": {
+                    "type": "string"
+                },
+                "ISSN": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "URL": {
+                    "type": "string"
+                },
+                "abstract": {
+                    "type": "string"
+                },
+                "alternative-id": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "archive": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "assertion": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Assertion"
+                    }
+                },
+                "author": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Author"
+                    }
+                },
+                "container-title": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "content-domain": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.ContentDomain"
+                },
+                "created": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Created"
+                },
+                "deposited": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Deposited"
+                },
+                "indexed": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Indexed"
+                },
+                "is-referenced-by-count": {
+                    "type": "integer"
+                },
+                "issn-type": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.ISSNType"
+                    }
+                },
+                "issue": {
+                    "type": "string"
+                },
+                "issued": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Issued"
+                },
+                "journal-issue": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.JournalIssue"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "license": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.License"
+                    }
+                },
+                "link": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Link"
+                    }
+                },
+                "member": {
+                    "type": "string"
+                },
+                "page": {
+                    "type": "string"
+                },
+                "prefix": {
+                    "type": "string"
+                },
+                "published": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Published"
+                },
+                "published-online": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.PublishedOnline"
+                },
+                "published-print": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.PublishedPrint"
+                },
+                "publisher": {
+                    "type": "string"
+                },
+                "reference": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Reference"
+                    }
+                },
+                "reference-count": {
+                    "type": "integer"
+                },
+                "references-count": {
+                    "type": "integer"
+                },
+                "resource": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.WorkResource"
+                },
+                "score": {
+                    "type": "number"
+                },
+                "short-container-title": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "source": {
+                    "type": "string"
+                },
+                "subtitle": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "title": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "type": {
+                    "type": "string"
+                },
+                "update-policy": {
+                    "type": "string"
+                },
+                "volume": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_external_crossref.WorkResource": {
+            "type": "object",
+            "properties": {
+                "primary": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Primary"
+                }
+            }
+        },
         "github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.Changelog": {
             "type": "object",
             "properties": {
@@ -1693,6 +2209,79 @@ const docTemplate = `{
                 },
                 "event": {
                     "type": "string"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_customdto.LinkORCIDRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "authentication_code_from_orcid"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_customdto.LoginRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "secretpassword"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_customdto.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                },
+                "user": {
+                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.UserAccount"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_customdto.ORCIDAuthURLResponse": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "example": "https://orcid.org/oauth/authorize?..."
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_customdto.RegisterRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "secretpassword"
+                }
+            }
+        },
+        "github_com_SURF-Innovatie_MORIS_internal_api_customdto.StatusResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "ok"
+                },
+                "timestamp": {
+                    "type": "string",
+                    "example": "2025-11-12T10:00:00Z"
                 }
             }
         },
@@ -1985,543 +2574,6 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_SURF-Innovatie_MORIS_internal_auth.BackendError": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer",
-                    "example": 400
-                },
-                "errors": {
-                    "description": "Can be map[string]string or []string or null"
-                },
-                "message": {
-                    "description": "Custom message",
-                    "type": "string",
-                    "example": "Detailed error description"
-                },
-                "status": {
-                    "type": "string",
-                    "example": "Bad Request"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.Assertion": {
-            "type": "object",
-            "properties": {
-                "URL": {
-                    "type": "string"
-                },
-                "group": {
-                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Group"
-                },
-                "label": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "order": {
-                    "type": "integer"
-                },
-                "value": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.Author": {
-            "type": "object",
-            "properties": {
-                "affiliation": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.AuthorAffiliation"
-                    }
-                },
-                "family": {
-                    "type": "string"
-                },
-                "given": {
-                    "type": "string"
-                },
-                "sequence": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.AuthorAffiliation": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.ContentDomain": {
-            "type": "object",
-            "properties": {
-                "crossmark-restriction": {
-                    "type": "boolean"
-                },
-                "domain": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.Created": {
-            "type": "object",
-            "properties": {
-                "date-parts": {
-                    "type": "array",
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        }
-                    }
-                },
-                "date-time": {
-                    "type": "string"
-                },
-                "timestamp": {
-                    "type": "integer"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.DateParts": {
-            "type": "object",
-            "properties": {
-                "date-parts": {
-                    "type": "array",
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        }
-                    }
-                },
-                "date-time": {
-                    "type": "string"
-                },
-                "timestamp": {
-                    "type": "integer"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.Deposited": {
-            "type": "object",
-            "properties": {
-                "date-parts": {
-                    "type": "array",
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        }
-                    }
-                },
-                "date-time": {
-                    "type": "string"
-                },
-                "timestamp": {
-                    "type": "integer"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.Group": {
-            "type": "object",
-            "properties": {
-                "label": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.ISSNType": {
-            "type": "object",
-            "properties": {
-                "type": {
-                    "type": "string"
-                },
-                "value": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.Indexed": {
-            "type": "object",
-            "properties": {
-                "date-parts": {
-                    "type": "array",
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        }
-                    }
-                },
-                "date-time": {
-                    "type": "string"
-                },
-                "timestamp": {
-                    "type": "integer"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.Issued": {
-            "type": "object",
-            "properties": {
-                "date-parts": {
-                    "type": "array",
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        }
-                    }
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.JournalIssue": {
-            "type": "object",
-            "properties": {
-                "issue": {
-                    "type": "string"
-                },
-                "published-online": {
-                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.PublishedOnline"
-                },
-                "published-print": {
-                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.PublishedPrint"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.License": {
-            "type": "object",
-            "properties": {
-                "URL": {
-                    "type": "string"
-                },
-                "content-version": {
-                    "type": "string"
-                },
-                "delay-in-days": {
-                    "type": "integer"
-                },
-                "start": {
-                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.DateParts"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.Link": {
-            "type": "object",
-            "properties": {
-                "URL": {
-                    "type": "string"
-                },
-                "content-type": {
-                    "type": "string"
-                },
-                "content-version": {
-                    "type": "string"
-                },
-                "intended-application": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.Primary": {
-            "type": "object",
-            "properties": {
-                "URL": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.Published": {
-            "type": "object",
-            "properties": {
-                "date-parts": {
-                    "type": "array",
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        }
-                    }
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.PublishedOnline": {
-            "type": "object",
-            "properties": {
-                "date-parts": {
-                    "type": "array",
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        }
-                    }
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.PublishedPrint": {
-            "type": "object",
-            "properties": {
-                "date-parts": {
-                    "type": "array",
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        }
-                    }
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.Reference": {
-            "type": "object",
-            "properties": {
-                "DOI": {
-                    "type": "string"
-                },
-                "ISBN": {
-                    "type": "string"
-                },
-                "ISSN": {
-                    "type": "string"
-                },
-                "article-title": {
-                    "type": "string"
-                },
-                "author": {
-                    "type": "string"
-                },
-                "component": {
-                    "type": "string"
-                },
-                "doi-asserted-by": {
-                    "type": "string"
-                },
-                "edition": {
-                    "type": "string"
-                },
-                "first-page": {
-                    "type": "string"
-                },
-                "issn-type": {
-                    "type": "string"
-                },
-                "issue": {
-                    "type": "string"
-                },
-                "journal-title": {
-                    "type": "string"
-                },
-                "key": {
-                    "type": "string"
-                },
-                "series-title": {
-                    "type": "string"
-                },
-                "standard-designator": {
-                    "type": "string"
-                },
-                "standards-body": {
-                    "type": "string"
-                },
-                "unstructured": {
-                    "type": "string"
-                },
-                "volume": {
-                    "type": "string"
-                },
-                "volume-title": {
-                    "type": "string"
-                },
-                "year": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.Work": {
-            "type": "object",
-            "properties": {
-                "DOI": {
-                    "type": "string"
-                },
-                "ISSN": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "URL": {
-                    "type": "string"
-                },
-                "abstract": {
-                    "type": "string"
-                },
-                "alternative-id": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "archive": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "assertion": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Assertion"
-                    }
-                },
-                "author": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Author"
-                    }
-                },
-                "container-title": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "content-domain": {
-                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.ContentDomain"
-                },
-                "created": {
-                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Created"
-                },
-                "deposited": {
-                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Deposited"
-                },
-                "indexed": {
-                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Indexed"
-                },
-                "is-referenced-by-count": {
-                    "type": "integer"
-                },
-                "issn-type": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.ISSNType"
-                    }
-                },
-                "issue": {
-                    "type": "string"
-                },
-                "issued": {
-                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Issued"
-                },
-                "journal-issue": {
-                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.JournalIssue"
-                },
-                "language": {
-                    "type": "string"
-                },
-                "license": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.License"
-                    }
-                },
-                "link": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Link"
-                    }
-                },
-                "member": {
-                    "type": "string"
-                },
-                "page": {
-                    "type": "string"
-                },
-                "prefix": {
-                    "type": "string"
-                },
-                "published": {
-                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Published"
-                },
-                "published-online": {
-                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.PublishedOnline"
-                },
-                "published-print": {
-                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.PublishedPrint"
-                },
-                "publisher": {
-                    "type": "string"
-                },
-                "reference": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Reference"
-                    }
-                },
-                "reference-count": {
-                    "type": "integer"
-                },
-                "references-count": {
-                    "type": "integer"
-                },
-                "resource": {
-                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.WorkResource"
-                },
-                "score": {
-                    "type": "number"
-                },
-                "short-container-title": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "source": {
-                    "type": "string"
-                },
-                "subtitle": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "title": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "type": {
-                    "type": "string"
-                },
-                "update-policy": {
-                    "type": "string"
-                },
-                "volume": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_crossref.WorkResource": {
-            "type": "object",
-            "properties": {
-                "primary": {
-                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Primary"
-                }
-            }
-        },
         "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Person": {
             "type": "object",
             "properties": {
@@ -2627,76 +2679,24 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handler_custom.LinkORCIDRequest": {
+        "github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError": {
             "type": "object",
             "properties": {
                 "code": {
-                    "type": "string",
-                    "example": "authentication_code_from_orcid"
-                }
-            }
-        },
-        "internal_handler_custom.LoginRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
+                    "type": "integer",
+                    "example": 400
                 },
-                "password": {
-                    "type": "string",
-                    "example": "secretpassword"
-                }
-            }
-        },
-        "internal_handler_custom.LoginResponse": {
-            "type": "object",
-            "properties": {
-                "token": {
-                    "type": "string",
-                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                "errors": {
+                    "description": "Can be map[string]string or []string or null"
                 },
-                "user": {
-                    "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.UserAccount"
-                }
-            }
-        },
-        "internal_handler_custom.ORCIDAuthURLResponse": {
-            "type": "object",
-            "properties": {
-                "url": {
+                "message": {
+                    "description": "Custom message",
                     "type": "string",
-                    "example": "https://orcid.org/oauth/authorize?..."
-                }
-            }
-        },
-        "internal_handler_custom.RegisterRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
+                    "example": "Detailed error description"
                 },
-                "name": {
-                    "type": "string",
-                    "example": "John Doe"
-                },
-                "password": {
-                    "type": "string",
-                    "example": "secretpassword"
-                }
-            }
-        },
-        "internal_handler_custom.StatusResponse": {
-            "type": "object",
-            "properties": {
                 "status": {
                     "type": "string",
-                    "example": "ok"
-                },
-                "timestamp": {
-                    "type": "string",
-                    "example": "2025-11-12T10:00:00Z"
+                    "example": "Bad Request"
                 }
             }
         }

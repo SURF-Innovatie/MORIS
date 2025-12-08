@@ -1,5 +1,342 @@
 basePath: /api
 definitions:
+  github_com_SURF-Innovatie_MORIS_external_crossref.Assertion:
+    properties:
+      URL:
+        type: string
+      group:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Group'
+      label:
+        type: string
+      name:
+        type: string
+      order:
+        type: integer
+      value:
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.Author:
+    properties:
+      affiliation:
+        items:
+          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.AuthorAffiliation'
+        type: array
+      family:
+        type: string
+      given:
+        type: string
+      sequence:
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.AuthorAffiliation:
+    properties:
+      name:
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.ContentDomain:
+    properties:
+      crossmark-restriction:
+        type: boolean
+      domain:
+        items:
+          type: string
+        type: array
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.Created:
+    properties:
+      date-parts:
+        items:
+          items:
+            type: integer
+          type: array
+        type: array
+      date-time:
+        type: string
+      timestamp:
+        type: integer
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.DateParts:
+    properties:
+      date-parts:
+        items:
+          items:
+            type: integer
+          type: array
+        type: array
+      date-time:
+        type: string
+      timestamp:
+        type: integer
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.Deposited:
+    properties:
+      date-parts:
+        items:
+          items:
+            type: integer
+          type: array
+        type: array
+      date-time:
+        type: string
+      timestamp:
+        type: integer
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.Group:
+    properties:
+      label:
+        type: string
+      name:
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.ISSNType:
+    properties:
+      type:
+        type: string
+      value:
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.Indexed:
+    properties:
+      date-parts:
+        items:
+          items:
+            type: integer
+          type: array
+        type: array
+      date-time:
+        type: string
+      timestamp:
+        type: integer
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.Issued:
+    properties:
+      date-parts:
+        items:
+          items:
+            type: integer
+          type: array
+        type: array
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.JournalIssue:
+    properties:
+      issue:
+        type: string
+      published-online:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.PublishedOnline'
+      published-print:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.PublishedPrint'
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.License:
+    properties:
+      URL:
+        type: string
+      content-version:
+        type: string
+      delay-in-days:
+        type: integer
+      start:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.DateParts'
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.Link:
+    properties:
+      URL:
+        type: string
+      content-type:
+        type: string
+      content-version:
+        type: string
+      intended-application:
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.Primary:
+    properties:
+      URL:
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.Published:
+    properties:
+      date-parts:
+        items:
+          items:
+            type: integer
+          type: array
+        type: array
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.PublishedOnline:
+    properties:
+      date-parts:
+        items:
+          items:
+            type: integer
+          type: array
+        type: array
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.PublishedPrint:
+    properties:
+      date-parts:
+        items:
+          items:
+            type: integer
+          type: array
+        type: array
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.Reference:
+    properties:
+      DOI:
+        type: string
+      ISBN:
+        type: string
+      ISSN:
+        type: string
+      article-title:
+        type: string
+      author:
+        type: string
+      component:
+        type: string
+      doi-asserted-by:
+        type: string
+      edition:
+        type: string
+      first-page:
+        type: string
+      issn-type:
+        type: string
+      issue:
+        type: string
+      journal-title:
+        type: string
+      key:
+        type: string
+      series-title:
+        type: string
+      standard-designator:
+        type: string
+      standards-body:
+        type: string
+      unstructured:
+        type: string
+      volume:
+        type: string
+      volume-title:
+        type: string
+      year:
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.Work:
+    properties:
+      DOI:
+        type: string
+      ISSN:
+        items:
+          type: string
+        type: array
+      URL:
+        type: string
+      abstract:
+        type: string
+      alternative-id:
+        items:
+          type: string
+        type: array
+      archive:
+        items:
+          type: string
+        type: array
+      assertion:
+        items:
+          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Assertion'
+        type: array
+      author:
+        items:
+          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Author'
+        type: array
+      container-title:
+        items:
+          type: string
+        type: array
+      content-domain:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.ContentDomain'
+      created:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Created'
+      deposited:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Deposited'
+      indexed:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Indexed'
+      is-referenced-by-count:
+        type: integer
+      issn-type:
+        items:
+          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.ISSNType'
+        type: array
+      issue:
+        type: string
+      issued:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Issued'
+      journal-issue:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.JournalIssue'
+      language:
+        type: string
+      license:
+        items:
+          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.License'
+        type: array
+      link:
+        items:
+          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Link'
+        type: array
+      member:
+        type: string
+      page:
+        type: string
+      prefix:
+        type: string
+      published:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Published'
+      published-online:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.PublishedOnline'
+      published-print:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.PublishedPrint'
+      publisher:
+        type: string
+      reference:
+        items:
+          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Reference'
+        type: array
+      reference-count:
+        type: integer
+      references-count:
+        type: integer
+      resource:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.WorkResource'
+      score:
+        type: number
+      short-container-title:
+        items:
+          type: string
+        type: array
+      source:
+        type: string
+      subtitle:
+        items:
+          type: string
+        type: array
+      title:
+        items:
+          type: string
+        type: array
+      type:
+        type: string
+      update-policy:
+        type: string
+      volume:
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_external_crossref.WorkResource:
+    properties:
+      primary:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Primary'
+    type: object
   github_com_SURF-Innovatie_MORIS_internal_api_changelogdto.Changelog:
     properties:
       entries:
@@ -12,6 +349,56 @@ definitions:
       at:
         type: string
       event:
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_internal_api_customdto.LinkORCIDRequest:
+    properties:
+      code:
+        example: authentication_code_from_orcid
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_internal_api_customdto.LoginRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: secretpassword
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_internal_api_customdto.LoginResponse:
+    properties:
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      user:
+        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.UserAccount'
+    type: object
+  github_com_SURF-Innovatie_MORIS_internal_api_customdto.ORCIDAuthURLResponse:
+    properties:
+      url:
+        example: https://orcid.org/oauth/authorize?...
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_internal_api_customdto.RegisterRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      name:
+        example: John Doe
+        type: string
+      password:
+        example: secretpassword
+        type: string
+    type: object
+  github_com_SURF-Innovatie_MORIS_internal_api_customdto.StatusResponse:
+    properties:
+      status:
+        example: ok
+        type: string
+      timestamp:
+        example: "2025-11-12T10:00:00Z"
         type: string
     type: object
   github_com_SURF-Innovatie_MORIS_internal_api_eventdto.Event:
@@ -206,358 +593,6 @@ definitions:
       person_id:
         type: string
     type: object
-  github_com_SURF-Innovatie_MORIS_internal_auth.BackendError:
-    properties:
-      code:
-        example: 400
-        type: integer
-      errors:
-        description: Can be map[string]string or []string or null
-      message:
-        description: Custom message
-        example: Detailed error description
-        type: string
-      status:
-        example: Bad Request
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.Assertion:
-    properties:
-      URL:
-        type: string
-      group:
-        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Group'
-      label:
-        type: string
-      name:
-        type: string
-      order:
-        type: integer
-      value:
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.Author:
-    properties:
-      affiliation:
-        items:
-          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.AuthorAffiliation'
-        type: array
-      family:
-        type: string
-      given:
-        type: string
-      sequence:
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.AuthorAffiliation:
-    properties:
-      name:
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.ContentDomain:
-    properties:
-      crossmark-restriction:
-        type: boolean
-      domain:
-        items:
-          type: string
-        type: array
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.Created:
-    properties:
-      date-parts:
-        items:
-          items:
-            type: integer
-          type: array
-        type: array
-      date-time:
-        type: string
-      timestamp:
-        type: integer
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.DateParts:
-    properties:
-      date-parts:
-        items:
-          items:
-            type: integer
-          type: array
-        type: array
-      date-time:
-        type: string
-      timestamp:
-        type: integer
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.Deposited:
-    properties:
-      date-parts:
-        items:
-          items:
-            type: integer
-          type: array
-        type: array
-      date-time:
-        type: string
-      timestamp:
-        type: integer
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.Group:
-    properties:
-      label:
-        type: string
-      name:
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.ISSNType:
-    properties:
-      type:
-        type: string
-      value:
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.Indexed:
-    properties:
-      date-parts:
-        items:
-          items:
-            type: integer
-          type: array
-        type: array
-      date-time:
-        type: string
-      timestamp:
-        type: integer
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.Issued:
-    properties:
-      date-parts:
-        items:
-          items:
-            type: integer
-          type: array
-        type: array
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.JournalIssue:
-    properties:
-      issue:
-        type: string
-      published-online:
-        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.PublishedOnline'
-      published-print:
-        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.PublishedPrint'
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.License:
-    properties:
-      URL:
-        type: string
-      content-version:
-        type: string
-      delay-in-days:
-        type: integer
-      start:
-        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.DateParts'
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.Link:
-    properties:
-      URL:
-        type: string
-      content-type:
-        type: string
-      content-version:
-        type: string
-      intended-application:
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.Primary:
-    properties:
-      URL:
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.Published:
-    properties:
-      date-parts:
-        items:
-          items:
-            type: integer
-          type: array
-        type: array
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.PublishedOnline:
-    properties:
-      date-parts:
-        items:
-          items:
-            type: integer
-          type: array
-        type: array
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.PublishedPrint:
-    properties:
-      date-parts:
-        items:
-          items:
-            type: integer
-          type: array
-        type: array
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.Reference:
-    properties:
-      DOI:
-        type: string
-      ISBN:
-        type: string
-      ISSN:
-        type: string
-      article-title:
-        type: string
-      author:
-        type: string
-      component:
-        type: string
-      doi-asserted-by:
-        type: string
-      edition:
-        type: string
-      first-page:
-        type: string
-      issn-type:
-        type: string
-      issue:
-        type: string
-      journal-title:
-        type: string
-      key:
-        type: string
-      series-title:
-        type: string
-      standard-designator:
-        type: string
-      standards-body:
-        type: string
-      unstructured:
-        type: string
-      volume:
-        type: string
-      volume-title:
-        type: string
-      year:
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.Work:
-    properties:
-      DOI:
-        type: string
-      ISSN:
-        items:
-          type: string
-        type: array
-      URL:
-        type: string
-      abstract:
-        type: string
-      alternative-id:
-        items:
-          type: string
-        type: array
-      archive:
-        items:
-          type: string
-        type: array
-      assertion:
-        items:
-          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Assertion'
-        type: array
-      author:
-        items:
-          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Author'
-        type: array
-      container-title:
-        items:
-          type: string
-        type: array
-      content-domain:
-        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.ContentDomain'
-      created:
-        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Created'
-      deposited:
-        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Deposited'
-      indexed:
-        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Indexed'
-      is-referenced-by-count:
-        type: integer
-      issn-type:
-        items:
-          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.ISSNType'
-        type: array
-      issue:
-        type: string
-      issued:
-        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Issued'
-      journal-issue:
-        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.JournalIssue'
-      language:
-        type: string
-      license:
-        items:
-          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.License'
-        type: array
-      link:
-        items:
-          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Link'
-        type: array
-      member:
-        type: string
-      page:
-        type: string
-      prefix:
-        type: string
-      published:
-        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Published'
-      published-online:
-        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.PublishedOnline'
-      published-print:
-        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.PublishedPrint'
-      publisher:
-        type: string
-      reference:
-        items:
-          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Reference'
-        type: array
-      reference-count:
-        type: integer
-      references-count:
-        type: integer
-      resource:
-        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.WorkResource'
-      score:
-        type: number
-      short-container-title:
-        items:
-          type: string
-        type: array
-      source:
-        type: string
-      subtitle:
-        items:
-          type: string
-        type: array
-      title:
-        items:
-          type: string
-        type: array
-      type:
-        type: string
-      update-policy:
-        type: string
-      volume:
-        type: string
-    type: object
-  github_com_SURF-Innovatie_MORIS_internal_crossref.WorkResource:
-    properties:
-      primary:
-        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Primary'
-    type: object
   github_com_SURF-Innovatie_MORIS_internal_domain_entities.Person:
     properties:
       avatarUrl:
@@ -633,54 +668,19 @@ definitions:
       user:
         $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.User'
     type: object
-  internal_handler_custom.LinkORCIDRequest:
+  github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError:
     properties:
       code:
-        example: authentication_code_from_orcid
+        example: 400
+        type: integer
+      errors:
+        description: Can be map[string]string or []string or null
+      message:
+        description: Custom message
+        example: Detailed error description
         type: string
-    type: object
-  internal_handler_custom.LoginRequest:
-    properties:
-      email:
-        example: user@example.com
-        type: string
-      password:
-        example: secretpassword
-        type: string
-    type: object
-  internal_handler_custom.LoginResponse:
-    properties:
-      token:
-        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-        type: string
-      user:
-        $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.UserAccount'
-    type: object
-  internal_handler_custom.ORCIDAuthURLResponse:
-    properties:
-      url:
-        example: https://orcid.org/oauth/authorize?...
-        type: string
-    type: object
-  internal_handler_custom.RegisterRequest:
-    properties:
-      email:
-        example: user@example.com
-        type: string
-      name:
-        example: John Doe
-        type: string
-      password:
-        example: secretpassword
-        type: string
-    type: object
-  internal_handler_custom.StatusResponse:
-    properties:
       status:
-        example: ok
-        type: string
-      timestamp:
-        example: "2025-11-12T10:00:00Z"
+        example: Bad Request
         type: string
     type: object
 host: localhost:8080
@@ -712,11 +712,11 @@ paths:
         "401":
           description: User not authenticated
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
         "403":
           description: Insufficient permissions
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
       security:
       - BearerAuth: []
       summary: Get all users (Admin only)
@@ -733,30 +733,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_handler_custom.LinkORCIDRequest'
+          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.LinkORCIDRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handler_custom.StatusResponse'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.StatusResponse'
         "400":
           description: Invalid request
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
         "401":
           description: User not authenticated
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
         "409":
           description: ORCID ID already linked
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
       security:
       - BearerAuth: []
       summary: Link ORCID ID
@@ -773,15 +773,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handler_custom.StatusResponse'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.StatusResponse'
         "401":
           description: User not authenticated
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
       security:
       - BearerAuth: []
       summary: Unlink ORCID ID
@@ -798,15 +798,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handler_custom.ORCIDAuthURLResponse'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.ORCIDAuthURLResponse'
         "401":
           description: User not authenticated
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
       security:
       - BearerAuth: []
       summary: Get ORCID authorization URL
@@ -829,7 +829,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_crossref.Work'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_external_crossref.Work'
         "400":
           description: invalid doi
           schema:
@@ -918,7 +918,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handler_custom.StatusResponse'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.StatusResponse'
       summary: Health check
       tags:
       - status
@@ -933,22 +933,22 @@ paths:
         name: credentials
         required: true
         schema:
-          $ref: '#/definitions/internal_handler_custom.LoginRequest'
+          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handler_custom.LoginResponse'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.LoginResponse'
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
         "401":
           description: Invalid credentials
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
       summary: Login user
       tags:
       - auth
@@ -1270,7 +1270,7 @@ paths:
         "401":
           description: User not authenticated
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
       security:
       - BearerAuth: []
       summary: Get user profile
@@ -1596,7 +1596,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/internal_handler_custom.RegisterRequest'
+          $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.RegisterRequest'
       produces:
       - application/json
       responses:
@@ -1607,11 +1607,11 @@ paths:
         "400":
           description: Invalid request body or missing fields
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_handler_middleware.BackendError'
       summary: Register a new user
       tags:
       - auth
@@ -1626,7 +1626,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handler_custom.StatusResponse'
+            $ref: '#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_customdto.StatusResponse'
       summary: Check API status
       tags:
       - status

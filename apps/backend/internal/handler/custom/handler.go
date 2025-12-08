@@ -35,7 +35,7 @@ func NewHandler(userService user.Service, authService coreauth.Service, orcidSer
 // @Tags status
 // @Accept json
 // @Produce json
-// @Success 200 {object} StatusResponse
+// @Success 200 {object} customdto.StatusResponse
 // @Router /status [get]
 func (h *Handler) Status(w http.ResponseWriter, r *http.Request) {
 	resp := customdto.StatusResponse{
@@ -51,7 +51,7 @@ func (h *Handler) Status(w http.ResponseWriter, r *http.Request) {
 // @Tags status
 // @Accept json
 // @Produce json
-// @Success 200 {object} StatusResponse
+// @Success 200 {object} customdto.StatusResponse
 // @Router /health [get]
 func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 	resp := customdto.StatusResponse{
@@ -67,10 +67,10 @@ func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param user body RegisterRequest true "User registration details"
+// @Param user body customdto.RegisterRequest true "User registration details"
 // @Success 201 {object} userdto.Response
-// @Failure 400 {object} auth.BackendError "Invalid request body or missing fields"
-// @Failure 500 {object} auth.BackendError "Internal server error"
+// @Failure 400 {object} middleware.BackendError "Invalid request body or missing fields"
+// @Failure 500 {object} middleware.BackendError "Internal server error"
 // @Router /register [post]
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	var req customdto.RegisterRequest
@@ -98,10 +98,10 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param credentials body LoginRequest true "User login credentials"
-// @Success 200 {object} LoginResponse
-// @Failure 400 {object} auth.BackendError "Invalid request body"
-// @Failure 401 {object} auth.BackendError "Invalid credentials"
+// @Param credentials body customdto.LoginRequest true "User login credentials"
+// @Success 200 {object} customdto.LoginResponse
+// @Failure 400 {object} middleware.BackendError "Invalid request body"
+// @Failure 401 {object} middleware.BackendError "Invalid credentials"
 // @Router /login [post]
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var req customdto.LoginRequest
@@ -134,7 +134,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {object} userdto.Response
-// @Failure 401 {object} auth.BackendError "User not authenticated"
+// @Failure 401 {object} middleware.BackendError "User not authenticated"
 // @Router /profile [get]
 func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 	userCtx, ok := middleware.GetUserFromContext(r.Context())
@@ -186,8 +186,8 @@ func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {string} string "Admin user list"
-// @Failure 401 {object} auth.BackendError "User not authenticated"
-// @Failure 403 {object} auth.BackendError "Insufficient permissions"
+// @Failure 401 {object} middleware.BackendError "User not authenticated"
+// @Failure 403 {object} middleware.BackendError "Insufficient permissions"
 // @Router /admin/users/list [get]
 func (h *Handler) AdminUserList(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -201,9 +201,9 @@ func (h *Handler) AdminUserList(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} ORCIDAuthURLResponse
-// @Failure 401 {object} auth.BackendError "User not authenticated"
-// @Failure 500 {object} auth.BackendError "Internal server error"
+// @Success 200 {object} customdto.ORCIDAuthURLResponse
+// @Failure 401 {object} middleware.BackendError "User not authenticated"
+// @Failure 500 {object} middleware.BackendError "Internal server error"
 // @Router /auth/orcid/url [get]
 func (h *Handler) GetORCIDAuthURL(w http.ResponseWriter, r *http.Request) {
 	u, ok := middleware.GetUserFromContext(r.Context())
@@ -247,12 +247,12 @@ func (h *Handler) GetORCIDAuthURL(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param request body LinkORCIDRequest true "ORCID link request"
-// @Success 200 {object} StatusResponse
-// @Failure 400 {object} auth.BackendError "Invalid request"
-// @Failure 401 {object} auth.BackendError "User not authenticated"
-// @Failure 409 {object} auth.BackendError "ORCID ID already linked"
-// @Failure 500 {object} auth.BackendError "Internal server error"
+// @Param request body customdto.LinkORCIDRequest true "ORCID link request"
+// @Success 200 {object} customdto.StatusResponse
+// @Failure 400 {object} middleware.BackendError "Invalid request"
+// @Failure 401 {object} middleware.BackendError "User not authenticated"
+// @Failure 409 {object} middleware.BackendError "ORCID ID already linked"
+// @Failure 500 {object} middleware.BackendError "Internal server error"
 // @Router /auth/orcid/link [post]
 func (h *Handler) LinkORCID(w http.ResponseWriter, r *http.Request) {
 	u, ok := middleware.GetUserFromContext(r.Context())
@@ -314,9 +314,9 @@ func (h *Handler) LinkORCID(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} StatusResponse
-// @Failure 401 {object} auth.BackendError "User not authenticated"
-// @Failure 500 {object} auth.BackendError "Internal server error"
+// @Success 200 {object} customdto.StatusResponse
+// @Failure 401 {object} middleware.BackendError "User not authenticated"
+// @Failure 500 {object} middleware.BackendError "Internal server error"
 // @Router /auth/orcid/unlink [post]
 func (h *Handler) UnlinkORCID(w http.ResponseWriter, r *http.Request) {
 	u, ok := middleware.GetUserFromContext(r.Context())
