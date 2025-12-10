@@ -28,45 +28,6 @@ func NewHandler(userService user.Service, authService coreauth.Service, orcidSer
 	}
 }
 
-// Register godoc
-// @Summary Register a new user
-// @Description Creates a new user account with the provided credentials
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Param user body authdto.RegisterRequest true "User registration details"
-// @Success 201 {object} userdto.Response
-// @Failure 400 {object} httputil.BackendError "Invalid request body or missing fields"
-// @Failure 500 {object} httputil.BackendError "Internal server error"
-// @Router /register [post]
-func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
-	var req authdto.RegisterRequest
-	if !httputil.ReadJSON(w, r, &req) {
-		return
-	}
-
-	// Assuming RegisterRequest needs to be converted or passed.
-	// The original code passed `domainReq` which was empty.
-	// Checking original code again:
-	// var domainReq coreauth.RegisterRequest
-	// usr, err := h.authService.Register(r.Context(), domainReq)
-	// It seems the original code had a bug or unfinished implementation regarding passing data.
-	// I will preserve exact behavior for now but use the new DTO type in signature.
-
-	// Construct domain request from handler request
-	domainReq := coreauth.RegisterRequest{
-		Password: req.Password,
-	}
-
-	usr, err := h.authService.Register(r.Context(), domainReq)
-	if err != nil {
-		_ = httputil.WriteError(w, http.StatusInternalServerError, err.Error(), nil)
-		return
-	}
-
-	_ = httputil.WriteJSON(w, http.StatusCreated, usr)
-}
-
 // Login godoc
 // @Summary Login user
 // @Description Authenticates a user and returns a JWT token

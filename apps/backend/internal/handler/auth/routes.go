@@ -8,7 +8,7 @@ import (
 
 // MountRoutes mounts all auth API endpoints
 func MountRoutes(r chi.Router, authSvc coreauth.Service, h *Handler) {
-	r.Post("/register", h.Register)
+
 	r.Post("/login", h.Login)
 
 	r.Group(func(r chi.Router) {

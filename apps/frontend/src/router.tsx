@@ -7,7 +7,6 @@ import ProjectFormRoute from "./routes/project-form";
 import ProjectEditRoute from "./routes/project-edit";
 import ProjectDetailsRoute from "./routes/project-details";
 import LoginRoute from "./routes/login";
-import RegisterRoute from "./routes/register";
 import RouteError from "./routes/route-error";
 import ProfileRoute from "./routes/profile";
 import OrcidCallbackRoute from "./routes/orcid-callback";
@@ -21,11 +20,6 @@ export function createAppRouter() {
     {
       path: "/",
       element: <LoginRoute />,
-      errorElement: <RouteError />,
-    },
-    {
-      path: "/register",
-      element: <RegisterRoute />,
       errorElement: <RouteError />,
     },
     {

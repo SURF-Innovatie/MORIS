@@ -65,6 +65,11 @@ func main() {
 	dbPassword := os.Getenv("DB_PASSWORD")
 	dbName := os.Getenv("DB_NAME")
 	dbPort := os.Getenv("DB_PORT")
+	jwtSecret := os.Getenv("JWT_SECRET")
+
+	if dbHost == "" || dbUser == "" || dbPassword == "" || dbName == "" || dbPort == "" || jwtSecret == "" {
+		logrus.Fatal("Database connection info and JWT secret must be set in environment variables")
+	}
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		dbHost, dbPort, dbUser, dbPassword, dbName)
@@ -86,7 +91,7 @@ func main() {
 	esStore := eventstore.NewEntStore(client)
 	personSvc := person.NewService(client)
 	userSvc := user.NewService(client, personSvc, esStore)
-	authSvc := auth.NewJWTService(client, userSvc, os.Getenv("JWT_SECRET"))
+	authSvc := auth.NewJWTService(client, userSvc, personSvc, jwtSecret)
 	orcidSvc := orcid.NewService(client, userSvc)
 
 	personHandler := personhandler.NewHandler(personSvc)

@@ -3,13 +3,13 @@ package auth
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	userent "github.com/SURF-Innovatie/MORIS/ent/user"
 	coreauth "github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/person"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -19,37 +19,17 @@ import (
 type service struct {
 	client    *ent.Client
 	userSvc   user.Service
+	personSvc person.Service
 	jwtSecret string
 }
 
-func NewJWTService(client *ent.Client, userSvc user.Service, jwtSecret string) coreauth.Service {
+func NewJWTService(client *ent.Client, userSvc user.Service, personSvc person.Service, jwtSecret string) coreauth.Service {
 	return &service{
 		client:    client,
 		userSvc:   userSvc,
+		personSvc: personSvc,
 		jwtSecret: jwtSecret,
 	}
-}
-
-// Register creates a new user with hashed password
-func (s *service) Register(ctx context.Context, req coreauth.RegisterRequest) (*entities.UserAccount, error) {
-	// Hash password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash password: %w", err)
-	}
-
-	// Create user with default "user" role
-	usr, err := s.client.User.
-		Create().
-		SetPersonID(req.PersonID).
-		SetPassword(string(hashedPassword)).
-		Save(ctx)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to create user: %w", err)
-	}
-
-	return s.userSvc.GetAccount(ctx, usr.ID)
 }
 
 // Login authenticates a user and returns a JWT token
@@ -89,11 +69,6 @@ func (s *service) Login(ctx context.Context, email, password string) (string, *e
 
 // generateJWT creates a JWT token for the user
 func (s *service) generateJWT(usr *entities.UserAccount) (string, error) {
-	jwtSecret := os.Getenv("JWT_SECRET")
-	if jwtSecret == "" {
-		jwtSecret = "your-secret-key-change-this-in-production" // Fallback for development
-	}
-
 	claims := jwt.MapClaims{
 		"user_id":  usr.User.ID,
 		"email":    usr.Person.Email,
@@ -103,7 +78,7 @@ func (s *service) generateJWT(usr *entities.UserAccount) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(jwtSecret))
+	tokenString, err := token.SignedString([]byte(s.jwtSecret))
 	if err != nil {
 		return "", err
 	}
@@ -113,16 +88,11 @@ func (s *service) generateJWT(usr *entities.UserAccount) (string, error) {
 
 // ValidateToken validates a JWT token and returns the user info
 func (s *service) ValidateToken(tokenString string) (*entities.UserAccount, error) {
-	jwtSecret := os.Getenv("JWT_SECRET")
-	if jwtSecret == "" {
-		jwtSecret = "your-secret-key-change-this-in-production"
-	}
-
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(jwtSecret), nil
+		return []byte(s.jwtSecret), nil
 	})
 
 	if err != nil {

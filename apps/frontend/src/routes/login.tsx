@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useLogin } from "@/hooks/useLogin";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -89,16 +89,6 @@ export default function LoginPage() {
             {isPending ? "Signing in..." : "Sign In"}
           </Button>
         </form>
-
-        <div className="text-center text-sm">
-          <span className="text-gray-600">Don't have an account? </span>
-          <Link
-            to="/register"
-            className="font-medium text-blue-600 hover:text-blue-500"
-          >
-            Sign up
-          </Link>
-        </div>
       </Card>
     </div>
   );
