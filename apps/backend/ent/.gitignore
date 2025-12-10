@@ -3,5 +3,6 @@
 *
 !entc.go
 !generate.go
+!schema
 !schema/*
 !.gitignore
