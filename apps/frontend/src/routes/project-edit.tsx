@@ -15,6 +15,7 @@ import { PeopleTab } from "@/components/project-edit/PeopleTab";
 import { ChangelogTab } from "@/components/project-edit/ChangelogTab";
 import { ProductsTab } from "@/components/project-edit/ProductsTab";
 import { projectFormSchema } from "@/lib/schemas/project";
+import { EMPTY_UUID } from "@/lib/constants";
 
 export default function ProjectEditRoute() {
   const { id } = useParams();
@@ -51,7 +52,7 @@ export default function ProjectEditRoute() {
     defaultValues: {
       title: "",
       description: "",
-      organisationID: "00000000-0000-0000-0000-000000000000",
+      organisationID: EMPTY_UUID,
     },
   });
 
@@ -62,8 +63,7 @@ export default function ProjectEditRoute() {
         description: project.description || "",
         startDate: project.startDate ? new Date(project.startDate) : undefined,
         endDate: project.endDate ? new Date(project.endDate) : undefined,
-        organisationID:
-          project.organization?.id || "00000000-0000-0000-0000-000000000000",
+        organisationID: project.organization?.id || EMPTY_UUID,
       });
     }
   }, [project, form]);

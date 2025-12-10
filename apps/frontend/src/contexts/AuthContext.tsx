@@ -33,6 +33,10 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+import { STORAGE_KEY_AUTH_TOKEN, STORAGE_KEY_AUTH_USER } from "@/lib/constants";
+
+// ... imports remain the same
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<UserAccount | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -40,8 +44,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Initialize auth state from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem("auth_token");
-    const storedUser = localStorage.getItem("auth_user");
+    const storedToken = localStorage.getItem(STORAGE_KEY_AUTH_TOKEN);
+    const storedUser = localStorage.getItem(STORAGE_KEY_AUTH_USER);
 
     if (storedToken && storedUser) {
       try {
@@ -50,40 +54,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(parsedUser);
       } catch (error) {
         console.error("Failed to parse stored user data:", error);
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("auth_user");
+        localStorage.removeItem(STORAGE_KEY_AUTH_TOKEN);
+        localStorage.removeItem(STORAGE_KEY_AUTH_USER);
       }
     }
     setIsLoading(false);
   }, []);
 
-  // Listen for logout events from axios interceptor
-  useEffect(() => {
-    const handleLogout = () => {
-      setToken(null);
-      setUser(null);
-    };
-
-    window.addEventListener("auth:logout", handleLogout);
-    return () => window.removeEventListener("auth:logout", handleLogout);
-  }, []);
-
   const login = useCallback((newToken: string, newUser: UserAccount) => {
-    localStorage.setItem("auth_token", newToken);
-    localStorage.setItem("auth_user", JSON.stringify(newUser));
+    localStorage.setItem(STORAGE_KEY_AUTH_TOKEN, newToken);
+    localStorage.setItem(STORAGE_KEY_AUTH_USER, JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("auth_user");
+    localStorage.removeItem(STORAGE_KEY_AUTH_TOKEN);
+    localStorage.removeItem(STORAGE_KEY_AUTH_USER);
     setToken(null);
     setUser(null);
   }, []);
 
   const updateUser = useCallback((updatedUser: UserAccount) => {
-    localStorage.setItem("auth_user", JSON.stringify(updatedUser));
+    localStorage.setItem(STORAGE_KEY_AUTH_USER, JSON.stringify(updatedUser));
     setUser(updatedUser);
   }, []);
 

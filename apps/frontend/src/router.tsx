@@ -3,7 +3,8 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import RootLayout from "./routes/root";
 import DashboardRoute from "./routes/dashboard";
-import ProjectFormRoute from "./routes/project-form";
+import CreateProjectRoute from "./routes/project-form";
+
 import ProjectEditRoute from "./routes/project-edit";
 import ProjectDetailsRoute from "./routes/project-details";
 import LoginRoute from "./routes/login";
@@ -44,7 +45,7 @@ export function createAppRouter() {
             },
             {
               path: "projects/new",
-              element: <ProjectFormRoute />,
+              element: <CreateProjectRoute />,
             },
             {
               path: "products",
