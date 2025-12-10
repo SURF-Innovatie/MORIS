@@ -2,6 +2,7 @@ package project
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -22,6 +23,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 )
 
 // ErrNotFound is returned when a project does not exist (no events).
@@ -44,6 +46,7 @@ type service struct {
 	cli    *ent.Client
 	es     eventstore.Store
 	evtSvc event.Service
+	redis  *redis.Client
 }
 
 type StartProjectParams struct {
@@ -63,8 +66,8 @@ type UpdateProjectParams struct {
 	EndDate        time.Time
 }
 
-func NewService(es eventstore.Store, cli *ent.Client, evtSvc event.Service) Service {
-	return &service{es: es, cli: cli, evtSvc: evtSvc}
+func NewService(es eventstore.Store, cli *ent.Client, evtSvc event.Service, rdb *redis.Client) Service {
+	return &service{es: es, cli: cli, evtSvc: evtSvc, redis: rdb}
 }
 
 func (s *service) GetProject(ctx context.Context, id uuid.UUID) (*entities.ProjectDetails, error) {
@@ -122,6 +125,12 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 	}
 
 	projection.Apply(proj, ev)
+
+	// Cache the project
+	if err := s.cacheProject(ctx, proj); err != nil {
+		// Log error but continue, caching failure shouldn't stop flow
+		fmt.Printf("failed to cache project: %v\n", err)
+	}
 
 	// user is already fetched at the beginning of the function
 	_ = s.evtSvc.HandleEvents(ctx, startEvent)
@@ -191,6 +200,11 @@ func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params Update
 			return nil, err
 		}
 		proj.Version++
+	}
+
+	// Update cache
+	if err := s.cacheProject(ctx, proj); err != nil {
+		fmt.Printf("failed to update project cache: %v\n", err)
 	}
 
 	_ = s.evtSvc.HandleEvents(ctx, newEvents...)
@@ -322,6 +336,11 @@ func (s *service) AddPerson(
 	projection.Apply(proj, evt)
 	proj.Version++
 
+	// Update cache
+	if err := s.cacheProject(ctx, proj); err != nil {
+		fmt.Printf("failed to update project cache: %v\n", err)
+	}
+
 	resp, err := s.buildProjectDetails(ctx, proj)
 	if err != nil {
 		return nil, err
@@ -367,6 +386,11 @@ func (s *service) RemovePerson(
 	projection.Apply(proj, evt)
 	proj.Version++
 
+	// Update cache
+	if err := s.cacheProject(ctx, proj); err != nil {
+		fmt.Printf("failed to update project cache: %v\n", err)
+	}
+
 	resp, err := s.buildProjectDetails(ctx, proj)
 	if err != nil {
 		return nil, err
@@ -409,6 +433,11 @@ func (s *service) AddProduct(
 
 	projection.Apply(proj, evt)
 	proj.Version += 1
+
+	// Update cache
+	if err := s.cacheProject(ctx, proj); err != nil {
+		fmt.Printf("failed to update project cache: %v\n", err)
+	}
 
 	// notify all users about the new product (temporary for demo)
 	// Handled by EventService now
@@ -458,6 +487,11 @@ func (s *service) RemoveProduct(
 
 	projection.Apply(proj, evt)
 	proj.Version += 1
+
+	// Update cache
+	if err := s.cacheProject(ctx, proj); err != nil {
+		fmt.Printf("failed to update project cache: %v\n", err)
+	}
 
 	resp, err := s.buildProjectDetails(ctx, proj)
 	if err != nil {
@@ -560,6 +594,11 @@ func (s *service) GetChangeLog(ctx context.Context, id uuid.UUID) (*entities.Cha
 }
 
 func (s *service) fromDb(ctx context.Context, projectID uuid.UUID) (*entities.Project, error) {
+	// Try cache first
+	if proj, err := s.getFromCache(ctx, projectID); err == nil {
+		return proj, nil
+	}
+
 	evts, version, err := s.es.Load(ctx, projectID)
 	if err != nil {
 		return nil, err
@@ -571,5 +610,41 @@ func (s *service) fromDb(ctx context.Context, projectID uuid.UUID) (*entities.Pr
 	proj := projection.Reduce(projectID, evts)
 	proj.Version = version
 
+	// Update cache
+	_ = s.cacheProject(ctx, proj)
+
 	return proj, nil
+}
+
+func (s *service) cacheProject(ctx context.Context, proj *entities.Project) error {
+	if s.redis == nil {
+		return nil
+	}
+
+	bytes, err := json.Marshal(proj)
+	if err != nil {
+		return err
+	}
+
+	key := fmt.Sprintf("project:%s", proj.Id.String())
+	return s.redis.Set(ctx, key, bytes, 24*time.Hour).Err()
+}
+
+func (s *service) getFromCache(ctx context.Context, projectID uuid.UUID) (*entities.Project, error) {
+	if s.redis == nil {
+		return nil, errors.New("redis not initialized")
+	}
+
+	key := fmt.Sprintf("project:%s", projectID.String())
+	val, err := s.redis.Get(ctx, key).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	var proj entities.Project
+	if err := json.Unmarshal([]byte(val), &proj); err != nil {
+		return nil, err
+	}
+
+	return &proj, nil
 }

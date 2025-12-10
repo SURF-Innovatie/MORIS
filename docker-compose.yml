@@ -16,5 +16,20 @@ services:
       timeout: 5s
       retries: 5
 
+  valkey:
+    image: valkey/valkey:9
+    command: valkey-server --requirepass "moris"
+    restart: always
+    ports:
+      - "6380:6379"
+    volumes:
+      - valkey_data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
   db_data: {}
+  valkey_data: {}

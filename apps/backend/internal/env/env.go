@@ -9,14 +9,17 @@ import (
 )
 
 type Config struct {
-	AppEnv     string
-	DBHost     string
-	DBUser     string
-	DBPassword string
-	DBName     string
-	DBPort     string
-	JWTSecret  string
-	Port       string
+	AppEnv        string
+	DBHost        string
+	DBUser        string
+	DBPassword    string
+	DBName        string
+	DBPort        string
+	CacheHost     string
+	CachePort     string
+	CachePassword string
+	JWTSecret     string
+	Port          string
 }
 
 var Global Config
@@ -30,14 +33,17 @@ func init() {
 	}
 
 	Global = Config{
-		AppEnv:     getEnv("APP_ENV", false, "dev"),
-		DBHost:     getEnv("DB_HOST", true, ""),
-		DBUser:     getEnv("DB_USER", true, ""),
-		DBPassword: getEnv("DB_PASSWORD", true, ""),
-		DBName:     getEnv("DB_NAME", true, ""),
-		DBPort:     getEnv("DB_PORT", true, ""),
-		JWTSecret:  getEnv("JWT_SECRET", true, ""),
-		Port:       getEnv("PORT", true, ""),
+		AppEnv:        getEnv("APP_ENV", false, "dev"),
+		DBHost:        getEnv("DB_HOST", true, ""),
+		DBUser:        getEnv("DB_USER", true, ""),
+		DBPassword:    getEnv("DB_PASSWORD", true, ""),
+		DBName:        getEnv("DB_NAME", true, ""),
+		DBPort:        getEnv("DB_PORT", true, ""),
+		CacheHost:     getEnv("CACHE_HOST", true, ""),
+		CachePort:     getEnv("CACHE_PORT", true, ""),
+		CachePassword: getEnv("CACHE_PASSWORD", false, ""),
+		JWTSecret:     getEnv("JWT_SECRET", true, ""),
+		Port:          getEnv("PORT", true, ""),
 	}
 }
 

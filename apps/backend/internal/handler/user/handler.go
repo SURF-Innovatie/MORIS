@@ -58,7 +58,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, toUserResponse(acc))
+	_ = httputil.WriteJSON(w, http.StatusOK, userdto.FromEntity(acc))
 }
 
 // GetUser godoc
@@ -85,7 +85,7 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, toUserResponse(acc))
+	_ = httputil.WriteJSON(w, http.StatusOK, userdto.FromEntity(acc))
 }
 
 // UpdateUser godoc
@@ -128,7 +128,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, toUserResponse(acc))
+	_ = httputil.WriteJSON(w, http.StatusOK, userdto.FromEntity(acc))
 }
 
 // DeleteUser godoc

@@ -36,6 +36,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	_ "github.com/lib/pq"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
@@ -77,6 +78,18 @@ func main() {
 		logrus.Fatalf("failed running Ent database migrations: %v", err)
 	}
 
+	// Redis Client
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("%s:%s", env.Global.CacheHost, env.Global.CachePort),
+		Password: env.Global.CachePassword,
+	})
+	if err := rdb.Ping(context.Background()).Err(); err != nil {
+		logrus.Warnf("failed to connect to redis/valkey: %v", err)
+	} else {
+		logrus.Infof("Connected to Redis at %s:%s", env.Global.CacheHost, env.Global.CachePort)
+	}
+	defer rdb.Close()
+
 	// Create services
 	esStore := eventstore.NewEntStore(client)
 	personSvc := person.NewService(client)
@@ -116,7 +129,7 @@ func main() {
 	authHandler := authhandler.NewHandler(userSvc, authSvc, orcidSvc)
 	systemHandler := systemhandler.NewHandler()
 
-	projSvc := project.NewService(esStore, client, eventSvc)
+	projSvc := project.NewService(esStore, client, eventSvc, rdb)
 	projHandler := projecthandler.NewHandler(projSvc)
 
 	userHandler := userhandler.NewHandler(userSvc, projSvc)
