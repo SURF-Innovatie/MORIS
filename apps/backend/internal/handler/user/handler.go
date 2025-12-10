@@ -37,7 +37,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.PersonID == uuid.Nil {
-		http.Error(w, "person ID is required", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "person ID is required", nil)
 		return
 	}
 
@@ -46,13 +46,13 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		Password: req.Password,
 	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
 	acc, err := h.svc.GetAccount(r.Context(), u.ID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
@@ -73,13 +73,13 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	id, err := httputil.ParseUUIDQuery(r, "id")
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
 		return
 	}
 
 	acc, err := h.svc.GetAccount(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
@@ -101,7 +101,7 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	id, err := httputil.ParseUUIDQuery(r, "id")
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
 		return
 	}
 
@@ -116,13 +116,13 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
 	acc, err := h.svc.GetAccount(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
@@ -143,12 +143,12 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	id, err := httputil.ParseUUIDQuery(r, "id")
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
 		return
 	}
 
 	if err := h.svc.Delete(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
@@ -169,13 +169,13 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetApprovedEvents(w http.ResponseWriter, r *http.Request) {
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
 		return
 	}
 
 	events, err := h.svc.GetApprovedEvents(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 

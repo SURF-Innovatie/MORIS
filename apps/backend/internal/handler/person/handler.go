@@ -34,7 +34,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.Name == "" {
-		http.Error(w, "name is required", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "name is required", nil)
 		return
 	}
 
@@ -45,7 +45,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		Email:      req.Email,
 	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
@@ -72,12 +72,12 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
 		return
 	}
 	p, err := h.svc.Get(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		httputil.WriteError(w, r, http.StatusNotFound, err.Error(), nil)
 		return
 	}
 	_ = httputil.WriteJSON(w, http.StatusOK, persondto.Response{
@@ -106,7 +106,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
 		return
 	}
 
@@ -124,7 +124,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		Description: req.Description,
 	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 

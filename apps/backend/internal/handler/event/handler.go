@@ -31,12 +31,12 @@ func (h *Handler) ApproveEvent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
-		http.Error(w, "invalid event id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid event id", nil)
 		return
 	}
 
 	if err := h.svc.ApproveEvent(ctx, id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
@@ -60,12 +60,12 @@ func (h *Handler) RejectEvent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
-		http.Error(w, "invalid event id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid event id", nil)
 		return
 	}
 
 	if err := h.svc.RejectEvent(ctx, id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 

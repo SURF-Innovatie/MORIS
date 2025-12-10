@@ -11,6 +11,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	crossref2 "github.com/SURF-Innovatie/MORIS/external/crossref"
 	"github.com/SURF-Innovatie/MORIS/external/orcid"
+	"github.com/SURF-Innovatie/MORIS/internal/errorlog"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
 	authhandler "github.com/SURF-Innovatie/MORIS/internal/handler/auth"
 	crossrefhandler "github.com/SURF-Innovatie/MORIS/internal/handler/crossref"
@@ -110,6 +111,7 @@ func main() {
 	crossrefHandler := crossrefhandler.NewHandler(crossrefSvc)
 
 	notifierSvc := notification.NewService(client)
+	errorLogSvc := errorlog.NewService(client)
 
 	eventSvc := event.NewService(esStore, client, notifierSvc)
 	eventSvc.RegisterNotificationHandler(&event.ProjectEventNotificationHandler{Notifier: notifierSvc, Cli: client})
@@ -136,6 +138,7 @@ func main() {
 	r.Use(middleware.Recoverer)
 
 	r.Route("/api", func(r chi.Router) {
+		r.Use(authmiddleware.ErrorLoggingMiddleware(errorLogSvc))
 		authhandler.MountRoutes(r, authSvc, authHandler)
 		systemhandler.MountRoutes(r, systemHandler)
 		r.Group(func(r chi.Router) {

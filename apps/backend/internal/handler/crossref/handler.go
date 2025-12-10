@@ -30,7 +30,7 @@ func NewHandler(svc crossref.Service) *Handler {
 func (h *Handler) GetWork(w http.ResponseWriter, r *http.Request) {
 	doi := r.URL.Query().Get("doi")
 	if doi == "" {
-		http.Error(w, "doi is required", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "doi is required", nil)
 		return
 	}
 
@@ -38,7 +38,7 @@ func (h *Handler) GetWork(w http.ResponseWriter, r *http.Request) {
 	work, err := h.svc.GetWork(r.Context(), doi)
 	if err != nil {
 		// TODO: Handle 404 specifically if the service returns a specific error for it
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 

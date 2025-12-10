@@ -9,7 +9,6 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/api/authdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
 	coreauth "github.com/SURF-Innovatie/MORIS/internal/auth"
-	"github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
 )
@@ -47,7 +46,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	token, authUser, err := h.authService.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
-		_ = httputil.WriteError(w, http.StatusUnauthorized, "Invalid credentials", nil)
+		_ = httputil.WriteError(w, r, http.StatusUnauthorized, "Invalid credentials", nil)
 		return
 	}
 
@@ -69,16 +68,16 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} httputil.BackendError "User not authenticated"
 // @Router /profile [get]
 func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
-	userCtx, ok := middleware.GetUserFromContext(r.Context())
+	userCtx, ok := httputil.GetUserFromContext(r.Context())
 	if !ok || userCtx == nil {
-		httputil.WriteError(w, http.StatusUnauthorized, "User not authenticated or found in context", nil)
+		httputil.WriteError(w, r, http.StatusUnauthorized, "User not found in context", nil)
 		return
 	}
 
 	// Fetch fresh user data from database
 	freshUser, err := h.userService.GetAccount(r.Context(), userCtx.User.ID)
 	if err != nil {
-		httputil.WriteError(w, http.StatusInternalServerError, "Failed to fetch user profile", nil)
+		httputil.WriteError(w, r, http.StatusInternalServerError, "Failed to fetch user profile", nil)
 		return
 	}
 
@@ -110,9 +109,9 @@ func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} httputil.BackendError "Internal server error"
 // @Router /auth/orcid/url [get]
 func (h *Handler) GetORCIDAuthURL(w http.ResponseWriter, r *http.Request) {
-	u, ok := middleware.GetUserFromContext(r.Context())
+	u, ok := httputil.GetUserFromContext(r.Context())
 	if !ok {
-		httputil.WriteError(w, http.StatusUnauthorized, "User not authenticated", nil)
+		httputil.WriteError(w, r, http.StatusUnauthorized, "User not authenticated", nil)
 		return
 	}
 
@@ -123,7 +122,7 @@ func (h *Handler) GetORCIDAuthURL(w http.ResponseWriter, r *http.Request) {
 			statusCode = http.StatusUnauthorized
 		}
 
-		httputil.WriteError(w, statusCode, err.Error(), nil)
+		httputil.WriteError(w, r, statusCode, err.Error(), nil)
 		return
 	}
 
@@ -147,15 +146,15 @@ func (h *Handler) GetORCIDAuthURL(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} httputil.BackendError "Internal server error"
 // @Router /auth/orcid/link [post]
 func (h *Handler) LinkORCID(w http.ResponseWriter, r *http.Request) {
-	u, ok := middleware.GetUserFromContext(r.Context())
+	u, ok := httputil.GetUserFromContext(r.Context())
 	if !ok {
-		httputil.WriteError(w, http.StatusUnauthorized, "User not authenticated", nil)
+		httputil.WriteError(w, r, http.StatusUnauthorized, "User not authenticated", nil)
 		return
 	}
 
 	var req authdto.LinkORCIDRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		httputil.WriteError(w, http.StatusBadRequest, "Invalid request body", nil)
+		httputil.WriteError(w, r, http.StatusBadRequest, "Invalid request body", nil)
 		return
 	}
 
@@ -169,7 +168,7 @@ func (h *Handler) LinkORCID(w http.ResponseWriter, r *http.Request) {
 			statusCode = http.StatusConflict
 		}
 
-		httputil.WriteError(w, statusCode, err.Error(), nil)
+		httputil.WriteError(w, r, statusCode, err.Error(), nil)
 		return
 	}
 
@@ -189,14 +188,14 @@ func (h *Handler) LinkORCID(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} httputil.BackendError "Internal server error"
 // @Router /auth/orcid/unlink [post]
 func (h *Handler) UnlinkORCID(w http.ResponseWriter, r *http.Request) {
-	u, ok := middleware.GetUserFromContext(r.Context())
+	u, ok := httputil.GetUserFromContext(r.Context())
 	if !ok {
-		httputil.WriteError(w, http.StatusUnauthorized, "User not authenticated", nil)
+		httputil.WriteError(w, r, http.StatusUnauthorized, "User not authenticated", nil)
 		return
 	}
 
 	if err := h.orcidService.Unlink(r.Context(), u.User.ID); err != nil {
-		httputil.WriteError(w, http.StatusInternalServerError, err.Error(), nil)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 

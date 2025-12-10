@@ -5,7 +5,6 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/productdto"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	productsvc "github.com/SURF-Innovatie/MORIS/internal/product"
 )
@@ -36,7 +35,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.Name == "" {
-		http.Error(w, "name is required", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "name is required", nil)
 		return
 	}
 
@@ -47,7 +46,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		DOI:      req.DOI,
 	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
@@ -71,7 +70,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	products, err := h.svc.GetAll(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 	_ = httputil.WriteJSON(w, http.StatusOK, products)
@@ -86,15 +85,15 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /products/me [get]
 func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
-	userCtx, ok := middleware.GetUserFromContext(r.Context())
+	userCtx, ok := httputil.GetUserFromContext(r.Context())
 	if !ok || userCtx == nil {
-		httputil.WriteError(w, http.StatusUnauthorized, "User not authenticated or found in context", nil)
+		httputil.WriteError(w, r, http.StatusUnauthorized, "User not authenticated or found in context", nil)
 		return
 	}
 
 	products, err := h.svc.GetAllForUser(r.Context(), userCtx.User.PersonID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
@@ -125,12 +124,12 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
 		return
 	}
 	p, err := h.svc.Get(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 	_ = httputil.WriteJSON(w, http.StatusOK, productdto.Response{
@@ -157,7 +156,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
 		return
 	}
 
@@ -166,7 +165,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.Name == "" {
-		http.Error(w, "name is required", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "name is required", nil)
 		return
 	}
 	p, err := h.svc.Update(r.Context(), id, entities.Product{
@@ -176,7 +175,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		DOI:      req.DOI,
 	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 	_ = httputil.WriteJSON(w, http.StatusOK, productdto.Response{
@@ -201,11 +200,11 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
 		return
 	}
 	if err := h.svc.Delete(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, "failed to delete product", err.Error())
 		return
 	}
 

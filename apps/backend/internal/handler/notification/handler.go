@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/notificationdto"
-	"github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/SURF-Innovatie/MORIS/internal/notification"
 	"github.com/google/uuid"
@@ -30,15 +29,15 @@ func NewHandler(svc notification.Service) *Handler {
 // @Failure 500 {string} string "internal server error"
 // @Router /notifications [get]
 func (h *Handler) GetNotifications(w http.ResponseWriter, r *http.Request) {
-	user, ok := middleware.GetUserFromContext(r.Context())
+	user, ok := httputil.GetUserFromContext(r.Context())
 	if !ok || user == nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
 		return
 	}
 
 	notifications, err := h.svc.ListForUser(r.Context(), user.User.ID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		logrus.Errorf("failed to list notifications for user %s: %v", user.User.ID, err)
 		return
 	}
@@ -77,26 +76,26 @@ func (h *Handler) GetNotifications(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /notifications/{id}/read [put]
 func (h *Handler) MarkNotificationAsRead(w http.ResponseWriter, r *http.Request) {
-	user, ok := middleware.GetUserFromContext(r.Context())
+	user, ok := httputil.GetUserFromContext(r.Context())
 	if !ok || user == nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
 		return
 	}
 
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
 		return
 	}
 
 	notification, err := h.svc.Get(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		httputil.WriteError(w, r, http.StatusNotFound, err.Error(), nil)
 		return
 	}
 
 	if notification.User.ID != user.User.ID {
-		http.Error(w, "forbidden", http.StatusForbidden)
+		httputil.WriteError(w, r, http.StatusForbidden, "forbidden", nil)
 		return
 	}
 
@@ -107,7 +106,7 @@ func (h *Handler) MarkNotificationAsRead(w http.ResponseWriter, r *http.Request)
 
 	err = h.svc.MarkAsRead(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 

@@ -41,12 +41,12 @@ func NewHandler(svc project.Service) *Handler {
 func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
-		http.Error(w, "invalid project id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
 		return
 	}
 	proj, err := h.svc.GetProject(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		httputil.WriteError(w, r, http.StatusNotFound, err.Error(), nil)
 		return
 	}
 	_ = httputil.WriteJSON(w, http.StatusOK, toProjectResponse(proj))
@@ -71,13 +71,13 @@ func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
 
 	start, err := time.Parse(time.RFC3339, req.StartDate)
 	if err != nil {
-		http.Error(w, "invalid startDate", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid startDate", nil)
 		return
 	}
 
 	end, err := time.Parse(time.RFC3339, req.EndDate)
 	if err != nil {
-		http.Error(w, "invalid endDate", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid endDate", nil)
 		return
 	}
 
@@ -92,7 +92,7 @@ func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
 
 	proj, err := h.svc.StartProject(r.Context(), params)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
@@ -115,7 +115,7 @@ func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
-		http.Error(w, "invalid project id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
 		return
 	}
 
@@ -126,13 +126,13 @@ func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 
 	start, err := time.Parse(time.RFC3339, req.StartDate)
 	if err != nil {
-		http.Error(w, "invalid startDate", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid startDate", nil)
 		return
 	}
 
 	end, err := time.Parse(time.RFC3339, req.EndDate)
 	if err != nil {
-		http.Error(w, "invalid endDate", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid endDate", nil)
 		return
 	}
 
@@ -147,10 +147,10 @@ func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 	proj, err := h.svc.UpdateProject(r.Context(), id, params)
 	if err != nil {
 		if err == project.ErrNotFound {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			httputil.WriteError(w, r, http.StatusNotFound, err.Error(), nil)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
@@ -170,7 +170,7 @@ func (h *Handler) GetAllProjects(w http.ResponseWriter, r *http.Request) {
 
 	projs, err := h.svc.GetAllProjects(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 	resps := make([]projectdto.Response, 0, len(projs))
@@ -195,19 +195,19 @@ func (h *Handler) GetAllProjects(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) AddPerson(w http.ResponseWriter, r *http.Request) {
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
-		http.Error(w, "invalid project id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
 		return
 	}
 
 	personID, err := httputil.ParseUUIDParam(r, "personId")
 	if err != nil {
-		http.Error(w, "invalid person id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid person id", nil)
 		return
 	}
 
 	proj, err := h.svc.AddPerson(r.Context(), id, personID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 	_ = httputil.WriteJSON(w, http.StatusOK, toProjectResponse(proj))
@@ -228,19 +228,19 @@ func (h *Handler) AddPerson(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) RemovePerson(w http.ResponseWriter, r *http.Request) {
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
-		http.Error(w, "invalid project id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
 		return
 	}
 
 	personId, err := httputil.ParseUUIDParam(r, "personId")
 	if err != nil {
-		http.Error(w, "invalid personId", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid personId", nil)
 		return
 	}
 
 	proj, err := h.svc.RemovePerson(r.Context(), id, personId)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
@@ -262,19 +262,19 @@ func (h *Handler) RemovePerson(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) AddProduct(w http.ResponseWriter, r *http.Request) {
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
-		http.Error(w, "invalid project id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
 		return
 	}
 
 	productID, err := httputil.ParseUUIDParam(r, "productID")
 	if err != nil {
-		http.Error(w, "invalid productID", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid productID", nil)
 		return
 	}
 
 	proj, err := h.svc.AddProduct(r.Context(), id, productID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
@@ -296,19 +296,19 @@ func (h *Handler) AddProduct(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) RemoveProduct(w http.ResponseWriter, r *http.Request) {
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
-		http.Error(w, "invalid project id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
 		return
 	}
 
 	productID, err := httputil.ParseUUIDParam(r, "productID")
 	if err != nil {
-		http.Error(w, "invalid productID", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid productID", nil)
 		return
 	}
 
 	proj, err := h.svc.RemoveProduct(r.Context(), id, productID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
@@ -329,13 +329,13 @@ func (h *Handler) RemoveProduct(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetChangelog(w http.ResponseWriter, r *http.Request) {
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
-		http.Error(w, "invalid project id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
 		return
 	}
 
 	changeLog, err := h.svc.GetChangeLog(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
@@ -422,13 +422,13 @@ func toProjectResponse(d *entities.ProjectDetails) projectdto.Response {
 func (h *Handler) GetPendingEvents(w http.ResponseWriter, r *http.Request) {
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
-		http.Error(w, "invalid project id", http.StatusBadRequest)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
 		return
 	}
 
 	events, err := h.svc.GetPendingEvents(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 

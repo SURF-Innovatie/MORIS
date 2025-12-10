@@ -1,12 +1,15 @@
 package httputil
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
 
 	"time"
 
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/env"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -27,14 +30,57 @@ type BackendError struct {
 	Message string      `json:"message,omitempty" example:"Detailed error description"` // Custom message
 }
 
+// ContextKey is a custom type for context keys
+type ContextKey string
+
+const (
+	// ContextKeyErrorDetails is the key used to store error details in the request context
+	ContextKeyErrorDetails ContextKey = "error_details"
+	// ContextKeyUser is the key used to store user info in context
+	ContextKeyUser ContextKey = "user"
+)
+
+// GetUserFromContext retrieves the authUser from the request context
+func GetUserFromContext(ctx context.Context) (*entities.UserAccount, bool) {
+	user, ok := ctx.Value(ContextKeyUser).(*entities.UserAccount)
+	return user, ok
+}
+
+// GetUserIDFromContext helper to extract user ID safely
+func GetUserIDFromContext(ctx context.Context) string {
+	userCtx, ok := GetUserFromContext(ctx)
+	if !ok || userCtx == nil {
+		return ""
+	}
+	return userCtx.User.ID.String()
+}
+
 // WriteError writes a standardized error response
-func WriteError(w http.ResponseWriter, code int, message string, errs interface{}) error {
+// It automatically handles environment-specific masking of errors.
+// It also stores the full error details in the request entity for middleware logging.
+func WriteError(w http.ResponseWriter, r *http.Request, code int, message string, errs interface{}) error {
+	// Store full error details in the request context specifically for the middleware to pick up.
+	// This allows the middleware to log the original error details even if the response is sanitized for production.
+	if container, ok := r.Context().Value(ContextKeyErrorDetails).(*ErrorDetailsContainer); ok {
+		container.Message = message
+		container.Errors = errs
+		container.StatusCode = code
+	}
+
 	resp := BackendError{
 		Code:    code,
 		Status:  http.StatusText(code),
 		Message: message,
 		Errors:  errs,
 	}
+
+	// Environment based masking
+	if env.IsProd() {
+		resp.Message = http.StatusText(code) // Default to generic status text
+		resp.Errors = nil                    // Hide detailed errors
+
+	}
+
 	return WriteJSON(w, code, resp)
 }
 
@@ -58,10 +104,17 @@ func WriteJSON(w http.ResponseWriter, status int, v any) error {
 // It returns true if successful, or writes an error response and returns false if failed.
 func ReadJSON(w http.ResponseWriter, r *http.Request, v any) bool {
 	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		WriteError(w, r, http.StatusBadRequest, "invalid request body", err.Error())
 		return false
 	}
 	return true
+}
+
+// ErrorDetailsContainer is used to pass error details from handler to middleware via context
+type ErrorDetailsContainer struct {
+	Message    string
+	Errors     interface{}
+	StatusCode int
 }
 
 // ParseUUIDParam parses a UUID from the URL path parameters.
