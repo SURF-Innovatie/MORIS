@@ -24,5 +24,9 @@ func (ProductAddedEvent) Edges() []ent.Edge {
 			Ref("product_added").
 			Unique().
 			Required(),
+		edge.To("product", Product.Type).
+			Field("product_id").
+			Unique().
+			Required(),
 	}
 }

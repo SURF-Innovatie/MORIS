@@ -13,6 +13,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/api/projectdto"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	_ "github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/SURF-Innovatie/MORIS/internal/project"
@@ -426,25 +427,42 @@ func (h *Handler) GetPendingEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	events, err := h.svc.GetPendingEvents(r.Context(), id)
+	pendingEvents, err := h.svc.GetPendingEvents(r.Context(), id)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
 	resp := eventdto.Response{
-		Events: make([]eventdto.Event, 0, len(events)),
+		Events: make([]eventdto.Event, 0, len(pendingEvents)),
 	}
-	for _, e := range events {
-		resp.Events = append(resp.Events, eventdto.Event{
+	for _, e := range pendingEvents {
+		dtoEvent := eventdto.Event{
 			ID:        e.GetID(),
 			ProjectID: e.AggregateID(),
 			Type:      e.Type(),
-			Status:    "pending",                                              // We filtered for pending
-			CreatedBy: e.(interface{ CreatedByID() uuid.UUID }).CreatedByID(), // Safe cast as Base has it
+			Status:    "pending",
+			CreatedBy: e.(interface{ CreatedByID() uuid.UUID }).CreatedByID(),
 			At:        e.OccurredAt(),
 			Details:   e.String(),
-		})
+		}
+
+		switch ev := e.(type) {
+		case events.PersonAdded:
+			p := toPersonDTO(ev.Person)
+			dtoEvent.Person = &p
+		case events.PersonRemoved:
+			p := toPersonDTO(ev.Person)
+			dtoEvent.Person = &p
+		case events.ProductAdded:
+			p := toProductDTO(ev.Product)
+			dtoEvent.Product = &p
+		case events.ProductRemoved:
+			p := toProductDTO(ev.Product)
+			dtoEvent.Product = &p
+		}
+
+		resp.Events = append(resp.Events, dtoEvent)
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, resp)

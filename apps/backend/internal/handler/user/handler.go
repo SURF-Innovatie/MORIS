@@ -7,16 +7,18 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
+	"github.com/SURF-Innovatie/MORIS/internal/project"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
 	"github.com/google/uuid"
 )
 
 type Handler struct {
-	svc user.Service
+	svc     user.Service
+	projSvc project.Service
 }
 
-func NewHandler(svc user.Service) *Handler {
-	return &Handler{svc: svc}
+func NewHandler(svc user.Service, projSvc project.Service) *Handler {
+	return &Handler{svc: svc, projSvc: projSvc}
 }
 
 // CreateUser godoc
@@ -182,14 +184,22 @@ func (h *Handler) GetApprovedEvents(w http.ResponseWriter, r *http.Request) {
 	// Map to DTO
 	dtos := make([]eventdto.Event, 0, len(events))
 	for _, e := range events {
+
+		proj, _ := h.projSvc.GetProject(r.Context(), e.AggregateID())
+		projectTitle := ""
+		if proj != nil {
+			projectTitle = proj.Project.Title
+		}
+
 		dtos = append(dtos, eventdto.Event{
-			ID:        e.GetID(),
-			ProjectID: e.AggregateID(),
-			Type:      e.Type(),
-			Status:    e.GetStatus(),
-			CreatedBy: e.CreatedByID(),
-			At:        e.OccurredAt(),
-			Details:   e.String(),
+			ID:           e.GetID(),
+			ProjectID:    e.AggregateID(),
+			Type:         e.Type(),
+			Status:       e.GetStatus(),
+			CreatedBy:    e.CreatedByID(),
+			At:           e.OccurredAt(),
+			Details:      e.String(),
+			ProjectTitle: projectTitle,
 		})
 	}
 

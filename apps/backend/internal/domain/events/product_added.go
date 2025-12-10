@@ -3,16 +3,19 @@ package events
 import (
 	"fmt"
 
-	"github.com/google/uuid"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 )
 
 type ProductAdded struct {
 	Base
-	ProductID uuid.UUID `json:"productID"`
+	Product entities.Product `json:"product"`
 }
 
 func (ProductAdded) isEvent()     {}
 func (ProductAdded) Type() string { return ProductAddedType }
 func (e ProductAdded) String() string {
-	return fmt.Sprintf("Product added: %s", e.ProductID)
+	if e.Product.Name != "" {
+		return fmt.Sprintf("Product added: %s", e.Product.Name)
+	}
+	return fmt.Sprintf("Product added: %s", e.Product.Id)
 }

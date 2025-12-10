@@ -29,6 +29,10 @@ func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e event
 		return nil
 	}
 
+	if e.GetStatus() != "pending" {
+		return nil
+	}
+
 	projectID := e.AggregateID()
 	logrus.Infof("NotifyApprovers: Processing PersonAdded event for project %s", projectID)
 

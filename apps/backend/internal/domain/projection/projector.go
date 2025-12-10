@@ -48,23 +48,23 @@ func Apply(p *entities.Project, e events.Event) {
 		p.Organisation = ev.OrganisationID
 
 	case events.PersonAdded:
-		if !hasItem(p.People, ev.PersonId) {
-			p.People = append(p.People, ev.PersonId)
+		if !hasItem(p.People, ev.Person.Id) {
+			p.People = append(p.People, ev.Person.Id)
 		}
 
 	case events.PersonRemoved:
 		p.People = filterItem(p.People, func(id uuid.UUID) bool {
-			return id != ev.PersonId
+			return id != ev.Person.Id
 		})
 
 	case events.ProductAdded:
-		if !hasItem(p.Products, ev.ProductID) {
-			p.Products = append(p.Products, ev.ProductID)
+		if !hasItem(p.Products, ev.Product.Id) {
+			p.Products = append(p.Products, ev.Product.Id)
 		}
 
 	case events.ProductRemoved:
 		p.Products = filterItem(p.Products, func(id uuid.UUID) bool {
-			return id != ev.ProductID
+			return id != ev.Product.Id
 		})
 
 	default:

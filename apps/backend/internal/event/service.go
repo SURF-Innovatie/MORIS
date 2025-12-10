@@ -16,6 +16,7 @@ type Service interface {
 	RejectEvent(ctx context.Context, eventID uuid.UUID) error
 	HandleEvents(ctx context.Context, evts ...events.Event) error
 	RegisterNotificationHandler(handler NotificationHandler)
+	GetEvent(ctx context.Context, eventID uuid.UUID) (events.Event, error)
 }
 
 type NotificationHandler interface {
@@ -90,4 +91,8 @@ func (s *service) RejectEvent(ctx context.Context, eventID uuid.UUID) error {
 	}
 
 	return s.HandleEvents(ctx, event)
+}
+
+func (s *service) GetEvent(ctx context.Context, eventID uuid.UUID) (events.Event, error) {
+	return s.es.LoadEvent(ctx, eventID)
 }

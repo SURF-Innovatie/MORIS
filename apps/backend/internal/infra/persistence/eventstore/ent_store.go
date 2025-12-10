@@ -11,6 +11,7 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	en "github.com/SURF-Innovatie/MORIS/ent/event"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 )
 
@@ -264,7 +265,7 @@ func (s *EntStore) Append(
 			if _, err := tx.PersonAddedEvent.
 				Create().
 				SetEvent(evRow).
-				SetPersonID(v.PersonId).
+				SetPersonID(v.Person.Id).
 				Save(ctx); err != nil {
 				_ = tx.Rollback()
 				return err
@@ -292,7 +293,7 @@ func (s *EntStore) Append(
 			if _, err := tx.PersonRemovedEvent.
 				Create().
 				SetEvent(evRow).
-				SetPersonID(v.PersonId).
+				SetPersonID(v.Person.Id).
 				Save(ctx); err != nil {
 				_ = tx.Rollback()
 				return err
@@ -320,7 +321,7 @@ func (s *EntStore) Append(
 			if _, err := tx.ProductAddedEvent.
 				Create().
 				SetEvent(evRow).
-				SetProductID(v.ProductID).
+				SetProductID(v.Product.Id).
 				Save(ctx); err != nil {
 				_ = tx.Rollback()
 				return err
@@ -348,7 +349,7 @@ func (s *EntStore) Append(
 			if _, err := tx.ProductRemovedEvent.
 				Create().
 				SetEvent(evRow).
-				SetProductID(v.ProductID).
+				SetProductID(v.Product.Id).
 				Save(ctx); err != nil {
 				_ = tx.Rollback()
 				return err
@@ -391,10 +392,18 @@ func (s *EntStore) Load(
 		WithStartDateChanged().
 		WithEndDateChanged().
 		WithOrganisationChanged().
-		WithPersonAdded().
-		WithPersonRemoved().
-		WithProductAdded().
-		WithProductRemoved().
+		WithPersonAdded(func(q *ent.PersonAddedEventQuery) {
+			q.WithPerson()
+		}).
+		WithPersonRemoved(func(q *ent.PersonRemovedEventQuery) {
+			q.WithPerson()
+		}).
+		WithProductAdded(func(q *ent.ProductAddedEventQuery) {
+			q.WithProduct()
+		}).
+		WithProductRemoved(func(q *ent.ProductRemovedEventQuery) {
+			q.WithProduct()
+		}).
 		All(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -429,10 +438,18 @@ func (s *EntStore) LoadEvent(ctx context.Context, eventID uuid.UUID) (events.Eve
 		WithStartDateChanged().
 		WithEndDateChanged().
 		WithOrganisationChanged().
-		WithPersonAdded().
-		WithPersonRemoved().
-		WithProductAdded().
-		WithProductRemoved().
+		WithPersonAdded(func(q *ent.PersonAddedEventQuery) {
+			q.WithPerson()
+		}).
+		WithPersonRemoved(func(q *ent.PersonRemovedEventQuery) {
+			q.WithPerson()
+		}).
+		WithProductAdded(func(q *ent.ProductAddedEventQuery) {
+			q.WithProduct()
+		}).
+		WithProductRemoved(func(q *ent.ProductRemovedEventQuery) {
+			q.WithProduct()
+		}).
 		Only(ctx)
 	if err != nil {
 		return nil, err
@@ -522,9 +539,30 @@ func (s *EntStore) mapEventRow(r *ent.Event) (events.Event, error) {
 		if payload == nil {
 			return nil, fmt.Errorf("missing PersonAdded edge for event %s", r.ID)
 		}
+		var person entities.Person
+		if payload.Edges.Person != nil {
+			p := payload.Edges.Person
+			var orcid *string
+			if p.OrcidID != "" {
+				orcid = &p.OrcidID
+			}
+			person = entities.Person{
+				Id:          p.ID,
+				Name:        p.Name,
+				Email:       p.Email,
+				AvatarUrl:   p.AvatarURL,
+				Description: p.Description,
+				UserID:      p.UserID,
+				ORCiD:       orcid,
+				GivenName:   p.GivenName,
+				FamilyName:  p.FamilyName,
+			}
+		} else {
+			person = entities.Person{Id: payload.PersonID}
+		}
 		return events.PersonAdded{
-			Base:     base,
-			PersonId: payload.PersonID,
+			Base:   base,
+			Person: person,
 		}, nil
 
 	case events.PersonRemovedType:
@@ -532,9 +570,30 @@ func (s *EntStore) mapEventRow(r *ent.Event) (events.Event, error) {
 		if payload == nil {
 			return nil, fmt.Errorf("missing PersonRemoved edge for event %s", r.ID)
 		}
+		var person entities.Person
+		if payload.Edges.Person != nil {
+			p := payload.Edges.Person
+			var orcid *string
+			if p.OrcidID != "" {
+				orcid = &p.OrcidID
+			}
+			person = entities.Person{
+				Id:          p.ID,
+				Name:        p.Name,
+				Email:       p.Email,
+				AvatarUrl:   p.AvatarURL,
+				Description: p.Description,
+				UserID:      p.UserID,
+				ORCiD:       orcid,
+				GivenName:   p.GivenName,
+				FamilyName:  p.FamilyName,
+			}
+		} else {
+			person = entities.Person{Id: payload.PersonID}
+		}
 		return events.PersonRemoved{
-			Base:     base,
-			PersonId: payload.PersonID,
+			Base:   base,
+			Person: person,
 		}, nil
 
 	case events.ProductAddedType:
@@ -542,9 +601,30 @@ func (s *EntStore) mapEventRow(r *ent.Event) (events.Event, error) {
 		if payload == nil {
 			return nil, fmt.Errorf("missing ProductAdded edge for event %s", r.ID)
 		}
+		var product entities.Product
+		if payload.Edges.Product != nil {
+			p := payload.Edges.Product
+			lang := ""
+			if p.Language != nil {
+				lang = *p.Language
+			}
+			doi := ""
+			if p.Doi != nil {
+				doi = *p.Doi
+			}
+			product = entities.Product{
+				Id:       p.ID,
+				Name:     p.Name,
+				Type:     entities.ProductType(p.Type),
+				Language: lang,
+				DOI:      doi,
+			}
+		} else {
+			product = entities.Product{Id: payload.ProductID}
+		}
 		return events.ProductAdded{
-			Base:      base,
-			ProductID: payload.ProductID,
+			Base:    base,
+			Product: product,
 		}, nil
 
 	case events.ProductRemovedType:
@@ -552,9 +632,30 @@ func (s *EntStore) mapEventRow(r *ent.Event) (events.Event, error) {
 		if payload == nil {
 			return nil, fmt.Errorf("missing ProductRemoved edge for event %s", r.ID)
 		}
+		var product entities.Product
+		if payload.Edges.Product != nil {
+			p := payload.Edges.Product
+			lang := ""
+			if p.Language != nil {
+				lang = *p.Language
+			}
+			doi := ""
+			if p.Doi != nil {
+				doi = *p.Doi
+			}
+			product = entities.Product{
+				Id:       p.ID,
+				Name:     p.Name,
+				Type:     entities.ProductType(p.Type),
+				Language: lang,
+				DOI:      doi,
+			}
+		} else {
+			product = entities.Product{Id: payload.ProductID}
+		}
 		return events.ProductRemoved{
-			Base:      base,
-			ProductID: payload.ProductID,
+			Base:    base,
+			Product: product,
 		}, nil
 
 	default:
@@ -577,10 +678,18 @@ func (s *EntStore) LoadUserApprovedEvents(ctx context.Context, userID uuid.UUID)
 		WithStartDateChanged().
 		WithEndDateChanged().
 		WithOrganisationChanged().
-		WithPersonAdded().
-		WithPersonRemoved().
-		WithProductAdded().
-		WithProductRemoved().
+		WithPersonAdded(func(q *ent.PersonAddedEventQuery) {
+			q.WithPerson()
+		}).
+		WithPersonRemoved(func(q *ent.PersonRemovedEventQuery) {
+			q.WithPerson()
+		}).
+		WithProductAdded(func(q *ent.ProductAddedEventQuery) {
+			q.WithProduct()
+		}).
+		WithProductRemoved(func(q *ent.ProductRemovedEventQuery) {
+			q.WithProduct()
+		}).
 		All(ctx)
 	if err != nil {
 		return nil, err

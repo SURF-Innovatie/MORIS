@@ -12,11 +12,17 @@ interface NotificationListProps {
   limit?: number;
 }
 
+enum NotificationType {
+  ApprovalRequest = "approval_request",
+  StatusUpdate = "status_update",
+  Info = "info",
+}
+
 const getIcon = (type?: string) => {
   switch (type) {
-    case "approval_request":
+    case NotificationType.ApprovalRequest:
       return <ClipboardCheck className="h-5 w-5 text-blue-500" />;
-    case "status_update":
+    case NotificationType.StatusUpdate:
       return <Info className="h-5 w-5 text-green-500" />;
     default:
       return <Bell className="h-5 w-5 text-gray-500" />;
@@ -31,7 +37,11 @@ export function NotificationList({ limit }: NotificationListProps) {
     message: string;
   } | null>(null);
 
-  const handleMarkAsRead = async (id: string) => {
+  const handleMarkAsRead = async (id: string, type?: string) => {
+    // Approval requests are only marked as read when the decision is made (handled by backend)
+    if (type === NotificationType.ApprovalRequest) {
+      return;
+    }
     await markAsRead(id);
   };
 
@@ -57,12 +67,14 @@ export function NotificationList({ limit }: NotificationListProps) {
     <>
       <div className="divide-y divide-border">
         {displayedNotifications.map((notification, index) => {
-          const isApproval = notification.type === "approval_request";
+          const isApproval =
+            notification.type === NotificationType.ApprovalRequest;
 
           const Content = (
             <div
-              className={`group flex items-start gap-4 p-4 transition-colors hover:bg-muted/50 ${!notification.read ? "bg-primary/5" : ""
-                } ${index === 0 ? "rounded-t-xl" : ""} ${index === notifications.length - 1 ? "rounded-b-xl" : ""}`}
+              className={`group flex items-start gap-4 p-4 transition-colors hover:bg-muted/50 ${
+                !notification.read ? "bg-primary/5" : ""
+              } ${index === 0 ? "rounded-t-xl" : ""} ${index === notifications.length - 1 ? "rounded-b-xl" : ""}`}
             >
               <div className="mt-1">{getIcon(notification.type)}</div>
               <div className="flex-1 space-y-1">
@@ -74,27 +86,28 @@ export function NotificationList({ limit }: NotificationListProps) {
                 <p className="text-xs text-muted-foreground/70">
                   {notification.sentAt
                     ? format(
-                      new Date(notification.sentAt),
-                      "MMM d, yyyy 'at' h:mm a"
-                    )
+                        new Date(notification.sentAt),
+                        "MMM d, yyyy 'at' h:mm a"
+                      )
                     : "Just now"}
                 </p>
               </div>
-              {!notification.read && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="Mark as read"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleMarkAsRead(notification.id!);
-                  }}
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                </Button>
-              )}
+              {!notification.read &&
+                notification.type !== NotificationType.ApprovalRequest && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Mark as read"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleMarkAsRead(notification.id!, notification.type);
+                    }}
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                  </Button>
+                )}
             </div>
           );
 
@@ -103,9 +116,7 @@ export function NotificationList({ limit }: NotificationListProps) {
               <div
                 key={notification.id}
                 onClick={() => {
-                  if (!notification.read) {
-                    handleMarkAsRead(notification.id!);
-                  }
+                  // No manual mark as read on click for approval
                   setSelectedApproval({
                     projectId: notification.projectId!,
                     eventId: notification.eventId!,
@@ -132,7 +143,7 @@ export function NotificationList({ limit }: NotificationListProps) {
                   className="block"
                   onClick={() => {
                     if (!notification.read) {
-                      handleMarkAsRead(notification.id!);
+                      handleMarkAsRead(notification.id!, notification.type);
                     }
                   }}
                 >

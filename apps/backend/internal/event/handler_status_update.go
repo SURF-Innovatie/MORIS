@@ -21,6 +21,20 @@ func (h *StatusUpdateNotificationHandler) CanHandle(e events.Event) bool {
 	return status == "approved" || status == "rejected"
 }
 
+// Friendly names mapping
+var eventFriendlyNames = map[string]string{
+	events.ProjectStartedType:      "Project Proposal",
+	events.TitleChangedType:        "Title Change",
+	events.DescriptionChangedType:  "Description Change",
+	events.StartDateChangedType:    "Start Date Change",
+	events.EndDateChangedType:      "End Date Change",
+	events.OrganisationChangedType: "Organisation Change",
+	events.PersonAddedType:         "Person Addition",
+	events.PersonRemovedType:       "Person Removal",
+	events.ProductAddedType:        "Product Addition",
+	events.ProductRemovedType:      "Product Removal",
+}
+
 func (h *StatusUpdateNotificationHandler) Handle(ctx context.Context, e events.Event) error {
 	status := e.GetStatus()
 	creatorID := e.CreatedByID()
@@ -33,7 +47,13 @@ func (h *StatusUpdateNotificationHandler) Handle(ctx context.Context, e events.E
 		return nil
 	}
 
-	msg := fmt.Sprintf("Your request '%s' has been %s.", e.Type(), status)
+	eventType := e.Type()
+	friendlyName, ok := eventFriendlyNames[eventType]
+	if !ok {
+		friendlyName = eventType // Fallback to raw type if not in map
+	}
+
+	msg := fmt.Sprintf("Your request '%s' has been %s.", friendlyName, status)
 
 	_, err = h.Cli.Notification.
 		Create().

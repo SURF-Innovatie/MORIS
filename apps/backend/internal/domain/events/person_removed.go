@@ -3,17 +3,19 @@ package events
 import (
 	"fmt"
 
-	"github.com/google/uuid"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 )
 
 type PersonRemoved struct {
 	Base
-	PersonId uuid.UUID `json:"personId"`
+	Person entities.Person `json:"person"`
 }
 
 func (PersonRemoved) isEvent()     {}
 func (PersonRemoved) Type() string { return PersonRemovedType }
 func (e PersonRemoved) String() string {
-	// TODO: have person removed event contain edge to person
-	return fmt.Sprintf("Person removed: %s", e.PersonId)
+	if e.Person.Name != "" {
+		return fmt.Sprintf("Person removed: %s", e.Person.Name)
+	}
+	return fmt.Sprintf("Person removed: %s", e.Person.Id)
 }

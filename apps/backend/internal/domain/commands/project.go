@@ -106,7 +106,7 @@ func AddPerson(id uuid.UUID, actor uuid.UUID, cur *entities.Project, personId uu
 			return nil, fmt.Errorf("person %s already exists in project %s", personId, cur.Id)
 		}
 	}
-	return events.PersonAdded{Base: base(id, actor, status), PersonId: personId}, nil
+	return events.PersonAdded{Base: base(id, actor, status), Person: entities.Person{Id: personId}}, nil
 }
 
 // RemovePerson emits PersonRemoved when present.
@@ -125,7 +125,7 @@ func RemovePerson(id uuid.UUID, actor uuid.UUID, cur *entities.Project, personId
 		return nil, fmt.Errorf("person %s not found for project %s", personId, cur.Id)
 	}
 
-	return events.PersonRemoved{Base: base(id, actor, status), PersonId: personId}, nil
+	return events.PersonRemoved{Base: base(id, actor, status), Person: entities.Person{Id: personId}}, nil
 }
 
 // AddProduct emits ProductAdded when not present
@@ -140,7 +140,7 @@ func AddProduct(id uuid.UUID, actor uuid.UUID, cur *entities.Project, productID 
 		}
 	}
 
-	return events.ProductAdded{Base: base(id, actor, status), ProductID: productID}, nil
+	return events.ProductAdded{Base: base(id, actor, status), Product: entities.Product{Id: productID}}, nil
 }
 
 // RemoveProduct emits ProductRemoved when present
@@ -157,7 +157,7 @@ func RemoveProduct(id uuid.UUID, actor uuid.UUID, cur *entities.Project, product
 	if !exist {
 		return nil, fmt.Errorf("product %s not found for project %s", productID, cur.Id)
 	}
-	return events.ProductRemoved{Base: base(id, actor, status), ProductID: productID}, nil
+	return events.ProductRemoved{Base: base(id, actor, status), Product: entities.Product{Id: productID}}, nil
 }
 
 func base(id uuid.UUID, actor uuid.UUID, status event.Status) events.Base {

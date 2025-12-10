@@ -24,5 +24,9 @@ func (PersonRemovedEvent) Edges() []ent.Edge {
 			Ref("person_removed").
 			Unique().
 			Required(),
+		edge.To("person", Person.Type).
+			Field("person_id").
+			Unique().
+			Required(),
 	}
 }

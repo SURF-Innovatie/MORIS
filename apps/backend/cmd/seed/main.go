@@ -350,7 +350,7 @@ func main() {
 					At:        time.Now().UTC(),
 					Status:    "approved",
 				},
-				PersonId: personID,
+				Person: entities.Person{Id: personID},
 			}
 
 			if err := es.Append(ctx, projectID, version, pevt); err != nil {
@@ -381,7 +381,7 @@ func main() {
 					At:        time.Now().UTC(),
 					Status:    "approved",
 				},
-				ProductID: productID,
+				Product: entities.Product{Id: productID},
 			}
 
 			if err := es.Append(ctx, projectID, version, pevt); err != nil {

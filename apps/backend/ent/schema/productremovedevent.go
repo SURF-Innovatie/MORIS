@@ -24,5 +24,9 @@ func (ProductRemovedEvent) Edges() []ent.Edge {
 			Ref("product_removed").
 			Unique().
 			Required(),
+		edge.To("product", Product.Type).
+			Field("product_id").
+			Unique().
+			Required(),
 	}
 }
