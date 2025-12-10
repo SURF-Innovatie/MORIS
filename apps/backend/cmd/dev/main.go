@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 
 	_ "github.com/SURF-Innovatie/MORIS/api/swag-docs"
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	crossref2 "github.com/SURF-Innovatie/MORIS/external/crossref"
 	"github.com/SURF-Innovatie/MORIS/external/orcid"
+	"github.com/SURF-Innovatie/MORIS/internal/env"
 	"github.com/SURF-Innovatie/MORIS/internal/errorlog"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
 	authhandler "github.com/SURF-Innovatie/MORIS/internal/handler/auth"
@@ -61,19 +61,8 @@ import (
 // @description Type "Bearer" then a space and your JWT token.
 
 func main() {
-	dbHost := os.Getenv("DB_HOST")
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-	dbPort := os.Getenv("DB_PORT")
-	jwtSecret := os.Getenv("JWT_SECRET")
-
-	if dbHost == "" || dbUser == "" || dbPassword == "" || dbName == "" || dbPort == "" || jwtSecret == "" {
-		logrus.Fatal("Database connection info and JWT secret must be set in environment variables")
-	}
-
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		dbHost, dbPort, dbUser, dbPassword, dbName)
+		env.Global.DBHost, env.Global.DBPort, env.Global.DBUser, env.Global.DBPassword, env.Global.DBName)
 
 	client, err := ent.Open("postgres", dsn)
 	if err != nil {
@@ -92,7 +81,7 @@ func main() {
 	esStore := eventstore.NewEntStore(client)
 	personSvc := person.NewService(client)
 	userSvc := user.NewService(client, personSvc, esStore)
-	authSvc := auth.NewJWTService(client, userSvc, personSvc, jwtSecret)
+	authSvc := auth.NewJWTService(client, userSvc, personSvc, env.Global.JWTSecret)
 	orcidSvc := orcid.NewService(client, userSvc)
 
 	personHandler := personhandler.NewHandler(personSvc)
@@ -154,18 +143,14 @@ func main() {
 		})
 	})
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		logrus.Fatal("$PORT must be set")
-	}
-	logrus.Infof("Go Backend Server starting on http://localhost:%s", port)
+	logrus.Infof("Go Backend Server starting on http://localhost:%s", env.Global.Port)
 	// Serve the generated swagger JSON and assets and the Swagger UI at /swagger/
 	r.Get("/swagger/swagger.json", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "api/swag-docs/swagger.json")
 	})
 	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:"+port+"/swagger/swagger.json"), // the url pointing to API definition
+		httpSwagger.URL("http://localhost:"+env.Global.Port+"/swagger/swagger.json"), // the url pointing to API definition
 	))
 
-	logrus.Fatal(http.ListenAndServe(":"+port, r))
+	logrus.Fatal(http.ListenAndServe(":"+env.Global.Port, r))
 }
