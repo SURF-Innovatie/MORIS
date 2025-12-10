@@ -14,14 +14,13 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
 	productent "github.com/SURF-Innovatie/MORIS/ent/product"
 	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
-	userent "github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/commands"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
+	"github.com/SURF-Innovatie/MORIS/internal/event"
 	"github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
-	notification "github.com/SURF-Innovatie/MORIS/internal/notification"
 	"github.com/google/uuid"
 )
 
@@ -42,9 +41,9 @@ type Service interface {
 }
 
 type service struct {
-	cli      *ent.Client
-	es       eventstore.Store
-	notifier notification.Service
+	cli    *ent.Client
+	es     eventstore.Store
+	evtSvc event.Service
 }
 
 type StartProjectParams struct {
@@ -64,8 +63,8 @@ type UpdateProjectParams struct {
 	EndDate        time.Time
 }
 
-func NewService(es eventstore.Store, cli *ent.Client, notifier notification.Service) Service {
-	return &service{es: es, cli: cli, notifier: notifier}
+func NewService(es eventstore.Store, cli *ent.Client, evtSvc event.Service) Service {
+	return &service{es: es, cli: cli, evtSvc: evtSvc}
 }
 
 func (s *service) GetProject(ctx context.Context, id uuid.UUID) (*entities.ProjectDetails, error) {
@@ -125,7 +124,7 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 	projection.Apply(proj, ev)
 
 	// user is already fetched at the beginning of the function
-	_ = s.notifier.NotifyForEvents(ctx, user, startEvent)
+	_ = s.evtSvc.HandleEvents(ctx, startEvent)
 
 	resp, err := s.buildProjectDetails(ctx, proj)
 	if err != nil {
@@ -193,6 +192,8 @@ func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params Update
 		}
 		proj.Version++
 	}
+
+	_ = s.evtSvc.HandleEvents(ctx, newEvents...)
 
 	return s.buildProjectDetails(ctx, proj)
 }
@@ -316,7 +317,7 @@ func (s *service) AddPerson(
 		return nil, err
 	}
 
-	_ = s.notifier.NotifyApprovers(ctx, evt)
+	_ = s.evtSvc.HandleEvents(ctx, evt)
 
 	projection.Apply(proj, evt)
 	proj.Version++
@@ -360,6 +361,8 @@ func (s *service) RemovePerson(
 	if err := s.es.Append(ctx, projectID, proj.Version, evt); err != nil {
 		return nil, err
 	}
+
+	_ = s.evtSvc.HandleEvents(ctx, evt)
 
 	projection.Apply(proj, evt)
 	proj.Version++
@@ -408,17 +411,8 @@ func (s *service) AddProduct(
 	proj.Version += 1
 
 	// notify all users about the new product (temporary for demo)
-	for _, personID := range proj.People {
-		// get user by personID
-		user, err = s.cli.User.Query().
-			Select(userent.FieldID).
-			Where(userent.PersonIDEQ(personID)).
-			Only(ctx)
-		if err != nil {
-			continue
-		}
-		_ = s.notifier.NotifyOfEvent(ctx, user.ID, evt)
-	}
+	// Handled by EventService now
+	_ = s.evtSvc.HandleEvents(ctx, evt)
 
 	resp, err := s.buildProjectDetails(ctx, proj)
 	if err != nil {
@@ -459,6 +453,8 @@ func (s *service) RemoveProduct(
 	if err := s.es.Append(ctx, projectID, proj.Version, evt); err != nil {
 		return nil, err
 	}
+
+	_ = s.evtSvc.HandleEvents(ctx, evt)
 
 	projection.Apply(proj, evt)
 	proj.Version += 1

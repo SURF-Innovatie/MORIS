@@ -106,19 +106,23 @@ func main() {
 
 	notifierSvc := notification.NewService(client)
 
+	eventSvc := event.NewService(esStore, client, notifierSvc)
+	eventSvc.RegisterNotificationHandler(&event.ProjectEventNotificationHandler{Notifier: notifierSvc, Cli: client})
+	eventSvc.RegisterNotificationHandler(&event.ApprovalRequestNotificationHandler{Notifier: notifierSvc, Cli: client})
+	eventSvc.RegisterNotificationHandler(&event.ProductAddedNotificationHandler{Notifier: notifierSvc, Cli: client, ES: esStore})
+	eventSvc.RegisterNotificationHandler(&event.StatusUpdateNotificationHandler{Notifier: notifierSvc, Cli: client})
+	evtHandler := eventHandler.NewHandler(eventSvc)
+
+	notificationHandler := notificationhandler.NewHandler(notifierSvc)
+
 	// Create HTTP handler/controller
 	authHandler := authhandler.NewHandler(userSvc, authSvc, orcidSvc)
 	systemHandler := systemhandler.NewHandler()
 
 	userHandler := userhandler.NewHandler(userSvc)
 
-	projSvc := project.NewService(esStore, client, notifierSvc)
+	projSvc := project.NewService(esStore, client, eventSvc)
 	projHandler := projecthandler.NewHandler(projSvc)
-
-	eventSvc := event.NewService(esStore, client, notifierSvc)
-	evtHandler := eventHandler.NewHandler(eventSvc)
-
-	notificationHandler := notificationhandler.NewHandler(notifierSvc)
 
 	// Router
 	r := chi.NewRouter()
