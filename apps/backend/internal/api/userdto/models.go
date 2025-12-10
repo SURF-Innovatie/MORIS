@@ -1,6 +1,9 @@
 package userdto
 
-import "github.com/google/uuid"
+import (
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/google/uuid"
+)
 
 type Request struct {
 	PersonID uuid.UUID `json:"person_id"`
@@ -17,4 +20,21 @@ type Response struct {
 	Email       string    `json:"email"`
 	AvatarURL   *string   `json:"avatarUrl"`
 	Description *string   `json:"description"`
+}
+
+func FromEntity(acc *entities.UserAccount) Response {
+	p := acc.Person
+	u := acc.User
+
+	return Response{
+		ID:          u.ID,
+		PersonID:    u.PersonID,
+		Email:       p.Email,
+		Name:        p.Name,
+		ORCiD:       p.ORCiD,
+		GivenName:   p.GivenName,
+		FamilyName:  p.FamilyName,
+		AvatarURL:   p.AvatarUrl,
+		Description: p.Description,
+	}
 }

@@ -50,10 +50,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := authdto.LoginResponse{
-		Token: token,
-		User:  authUser,
-	}
+	resp := authdto.FromEntity(token, authUser)
 	_ = httputil.WriteJSON(w, http.StatusOK, resp)
 }
 
@@ -81,17 +78,7 @@ func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto := userdto.Response{
-		ID:          freshUser.User.ID,
-		PersonID:    freshUser.User.PersonID,
-		ORCiD:       freshUser.Person.ORCiD,
-		Name:        freshUser.Person.Name,
-		GivenName:   freshUser.Person.GivenName,
-		FamilyName:  freshUser.Person.FamilyName,
-		Email:       freshUser.Person.Email,
-		AvatarURL:   freshUser.Person.AvatarUrl,
-		Description: freshUser.Person.Description,
-	}
+	dto := userdto.FromEntity(freshUser)
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(dto)

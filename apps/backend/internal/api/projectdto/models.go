@@ -6,6 +6,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/api/organisationdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/persondto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/productdto"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
 
@@ -30,4 +31,29 @@ type Response struct {
 	Organization organisationdto.Response `json:"organization"`
 	People       []persondto.Response     `json:"people"`
 	Products     []productdto.Response    `json:"products"`
+}
+
+func FromEntity(d entities.ProjectDetails) Response {
+	peopleDTOs := make([]persondto.Response, 0, len(d.People))
+	for _, p := range d.People {
+		peopleDTOs = append(peopleDTOs, persondto.FromEntity(p))
+	}
+
+	productDTOs := make([]productdto.Response, 0, len(d.Products))
+	for _, p := range d.Products {
+		productDTOs = append(productDTOs, productdto.FromEntity(p))
+	}
+
+	return Response{
+		Id:           d.Project.Id,
+		ProjectAdmin: d.Project.ProjectAdmin,
+		Version:      d.Project.Version,
+		Title:        d.Project.Title,
+		Description:  d.Project.Description,
+		StartDate:    d.Project.StartDate,
+		EndDate:      d.Project.EndDate,
+		Organization: organisationdto.FromEntity(d.Organisation),
+		People:       peopleDTOs,
+		Products:     productDTOs,
+	}
 }

@@ -50,13 +50,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, productdto.Response{
-		ID:       p.Id,
-		Name:     p.Name,
-		DOI:      p.DOI,
-		Language: p.Language,
-		Type:     p.Type,
-	})
+	_ = httputil.WriteJSON(w, http.StatusOK, productdto.FromEntity(*p))
 }
 
 // GetAll godoc
@@ -99,13 +93,7 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 
 	dtos := make([]productdto.Response, 0, len(products))
 	for _, p := range products {
-		dtos = append(dtos, productdto.Response{
-			ID:       p.Id,
-			Name:     p.Name,
-			DOI:      p.DOI,
-			Language: p.Language,
-			Type:     p.Type,
-		})
+		dtos = append(dtos, productdto.FromEntity(*p))
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, dtos)
@@ -132,13 +120,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
-	_ = httputil.WriteJSON(w, http.StatusOK, productdto.Response{
-		ID:       p.Id,
-		Name:     p.Name,
-		DOI:      p.DOI,
-		Language: p.Language,
-		Type:     p.Type,
-	})
+	_ = httputil.WriteJSON(w, http.StatusOK, productdto.FromEntity(*p))
 }
 
 // Update godoc
@@ -178,13 +160,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
-	_ = httputil.WriteJSON(w, http.StatusOK, productdto.Response{
-		ID:       p.Id,
-		Name:     p.Name,
-		DOI:      p.DOI,
-		Language: p.Language,
-		Type:     p.Type,
-	})
+	_ = httputil.WriteJSON(w, http.StatusOK, productdto.FromEntity(*p))
 }
 
 // Delete godoc

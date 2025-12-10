@@ -34,6 +34,13 @@ type LoginResponse struct {
 	User  *entities.UserAccount `json:"user"`
 }
 
+func FromEntity(token string, user *entities.UserAccount) LoginResponse {
+	return LoginResponse{
+		Token: token,
+		User:  user,
+	}
+}
+
 // ORCIDAuthURLResponse swagger:model ORCIDAuthURLResponse
 // Represents the response body for getting the ORCID auth URL.
 type ORCIDAuthURLResponse struct {

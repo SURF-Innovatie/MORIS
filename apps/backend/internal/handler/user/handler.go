@@ -191,34 +191,10 @@ func (h *Handler) GetApprovedEvents(w http.ResponseWriter, r *http.Request) {
 			projectTitle = proj.Project.Title
 		}
 
-		dtos = append(dtos, eventdto.Event{
-			ID:           e.GetID(),
-			ProjectID:    e.AggregateID(),
-			Type:         e.Type(),
-			Status:       e.GetStatus(),
-			CreatedBy:    e.CreatedByID(),
-			At:           e.OccurredAt(),
-			Details:      e.String(),
-			ProjectTitle: projectTitle,
-		})
+		dtos = append(dtos, eventdto.FromEntityWithTitle(e, projectTitle))
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, eventdto.Response{Events: dtos})
-}
-
-func toUserResponse(acc *entities.UserAccount) userdto.Response {
-	p := acc.Person
-	u := acc.User
-
-	return userdto.Response{
-		ID:         u.ID,
-		PersonID:   u.PersonID,
-		Email:      p.Email,
-		Name:       p.Name,
-		ORCiD:      p.ORCiD,
-		GivenName:  p.GivenName,
-		FamilyName: p.FamilyName,
-	}
 }
 
 // ListUsers godoc

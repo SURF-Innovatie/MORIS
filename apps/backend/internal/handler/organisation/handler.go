@@ -35,10 +35,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, organisationdto.Response{
-		ID:   p.Id,
-		Name: p.Name,
-	})
+	_ = httputil.WriteJSON(w, http.StatusOK, organisationdto.FromEntity(*p))
 }
 
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
@@ -52,10 +49,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteError(w, r, http.StatusNotFound, err.Error(), nil)
 		return
 	}
-	_ = httputil.WriteJSON(w, http.StatusOK, organisationdto.Response{
-		ID:   p.Id,
-		Name: p.Name,
-	})
+	_ = httputil.WriteJSON(w, http.StatusOK, organisationdto.FromEntity(*p))
 }
 
 // List / Update implementations omitted for brevity; same pattern.

@@ -19,3 +19,13 @@ type Response struct {
 	Language string               `json:"language"`
 	DOI      string               `json:"doi"`
 }
+
+func FromEntity(e entities.Product) Response {
+	return Response{
+		ID:       e.Id,
+		Name:     e.Name,
+		Type:     e.Type,
+		Language: e.Language,
+		DOI:      e.DOI,
+	}
+}

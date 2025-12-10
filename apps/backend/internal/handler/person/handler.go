@@ -49,14 +49,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, persondto.Response{
-		ID:         p.Id,
-		UserID:     p.UserID,
-		Name:       p.Name,
-		GivenName:  p.GivenName,
-		FamilyName: p.FamilyName,
-		Email:      p.Email,
-	})
+	_ = httputil.WriteJSON(w, http.StatusOK, persondto.FromEntity(*p))
 }
 
 // Get retrieves a person by ID
@@ -80,14 +73,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteError(w, r, http.StatusNotFound, err.Error(), nil)
 		return
 	}
-	_ = httputil.WriteJSON(w, http.StatusOK, persondto.Response{
-		ID:         p.Id,
-		UserID:     p.UserID,
-		Name:       p.Name,
-		GivenName:  p.GivenName,
-		FamilyName: p.FamilyName,
-		Email:      p.Email,
-	})
+	_ = httputil.WriteJSON(w, http.StatusOK, persondto.FromEntity(*p))
 }
 
 // Update updates a person
@@ -128,16 +114,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, persondto.Response{
-		ID:          p.Id,
-		UserID:      p.UserID,
-		Name:        p.Name,
-		GivenName:   p.GivenName,
-		FamilyName:  p.FamilyName,
-		Email:       p.Email,
-		AvatarUrl:   p.AvatarUrl,
-		Description: p.Description,
-	})
+	_ = httputil.WriteJSON(w, http.StatusOK, persondto.FromEntity(*p))
 }
 
 // List implementation omitted for brevity.

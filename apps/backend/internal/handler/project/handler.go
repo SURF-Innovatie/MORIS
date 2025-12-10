@@ -5,19 +5,11 @@ import (
 	"time"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/changelogdto"
-	_ "github.com/SURF-Innovatie/MORIS/internal/api/changelogdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/eventdto"
-	"github.com/SURF-Innovatie/MORIS/internal/api/organisationdto"
-	"github.com/SURF-Innovatie/MORIS/internal/api/persondto"
-	"github.com/SURF-Innovatie/MORIS/internal/api/productdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/projectdto"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	_ "github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/SURF-Innovatie/MORIS/internal/project"
-	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -50,7 +42,7 @@ func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteError(w, r, http.StatusNotFound, err.Error(), nil)
 		return
 	}
-	_ = httputil.WriteJSON(w, http.StatusOK, toProjectResponse(proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, projectdto.FromEntity(*proj))
 }
 
 // StartProject godoc
@@ -97,7 +89,7 @@ func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, toProjectResponse(proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, projectdto.FromEntity(*proj))
 }
 
 // UpdateProject godoc
@@ -155,7 +147,7 @@ func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, toProjectResponse(proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, projectdto.FromEntity(*proj))
 }
 
 // GetAllProjects godoc
@@ -176,7 +168,7 @@ func (h *Handler) GetAllProjects(w http.ResponseWriter, r *http.Request) {
 	}
 	resps := make([]projectdto.Response, 0, len(projs))
 	for _, p := range projs {
-		resps = append(resps, toProjectResponse(p))
+		resps = append(resps, projectdto.FromEntity(*p))
 	}
 	_ = httputil.WriteJSON(w, http.StatusOK, resps)
 }
@@ -211,7 +203,7 @@ func (h *Handler) AddPerson(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
-	_ = httputil.WriteJSON(w, http.StatusOK, toProjectResponse(proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, projectdto.FromEntity(*proj))
 }
 
 // RemovePerson godoc
@@ -245,7 +237,7 @@ func (h *Handler) RemovePerson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, toProjectResponse(proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, projectdto.FromEntity(*proj))
 }
 
 // AddProduct godoc
@@ -279,7 +271,7 @@ func (h *Handler) AddProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, toProjectResponse(proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, projectdto.FromEntity(*proj))
 }
 
 // RemoveProduct godoc
@@ -313,7 +305,7 @@ func (h *Handler) RemoveProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, toProjectResponse(proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, projectdto.FromEntity(*proj))
 }
 
 // GetChangelog godoc
@@ -340,73 +332,7 @@ func (h *Handler) GetChangelog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	changeDto := changelogdto.Changelog{
-		Entries: make([]changelogdto.ChangelogEntry, 0, len(changeLog.Entries)),
-	}
-	for _, entry := range changeLog.Entries {
-		changeDto.Entries = append(changeDto.Entries, changelogdto.ChangelogEntry{
-			Event: entry.Event,
-			At:    entry.At,
-		})
-	}
-
-	_ = httputil.WriteJSON(w, http.StatusOK, changeDto)
-}
-
-func toOrganisationDTO(org entities.Organisation) organisationdto.Response {
-	return organisationdto.Response{
-		ID:   org.Id,
-		Name: org.Name,
-	}
-}
-
-func toPersonDTO(p entities.Person) persondto.Response {
-	return persondto.Response{
-		ID:          p.Id,
-		UserID:      p.UserID,
-		Name:        p.Name,
-		GivenName:   p.GivenName,
-		FamilyName:  p.FamilyName,
-		Email:       p.Email,
-		AvatarUrl:   p.AvatarUrl,
-		ORCiD:       p.ORCiD,
-		Description: p.Description,
-	}
-}
-
-func toProductDTO(p entities.Product) productdto.Response {
-	return productdto.Response{
-		ID:       p.Id,
-		Name:     p.Name,
-		Language: p.Language,
-		Type:     p.Type,
-		DOI:      p.DOI,
-	}
-}
-
-func toProjectResponse(d *entities.ProjectDetails) projectdto.Response {
-	peopleDTOs := make([]persondto.Response, 0, len(d.People))
-	for _, p := range d.People {
-		peopleDTOs = append(peopleDTOs, toPersonDTO(p))
-	}
-
-	productDTOs := make([]productdto.Response, 0, len(d.Products))
-	for _, p := range d.Products {
-		productDTOs = append(productDTOs, toProductDTO(p))
-	}
-
-	return projectdto.Response{
-		Id:           d.Project.Id,
-		ProjectAdmin: d.Project.ProjectAdmin,
-		Version:      d.Project.Version,
-		Title:        d.Project.Title,
-		Description:  d.Project.Description,
-		StartDate:    d.Project.StartDate,
-		EndDate:      d.Project.EndDate,
-		Organization: toOrganisationDTO(d.Organisation),
-		People:       peopleDTOs,
-		Products:     productDTOs,
-	}
+	_ = httputil.WriteJSON(w, http.StatusOK, changelogdto.FromEntity(*changeLog))
 }
 
 // GetPendingEvents godoc
@@ -437,32 +363,7 @@ func (h *Handler) GetPendingEvents(w http.ResponseWriter, r *http.Request) {
 		Events: make([]eventdto.Event, 0, len(pendingEvents)),
 	}
 	for _, e := range pendingEvents {
-		dtoEvent := eventdto.Event{
-			ID:        e.GetID(),
-			ProjectID: e.AggregateID(),
-			Type:      e.Type(),
-			Status:    "pending",
-			CreatedBy: e.(interface{ CreatedByID() uuid.UUID }).CreatedByID(),
-			At:        e.OccurredAt(),
-			Details:   e.String(),
-		}
-
-		switch ev := e.(type) {
-		case events.PersonAdded:
-			p := toPersonDTO(ev.Person)
-			dtoEvent.Person = &p
-		case events.PersonRemoved:
-			p := toPersonDTO(ev.Person)
-			dtoEvent.Person = &p
-		case events.ProductAdded:
-			p := toProductDTO(ev.Product)
-			dtoEvent.Product = &p
-		case events.ProductRemoved:
-			p := toProductDTO(ev.Product)
-			dtoEvent.Product = &p
-		}
-
-		resp.Events = append(resp.Events, dtoEvent)
+		resp.Events = append(resp.Events, eventdto.FromEntity(e))
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, resp)
