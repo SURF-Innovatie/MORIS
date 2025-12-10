@@ -140,20 +140,6 @@ export const ExpandableNavbar = () => {
                 </div>
               )}
               <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start"
-                asChild
-              >
-                <a
-                  href="https://ui.shadcn.com/components"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <Zap className="mr-2 h-4 w-4" aria-hidden /> Browse components
-                </a>
-              </Button>
-              <Button
                 size="sm"
                 variant="destructive"
                 className="w-full justify-start"

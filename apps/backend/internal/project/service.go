@@ -24,6 +24,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 )
 
 // ErrNotFound is returned when a project does not exist (no events).
@@ -40,6 +41,7 @@ type Service interface {
 	RemoveProduct(ctx context.Context, projectID uuid.UUID, productID uuid.UUID) (*entities.ProjectDetails, error)
 	GetChangeLog(ctx context.Context, id uuid.UUID) (*entities.ChangeLog, error)
 	GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.Event, error)
+	WarmupCache(ctx context.Context) error
 }
 
 type service struct {
@@ -67,7 +69,9 @@ type UpdateProjectParams struct {
 }
 
 func NewService(es eventstore.Store, cli *ent.Client, evtSvc event.Service, rdb *redis.Client) Service {
-	return &service{es: es, cli: cli, evtSvc: evtSvc, redis: rdb}
+	s := &service{es: es, cli: cli, evtSvc: evtSvc, redis: rdb}
+	evtSvc.RegisterStatusChangeHandler(s.onStatusChange)
+	return s
 }
 
 func (s *service) GetProject(ctx context.Context, id uuid.UUID) (*entities.ProjectDetails, error) {
@@ -129,7 +133,7 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 	// Cache the project
 	if err := s.cacheProject(ctx, proj); err != nil {
 		// Log error but continue, caching failure shouldn't stop flow
-		fmt.Printf("failed to cache project: %v\n", err)
+		logrus.Errorf("failed to cache project: %v", err)
 	}
 
 	// user is already fetched at the beginning of the function
@@ -204,7 +208,7 @@ func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params Update
 
 	// Update cache
 	if err := s.cacheProject(ctx, proj); err != nil {
-		fmt.Printf("failed to update project cache: %v\n", err)
+		logrus.Errorf("failed to update project cache: %v\n", err)
 	}
 
 	_ = s.evtSvc.HandleEvents(ctx, newEvents...)
@@ -338,7 +342,7 @@ func (s *service) AddPerson(
 
 	// Update cache
 	if err := s.cacheProject(ctx, proj); err != nil {
-		fmt.Printf("failed to update project cache: %v\n", err)
+		logrus.Errorf("failed to update project cache: %v", err)
 	}
 
 	resp, err := s.buildProjectDetails(ctx, proj)
@@ -388,7 +392,7 @@ func (s *service) RemovePerson(
 
 	// Update cache
 	if err := s.cacheProject(ctx, proj); err != nil {
-		fmt.Printf("failed to update project cache: %v\n", err)
+		logrus.Errorf("failed to update project cache: %v", err)
 	}
 
 	resp, err := s.buildProjectDetails(ctx, proj)
@@ -436,7 +440,7 @@ func (s *service) AddProduct(
 
 	// Update cache
 	if err := s.cacheProject(ctx, proj); err != nil {
-		fmt.Printf("failed to update project cache: %v\n", err)
+		logrus.Errorf("failed to update project cache: %v", err)
 	}
 
 	// notify all users about the new product (temporary for demo)
@@ -490,7 +494,7 @@ func (s *service) RemoveProduct(
 
 	// Update cache
 	if err := s.cacheProject(ctx, proj); err != nil {
-		fmt.Printf("failed to update project cache: %v\n", err)
+		logrus.Errorf("failed to update project cache: %v", err)
 	}
 
 	resp, err := s.buildProjectDetails(ctx, proj)
@@ -616,6 +620,49 @@ func (s *service) fromDb(ctx context.Context, projectID uuid.UUID) (*entities.Pr
 	return proj, nil
 }
 
+func (s *service) WarmupCache(ctx context.Context) error {
+	if s.redis == nil {
+		logrus.Warn("Redis not initialized, skipping cache warmup")
+	}
+
+	logrus.Info("Starting cache warmup...")
+
+	// Get all project IDs from ProjectStartedEvent
+	// We use the generated client to query specific event types to find all projects
+	var projectIDs []uuid.UUID
+	if err := s.cli.ProjectStartedEvent.Query().
+		QueryEvent().
+		Select(en.FieldProjectID).
+		Scan(ctx, &projectIDs); err != nil {
+		return err
+	}
+
+	count := 0
+	for _, id := range projectIDs {
+
+		evts, version, err := s.es.Load(ctx, id)
+		if err != nil {
+			logrus.Errorf("Failed to load project %s during warmup: %v", id, err)
+			continue
+		}
+		if len(evts) == 0 {
+			continue
+		}
+
+		proj := projection.Reduce(id, evts)
+		proj.Version = version
+
+		if err := s.cacheProject(ctx, proj); err != nil {
+			logrus.Errorf("Failed to cache project %s: %v", id, err)
+		} else {
+			count++
+		}
+	}
+
+	logrus.Infof("Cache warmup completed. Cached %d projects.", count)
+	return nil
+}
+
 func (s *service) cacheProject(ctx context.Context, proj *entities.Project) error {
 	if s.redis == nil {
 		return nil
@@ -647,4 +694,26 @@ func (s *service) getFromCache(ctx context.Context, projectID uuid.UUID) (*entit
 	}
 
 	return &proj, nil
+}
+
+func (s *service) onStatusChange(ctx context.Context, e events.Event) error {
+	projectID := e.AggregateID()
+
+	evts, version, err := s.es.Load(ctx, projectID)
+	if err != nil {
+		return err
+	}
+	if len(evts) == 0 {
+		return ErrNotFound
+	}
+
+	proj := projection.Reduce(projectID, evts)
+	proj.Version = version
+
+	// Update cache
+	if err := s.cacheProject(ctx, proj); err != nil {
+		logrus.Errorf("failed to update project cache on status change: %v", err)
+	}
+
+	return nil
 }

@@ -157,6 +157,13 @@ func main() {
 		})
 	})
 
+	// Warmup cache in background
+	go func() {
+		if err := projSvc.WarmupCache(context.Background()); err != nil {
+			logrus.Errorf("Failed to warmup cache: %v", err)
+		}
+	}()
+
 	logrus.Infof("Go Backend Server starting on http://localhost:%s", env.Global.Port)
 	// Serve the generated swagger JSON and assets and the Swagger UI at /swagger/
 	r.Get("/swagger/swagger.json", func(w http.ResponseWriter, r *http.Request) {
