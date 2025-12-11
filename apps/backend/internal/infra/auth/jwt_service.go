@@ -14,21 +14,24 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/oauth2"
 )
 
 type service struct {
-	client    *ent.Client
-	userSvc   user.Service
-	personSvc person.Service
-	jwtSecret string
+	client       *ent.Client
+	userSvc      user.Service
+	personSvc    person.Service
+	jwtSecret    string
+	oidcProvider OIDCProvider
 }
 
-func NewJWTService(client *ent.Client, userSvc user.Service, personSvc person.Service, jwtSecret string) coreauth.Service {
+func NewJWTService(client *ent.Client, userSvc user.Service, personSvc person.Service, jwtSecret string, oidcProvider OIDCProvider) coreauth.Service {
 	return &service{
-		client:    client,
-		userSvc:   userSvc,
-		personSvc: personSvc,
-		jwtSecret: jwtSecret,
+		client:       client,
+		userSvc:      userSvc,
+		personSvc:    personSvc,
+		jwtSecret:    jwtSecret,
+		oidcProvider: oidcProvider,
 	}
 }
 
@@ -124,26 +127,40 @@ func (s *service) ValidateToken(tokenString string) (*entities.UserAccount, erro
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	// TODO: question why do we take fields from token instead of DB
-	//email, ok := claims["email"].(string)
-	//if !ok {
-	//	return nil, fmt.Errorf("invalid email in token")
-	//}
-	//
-	//orcidID, _ := claims["orcid_id"].(string) // Optional field
-
-	//rolesInterface, ok := claims["roles"].([]interface{})
-	//if !ok {
-	//	return nil, fmt.Errorf("invalid roles in token")
-	//}
-
-	//roles := make([]string, len(rolesInterface))
-	//for i, r := range rolesInterface {
-	//	roles[i], ok = r.(string)
-	//	if !ok {
-	//		return nil, fmt.Errorf("invalid role format in token")
-	//	}
-	//}
-
 	return usr, nil
+}
+
+func (s *service) GetOIDCAuthURL(ctx context.Context) (string, error) {
+	state := uuid.New().String() // TODO: store state in redis to verify later
+	return s.oidcProvider.AuthCodeURL(state), nil
+}
+
+func (s *service) LoginOIDC(ctx context.Context, code string) (string, *entities.UserAccount, error) {
+	oauth2Token, err := s.oidcProvider.Exchange(ctx, code)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to exchange code: %w", err)
+	}
+
+	userInfo, err := s.oidcProvider.UserInfo(ctx, oauth2.StaticTokenSource(oauth2Token))
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to get user info: %w", err)
+	}
+
+	// Find user by email
+	usr, err := s.userSvc.GetAccountByEmail(ctx, userInfo.Email)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			// TODO: Auto-register user? For now just fail
+			return "", nil, fmt.Errorf("user not found with email %s", userInfo.Email)
+		}
+		return "", nil, fmt.Errorf("failed to query user: %w", err)
+	}
+
+	// Generate JWT token
+	token, err := s.generateJWT(usr)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to generate token: %w", err)
+	}
+
+	return token, usr, nil
 }

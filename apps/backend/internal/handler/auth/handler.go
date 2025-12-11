@@ -5,6 +5,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/SURF-Innovatie/MORIS/external/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/api/authdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
@@ -188,4 +190,54 @@ func (h *Handler) UnlinkORCID(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = httputil.WriteStatus(w)
+}
+
+// GetSURFconextAuthURL godoc
+// @Summary Get SURFconext authorization URL
+// @Description Returns the URL to redirect the user to for SURFconext authentication
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Success 200 {object} authdto.ORCIDAuthURLResponse
+// @Failure 500 {object} httputil.BackendError "Internal server error"
+// @Router /auth/surfconext/url [get]
+func (h *Handler) GetSURFconextAuthURL(w http.ResponseWriter, r *http.Request) {
+	url, err := h.authService.GetOIDCAuthURL(r.Context())
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	resp := authdto.ORCIDAuthURLResponse{URL: url} // Reusing response struct as it's just a URL wrapper
+	_ = httputil.WriteJSON(w, http.StatusOK, resp)
+}
+
+// LoginSURFconext godoc
+// @Summary Login with SURFconext
+// @Description Authenticates a user using SURFconext and returns a JWT token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body authdto.SURFconextLoginRequest true "SURFconext login request"
+// @Success 200 {object} authdto.LoginResponse
+// @Failure 400 {object} httputil.BackendError "Invalid request body"
+// @Failure 401 {object} httputil.BackendError "Invalid credentials"
+// @Failure 500 {object} httputil.BackendError "Internal server error"
+// @Router /auth/surfconext/login [post]
+func (h *Handler) LoginSURFconext(w http.ResponseWriter, r *http.Request) {
+	var req authdto.SURFconextLoginRequest
+	if !httputil.ReadJSON(w, r, &req) {
+		return
+	}
+
+	token, authUser, err := h.authService.LoginOIDC(r.Context(), req.Code)
+	if err != nil {
+		logrus.Errorf("SURFconext login failed: %v", err)
+		httputil.WriteError(w, r, http.StatusUnauthorized, "Authentication failed", nil)
+		return
+	}
+
+	resp := authdto.FromEntity(token, authUser)
+	_ = httputil.WriteJSON(w, http.StatusOK, resp)
 }

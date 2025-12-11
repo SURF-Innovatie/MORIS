@@ -11,6 +11,7 @@ import LoginRoute from "./routes/login";
 import RouteError from "./routes/route-error";
 import ProfileRoute from "./routes/profile";
 import OrcidCallbackRoute from "./routes/orcid-callback";
+import SURFconextCallbackRoute from "./routes/surfconext-callback";
 import ProtectedRoute from "./routes/protected-route";
 import InboxRoute from "./routes/inbox";
 import ProjectsRoute from "./routes/projects";
@@ -84,6 +85,11 @@ export function createAppRouter() {
           element: <OrcidCallbackRoute />,
         },
       ],
+    },
+    {
+      path: "/surfconext-callback",
+      element: <SURFconextCallbackRoute />,
+      errorElement: <RouteError />,
     },
     {
       path: "*",

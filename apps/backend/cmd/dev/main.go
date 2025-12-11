@@ -94,7 +94,11 @@ func main() {
 	esStore := eventstore.NewEntStore(client)
 	personSvc := person.NewService(client)
 	userSvc := user.NewService(client, personSvc, esStore)
-	authSvc := auth.NewJWTService(client, userSvc, personSvc, env.Global.JWTSecret)
+	oidcProvider, err := auth.NewOIDCProvider(context.Background())
+	if err != nil {
+		logrus.Fatalf("failed to create OIDC provider: %v", err)
+	}
+	authSvc := auth.NewJWTService(client, userSvc, personSvc, env.Global.JWTSecret, oidcProvider)
 	orcidSvc := orcid.NewService(client, userSvc)
 
 	personHandler := personhandler.NewHandler(personSvc)

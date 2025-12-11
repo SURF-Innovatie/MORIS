@@ -52,3 +52,9 @@ type ORCIDAuthURLResponse struct {
 type LinkORCIDRequest struct {
 	Code string `json:"code" example:"authentication_code_from_orcid"`
 }
+
+// SURFconextLoginRequest swagger:model SURFconextLoginRequest
+// Represents the request body for SURFconext login.
+type SURFconextLoginRequest struct {
+	Code string `json:"code" example:"authentication_code_from_surfconext"`
+}

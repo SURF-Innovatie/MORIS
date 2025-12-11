@@ -9,17 +9,21 @@ import (
 )
 
 type Config struct {
-	AppEnv        string
-	DBHost        string
-	DBUser        string
-	DBPassword    string
-	DBName        string
-	DBPort        string
-	CacheHost     string
-	CachePort     string
-	CachePassword string
-	JWTSecret     string
-	Port          string
+	AppEnv           string
+	DBHost           string
+	DBUser           string
+	DBPassword       string
+	DBName           string
+	DBPort           string
+	CacheHost        string
+	CachePort        string
+	CachePassword    string
+	JWTSecret        string
+	Port             string
+	OIDCIssuer       string
+	OIDCClientID     string
+	OIDCClientSecret string
+	OIDCRedirectURL  string
 }
 
 var Global Config
@@ -33,17 +37,21 @@ func init() {
 	}
 
 	Global = Config{
-		AppEnv:        getEnv("APP_ENV", false, "dev"),
-		DBHost:        getEnv("DB_HOST", true, ""),
-		DBUser:        getEnv("DB_USER", true, ""),
-		DBPassword:    getEnv("DB_PASSWORD", true, ""),
-		DBName:        getEnv("DB_NAME", true, ""),
-		DBPort:        getEnv("DB_PORT", true, ""),
-		CacheHost:     getEnv("CACHE_HOST", true, ""),
-		CachePort:     getEnv("CACHE_PORT", true, ""),
-		CachePassword: getEnv("CACHE_PASSWORD", false, ""),
-		JWTSecret:     getEnv("JWT_SECRET", true, ""),
-		Port:          getEnv("PORT", true, ""),
+		AppEnv:           getEnv("APP_ENV", false, "dev"),
+		DBHost:           getEnv("DB_HOST", true, ""),
+		DBUser:           getEnv("DB_USER", true, ""),
+		DBPassword:       getEnv("DB_PASSWORD", true, ""),
+		DBName:           getEnv("DB_NAME", true, ""),
+		DBPort:           getEnv("DB_PORT", true, ""),
+		CacheHost:        getEnv("CACHE_HOST", true, ""),
+		CachePort:        getEnv("CACHE_PORT", true, ""),
+		CachePassword:    getEnv("CACHE_PASSWORD", false, ""),
+		JWTSecret:        getEnv("JWT_SECRET", true, ""),
+		Port:             getEnv("PORT", true, ""),
+		OIDCIssuer:       getEnv("OIDC_ISSUER", false, "https://connect.test.surfconext.nl"),
+		OIDCClientID:     getEnv("OIDC_CLIENT_ID", false, "dev-client-id"),
+		OIDCClientSecret: getEnv("OIDC_CLIENT_SECRET", false, "dev-client-secret"),
+		OIDCRedirectURL:  getEnv("OIDC_REDIRECT_URL", false, "http://localhost:5173/surfconext-callback"),
 	}
 }
 
