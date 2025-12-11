@@ -16,7 +16,8 @@ func MountUserRoutes(r chi.Router, h *Handler) {
 	})
 
 	r.Group(func(r chi.Router) {
-		r.Use(middleware.RequireRoleMiddleware("admin"))
+		r.Use(middleware.RequireSysAdminMiddleware())
 		r.Get("/admin/users/list", h.ListUsers)
+		r.Post("/admin/users/{id}/toggle-active", h.ToggleActive)
 	})
 }

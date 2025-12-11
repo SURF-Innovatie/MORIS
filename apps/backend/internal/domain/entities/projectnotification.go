@@ -16,3 +16,15 @@ type Notification struct {
 	Read    bool
 	SentAt  time.Time
 }
+
+func (n *Notification) FromEnt(row *ent.Notification, u *ent.User, e *ent.Event) *Notification {
+	return &Notification{
+		Id:      row.ID,
+		User:    u,
+		Event:   e,
+		Message: row.Message,
+		Type:    row.Type.String(),
+		Read:    row.Read,
+		SentAt:  row.SentAt,
+	}
+}

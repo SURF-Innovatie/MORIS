@@ -5,16 +5,16 @@ import React, {
   useCallback,
   ReactNode,
 } from "react";
-import { UserAccount } from "@api/model";
+import { UserResponse } from "@api/model";
 
 interface AuthContextType {
-  user: UserAccount | null;
+  user: UserResponse | null;
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (token: string, user: UserAccount) => void;
+  login: (token: string, user: UserResponse) => void;
   logout: () => void;
-  updateUser: (user: UserAccount) => void;
+  updateUser: (user: UserResponse) => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(
@@ -38,7 +38,7 @@ import { STORAGE_KEY_AUTH_TOKEN, STORAGE_KEY_AUTH_USER } from "@/lib/constants";
 // ... imports remain the same
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<UserAccount | null>(null);
+  const [user, setUser] = useState<UserResponse | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     if (storedToken && storedUser) {
       try {
-        const parsedUser = JSON.parse(storedUser) as UserAccount;
+        const parsedUser = JSON.parse(storedUser) as UserResponse;
         setToken(storedToken);
         setUser(parsedUser);
       } catch (error) {
@@ -61,7 +61,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(false);
   }, []);
 
-  const login = useCallback((newToken: string, newUser: UserAccount) => {
+  const login = useCallback((newToken: string, newUser: UserResponse) => {
     localStorage.setItem(STORAGE_KEY_AUTH_TOKEN, newToken);
     localStorage.setItem(STORAGE_KEY_AUTH_USER, JSON.stringify(newUser));
     setToken(newToken);
@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
   }, []);
 
-  const updateUser = useCallback((updatedUser: UserAccount) => {
+  const updateUser = useCallback((updatedUser: UserResponse) => {
     localStorage.setItem(STORAGE_KEY_AUTH_USER, JSON.stringify(updatedUser));
     setUser(updatedUser);
   }, []);

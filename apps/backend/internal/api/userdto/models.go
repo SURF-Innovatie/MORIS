@@ -5,9 +5,21 @@ import (
 	"github.com/google/uuid"
 )
 
+type PaginatedResponse struct {
+	Data       []Response `json:"data"`
+	Total      int        `json:"total"`
+	Page       int        `json:"page"`
+	PageSize   int        `json:"page_size"`
+	TotalPages int        `json:"total_pages"`
+}
+
 type Request struct {
 	PersonID uuid.UUID `json:"person_id"`
 	Password string    `json:"password"`
+}
+
+type ToggleActiveRequest struct {
+	IsActive bool `json:"is_active"`
 }
 
 type Response struct {
@@ -20,6 +32,8 @@ type Response struct {
 	Email       string    `json:"email"`
 	AvatarURL   *string   `json:"avatarUrl"`
 	Description *string   `json:"description"`
+	IsSysAdmin  bool      `json:"is_sys_admin"`
+	IsActive    bool      `json:"is_active"`
 }
 
 func FromEntity(acc *entities.UserAccount) Response {
@@ -36,5 +50,7 @@ func FromEntity(acc *entities.UserAccount) Response {
 		FamilyName:  p.FamilyName,
 		AvatarURL:   p.AvatarUrl,
 		Description: p.Description,
+		IsSysAdmin:  u.IsSysAdmin,
+		IsActive:    u.IsActive,
 	}
 }

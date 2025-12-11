@@ -67,13 +67,13 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param id query string true "User ID (UUID)"
+// @Param id path string true "User ID (UUID)"
 // @Success 200 {object} userdto.Response
 // @Failure 400 {string} string "invalid id"
 // @Failure 500 {string} string "internal server error"
-// @Router /users [get]
+// @Router /users/{id} [get]
 func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
-	id, err := httputil.ParseUUIDQuery(r, "id")
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
 		return
@@ -94,16 +94,28 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param id query string true "User ID (UUID)"
+// @Param id path string true "User ID (UUID)"
 // @Param user body userdto.Request true "User update payload"
 // @Success 200 {object} userdto.Response
 // @Failure 400 {string} string "invalid id or request body"
 // @Failure 500 {string} string "internal server error"
-// @Router /users [put]
+// @Router /users/{id} [put]
 func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	id, err := httputil.ParseUUIDQuery(r, "id")
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
+		return
+	}
+
+	// Permission check: User can update themselves, SysAdmin can update anyone
+	authUser, ok := httputil.GetUserFromContext(r.Context())
+	if !ok {
+		httputil.WriteError(w, r, http.StatusUnauthorized, "User not authenticated", nil)
+		return
+	}
+
+	if authUser.User.ID != id && !authUser.User.IsSysAdmin {
+		httputil.WriteError(w, r, http.StatusForbidden, "Forbidden: Can only update own profile", nil)
 		return
 	}
 
@@ -137,15 +149,32 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param id query string true "User ID (UUID)"
+// @Param id path string true "User ID (UUID)"
 // @Success 204 {string} string "no content"
 // @Failure 400 {string} string "invalid id"
 // @Failure 500 {string} string "internal server error"
-// @Router /users [delete]
+// @Router /users/{id} [delete]
 func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	id, err := httputil.ParseUUIDQuery(r, "id")
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
+		return
+	}
+
+	authUser, ok := httputil.GetUserFromContext(r.Context())
+	if !ok {
+		httputil.WriteError(w, r, http.StatusUnauthorized, "user not authenticated", nil)
+		return
+	}
+
+	if !authUser.User.IsSysAdmin {
+		httputil.WriteError(w, r, http.StatusForbidden, "insufficient permissions", nil)
+		return
+	}
+
+	// Prevent deleting yourself
+	if authUser.User.ID == id {
+		httputil.WriteError(w, r, http.StatusBadRequest, "cannot delete yourself", nil)
 		return
 	}
 
@@ -199,16 +228,111 @@ func (h *Handler) GetApprovedEvents(w http.ResponseWriter, r *http.Request) {
 
 // ListUsers godoc
 // @Summary Get all users (Admin only)
-// @Description Returns a list of all users - requires admin role
+// @Description Returns a paginated list of all users - requires admin role
 // @Tags admin
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {string} string "Admin user list"
+// @Param page query int false "Page number (default 1)"
+// @Param page_size query int false "Page size (default 10)"
+// @Success 200 {object} userdto.PaginatedResponse
 // @Failure 401 {object} httputil.BackendError "User not authenticated"
 // @Failure 403 {object} httputil.BackendError "Insufficient permissions"
 // @Router /admin/users/list [get]
 func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write([]byte(`{"message": "Admin-only user list!", "users": [{"id":1,"name":"Admin User"}]}`))
+	page := httputil.ParseIntQuery(r, "page", 1)
+	pageSize := httputil.ParseIntQuery(r, "page_size", 10)
+
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 10
+	}
+	if pageSize > 100 {
+		pageSize = 100
+	}
+
+	offset := (page - 1) * pageSize
+
+	users, total, err := h.svc.ListAll(r.Context(), pageSize, offset)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	dtos := make([]userdto.Response, 0, len(users))
+	for _, acc := range users {
+		dtos = append(dtos, userdto.FromEntity(acc))
+	}
+
+	totalPages := (total + pageSize - 1) / pageSize
+
+	resp := userdto.PaginatedResponse{
+		Data:       dtos,
+		Total:      total,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: totalPages,
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, resp)
+}
+
+// ToggleActive godoc
+// @Summary Toggle user active status (Admin only)
+// @Description Toggle user active status - requires admin role
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "User ID"
+// @Param request body userdto.ToggleActiveRequest true "Toggle active status payload"
+// @Success 200 {object} httputil.StatusResponse
+// @Failure 401 {object} httputil.BackendError "User not authenticated"
+// @Failure 403 {object} httputil.BackendError "Insufficient permissions"
+// @Router /admin/users/{id}/toggle-active [post]
+func (h *Handler) ToggleActive(w http.ResponseWriter, r *http.Request) {
+	id, err := httputil.ParseUUIDParam(r, "id")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
+	authUser, ok := httputil.GetUserFromContext(r.Context())
+	if !ok {
+		httputil.WriteError(w, r, http.StatusUnauthorized, "user not authenticated", nil)
+		return
+	}
+
+	if !authUser.User.IsSysAdmin {
+		httputil.WriteError(w, r, http.StatusForbidden, "insufficient permissions", nil)
+		return
+	}
+
+	// Prevent deactivating yourself
+	if authUser.User.ID == id {
+		httputil.WriteError(w, r, http.StatusBadRequest, "cannot deactivate yourself", nil)
+		return
+	}
+
+	// Get current status to toggle
+	_, err = h.svc.GetAccount(r.Context(), id)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusNotFound, "user not found", nil)
+		return
+	}
+
+	var req userdto.ToggleActiveRequest
+	if !httputil.ReadJSON(w, r, &req) {
+		return
+	}
+
+	err = h.svc.ToggleActive(r.Context(), id, req.IsActive)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	_ = httputil.WriteStatus(w)
 }

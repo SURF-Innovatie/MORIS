@@ -47,24 +47,18 @@ const OrcidCallbackRoute = () => {
     const link = async () => {
       try {
         await linkORCID({ data: { code } });
-
         try {
           const { data: user } = await fetchProfile();
           if (user) {
             updateUser({
-              user: {
-                id: user.id,
-                personID: user.person_id,
-              },
-              person: {
-                id: user.person_id,
-                email: user.email,
-                name: user.name,
-                givenName: user.givenName,
-                familyName: user.familyName,
-                orciD: user.orcid,
-                userID: user.id,
-              },
+              id: user.id,
+              person_id: user.person_id,
+              email: user.email,
+              name: user.name,
+              givenName: user.givenName,
+              familyName: user.familyName,
+              orcid: user.orcid,
+              is_sys_admin: user.is_sys_admin,
             });
           }
         } catch (error) {

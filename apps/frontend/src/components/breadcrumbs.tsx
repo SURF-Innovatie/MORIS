@@ -25,6 +25,12 @@ export const Breadcrumbs = () => {
                 const isLast = index === pathnames.length - 1;
                 const label = value.charAt(0).toUpperCase() + value.slice(1);
 
+                // Hide UUIDs (basic check: length > 30 and contains hyphen)
+                // Or better: strict UUID regex
+                const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(value);
+
+                if (isUuid) return null;
+
                 return (
                     <div key={to} className="flex items-center">
                         {isLast ? (

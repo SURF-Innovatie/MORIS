@@ -70,11 +70,12 @@ func (s *service) Login(ctx context.Context, email, password string) (string, *e
 // generateJWT creates a JWT token for the user
 func (s *service) generateJWT(usr *entities.UserAccount) (string, error) {
 	claims := jwt.MapClaims{
-		"user_id":  usr.User.ID,
-		"email":    usr.Person.Email,
-		"orcid_id": usr.Person.ORCiD,
-		"exp":      time.Now().Add(time.Hour * 24 * 7).Unix(), // 7 days expiry
-		"iat":      time.Now().Unix(),
+		"user_id":   usr.User.ID,
+		"email":     usr.Person.Email,
+		"orcid_id":  usr.Person.ORCiD,
+		"is_active": usr.User.IsActive,
+		"exp":       time.Now().Add(time.Hour * 24 * 7).Unix(), // 7 days expiry
+		"iat":       time.Now().Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -124,7 +125,7 @@ func (s *service) ValidateToken(tokenString string) (*entities.UserAccount, erro
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	// TODO: question why do we take fields from token instead of DB
+	// TODO: question why do we take fields from token instead of DB; answer = fast lookup without DB call
 	//email, ok := claims["email"].(string)
 	//if !ok {
 	//	return nil, fmt.Errorf("invalid email in token")

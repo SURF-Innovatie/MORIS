@@ -32,6 +32,12 @@ func AuthMiddleware(authSvc coreauth.Service) func(http.Handler) http.Handler {
 				return
 			}
 
+			// Check if user is active
+			if !user.User.IsActive {
+				httputil.WriteError(w, r, http.StatusUnauthorized, "User account is inactive", nil)
+				return
+			}
+
 			// Store the authenticated user in the request context
 			ctx := context.WithValue(r.Context(), httputil.ContextKeyUser, user)
 			r = r.WithContext(ctx)
@@ -41,8 +47,8 @@ func AuthMiddleware(authSvc coreauth.Service) func(http.Handler) http.Handler {
 	}
 }
 
-// RequireRoleMiddleware checks if the authenticated user has any of the required roles.
-func RequireRoleMiddleware(roles ...string) func(next http.Handler) http.Handler {
+// RequireSysAdminMiddleware checks if the authenticated user is a system administrator.
+func RequireSysAdminMiddleware() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			user, ok := httputil.GetUserFromContext(r.Context())
@@ -51,25 +57,10 @@ func RequireRoleMiddleware(roles ...string) func(next http.Handler) http.Handler
 				return
 			}
 
-			//hasRole := false
-			//for _, requiredRole := range roles {
-			//	for _, userRole := range user.Roles {
-			//		if userRole == requiredRole {
-			//			hasRole = true
-			//			break
-			//		}
-			//	}
-			//	if hasRole {
-			//		break
-			//	}
-			//}
-			//
-			//if !hasRole {
-			//	w.Header().Set("Content-Type", "application/json")
-			//	w.WriteHeader(http.StatusForbidden)
-			//	json.NewEncoder(w).Encode(BackendError{Code: http.StatusForbidden, Status: "Forbidden", Message: "Forbidden: Insufficient permissions"})
-			//	return
-			//}
+			if !user.User.IsSysAdmin {
+				httputil.WriteError(w, r, http.StatusForbidden, "Forbidden: Insufficient permissions", nil)
+				return
+			}
 
 			next.ServeHTTP(w, r)
 		})

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"time"
 
@@ -133,4 +134,17 @@ func ParseUUIDQuery(r *http.Request, key string) (uuid.UUID, error) {
 		return uuid.Nil, errors.New("missing query param: " + key)
 	}
 	return uuid.Parse(idStr)
+}
+
+// ParseIntQuery parses an int from the URL query parameters with a default value.
+func ParseIntQuery(r *http.Request, key string, defaultValue int) int {
+	valStr := r.URL.Query().Get(key)
+	if valStr == "" {
+		return defaultValue
+	}
+	val, err := strconv.Atoi(valStr)
+	if err != nil {
+		return defaultValue
+	}
+	return val
 }

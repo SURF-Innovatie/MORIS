@@ -1,9 +1,23 @@
 package entities
 
-import "github.com/google/uuid"
+import (
+	"github.com/SURF-Innovatie/MORIS/ent"
+	"github.com/google/uuid"
+)
 
 type User struct {
-	ID       uuid.UUID
-	PersonID uuid.UUID
-	Password string
+	ID         uuid.UUID
+	PersonID   uuid.UUID
+	Password   string
+	IsSysAdmin bool `json:"is_sys_admin"`
+	IsActive   bool `json:"is_active"`
+}
+
+func (u *User) FromEnt(row *ent.User) *User {
+	return &User{
+		ID:         row.ID,
+		PersonID:   row.PersonID,
+		IsSysAdmin: row.IsSysAdmin,
+		IsActive:   row.IsActive,
+	}
 }

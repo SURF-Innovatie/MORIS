@@ -1,6 +1,9 @@
 package entities
 
-import "github.com/google/uuid"
+import (
+	"github.com/SURF-Innovatie/MORIS/ent"
+	"github.com/google/uuid"
+)
 
 type Person struct {
 	Id          uuid.UUID
@@ -12,4 +15,17 @@ type Person struct {
 	GivenName   *string
 	FamilyName  *string
 	Email       string
+}
+
+func (p *Person) FromEnt(row *ent.Person) *Person {
+	return &Person{
+		Id:          row.ID,
+		Name:        row.Name,
+		ORCiD:       &row.OrcidID,
+		GivenName:   row.GivenName,
+		FamilyName:  row.FamilyName,
+		Email:       row.Email,
+		AvatarUrl:   row.AvatarURL,
+		Description: row.Description,
+	}
 }

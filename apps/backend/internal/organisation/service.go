@@ -33,7 +33,7 @@ func (s *service) Create(ctx context.Context, o entities.Organisation) (*entitie
 	if err != nil {
 		return nil, err
 	}
-	return mapRow(row), nil
+	return (&entities.Organisation{}).FromEnt(row), nil
 }
 
 func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.Organisation, error) {
@@ -44,7 +44,7 @@ func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.Organisation
 	if err != nil {
 		return nil, err
 	}
-	return mapRow(row), nil
+	return (&entities.Organisation{}).FromEnt(row), nil
 }
 
 func (s *service) Update(ctx context.Context, id uuid.UUID, p entities.Organisation) (*entities.Organisation, error) {
@@ -55,7 +55,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, p entities.Organisat
 	if err != nil {
 		return nil, err
 	}
-	return mapRow(row), nil
+	return (&entities.Organisation{}).FromEnt(row), nil
 }
 
 func (s *service) List(ctx context.Context) ([]entities.Organisation, error) {
@@ -67,14 +67,7 @@ func (s *service) List(ctx context.Context) ([]entities.Organisation, error) {
 	}
 	out := make([]entities.Organisation, 0, len(rows))
 	for _, r := range rows {
-		out = append(out, *mapRow(r))
+		out = append(out, *(&entities.Organisation{}).FromEnt(r))
 	}
 	return out, nil
-}
-
-func mapRow(r *ent.Organisation) *entities.Organisation {
-	return &entities.Organisation{
-		Id:   r.ID,
-		Name: r.Name,
-	}
 }

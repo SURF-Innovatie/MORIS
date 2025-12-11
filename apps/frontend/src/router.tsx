@@ -1,5 +1,5 @@
 import type { RouteObject } from "react-router-dom";
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 
 import RootLayout from "./routes/root";
 import DashboardRoute from "./routes/dashboard";
@@ -15,6 +15,8 @@ import ProtectedRoute from "./routes/protected-route";
 import InboxRoute from "./routes/inbox";
 import ProjectsRoute from "./routes/projects";
 import ProductsRoute from "./routes/products";
+import AdminUsersRoute from "./routes/admin-users";
+import AdminUserEditRoute from "./routes/admin-user-edit";
 
 export function createAppRouter() {
   const routes: RouteObject[] = [
@@ -54,6 +56,20 @@ export function createAppRouter() {
             {
               path: "profile",
               element: <ProfileRoute />,
+            },
+            {
+              path: "admin",
+              element: <ProtectedRoute requireSysAdmin><Outlet /></ProtectedRoute>,
+              children: [
+                {
+                  path: "users",
+                  element: <AdminUsersRoute />,
+                },
+                {
+                  path: "users/:id/edit",
+                  element: <AdminUserEditRoute />,
+                },
+              ],
             },
           ],
         },

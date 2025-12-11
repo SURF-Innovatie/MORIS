@@ -3,7 +3,6 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   Grid,
   Star,
-  Zap,
   LogOut,
   Menu,
   X,
@@ -41,7 +40,6 @@ const NAV_GROUPS = [
     label: "Settings",
     items: [
       { to: "/dashboard/profile", label: "Profile", icon: User },
-      // { to: "/dashboard/api-keys", label: "API Keys", icon: Key },
     ],
   },
 ];
@@ -52,6 +50,20 @@ export const ExpandableNavbar = () => {
   const { mutate: logout } = useLogout();
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
+
+  const navGroups = [
+    ...NAV_GROUPS,
+    ...(user?.is_sys_admin
+      ? [
+        {
+          label: "Admin",
+          items: [
+            { to: "/dashboard/admin/users", label: "Users", icon: User },
+          ],
+        },
+      ]
+      : []),
+  ];
 
   const handleLogout = () => {
     logout(undefined, {
@@ -94,7 +106,7 @@ export const ExpandableNavbar = () => {
         <div className="lg:hidden fixed inset-0 z-40 bg-background/95 backdrop-blur-sm pt-16">
           <div className="flex flex-col h-full p-4">
             <nav className="flex flex-col gap-6 mb-6 overflow-y-auto">
-              {NAV_GROUPS.map((group) => (
+              {navGroups.map((group) => (
                 <div key={group.label} className="flex flex-col gap-2">
                   <div className="px-4 text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">
                     {group.label}
@@ -135,7 +147,7 @@ export const ExpandableNavbar = () => {
                 <div className="px-4 py-2 text-sm text-muted-foreground">
                   Logged in as{" "}
                   <span className="font-medium text-foreground">
-                    {user.person?.email}
+                    {user?.email}
                   </span>
                 </div>
               )}
@@ -167,7 +179,7 @@ export const ExpandableNavbar = () => {
 
         {/* Navigation */}
         <nav className="flex flex-col gap-6 p-3 flex-1 overflow-y-auto">
-          {NAV_GROUPS.map((group, groupIndex) => (
+          {navGroups.map((group, groupIndex) => (
             <div key={group.label} className="flex flex-col gap-2">
               <div className="px-3 text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">
                 {group.label}
@@ -199,7 +211,7 @@ export const ExpandableNavbar = () => {
                 </NavLink>
               ))}
               {/* Add separator between groups if not the last one */}
-              {groupIndex < NAV_GROUPS.length - 1 && (
+              {groupIndex < navGroups.length - 1 && (
                 <div className="mx-3 my-1 border-t border-white/5" />
               )}
             </div>
@@ -210,7 +222,7 @@ export const ExpandableNavbar = () => {
         <div className="p-3 border-t border-white/10 space-y-2">
           {user && (
             <div className="px-3 py-2 text-sm text-muted-foreground truncate">
-              {user.person?.email}
+              {user?.email}
             </div>
           )}
           <Button

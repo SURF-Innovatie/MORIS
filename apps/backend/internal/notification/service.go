@@ -39,7 +39,7 @@ func (s *service) Create(ctx context.Context, p entities.Notification) (*entitie
 		return nil, err
 	}
 
-	return mapRow(row, p.User, p.Event), nil
+	return (&entities.Notification{}).FromEnt(row, p.User, p.Event), nil
 }
 
 func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.Notification, error) {
@@ -58,7 +58,7 @@ func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.Notification
 
 	event, _ := row.QueryEvent().Only(ctx)
 
-	return mapRow(row, user, event), nil
+	return (&entities.Notification{}).FromEnt(row, user, event), nil
 }
 
 func (s *service) Update(ctx context.Context, id uuid.UUID, p entities.Notification) (*entities.Notification, error) {
@@ -71,7 +71,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, p entities.Notificat
 	if err != nil {
 		return nil, err
 	}
-	return mapRow(row, p.User, p.Event), nil
+	return (&entities.Notification{}).FromEnt(row, p.User, p.Event), nil
 }
 
 func (s *service) List(ctx context.Context) ([]entities.Notification, error) {
@@ -90,7 +90,7 @@ func (s *service) List(ctx context.Context) ([]entities.Notification, error) {
 
 		event, _ := r.QueryEvent().Only(ctx)
 
-		out = append(out, *mapRow(r, user, event))
+		out = append(out, *(&entities.Notification{}).FromEnt(r, user, event))
 	}
 
 	return out, nil
@@ -116,21 +116,9 @@ func (s *service) ListForUser(ctx context.Context, userID uuid.UUID) ([]entities
 		// event can be empty
 		event, _ := r.QueryEvent().Only(ctx)
 
-		out = append(out, *mapRow(r, u, event))
+		out = append(out, *(&entities.Notification{}).FromEnt(r, u, event))
 	}
 	return out, nil
-}
-
-func mapRow(r *ent.Notification, u *ent.User, e *ent.Event) *entities.Notification {
-	return &entities.Notification{
-		Id:      r.ID,
-		Message: r.Message,
-		Type:    r.Type.String(),
-		Read:    r.Read,
-		User:    u,
-		Event:   e,
-		SentAt:  r.SentAt,
-	}
 }
 
 func (s *service) MarkAsRead(ctx context.Context, id uuid.UUID) error {

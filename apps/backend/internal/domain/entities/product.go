@@ -1,6 +1,9 @@
 package entities
 
-import "github.com/google/uuid"
+import (
+	"github.com/SURF-Innovatie/MORIS/ent"
+	"github.com/google/uuid"
+)
 
 // TODO: expand using: https://openaire-guidelines-for-cris-managers.readthedocs.io/en/v1.2.0/cerif_xml_product_entity.html
 
@@ -27,3 +30,13 @@ const (
 	Trademark
 	Workflow
 )
+
+func (p *Product) FromEnt(row *ent.Product) *Product {
+	return &Product{
+		Id:       row.ID,
+		Type:     ProductType(row.Type),
+		Language: *row.Language,
+		Name:     row.Name,
+		DOI:      *row.Doi,
+	}
+}

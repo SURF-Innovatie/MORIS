@@ -5,7 +5,6 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/user"
-	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
@@ -22,6 +21,8 @@ type Service interface {
 	GetAccount(ctx context.Context, id uuid.UUID) (*entities.UserAccount, error)
 	GetAccountByEmail(ctx context.Context, email string) (*entities.UserAccount, error)
 	GetApprovedEvents(ctx context.Context, userID uuid.UUID) ([]events.Event, error)
+	ListAll(ctx context.Context, limit, offset int) ([]*entities.UserAccount, int, error)
+	ToggleActive(ctx context.Context, id uuid.UUID, isActive bool) error
 }
 
 type service struct {
@@ -44,10 +45,7 @@ func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.User, error)
 		return nil, err
 	}
 
-	return &entities.User{
-		ID:       row.ID,
-		PersonID: row.PersonID,
-	}, nil
+	return (&entities.User{}).FromEnt(row), nil
 }
 
 func (s *service) Create(ctx context.Context, user entities.User) (*entities.User, error) {
@@ -61,10 +59,7 @@ func (s *service) Create(ctx context.Context, user entities.User) (*entities.Use
 		return nil, err
 	}
 
-	return &entities.User{
-		ID:       row.ID,
-		PersonID: row.PersonID,
-	}, nil
+	return (&entities.User{}).FromEnt(row), nil
 }
 
 func (s *service) Update(ctx context.Context, id uuid.UUID, user entities.User) (*entities.User, error) {
@@ -77,15 +72,19 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, user entities.User) 
 		return nil, err
 	}
 
-	return &entities.User{
-		ID:       row.ID,
-		PersonID: row.PersonID,
-	}, nil
+	return (&entities.User{}).FromEnt(row), nil
 }
 
 func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	return s.cli.User.
 		DeleteOneID(id).
+		Exec(ctx)
+}
+
+func (s *service) ToggleActive(ctx context.Context, id uuid.UUID, isActive bool) error {
+	return s.cli.User.
+		UpdateOneID(id).
+		SetIsActive(isActive).
 		Exec(ctx)
 }
 
@@ -104,11 +103,7 @@ func (s *service) GetAccount(ctx context.Context, id uuid.UUID) (*entities.UserA
 	}
 
 	return &entities.UserAccount{
-		User: entities.User{
-			ID:       userRow.ID,
-			PersonID: userRow.PersonID,
-			// Password is omitted for security reasons
-		},
+		User:   *(&entities.User{}).FromEnt(userRow),
 		Person: *personEntity,
 	}, nil
 }
@@ -128,32 +123,37 @@ func (s *service) GetAccountByEmail(ctx context.Context, email string) (*entitie
 	}
 
 	return &entities.UserAccount{
-		User: entities.User{
-			ID:       userRow.ID,
-			PersonID: userRow.PersonID,
-			// Password is omitted for security reasons
-		},
+		User:   *(&entities.User{}).FromEnt(userRow),
 		Person: *personEntity,
-	}, nil
-}
-
-func (s *service) mapRow(ctx context.Context, row *ent.User) (*userdto.Response, error) {
-	per, err := s.personSvc.Get(ctx, row.PersonID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &userdto.Response{
-		ID:         row.ID,
-		PersonID:   row.PersonID,
-		Email:      per.Email,
-		Name:       per.Name,
-		ORCiD:      per.ORCiD,
-		GivenName:  per.GivenName,
-		FamilyName: per.FamilyName,
 	}, nil
 }
 
 func (s *service) GetApprovedEvents(ctx context.Context, userID uuid.UUID) ([]events.Event, error) {
 	return s.es.LoadUserApprovedEvents(ctx, userID)
+}
+
+func (s *service) ListAll(ctx context.Context, limit, offset int) ([]*entities.UserAccount, int, error) {
+	total, err := s.cli.User.Query().Count(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	users, err := s.cli.User.Query().
+		Limit(limit).
+		Offset(offset).
+		All(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	accounts := make([]*entities.UserAccount, 0, len(users))
+	for _, u := range users {
+		acc, err := s.GetAccount(ctx, u.ID)
+		if err != nil {
+			// Skip users with missing person or other errors for now, or handle appropriately
+			continue
+		}
+		accounts = append(accounts, acc)
+	}
+	return accounts, total, nil
 }

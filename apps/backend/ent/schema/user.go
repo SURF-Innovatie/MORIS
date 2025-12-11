@@ -16,7 +16,9 @@ func (User) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New).Immutable().Unique(),
 		field.UUID("person_id", uuid.UUID{}).Default(uuid.New).Unique(),
-		field.String("password").NotEmpty().Sensitive(), // Sensitive prevents it from being logged
+		field.String("password").NotEmpty().Sensitive(),
+		field.Bool("is_sys_admin").Default(false),
+		field.Bool("is_active").Default(true),
 	}
 }
 

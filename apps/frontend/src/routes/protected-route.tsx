@@ -1,8 +1,13 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
-export default function ProtectedRoute() {
-  const { isAuthenticated, isLoading } = useAuth();
+interface ProtectedRouteProps {
+  children?: React.ReactNode;
+  requireSysAdmin?: boolean;
+}
+
+export default function ProtectedRoute({ children, requireSysAdmin }: ProtectedRouteProps) {
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -16,5 +21,9 @@ export default function ProtectedRoute() {
     return <Navigate to="/" replace />;
   }
 
-  return <Outlet />;
+  if (requireSysAdmin && !user?.is_sys_admin) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children ? <>{children}</> : <Outlet />;
 }

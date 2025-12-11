@@ -70,21 +70,7 @@ export function OrcidConnection({ user, refetchProfile }: OrcidConnectionProps) 
             const { data: updatedUser } = await refetchProfile();
             if (updatedUser) {
                 // Map UserResponse to UserAccount
-                updateUser({
-                    user: {
-                        id: updatedUser.id,
-                        personID: updatedUser.person_id,
-                    },
-                    person: {
-                        id: updatedUser.person_id,
-                        email: updatedUser.email,
-                        name: updatedUser.name,
-                        givenName: updatedUser.givenName,
-                        familyName: updatedUser.familyName,
-                        orciD: updatedUser.orcid,
-                        userID: updatedUser.id,
-                    },
-                });
+                updateUser(updatedUser);
             }
         } catch (error) {
             toast({

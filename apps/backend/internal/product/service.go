@@ -37,7 +37,7 @@ func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.Product, err
 		return nil, err
 	}
 
-	return mapRow(row), nil
+	return (&entities.Product{}).FromEnt(row), nil
 }
 
 func (s *service) GetAll(ctx context.Context) ([]*entities.Product, error) {
@@ -47,7 +47,7 @@ func (s *service) GetAll(ctx context.Context) ([]*entities.Product, error) {
 	}
 	products := make([]*entities.Product, 0)
 	for _, row := range rows {
-		products = append(products, mapRow(row))
+		products = append(products, (&entities.Product{}).FromEnt(row))
 	}
 	return products, nil
 }
@@ -65,7 +65,7 @@ func (s *service) Create(ctx context.Context, product entities.Product) (*entiti
 		return nil, err
 	}
 
-	return mapRow(row), nil
+	return (&entities.Product{}).FromEnt(row), nil
 }
 
 func (s *service) Update(ctx context.Context, id uuid.UUID, p entities.Product) (*entities.Product, error) {
@@ -81,7 +81,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, p entities.Product) 
 		return nil, err
 	}
 
-	return mapRow(row), nil
+	return (&entities.Product{}).FromEnt(row), nil
 }
 
 func (s *service) GetAllForUser(ctx context.Context, personId uuid.UUID) ([]*entities.Product, error) {
@@ -95,20 +95,10 @@ func (s *service) GetAllForUser(ctx context.Context, personId uuid.UUID) ([]*ent
 
 	products := make([]*entities.Product, 0)
 	for _, row := range rows {
-		products = append(products, mapRow(row))
+		products = append(products, (&entities.Product{}).FromEnt(row))
 	}
 
 	return products, nil
-}
-
-func mapRow(row *ent.Product) *entities.Product {
-	return &entities.Product{
-		Id:       row.ID,
-		Type:     entities.ProductType(row.Type),
-		Language: *row.Language,
-		Name:     row.Name,
-		DOI:      *row.Doi,
-	}
 }
 
 func (s *service) Delete(ctx context.Context, id uuid.UUID) error {

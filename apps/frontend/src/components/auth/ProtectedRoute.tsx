@@ -4,14 +4,14 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRoles?: string[];
+  requireSysAdmin?: boolean;
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+export const ProtectedRoute = ({
   children,
-  requiredRoles: _requiredRoles,
-}) => {
-  const { isAuthenticated, isLoading, user: _user } = useAuth();
+  requireSysAdmin,
+}: ProtectedRouteProps) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return (
@@ -25,13 +25,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" replace />;
   }
 
-  // Check if user has required roles
-  // TODO: Roles are currently missing from the backend User/Person structure.
-  // Re-enable this check once roles are available.
-  /*
-  if (requiredRoles && requiredRoles.length > 0) {
-    const hasRequiredRole = requiredRoles.some((role) => user?.roles?.includes(role));
-    if (!hasRequiredRole) {
+  if (requireSysAdmin) {
+    // Check for is_sys_admin flag.
+    // Note: The structure depends on generated types. Assuming user.user.is_sys_admin based on previous context.
+    const isSysAdmin = user?.is_sys_admin;
+
+    if (!isSysAdmin) {
       return (
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-lg text-red-600">Access Denied: Insufficient permissions</div>
@@ -39,7 +38,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       );
     }
   }
-  */
 
   return <>{children}</>;
 };
