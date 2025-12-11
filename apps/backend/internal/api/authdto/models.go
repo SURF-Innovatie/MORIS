@@ -50,7 +50,8 @@ type ORCIDAuthURLResponse struct {
 // LinkORCIDRequest swagger:model LinkORCIDRequest
 // Represents the request body for linking an ORCID ID.
 type LinkORCIDRequest struct {
-	Code string `json:"code" example:"authentication_code_from_orcid"`
+	Code  string `json:"code" example:"authentication_code_from_orcid"`
+	State string `json:"state" example:"random_state_string"`
 }
 
 // SURFconextLoginRequest swagger:model SURFconextLoginRequest

@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   Grid,
   Star,
-  Zap,
+
   LogOut,
   Menu,
   X,

@@ -104,7 +104,7 @@ func (h *Handler) GetORCIDAuthURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url, err := h.orcidService.GetAuthURL(r.Context(), u.User.ID)
+	url, state, err := h.orcidService.GetAuthURL(r.Context(), u.User.ID)
 	if err != nil {
 		statusCode := http.StatusInternalServerError
 		if errors.Is(err, orcid.ErrUnauthenticated) {
@@ -114,6 +114,17 @@ func (h *Handler) GetORCIDAuthURL(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteError(w, r, statusCode, err.Error(), nil)
 		return
 	}
+
+	// Set state cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "orcid_state",
+		Value:    state,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true, // TODO: Check if dev environment supports Secure
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   300, // 5 minutes
+	})
 
 	w.Header().Set("Content-Type", "application/json")
 	resp := authdto.ORCIDAuthURLResponse{URL: url}
@@ -147,7 +158,25 @@ func (h *Handler) LinkORCID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.orcidService.Link(r.Context(), u.User.ID, req.Code)
+	// Validate state
+	cookie, err := r.Cookie("orcid_state")
+	if err != nil || cookie.Value != req.State {
+		httputil.WriteError(w, r, http.StatusBadRequest, "Invalid state parameter", nil)
+		return
+	}
+
+	// Clear state cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "orcid_state",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1,
+	})
+
+	err = h.orcidService.Link(r.Context(), u.User.ID, req.Code)
 	if err != nil {
 		statusCode := http.StatusInternalServerError
 		switch {

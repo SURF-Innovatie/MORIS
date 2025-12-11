@@ -20,6 +20,7 @@ const OrcidCallbackRoute = () => {
   useEffect(() => {
     const code = searchParams.get("code");
     const error = searchParams.get("error");
+    const state = searchParams.get("state");
 
     if (processedRef.current) return;
     processedRef.current = true;
@@ -46,7 +47,7 @@ const OrcidCallbackRoute = () => {
 
     const link = async () => {
       try {
-        await linkORCID({ data: { code } });
+        await linkORCID({ data: { code, state: state || "" } });
 
         try {
           const { data: user } = await fetchProfile();

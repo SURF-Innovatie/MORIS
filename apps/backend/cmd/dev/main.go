@@ -99,7 +99,12 @@ func main() {
 		logrus.Fatalf("failed to create OIDC provider: %v", err)
 	}
 	authSvc := auth.NewJWTService(client, userSvc, personSvc, env.Global.JWTSecret, oidcProvider)
-	orcidSvc := orcid.NewService(client, userSvc)
+
+	orcidConfig, orcidProvider, err := orcid.SetupORCIDOAuth2(context.Background())
+	if err != nil {
+		logrus.Fatalf("failed to setup ORCID provider: %v", err)
+	}
+	orcidSvc := orcid.NewService(client, userSvc, orcidProvider, orcidConfig)
 
 	personHandler := personhandler.NewHandler(personSvc)
 	productSvc := product.NewService(client)

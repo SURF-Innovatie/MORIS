@@ -2,12 +2,16 @@ package orcid
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"fmt"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
+	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/google/uuid"
+	"golang.org/x/oauth2"
 )
 
 var (
@@ -17,8 +21,8 @@ var (
 )
 
 type Service interface {
-	// GetAuthURL returns an ORCID OAuth authorization URL for the given user.
-	GetAuthURL(ctx context.Context, userID uuid.UUID) (string, error)
+	// GetAuthURL returns an ORCID OAuth authorization URL for the given user, and the state parameter.
+	GetAuthURL(ctx context.Context, userID uuid.UUID) (string, string, error)
 
 	// Link links an ORCID ID to the given user using the ORCID auth code.
 	Link(ctx context.Context, userID uuid.UUID, code string) error
@@ -28,25 +32,40 @@ type Service interface {
 }
 
 type service struct {
-	client  *ent.Client
-	userSvc user.Service
+	client   *ent.Client
+	userSvc  user.Service
+	provider *oidc.Provider
+	oauth2   *oauth2.Config
 }
 
-func NewService(client *ent.Client, userSvc user.Service) Service {
-	return &service{client, userSvc}
+func NewService(client *ent.Client, userSvc user.Service, provider *oidc.Provider, oauth2 *oauth2.Config) Service {
+	return &service{
+		client:   client,
+		userSvc:  userSvc,
+		provider: provider,
+		oauth2:   oauth2,
+	}
 }
 
-func (s *service) GetAuthURL(ctx context.Context, userID uuid.UUID) (string, error) {
-	// Optional: verify user exists
+func (s *service) GetAuthURL(ctx context.Context, userID uuid.UUID) (string, string, error) {
 	if _, err := s.client.User.Get(ctx, userID); err != nil {
-		return "", ErrUnauthenticated
+		return "", "", ErrUnauthenticated
 	}
 
-	cfg, err := GetORCIDConfig()
+	state, err := generateState()
 	if err != nil {
+		return "", "", fmt.Errorf("failed to generate state: %w", err)
+	}
+
+	return s.oauth2.AuthCodeURL(state), state, nil
+}
+
+func generateState() (string, error) {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
-	return cfg.GenerateAuthURL(), nil
+	return base64.URLEncoding.EncodeToString(b), nil
 }
 
 func (s *service) Link(ctx context.Context, userID uuid.UUID, code string) error {
@@ -54,14 +73,15 @@ func (s *service) Link(ctx context.Context, userID uuid.UUID, code string) error
 		return ErrMissingCode
 	}
 
-	cfg, err := GetORCIDConfig()
+	token, err := s.oauth2.Exchange(ctx, code)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to exchange code: %w", err)
 	}
 
-	orcidID, err := cfg.ExchangeCode(ctx, code)
-	if err != nil {
-		return err
+	// Extract ORCID ID.
+	orcidID, ok := token.Extra("orcid").(string)
+	if !ok || orcidID == "" {
+		return errors.New("failed to retrieve ORCID ID")
 	}
 
 	usr, err := s.userSvc.GetAccount(ctx, userID)
