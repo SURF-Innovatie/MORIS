@@ -55,7 +55,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 // Profile godoc
-// @Summary Get user profile
+// @Summary GetOrganisationNode user profile
 // @Description Returns the authenticated user's profile information
 // @Tags auth
 // @Accept json
@@ -85,7 +85,7 @@ func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetORCIDAuthURL godoc
-// @Summary Get ORCID authorization URL
+// @Summary GetOrganisationNode ORCID authorization URL
 // @Description Returns the URL to redirect the user to for ORCID authentication
 // @Tags auth
 // @Accept json

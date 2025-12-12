@@ -18,7 +18,7 @@ func NewHandler(svc notification.Service) *Handler {
 }
 
 // GetNotifications godoc
-// @Summary Get notifications for the logged-in user
+// @Summary GetOrganisationNode notifications for the logged-in user
 // @Description Retrieves a list of notifications for the authenticated user
 // @Tags notifications
 // @Accept json

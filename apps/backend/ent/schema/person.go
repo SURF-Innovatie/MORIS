@@ -36,6 +36,9 @@ func (Person) Fields() []ent.Field {
 
 func (Person) Edges() []ent.Edge {
 	return []ent.Edge{
+		edge.From("memberships", Membership.Type).
+			Ref("person"),
+
 		edge.To("products", Product.Type),
 	}
 }

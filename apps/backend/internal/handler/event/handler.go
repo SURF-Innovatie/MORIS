@@ -104,7 +104,7 @@ func (h *Handler) RejectEvent(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetEvent godoc
-// @Summary Get event details
+// @Summary GetOrganisationNode event details
 // @Description Retrieves details for a specific event by ID
 // @Tags events
 // @Accept json

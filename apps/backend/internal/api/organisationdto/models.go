@@ -5,18 +5,29 @@ import (
 	"github.com/google/uuid"
 )
 
-type CreateRequest struct {
+type CreateRootRequest struct {
 	Name string `json:"name"`
 }
 
-type Response struct {
-	ID   uuid.UUID `json:"id"`
-	Name string    `json:"name"`
+type CreateChildRequest struct {
+	Name string `json:"name"`
 }
 
-func FromEntity(e entities.Organisation) Response {
+type UpdateRequest struct {
+	Name     string     `json:"name"`
+	ParentID *uuid.UUID `json:"parentId"` // null => root
+}
+
+type Response struct {
+	ID       uuid.UUID  `json:"id"`
+	ParentID *uuid.UUID `json:"parentId"`
+	Name     string     `json:"name"`
+}
+
+func FromEntity(n entities.OrganisationNode) Response {
 	return Response{
-		ID:   e.Id,
-		Name: e.Name,
+		ID:       n.ID,
+		ParentID: n.ParentID,
+		Name:     n.Name,
 	}
 }

@@ -21,7 +21,7 @@ func NewHandler(svc project.Service) *Handler {
 }
 
 // GetProject godoc
-// @Summary Get a project by ID
+// @Summary GetOrganisationNode a project by ID
 // @Description Retrieves a single project by its unique identifier
 // @Tags projects
 // @Accept json
@@ -93,7 +93,7 @@ func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateProject godoc
-// @Summary Update a project
+// @Summary UpdateOrganisationNode a project
 // @Description Updates an existing project with the provided details
 // @Tags projects
 // @Accept json
@@ -151,7 +151,7 @@ func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetAllProjects godoc
-// @Summary Get all projects
+// @Summary GetOrganisationNode all projects
 // @Description Retrieves a list of all projects
 // @Tags projects
 // @Accept json
@@ -309,7 +309,7 @@ func (h *Handler) RemoveProduct(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetChangelog godoc
-// @Summary Get change log for a project
+// @Summary GetOrganisationNode change log for a project
 // @Description Retrieves the change log for a specific project
 // @Tags projects
 // @Accept json
@@ -336,7 +336,7 @@ func (h *Handler) GetChangelog(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetPendingEvents godoc
-// @Summary Get pending events for a project
+// @Summary GetOrganisationNode pending events for a project
 // @Description Retrieves a list of pending events for a specific project
 // @Tags projects
 // @Accept json

@@ -2,19 +2,23 @@ package organisation
 
 import (
 	"context"
-
-	"github.com/google/uuid"
+	"fmt"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
-	or "github.com/SURF-Innovatie/MORIS/ent/organisation"
+	orgnode "github.com/SURF-Innovatie/MORIS/ent/organisationnode"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/google/uuid"
 )
 
 type Service interface {
-	Create(ctx context.Context, o entities.Organisation) (*entities.Organisation, error)
-	Get(ctx context.Context, id uuid.UUID) (*entities.Organisation, error)
-	Update(ctx context.Context, id uuid.UUID, o entities.Organisation) (*entities.Organisation, error)
-	List(ctx context.Context) ([]entities.Organisation, error)
+	CreateRoot(ctx context.Context, name string) (*entities.OrganisationNode, error)
+	CreateChild(ctx context.Context, parentID uuid.UUID, name string) (*entities.OrganisationNode, error)
+
+	Get(ctx context.Context, id uuid.UUID) (*entities.OrganisationNode, error)
+	Update(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID) (*entities.OrganisationNode, error)
+
+	ListRoots(ctx context.Context) ([]entities.OrganisationNode, error)
+	ListChildren(ctx context.Context, parentID uuid.UUID) ([]entities.OrganisationNode, error)
 }
 
 type service struct {
@@ -25,49 +29,99 @@ func NewService(cli *ent.Client) Service {
 	return &service{cli: cli}
 }
 
-func (s *service) Create(ctx context.Context, o entities.Organisation) (*entities.Organisation, error) {
-	row, err := s.cli.Organisation.
+func (s *service) CreateRoot(ctx context.Context, name string) (*entities.OrganisationNode, error) {
+	row, err := s.cli.OrganisationNode.
 		Create().
-		SetName(o.Name).
+		SetName(name).
 		Save(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return (&entities.Organisation{}).FromEnt(row), nil
+	return entities.OrganisationNodeFromEnt(row), nil
 }
 
-func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.Organisation, error) {
-	row, err := s.cli.Organisation.
+func (s *service) CreateChild(ctx context.Context, parentID uuid.UUID, name string) (*entities.OrganisationNode, error) {
+	parent, err := s.cli.OrganisationNode.Get(ctx, parentID)
+	if err != nil {
+		return nil, err
+	}
+
+	row, err := s.cli.OrganisationNode.
+		Create().
+		SetName(name).
+		SetParent(parent).
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return entities.OrganisationNodeFromEnt(row), nil
+}
+
+func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.OrganisationNode, error) {
+	row, err := s.cli.OrganisationNode.
 		Query().
-		Where(or.IDEQ(id)).
+		Where(orgnode.IDEQ(id)).
 		Only(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return (&entities.Organisation{}).FromEnt(row), nil
+	return entities.OrganisationNodeFromEnt(row), nil
 }
 
-func (s *service) Update(ctx context.Context, id uuid.UUID, p entities.Organisation) (*entities.Organisation, error) {
-	row, err := s.cli.Organisation.
-		UpdateOneID(id).
-		SetName(p.Name).
-		Save(ctx)
+func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID) (*entities.OrganisationNode, error) {
+	upd := s.cli.OrganisationNode.UpdateOneID(id).SetName(name)
+
+	// parent change support:
+	// - parentID == nil => make it a root (clear parent)
+	// - parentID != nil => set new parent
+	if parentID == nil {
+		upd = upd.ClearParent()
+	} else {
+		if *parentID == id {
+			return nil, fmt.Errorf("node cannot be its own parent")
+		}
+		parent, err := s.cli.OrganisationNode.Get(ctx, *parentID)
+		if err != nil {
+			return nil, err
+		}
+		upd = upd.SetParent(parent)
+	}
+
+	row, err := upd.Save(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return (&entities.Organisation{}).FromEnt(row), nil
+	return entities.OrganisationNodeFromEnt(row), nil
 }
 
-func (s *service) List(ctx context.Context) ([]entities.Organisation, error) {
-	rows, err := s.cli.Organisation.
+func (s *service) ListRoots(ctx context.Context) ([]entities.OrganisationNode, error) {
+	rows, err := s.cli.OrganisationNode.
 		Query().
+		Where(orgnode.Not(orgnode.HasParent())).
 		All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]entities.Organisation, 0, len(rows))
+
+	out := make([]entities.OrganisationNode, 0, len(rows))
 	for _, r := range rows {
-		out = append(out, *(&entities.Organisation{}).FromEnt(r))
+		out = append(out, *entities.OrganisationNodeFromEnt(r))
+	}
+	return out, nil
+}
+
+func (s *service) ListChildren(ctx context.Context, parentID uuid.UUID) ([]entities.OrganisationNode, error) {
+	rows, err := s.cli.OrganisationNode.
+		Query().
+		Where(orgnode.HasParentWith(orgnode.IDEQ(parentID))).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]entities.OrganisationNode, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, *entities.OrganisationNodeFromEnt(r))
 	}
 	return out, nil
 }

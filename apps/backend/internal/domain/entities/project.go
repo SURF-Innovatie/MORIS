@@ -21,7 +21,7 @@ type Project struct {
 
 type ProjectDetails struct {
 	Project      Project
-	Organisation Organisation
+	Organisation OrganisationNode
 	People       []Person
 	Products     []Product
 }

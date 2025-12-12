@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
-	"github.com/SURF-Innovatie/MORIS/ent/organisation"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	notifservice "github.com/SURF-Innovatie/MORIS/internal/notification"
 	"github.com/google/uuid"
@@ -69,15 +68,15 @@ func (h *ProjectEventNotificationHandler) buildMessage(ctx context.Context, e ev
 		return fmt.Sprintf("Project start date changed to %s.", v.StartDate.Format("2006-01-02")), nil
 	case events.EndDateChanged:
 		return fmt.Sprintf("Project end date changed to %s.", v.EndDate.Format("2006-01-02")), nil
-	case events.OrganisationChanged:
-		org, err := h.Cli.Organisation.
-			Query().
-			Where(organisation.IDEQ(v.OrganisationID)).
-			First(ctx)
-		if err != nil {
-			return "", err
-		}
-		return fmt.Sprintf("Project organisation changed to '%s'.", org.Name), nil
+	//case events.OrganisationChanged:
+	//	org, err := h.Cli.OrganisationChangedEvent.
+	//		Query().
+	//		Where(organisationnode.IDEQ(v.OrganisationID)).
+	//		Only(ctx)
+	//	if err != nil {
+	//		return "", err
+	//	}
+	//	return fmt.Sprintf("Project organisation changed to '%s'.", org.ID), nil
 	default:
 		return "", nil
 	}

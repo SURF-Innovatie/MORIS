@@ -134,6 +134,9 @@ func main() {
 
 	userHandler := userhandler.NewHandler(userSvc, projSvc)
 
+	rbacService := organisation.NewRBACService(client)
+	rbacHandler := organisationhandler.NewRBACHandler(rbacService)
+
 	// Router
 	r := chi.NewRouter()
 	log := logrus.New()
@@ -147,10 +150,10 @@ func main() {
 		r.Group(func(r chi.Router) {
 			r.Use(authmiddleware.AuthMiddleware(authSvc))
 			projecthandler.MountProjectRoutes(r, projHandler)
+			organisationhandler.MountOrganisationRoutes(r, organisationHandler, rbacHandler)
 			eventHandler.MountEventRoutes(r, evtHandler)
 			personhandler.MountPersonRoutes(r, personHandler)
 			producthandler.MountProductRoutes(r, productHandler)
-			organisationhandler.MountOrganisationRoutes(r, organisationHandler)
 			notificationhandler.MountNotificationRoutes(r, notificationHandler)
 			userhandler.MountUserRoutes(r, userHandler)
 			crossrefhandler.MountCrossrefRoutes(r, crossrefHandler)

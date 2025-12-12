@@ -16,7 +16,7 @@ func NewHandler(svc crossref.Service) *Handler {
 }
 
 // GetWork godoc
-// @Summary Get a work by DOI
+// @Summary GetOrganisationNode a work by DOI
 // @Description Retrieves a single work from Crossref by its DOI
 // @Tags crossref
 // @Accept json

@@ -62,7 +62,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetUser godoc
-// @Summary Get a user by ID
+// @Summary GetOrganisationNode a user by ID
 // @Description Retrieves a single user by its ID, provided as the `id` query parameter.
 // @Tags users
 // @Accept json
@@ -89,7 +89,7 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateUser godoc
-// @Summary Update a user
+// @Summary UpdateOrganisationNode a user
 // @Description Updates an existing user's person reference and/or password based on the given ID and request body.
 // @Tags users
 // @Accept json
@@ -187,7 +187,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetApprovedEvents godoc
-// @Summary Get approved events for a user
+// @Summary GetOrganisationNode approved events for a user
 // @Description Retrieves all approved events created by the user with the given ID.
 // @Tags users
 // @Accept json
@@ -227,7 +227,7 @@ func (h *Handler) GetApprovedEvents(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListUsers godoc
-// @Summary Get all users (Admin only)
+// @Summary GetOrganisationNode all users (Admin only)
 // @Description Returns a paginated list of all users - requires admin role
 // @Tags admin
 // @Accept json
@@ -316,7 +316,7 @@ func (h *Handler) ToggleActive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get current status to toggle
+	// GetOrganisationNode current status to toggle
 	_, err = h.svc.GetAccount(r.Context(), id)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusNotFound, "user not found", nil)

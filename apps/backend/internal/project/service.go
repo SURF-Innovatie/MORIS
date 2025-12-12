@@ -10,7 +10,7 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	en "github.com/SURF-Innovatie/MORIS/ent/event"
-	organisationent "github.com/SURF-Innovatie/MORIS/ent/organisation"
+	organisationent "github.com/SURF-Innovatie/MORIS/ent/organisationnode"
 	personent "github.com/SURF-Innovatie/MORIS/ent/person"
 	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
 	productent "github.com/SURF-Innovatie/MORIS/ent/product"
@@ -206,7 +206,7 @@ func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params Update
 		proj.Version++
 	}
 
-	// Update cache
+	// UpdateOrganisationNode cache
 	if err := s.cacheProject(ctx, proj); err != nil {
 		logrus.Errorf("failed to update project cache: %v\n", err)
 	}
@@ -340,7 +340,7 @@ func (s *service) AddPerson(
 	projection.Apply(proj, evt)
 	proj.Version++
 
-	// Update cache
+	// UpdateOrganisationNode cache
 	if err := s.cacheProject(ctx, proj); err != nil {
 		logrus.Errorf("failed to update project cache: %v", err)
 	}
@@ -390,7 +390,7 @@ func (s *service) RemovePerson(
 	projection.Apply(proj, evt)
 	proj.Version++
 
-	// Update cache
+	// UpdateOrganisationNode cache
 	if err := s.cacheProject(ctx, proj); err != nil {
 		logrus.Errorf("failed to update project cache: %v", err)
 	}
@@ -438,7 +438,7 @@ func (s *service) AddProduct(
 	projection.Apply(proj, evt)
 	proj.Version += 1
 
-	// Update cache
+	// UpdateOrganisationNode cache
 	if err := s.cacheProject(ctx, proj); err != nil {
 		logrus.Errorf("failed to update project cache: %v", err)
 	}
@@ -492,7 +492,7 @@ func (s *service) RemoveProduct(
 	projection.Apply(proj, evt)
 	proj.Version += 1
 
-	// Update cache
+	// UpdateOrganisationNode cache
 	if err := s.cacheProject(ctx, proj); err != nil {
 		logrus.Errorf("failed to update project cache: %v", err)
 	}
@@ -552,7 +552,7 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Projec
 		})
 	}
 
-	orgRow, err := s.cli.Organisation.
+	orgRow, err := s.cli.OrganisationNode.
 		Query().
 		Where(organisationent.ID(proj.Organisation)).
 		First(ctx)
@@ -560,8 +560,8 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Projec
 		return nil, err
 	}
 
-	org := entities.Organisation{
-		Id:   orgRow.ID,
+	org := entities.OrganisationNode{
+		ID:   orgRow.ID,
 		Name: orgRow.Name,
 	}
 
@@ -614,7 +614,7 @@ func (s *service) fromDb(ctx context.Context, projectID uuid.UUID) (*entities.Pr
 	proj := projection.Reduce(projectID, evts)
 	proj.Version = version
 
-	// Update cache
+	// UpdateOrganisationNode cache
 	_ = s.cacheProject(ctx, proj)
 
 	return proj, nil
@@ -627,7 +627,7 @@ func (s *service) WarmupCache(ctx context.Context) error {
 
 	logrus.Info("Starting cache warmup...")
 
-	// Get all project IDs from ProjectStartedEvent
+	// GetOrganisationNode all project IDs from ProjectStartedEvent
 	// We use the generated client to query specific event types to find all projects
 	var projectIDs []uuid.UUID
 	if err := s.cli.ProjectStartedEvent.Query().
@@ -710,7 +710,7 @@ func (s *service) onStatusChange(ctx context.Context, e events.Event) error {
 	proj := projection.Reduce(projectID, evts)
 	proj.Version = version
 
-	// Update cache
+	// UpdateOrganisationNode cache
 	if err := s.cacheProject(ctx, proj); err != nil {
 		logrus.Errorf("failed to update project cache on status change: %v", err)
 	}
