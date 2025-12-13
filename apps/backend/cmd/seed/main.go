@@ -25,7 +25,7 @@ import (
 type seedProject struct {
 	Title        string
 	Description  string
-	Organisation string // now maps to OrganisationNode
+	Organisation string
 	People       []string
 	Products     []seedProduct
 	Start        time.Time
@@ -296,7 +296,6 @@ func main() {
 			logrus.Infof("Created user for person %s", name)
 		}
 
-		// OrganisationNode for this project (no flat OwningOrgNode table anymore)
 		if _, exists := orgNodeIDs[sp.Organisation]; !exists {
 			orgNode, err := client.OrganisationNode.
 				Create().

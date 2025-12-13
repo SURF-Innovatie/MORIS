@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
@@ -20,6 +21,13 @@ func (ProjectRole) Fields() []ent.Field {
 
 		// optional human label; can equal key
 		field.String("name").NotEmpty(),
+	}
+}
+
+func (ProjectRole) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.To("assigned_events", ProjectRoleAssignedEvent.Type),
+		edge.To("unassigned_events", ProjectRoleUnassignedEvent.Type),
 	}
 }
 

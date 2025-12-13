@@ -72,7 +72,7 @@ func (s *service) Link(ctx context.Context, userID uuid.UUID, code string) error
 		return ErrAlreadyLinked
 	}
 
-	// UpdateOrganisationNode person with ORCID ID
+	// Update person with ORCID ID
 	if _, err := s.client.Person.
 		UpdateOneID(usr.Person.ID).
 		SetOrcidID(orcidID).

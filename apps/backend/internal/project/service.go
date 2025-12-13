@@ -216,7 +216,7 @@ func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params Update
 		proj.Version++
 	}
 
-	// UpdateOrganisationNode cache
+	// Update cache
 	if err := s.cacheProject(ctx, proj); err != nil {
 		logrus.Errorf("failed to update project cache: %v\n", err)
 	}
@@ -421,7 +421,7 @@ func (s *service) AddProduct(
 	projection.Apply(proj, evt)
 	proj.Version += 1
 
-	// UpdateOrganisationNode cache
+	// Update cache
 	if err := s.cacheProject(ctx, proj); err != nil {
 		logrus.Errorf("failed to update project cache: %v", err)
 	}
@@ -475,7 +475,7 @@ func (s *service) RemoveProduct(
 	projection.Apply(proj, evt)
 	proj.Version += 1
 
-	// UpdateOrganisationNode cache
+	// Update cache
 	if err := s.cacheProject(ctx, proj); err != nil {
 		logrus.Errorf("failed to update project cache: %v", err)
 	}
@@ -604,7 +604,7 @@ func (s *service) fromDb(ctx context.Context, projectID uuid.UUID) (*entities.Pr
 	proj := projection.Reduce(projectID, evts)
 	proj.Version = version
 
-	// UpdateOrganisationNode cache
+	// Update cache
 	_ = s.cacheProject(ctx, proj)
 
 	return proj, nil
@@ -617,7 +617,7 @@ func (s *service) WarmupCache(ctx context.Context) error {
 
 	logrus.Info("Starting cache warmup...")
 
-	// GetOrganisationNode all project IDs from ProjectStartedEvent
+	// Get all project IDs from ProjectStartedEvent
 	// We use the generated client to query specific event types to find all projects
 	var projectIDs []uuid.UUID
 	if err := s.cli.ProjectStartedEvent.Query().
@@ -700,7 +700,7 @@ func (s *service) onStatusChange(ctx context.Context, e events.Event) error {
 	proj := projection.Reduce(projectID, evts)
 	proj.Version = version
 
-	// UpdateOrganisationNode cache
+	// Update cache
 	if err := s.cacheProject(ctx, proj); err != nil {
 		logrus.Errorf("failed to update project cache on status change: %v", err)
 	}

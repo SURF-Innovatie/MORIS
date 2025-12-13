@@ -23,6 +23,7 @@ func NewHandler(svc productsvc.Service) *Handler {
 // @Tags products
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param product body productdto.Request true "Product data"
 // @Success 200 {object} productdto.Response
 // @Failure 400 {string} string "invalid body"
@@ -58,6 +59,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Description Returns all products
 // @Tags products
 // @Produce json
+// @Security BearerAuth
 // @Success 200 {array} entities.Product
 // @Failure 500 {string} string "internal server error"
 // @Router /products [get]
@@ -75,6 +77,7 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 // @Description Returns products associated with the current user
 // @Tags products
 // @Produce json
+// @Security BearerAuth
 // @Success 200 {array} productdto.Response
 // @Failure 500 {string} string "internal server error"
 // @Router /products/me [get]
@@ -104,6 +107,7 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 // @Description Get a single product by ID
 // @Tags products
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Product ID (UUID)"
 // @Success 200 {object} productdto.Response
 // @Failure 400 {string} string "invalid id"
@@ -129,6 +133,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 // @Tags products
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Product ID (UUID)"
 // @Param product body productdto.Request true "Product data"
 // @Success 200 {object} productdto.Response
@@ -168,6 +173,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 // @Description Delete a product by ID
 // @Tags products
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Product ID (UUID)"
 // @Success 200 {string} string "ok"
 // @Failure 400 {string} string "invalid id"

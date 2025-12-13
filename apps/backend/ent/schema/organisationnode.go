@@ -1,4 +1,3 @@
-// internal/ent/schema/organisationnode.go
 package schema
 
 import (

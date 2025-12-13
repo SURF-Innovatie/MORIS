@@ -62,7 +62,7 @@ func (s *service) HandleEvents(ctx context.Context, evts ...events.Event) error 
 }
 
 func (s *service) ApproveEvent(ctx context.Context, eventID uuid.UUID) error {
-	// 1. UpdateOrganisationNode status
+	// 1. Update status
 	if err := s.es.UpdateEventStatus(ctx, eventID, "approved"); err != nil {
 		return err
 	}

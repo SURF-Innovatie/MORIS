@@ -27,6 +27,7 @@ func NewHandler(svc user.Service, projSvc project.Service) *Handler {
 // @Tags users
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param user body userdto.Request true "User creation payload"
 // @Success 200 {object} userdto.Response
 // @Failure 400 {string} string "invalid request body or missing person ID"
@@ -62,11 +63,12 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetUser godoc
-// @Summary GetOrganisationNode a user by ID
+// @Summary Get a user by ID
 // @Description Retrieves a single user by its ID, provided as the `id` query parameter.
 // @Tags users
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User ID (UUID)"
 // @Success 200 {object} userdto.Response
 // @Failure 400 {string} string "invalid id"
@@ -89,11 +91,12 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateUser godoc
-// @Summary UpdateOrganisationNode a user
+// @Summary Update a user
 // @Description Updates an existing user's person reference and/or password based on the given ID and request body.
 // @Tags users
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User ID (UUID)"
 // @Param user body userdto.Request true "User update payload"
 // @Success 200 {object} userdto.Response
@@ -149,6 +152,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User ID (UUID)"
 // @Success 204 {string} string "no content"
 // @Failure 400 {string} string "invalid id"
@@ -187,11 +191,12 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetApprovedEvents godoc
-// @Summary GetOrganisationNode approved events for a user
+// @Summary Get approved events for a user
 // @Description Retrieves all approved events created by the user with the given ID.
 // @Tags users
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User ID (UUID)"
 // @Success 200 {object} eventdto.Response
 // @Failure 400 {string} string "invalid id"
@@ -227,7 +232,7 @@ func (h *Handler) GetApprovedEvents(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListUsers godoc
-// @Summary GetOrganisationNode all users (Admin only)
+// @Summary Get all users (Admin only)
 // @Description Returns a paginated list of all users - requires admin role
 // @Tags admin
 // @Accept json
@@ -316,7 +321,7 @@ func (h *Handler) ToggleActive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// GetOrganisationNode current status to toggle
+	// Get current status to toggle
 	_, err = h.svc.GetAccount(r.Context(), id)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusNotFound, "user not found", nil)

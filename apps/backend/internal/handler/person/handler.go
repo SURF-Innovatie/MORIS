@@ -23,6 +23,7 @@ func NewHandler(s personsvc.Service) *Handler {
 // @Tags people
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param request body persondto.Request true "Person details"
 // @Success 200 {object} persondto.Response
 // @Failure 400 {string} string "Invalid body or missing required fields"
@@ -57,6 +58,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Description Get a person by their ID
 // @Tags people
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Person ID"
 // @Success 200 {object} persondto.Response
 // @Failure 400 {string} string "Invalid ID"
@@ -82,6 +84,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 // @Tags people
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Person ID"
 // @Param request body persondto.Request true "Person details"
 // @Success 200 {object} persondto.Response

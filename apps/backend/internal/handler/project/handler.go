@@ -21,11 +21,12 @@ func NewHandler(svc project.Service) *Handler {
 }
 
 // GetProject godoc
-// @Summary GetOrganisationNode a project by ID
+// @Summary Get a project by ID
 // @Description Retrieves a single project by its unique identifier
 // @Tags projects
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Project ID (UUID)"
 // @Success 200 {object} projectdto.Response
 // @Failure 400 {string} string "invalid project id"
@@ -51,6 +52,7 @@ func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 // @Tags projects
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param project body projectdto.Request true "Project details"
 // @Success 200 {object} projectdto.Response
 // @Failure 400 {string} string "invalid body or date format"
@@ -92,11 +94,12 @@ func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateProject godoc
-// @Summary UpdateOrganisationNode a project
+// @Summary Update a project
 // @Description Updates an existing project with the provided details
 // @Tags projects
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Project ID (UUID)"
 // @Param project body projectdto.Request true "Project details"
 // @Success 200 {object} projectdto.Response
@@ -150,11 +153,12 @@ func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetAllProjects godoc
-// @Summary GetOrganisationNode all projects
+// @Summary Get all projects
 // @Description Retrieves a list of all projects
 // @Tags projects
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Success 200 {array} projectdto.Response
 // @Failure 500 {string} string "internal server error"
 // @Router /projects [get]
@@ -178,6 +182,7 @@ func (h *Handler) GetAllProjects(w http.ResponseWriter, r *http.Request) {
 // @Tags projects
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Project ID (UUID)"
 // @Param personId path string true "Person ID (UUID)"
 // @Success 200 {object} projectdto.Response
@@ -211,6 +216,7 @@ func (h *Handler) AddPerson(w http.ResponseWriter, r *http.Request) {
 // @Tags projects
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Project ID (UUID)"
 // @Param personId path string true "Person ID (UUID)"
 // @Success 200 {object} projectdto.Response
@@ -245,6 +251,7 @@ func (h *Handler) RemovePerson(w http.ResponseWriter, r *http.Request) {
 // @Tags projects
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Project ID (UUID)"
 // @Param productID path string true "Product ID (UUID)"
 // @Success 200 {object} projectdto.Response
@@ -279,6 +286,7 @@ func (h *Handler) AddProduct(w http.ResponseWriter, r *http.Request) {
 // @Tags projects
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Project ID (UUID)"
 // @Param productID path string true "Product ID (UUID)"
 // @Success 200 {object} projectdto.Response
@@ -308,11 +316,12 @@ func (h *Handler) RemoveProduct(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetChangelog godoc
-// @Summary GetOrganisationNode change log for a project
+// @Summary Get change log for a project
 // @Description Retrieves the change log for a specific project
 // @Tags projects
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Project ID (UUID)"
 // @Success 200 {object} changelogdto.Changelog
 // @Failure 400 {string} string "invalid project id"
@@ -335,11 +344,12 @@ func (h *Handler) GetChangelog(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetPendingEvents godoc
-// @Summary GetOrganisationNode pending events for a project
+// @Summary Get pending events for a project
 // @Description Retrieves a list of pending events for a specific project
 // @Tags projects
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Project ID (UUID)"
 // @Success 200 {object} eventdto.Response
 // @Failure 400 {string} string "invalid project id"

@@ -18,11 +18,12 @@ func NewHandler(svc notification.Service) *Handler {
 }
 
 // GetNotifications godoc
-// @Summary GetOrganisationNode notifications for the logged-in user
+// @Summary Get notifications for the logged-in user
 // @Description Retrieves a list of notifications for the authenticated user
 // @Tags notifications
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Success 200 {array} notificationdto.Response
 // @Failure 401 {string} string "unauthorized"
 // @Failure 500 {string} string "internal server error"
@@ -55,6 +56,7 @@ func (h *Handler) GetNotifications(w http.ResponseWriter, r *http.Request) {
 // @Tags notifications
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Notification ID"
 // @Success 200 {string} string "ok"
 // @Failure 401 {string} string "unauthorized"

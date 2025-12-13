@@ -86,7 +86,7 @@ func (h *Handler) CreateChild(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetOrganisationNode godoc
-// @Summary GetOrganisationNode an organisation node
+// @Summary Get an organisation node
 // @Description Retrieves a single organisation node by ID
 // @Tags organisation
 // @Accept json
@@ -115,7 +115,7 @@ func (h *Handler) GetOrganisationNode(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateOrganisationNode godoc
-// @Summary UpdateOrganisationNode an organisation node
+// @Summary Update an organisation node
 // @Description Updates an organisation node's name and/or parent (re-parenting). If parentID is null, the node becomes a root node.
 // @Tags organisation
 // @Accept json

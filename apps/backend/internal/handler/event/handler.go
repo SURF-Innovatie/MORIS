@@ -51,6 +51,7 @@ func toProductDTO(p entities.Product) productdto.Response {
 // @Tags events
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Event ID (UUID)"
 // @Success 200 {object} map[string]string
 // @Failure 400 {string} string "invalid event id"
@@ -80,6 +81,7 @@ func (h *Handler) ApproveEvent(w http.ResponseWriter, r *http.Request) {
 // @Tags events
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Event ID (UUID)"
 // @Success 200 {object} map[string]string
 // @Failure 400 {string} string "invalid event id"
@@ -104,11 +106,12 @@ func (h *Handler) RejectEvent(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetEvent godoc
-// @Summary GetOrganisationNode event details
+// @Summary Get event details
 // @Description Retrieves details for a specific event by ID
 // @Tags events
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Event ID (UUID)"
 // @Success 200 {object} eventdto.Event
 // @Failure 400 {string} string "invalid event id"
