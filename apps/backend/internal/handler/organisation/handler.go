@@ -92,7 +92,7 @@ func (h *Handler) CreateChild(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param id path string true "Organisation node ID"
+// @Param id path string true "OwningOrgNode node ID"
 // @Success 200 {object} organisationdto.Response
 // @Failure 400 {string} string "invalid id"
 // @Failure 404 {string} string "not found"
@@ -121,7 +121,7 @@ func (h *Handler) GetOrganisationNode(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param id path string true "Organisation node ID"
+// @Param id path string true "OwningOrgNode node ID"
 // @Param body body organisationdto.UpdateRequest true "UpdateOrganisationNode organisation node request"
 // @Success 200 {object} organisationdto.Response
 // @Failure 400 {string} string "invalid id / name is required / invalid request body"

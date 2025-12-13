@@ -168,7 +168,7 @@ func (h *RBACHandler) RemoveMembership(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param id path string true "Organisation node ID"
+// @Param id path string true "OwningOrgNode node ID"
 // @Success 200 {array} organisationrbacdto.EffectiveMembershipResponse
 // @Failure 400 {string} string "invalid id"
 // @Failure 401 {string} string "unauthorized"
@@ -210,7 +210,7 @@ func (h *RBACHandler) ListEffectiveMemberships(w http.ResponseWriter, r *http.Re
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param id path string true "Organisation node ID"
+// @Param id path string true "OwningOrgNode node ID"
 // @Success 200 {object} organisationrbacdto.ApprovalNodeResponse
 // @Failure 400 {string} string "invalid id"
 // @Failure 401 {string} string "unauthorized"

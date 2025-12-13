@@ -115,9 +115,12 @@ func main() {
 	notifierSvc := notification.NewService(client)
 	errorLogSvc := errorlog.NewService(client)
 
+	rbacSvc := organisation.NewRBACService(client)
+	rbacHandler := organisationhandler.NewRBACHandler(rbacSvc)
+
 	eventSvc := event.NewService(esStore, client, notifierSvc)
-	eventSvc.RegisterNotificationHandler(&event.ProjectEventNotificationHandler{Notifier: notifierSvc, Cli: client})
-	eventSvc.RegisterNotificationHandler(&event.ApprovalRequestNotificationHandler{Notifier: notifierSvc, Cli: client})
+	eventSvc.RegisterNotificationHandler(&event.ProjectEventNotificationHandler{Cli: client})
+	eventSvc.RegisterNotificationHandler(&event.ApprovalRequestNotificationHandler{Cli: client, ES: esStore, RBAC: rbacSvc})
 	eventSvc.RegisterNotificationHandler(&event.ProductAddedNotificationHandler{Notifier: notifierSvc, Cli: client, ES: esStore})
 	eventSvc.RegisterNotificationHandler(&event.StatusUpdateNotificationHandler{Notifier: notifierSvc, Cli: client})
 	eventSvc.RegisterNotificationHandler(&event.ApprovalCleanupHandler{Cli: client})
@@ -133,9 +136,6 @@ func main() {
 	projHandler := projecthandler.NewHandler(projSvc)
 
 	userHandler := userhandler.NewHandler(userSvc, projSvc)
-
-	rbacService := organisation.NewRBACService(client)
-	rbacHandler := organisationhandler.NewRBACHandler(rbacService)
 
 	// Router
 	r := chi.NewRouter()

@@ -38,10 +38,10 @@ func (h *ProductAddedNotificationHandler) Handle(ctx context.Context, e events.E
 	proj := projection.Reduce(projectID, evts)
 
 	// Notify all current members
-	for _, personID := range proj.People {
+	for _, member := range proj.Members {
 		// Find user for this person
 		u, err := h.Cli.User.Query().
-			Where(user.PersonIDEQ(personID)).
+			Where(user.PersonIDEQ(member.PersonID)).
 			Only(ctx)
 		if err != nil {
 			// Person might not have a user account or error

@@ -23,7 +23,7 @@ func NewHandler(svc event.Service) *Handler {
 
 func toPersonDTO(p entities.Person) persondto.Response {
 	return persondto.Response{
-		ID:          p.Id,
+		ID:          p.ID,
 		UserID:      p.UserID,
 		Name:        p.Name,
 		GivenName:   p.GivenName,
@@ -139,18 +139,14 @@ func (h *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch ev := e.(type) {
-	case events.PersonAdded:
-		p := toPersonDTO(ev.Person)
-		dtoEvent.Person = &p
-	case events.PersonRemoved:
-		p := toPersonDTO(ev.Person)
-		dtoEvent.Person = &p
+	case events.ProjectRoleAssigned:
+		dtoEvent.PersonID = &ev.PersonID
+	case events.ProjectRoleUnassigned:
+		dtoEvent.PersonID = &ev.PersonID
 	case events.ProductAdded:
-		p := toProductDTO(ev.Product)
-		dtoEvent.Product = &p
+		dtoEvent.ProductID = &ev.ProductID
 	case events.ProductRemoved:
-		p := toProductDTO(ev.Product)
-		dtoEvent.Product = &p
+		dtoEvent.ProductID = &ev.ProductID
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, dtoEvent)

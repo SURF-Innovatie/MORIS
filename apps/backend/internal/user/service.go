@@ -116,7 +116,7 @@ func (s *service) GetAccountByEmail(ctx context.Context, email string) (*entitie
 
 	userRow, err := s.cli.User.
 		Query().
-		Where(user.PersonIDEQ(personEntity.Id)).
+		Where(user.PersonIDEQ(personEntity.ID)).
 		Only(ctx)
 	if err != nil {
 		return nil, err

@@ -74,7 +74,7 @@ func (s *service) Link(ctx context.Context, userID uuid.UUID, code string) error
 
 	// UpdateOrganisationNode person with ORCID ID
 	if _, err := s.client.Person.
-		UpdateOneID(usr.Person.Id).
+		UpdateOneID(usr.Person.ID).
 		SetOrcidID(orcidID).
 		Save(ctx); err != nil {
 		return fmt.Errorf("failed to link ORCID ID: %w", err)

@@ -12,9 +12,9 @@ import (
 	en "github.com/SURF-Innovatie/MORIS/ent/event"
 	organisationent "github.com/SURF-Innovatie/MORIS/ent/organisationnode"
 	personent "github.com/SURF-Innovatie/MORIS/ent/person"
-	"github.com/SURF-Innovatie/MORIS/ent/personaddedevent"
 	productent "github.com/SURF-Innovatie/MORIS/ent/product"
-	"github.com/SURF-Innovatie/MORIS/ent/projectstartedevent"
+	entprojectrole "github.com/SURF-Innovatie/MORIS/ent/projectrole"
+	entprojectroleassigned "github.com/SURF-Innovatie/MORIS/ent/projectroleassignedevent"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/commands"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
@@ -52,20 +52,19 @@ type service struct {
 }
 
 type StartProjectParams struct {
-	ProjectAdmin   uuid.UUID
-	Title          string
-	Description    string
-	OrganisationID uuid.UUID
-	StartDate      time.Time
-	EndDate        time.Time
+	Title           string
+	Description     string
+	OwningOrgNodeID uuid.UUID
+	StartDate       time.Time
+	EndDate         time.Time
 }
 
 type UpdateProjectParams struct {
-	Title          string
-	Description    string
-	OrganisationID uuid.UUID
-	StartDate      time.Time
-	EndDate        time.Time
+	Title           string
+	Description     string
+	OwningOrgNodeID uuid.UUID
+	StartDate       time.Time
+	EndDate         time.Time
 }
 
 func NewService(es eventstore.Store, cli *ent.Client, evtSvc event.Service, rdb *redis.Client) Service {
@@ -104,12 +103,11 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 			Status:    string(en.StatusApproved),
 			CreatedBy: user.ID,
 		},
-		ProjectAdmin:   user.PersonID,
-		Title:          params.Title,
-		Description:    params.Description,
-		StartDate:      params.StartDate,
-		EndDate:        params.EndDate,
-		OrganisationID: params.OrganisationID,
+		Title:           params.Title,
+		Description:     params.Description,
+		StartDate:       params.StartDate,
+		EndDate:         params.EndDate,
+		OwningOrgNodeID: params.OwningOrgNodeID,
 	}
 
 	if err := s.es.Append(ctx, projectID, 0, startEvent); err != nil {
@@ -119,7 +117,19 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 	proj := projection.Reduce(projectID, []events.Event{startEvent})
 	proj.Version = 1
 
-	ev, err := commands.AddPerson(projectID, user.ID, proj, user.PersonID, en.StatusApproved)
+	adminRoleID, err := s.projectRoleID(ctx, "admin") // or "lead" depending on your key
+	if err != nil {
+		return nil, err
+	}
+
+	ev, err := commands.AssignProjectRole(
+		projectID,
+		user.ID,
+		proj,
+		user.PersonID,
+		adminRoleID,
+		en.StatusApproved,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +198,7 @@ func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params Update
 		projection.Apply(proj, evt)
 	}
 
-	if evt, err := commands.SetOrganisation(id, user.ID, proj, params.OrganisationID, en.StatusApproved); err != nil {
+	if evt, err := commands.ChangeOwningOrgNode(id, user.ID, proj, params.OwningOrgNodeID, en.StatusApproved); err != nil {
 		return nil, err
 	} else if evt != nil {
 		newEvents = append(newEvents, evt)
@@ -216,6 +226,21 @@ func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params Update
 	return s.buildProjectDetails(ctx, proj)
 }
 
+func (s *service) projectRoleID(ctx context.Context, key string) (uuid.UUID, error) {
+	var ids []uuid.UUID
+	if err := s.cli.ProjectRole.
+		Query().
+		Where(entprojectrole.KeyEQ(key)).
+		Select(entprojectrole.FieldID).
+		Scan(ctx, &ids); err != nil {
+		return uuid.Nil, err
+	}
+	if len(ids) == 0 {
+		return uuid.Nil, fmt.Errorf("project role not found: %s", key)
+	}
+	return ids[0], nil
+}
+
 // TODO, instead of a helper function there should be a currentUserService
 func currentUser(ctx context.Context, cli *ent.Client) (*ent.User, error) {
 	authUser, ok := httputil.GetUserFromContext(ctx)
@@ -232,33 +257,17 @@ func (s *service) GetAllProjects(ctx context.Context) ([]*entities.ProjectDetail
 		return nil, err
 	}
 
-	// 1. Projects where user is admin (ProjectStartedEvent)
-	var adminProjectIDs []uuid.UUID
-	if err := s.cli.ProjectStartedEvent.
-		Query().
-		Where(projectstartedevent.ProjectAdminEQ(user.PersonID)).
-		QueryEvent().
-		Select(en.FieldProjectID).
-		Scan(ctx, &adminProjectIDs); err != nil {
-		return nil, err
-	}
-
-	// 2. Projects where user is added (PersonAddedEvent)
 	var memberProjectIDs []uuid.UUID
-	if err := s.cli.PersonAddedEvent.
+	if err := s.cli.ProjectRoleAssignedEvent.
 		Query().
-		Where(personaddedevent.PersonIDEQ(user.PersonID)).
+		Where(entprojectroleassigned.PersonIDEQ(user.PersonID)).
 		QueryEvent().
 		Select(en.FieldProjectID).
 		Scan(ctx, &memberProjectIDs); err != nil {
 		return nil, err
 	}
 
-	// Combine IDs
-	uniqueIDs := make(map[uuid.UUID]struct{})
-	for _, id := range adminProjectIDs {
-		uniqueIDs[id] = struct{}{}
-	}
+	uniqueIDs := make(map[uuid.UUID]struct{}, len(memberProjectIDs))
 	for _, id := range memberProjectIDs {
 		uniqueIDs[id] = struct{}{}
 	}
@@ -303,11 +312,7 @@ func (s *service) GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]
 	return pending, nil
 }
 
-func (s *service) AddPerson(
-	ctx context.Context,
-	projectID uuid.UUID,
-	personId uuid.UUID,
-) (*entities.ProjectDetails, error) {
+func (s *service) AddPerson(ctx context.Context, projectID uuid.UUID, personId uuid.UUID) (*entities.ProjectDetails, error) {
 	proj, err := s.fromDb(ctx, projectID)
 	if err != nil {
 		return nil, err
@@ -318,17 +323,17 @@ func (s *service) AddPerson(
 		return nil, err
 	}
 
-	evt, err := commands.AddPerson(projectID, user.ID, proj, personId, en.StatusPending)
+	contribRoleID, err := s.projectRoleID(ctx, "contributor")
+	if err != nil {
+		return nil, err
+	}
+
+	evt, err := commands.AssignProjectRole(projectID, user.ID, proj, personId, contribRoleID, en.StatusPending)
 	if err != nil {
 		return nil, err
 	}
 	if evt == nil {
-		resp, err := s.buildProjectDetails(ctx, proj)
-		if err != nil {
-			return nil, err
-		}
-
-		return resp, nil
+		return s.buildProjectDetails(ctx, proj)
 	}
 
 	if err := s.es.Append(ctx, projectID, proj.Version, evt); err != nil {
@@ -340,24 +345,11 @@ func (s *service) AddPerson(
 	projection.Apply(proj, evt)
 	proj.Version++
 
-	// UpdateOrganisationNode cache
-	if err := s.cacheProject(ctx, proj); err != nil {
-		logrus.Errorf("failed to update project cache: %v", err)
-	}
-
-	resp, err := s.buildProjectDetails(ctx, proj)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	_ = s.cacheProject(ctx, proj)
+	return s.buildProjectDetails(ctx, proj)
 }
 
-func (s *service) RemovePerson(
-	ctx context.Context,
-	projectID uuid.UUID,
-	personID uuid.UUID,
-) (*entities.ProjectDetails, error) {
+func (s *service) RemovePerson(ctx context.Context, projectID uuid.UUID, personID uuid.UUID) (*entities.ProjectDetails, error) {
 	proj, err := s.fromDb(ctx, projectID)
 	if err != nil {
 		return nil, err
@@ -368,17 +360,17 @@ func (s *service) RemovePerson(
 		return nil, err
 	}
 
-	evt, err := commands.RemovePerson(projectID, user.ID, proj, personID, en.StatusApproved)
+	contribRoleID, err := s.projectRoleID(ctx, "contributor")
+	if err != nil {
+		return nil, err
+	}
+
+	evt, err := commands.UnassignProjectRole(projectID, user.ID, proj, personID, contribRoleID, en.StatusApproved)
 	if err != nil {
 		return nil, err
 	}
 	if evt == nil {
-		resp, err := s.buildProjectDetails(ctx, proj)
-		if err != nil {
-			return nil, err
-		}
-
-		return resp, nil
+		return s.buildProjectDetails(ctx, proj)
 	}
 
 	if err := s.es.Append(ctx, projectID, proj.Version, evt); err != nil {
@@ -390,17 +382,8 @@ func (s *service) RemovePerson(
 	projection.Apply(proj, evt)
 	proj.Version++
 
-	// UpdateOrganisationNode cache
-	if err := s.cacheProject(ctx, proj); err != nil {
-		logrus.Errorf("failed to update project cache: %v", err)
-	}
-
-	resp, err := s.buildProjectDetails(ctx, proj)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	_ = s.cacheProject(ctx, proj)
+	return s.buildProjectDetails(ctx, proj)
 }
 
 func (s *service) AddProduct(
@@ -510,9 +493,18 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Projec
 		return nil, errors.New("project is nil")
 	}
 
+	personIDSet := map[uuid.UUID]struct{}{}
+	for _, m := range proj.Members {
+		personIDSet[m.PersonID] = struct{}{}
+	}
+	personIDs := make([]uuid.UUID, 0, len(personIDSet))
+	for id := range personIDSet {
+		personIDs = append(personIDs, id)
+	}
+
 	peopleRows, err := s.cli.Person.
 		Query().
-		Where(personent.IDIn(proj.People...)).
+		Where(personent.IDIn(personIDs...)).
 		All(ctx)
 	if err != nil {
 		return nil, err
@@ -521,7 +513,7 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Projec
 	people := make([]entities.Person, 0, len(peopleRows))
 	for _, p := range peopleRows {
 		people = append(people, entities.Person{
-			Id:          p.ID,
+			ID:          p.ID,
 			UserID:      p.UserID,
 			Name:        p.Name,
 			GivenName:   p.GivenName,
@@ -535,11 +527,8 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Projec
 
 	productRows, err := s.cli.Product.
 		Query().
-		Where(productent.IDIn(proj.Products...)).
+		Where(productent.IDIn(proj.ProductIDs...)).
 		All(ctx)
-	if err != nil {
-		return nil, err
-	}
 
 	products := make([]entities.Product, 0, len(productRows))
 	for _, p := range productRows {
@@ -554,22 +543,23 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Projec
 
 	orgRow, err := s.cli.OrganisationNode.
 		Query().
-		Where(organisationent.ID(proj.Organisation)).
-		First(ctx)
+		Where(organisationent.IDEQ(proj.OwningOrgNodeID)).
+		Only(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	org := entities.OrganisationNode{
-		ID:   orgRow.ID,
-		Name: orgRow.Name,
+		ID:       orgRow.ID,
+		ParentID: orgRow.ParentID,
+		Name:     orgRow.Name,
 	}
 
 	return &entities.ProjectDetails{
-		Project:      *proj,
-		Organisation: org,
-		People:       people,
-		Products:     products,
+		Project:       *proj,
+		OwningOrgNode: org,
+		People:        people,
+		Products:      products,
 	}, nil
 }
 

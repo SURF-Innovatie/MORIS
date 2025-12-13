@@ -10,6 +10,7 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
+	entprojectrole "github.com/SURF-Innovatie/MORIS/ent/projectrole"
 	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
@@ -129,6 +130,22 @@ func main() {
 	logrus.Infof("Created user for person %s", testUserName)
 
 	es := eventstore.NewEntStore(client)
+
+	if _, err := client.ProjectRole.
+		Create().
+		SetKey("contributor").
+		SetName("Contributor").
+		Save(ctx); err != nil {
+		logrus.Fatalf("create project role contributor: %v", err)
+	}
+
+	if _, err := client.ProjectRole.
+		Create().
+		SetKey("admin"). // or "lead" if you prefer; must match what you query later
+		SetName("Project Lead").
+		Save(ctx); err != nil {
+		logrus.Fatalf("create project role admin: %v", err)
+	}
 
 	projects := []seedProject{
 		{
@@ -279,7 +296,7 @@ func main() {
 			logrus.Infof("Created user for person %s", name)
 		}
 
-		// OrganisationNode for this project (no flat Organisation table anymore)
+		// OrganisationNode for this project (no flat OwningOrgNode table anymore)
 		if _, exists := orgNodeIDs[sp.Organisation]; !exists {
 			orgNode, err := client.OrganisationNode.
 				Create().
@@ -389,12 +406,11 @@ func main() {
 				At:        time.Now().UTC(),
 				Status:    "approved",
 			},
-			ProjectAdmin:   testPersonID,
-			Title:          sp.Title,
-			Description:    sp.Description,
-			StartDate:      sp.Start,
-			EndDate:        sp.End,
-			OrganisationID: mustOrgNodeID(sp.Organisation),
+			Title:           sp.Title,
+			Description:     sp.Description,
+			StartDate:       sp.Start,
+			EndDate:         sp.End,
+			OwningOrgNodeID: mustOrgNodeID(sp.Organisation),
 		}
 
 		if err := es.Append(ctx, projectID, 0, startEvent); err != nil {
@@ -403,19 +419,44 @@ func main() {
 
 		version := 1
 
+		// fetch project role IDs
+		contributorRoleID, err := client.ProjectRole.
+			Query().
+			Where(entprojectrole.KeyEQ("contributor")).
+			OnlyID(ctx)
+		if err != nil {
+			logrus.Fatalf("fetch contributor role id: %v", err)
+		}
+
+		leadRoleID, err := client.ProjectRole.
+			Query().
+			Where(entprojectrole.KeyEQ("admin")).
+			OnlyID(ctx)
+		if err != nil {
+			logrus.Fatalf("fetch lead/admin role id: %v", err)
+		}
+
 		for _, name := range sp.People {
 			personID := mustPersonID(name)
-			pevt := events.PersonAdded{
+
+			roleID := contributorRoleID
+			if name == testUserName {
+				roleID = leadRoleID // make test user the project lead/admin
+			}
+
+			pevt := events.ProjectRoleAssigned{
 				Base: events.Base{
+					ID:        uuid.New(),
 					ProjectID: projectID,
 					At:        time.Now().UTC(),
 					Status:    "approved",
 				},
-				Person: entities.Person{Id: personID},
+				PersonID:      personID,
+				ProjectRoleID: roleID,
 			}
 
 			if err := es.Append(ctx, projectID, version, pevt); err != nil {
-				logrus.Fatalf("append PersonAdded for %s (%s): %v", name, sp.Title, err)
+				logrus.Fatalf("append ProjectRoleAssigned for %s (%s): %v", name, sp.Title, err)
 			}
 			version++
 		}
@@ -429,7 +470,7 @@ func main() {
 					At:        time.Now().UTC(),
 					Status:    "approved",
 				},
-				Product: entities.Product{Id: productID},
+				ProductID: productID,
 			}
 
 			if err := es.Append(ctx, projectID, version, pevt); err != nil {

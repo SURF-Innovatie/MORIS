@@ -6,7 +6,7 @@ import (
 )
 
 type Person struct {
-	Id          uuid.UUID
+	ID          uuid.UUID
 	AvatarUrl   *string
 	Description *string
 	UserID      uuid.UUID
@@ -19,7 +19,7 @@ type Person struct {
 
 func (p *Person) FromEnt(row *ent.Person) *Person {
 	return &Person{
-		Id:          row.ID,
+		ID:          row.ID,
 		Name:        row.Name,
 		ORCiD:       &row.OrcidID,
 		GivenName:   row.GivenName,

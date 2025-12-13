@@ -75,12 +75,11 @@ func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := project.StartProjectParams{
-		ProjectAdmin:   req.ProjectAdmin,
-		Title:          req.Title,
-		Description:    req.Description,
-		OrganisationID: req.OrganisationID,
-		StartDate:      start,
-		EndDate:        end,
+		Title:           req.Title,
+		Description:     req.Description,
+		OwningOrgNodeID: req.OwningOrgNodeID,
+		StartDate:       start,
+		EndDate:         end,
 	}
 
 	proj, err := h.svc.StartProject(r.Context(), params)
@@ -130,11 +129,11 @@ func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := project.UpdateProjectParams{
-		Title:          req.Title,
-		Description:    req.Description,
-		OrganisationID: req.OrganisationID,
-		StartDate:      start,
-		EndDate:        end,
+		Title:           req.Title,
+		Description:     req.Description,
+		OwningOrgNodeID: req.OwningOrgNodeID,
+		StartDate:       start,
+		EndDate:         end,
 	}
 
 	proj, err := h.svc.UpdateProject(r.Context(), id, params)

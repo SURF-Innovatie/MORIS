@@ -30,7 +30,7 @@ type Response struct {
 
 func FromEntity(e entities.Person) Response {
 	return Response{
-		ID:          e.Id,
+		ID:          e.ID,
 		UserID:      e.UserID,
 		Name:        e.Name,
 		GivenName:   e.GivenName,

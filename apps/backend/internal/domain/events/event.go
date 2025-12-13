@@ -18,16 +18,16 @@ type Event interface {
 }
 
 const (
-	ProjectStartedType      = "project.started"
-	TitleChangedType        = "project.title_changed"
-	DescriptionChangedType  = "project.description_changed"
-	StartDateChangedType    = "project.start_date_changed"
-	EndDateChangedType      = "project.end_date_changed"
-	OrganisationChangedType = "project.organisation_changed"
-	PersonAddedType         = "project.person_added"
-	PersonRemovedType       = "project.person_removed"
-	ProductAddedType        = "project.product_added"
-	ProductRemovedType      = "project.product_removed"
+	ProjectStartedType        = "project.started"
+	TitleChangedType          = "project.title_changed"
+	DescriptionChangedType    = "project.description_changed"
+	StartDateChangedType      = "project.start_date_changed"
+	EndDateChangedType        = "project.end_date_changed"
+	ProductAddedType          = "project.product_added"
+	ProductRemovedType        = "project.product_removed"
+	ProjectRoleAssignedType   = "project.role_assigned"
+	ProjectRoleUnassignedType = "project.role_revoked"
+	OwningOrgNodeChangedType  = "project.owning_org_node_changed"
 )
 
 type Base struct {

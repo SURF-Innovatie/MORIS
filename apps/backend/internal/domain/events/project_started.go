@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
 
 type ProjectStarted struct {
 	Base
-	ProjectAdmin   uuid.UUID   `json:"projectAdmin"`
-	Title          string      `json:"title"`
-	Description    string      `json:"description"`
-	StartDate      time.Time   `json:"startDate"`
-	EndDate        time.Time   `json:"endDate"`
-	People         []uuid.UUID `json:"people"`
-	OrganisationID uuid.UUID   `json:"organisation"`
+	Title           string                   `json:"title"`
+	Description     string                   `json:"description"`
+	StartDate       time.Time                `json:"startDate"`
+	EndDate         time.Time                `json:"endDate"`
+	Members         []entities.ProjectMember `json:"members_ids"`
+	OwningOrgNodeID uuid.UUID                `json:"owning_org_node_id"`
 }
 
 func (ProjectStarted) isEvent()     {}
