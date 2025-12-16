@@ -39,8 +39,10 @@ type Service interface {
 	RemovePerson(ctx context.Context, projectID uuid.UUID, personID uuid.UUID) (*entities.ProjectDetails, error)
 	AddProduct(ctx context.Context, projectID uuid.UUID, productID uuid.UUID) (*entities.ProjectDetails, error)
 	RemoveProduct(ctx context.Context, projectID uuid.UUID, productID uuid.UUID) (*entities.ProjectDetails, error)
+	UpdateMemberRole(ctx context.Context, projectID uuid.UUID, personID uuid.UUID, roleKey string) (*entities.ProjectDetails, error)
 	GetChangeLog(ctx context.Context, id uuid.UUID) (*entities.ChangeLog, error)
 	GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.Event, error)
+	GetProjectRoles(ctx context.Context) ([]entities.ProjectRole, error)
 	WarmupCache(ctx context.Context) error
 }
 
@@ -386,6 +388,86 @@ func (s *service) RemovePerson(ctx context.Context, projectID uuid.UUID, personI
 	return s.buildProjectDetails(ctx, proj)
 }
 
+func (s *service) UpdateMemberRole(
+	ctx context.Context,
+	projectID uuid.UUID,
+	personID uuid.UUID,
+	roleKey string,
+) (*entities.ProjectDetails, error) {
+	proj, err := s.fromDb(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := currentUser(ctx, s.cli)
+	if err != nil {
+		return nil, err
+	}
+
+	// 1. Find current role
+	var currentRoleID uuid.UUID
+	found := false
+	for _, m := range proj.Members {
+		if m.PersonID == personID {
+			currentRoleID = m.ProjectRoleID
+			found = true
+			break
+		}
+	}
+	if !found {
+		return nil, errors.New("person is not a member of this project")
+	}
+
+	// 2. Resolve new role ID
+	newRoleID, err := s.projectRoleID(ctx, roleKey)
+	if err != nil {
+		return nil, err
+	}
+
+	if currentRoleID == newRoleID {
+		return s.buildProjectDetails(ctx, proj)
+	}
+
+	// 3. Create Events
+	// Unassign old role
+	unassignEvt, err := commands.UnassignProjectRole(projectID, user.ID, proj, personID, currentRoleID, en.StatusApproved)
+	if err != nil {
+		return nil, err
+	}
+
+	// Assign new role
+	assignEvt, err := commands.AssignProjectRole(projectID, user.ID, proj, personID, newRoleID, en.StatusApproved)
+	if err != nil {
+		return nil, err
+	}
+
+	newEvents := []events.Event{}
+	if unassignEvt != nil {
+		newEvents = append(newEvents, unassignEvt)
+	}
+	if assignEvt != nil {
+		newEvents = append(newEvents, assignEvt)
+	}
+
+	if len(newEvents) == 0 {
+		return s.buildProjectDetails(ctx, proj)
+	}
+
+	// 4. Append and Apply
+	for _, evt := range newEvents {
+		if err := s.es.Append(ctx, projectID, proj.Version, evt); err != nil {
+			return nil, err
+		}
+		projection.Apply(proj, evt)
+		proj.Version++
+	}
+
+	_ = s.evtSvc.HandleEvents(ctx, newEvents...)
+	_ = s.cacheProject(ctx, proj)
+
+	return s.buildProjectDetails(ctx, proj)
+}
+
 func (s *service) AddProduct(
 	ctx context.Context,
 	projectID uuid.UUID,
@@ -493,13 +575,21 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Projec
 		return nil, errors.New("project is nil")
 	}
 
+	// Fetch People
 	personIDSet := map[uuid.UUID]struct{}{}
+	roleIDSet := map[uuid.UUID]struct{}{}
+
 	for _, m := range proj.Members {
 		personIDSet[m.PersonID] = struct{}{}
+		roleIDSet[m.ProjectRoleID] = struct{}{}
 	}
 	personIDs := make([]uuid.UUID, 0, len(personIDSet))
 	for id := range personIDSet {
 		personIDs = append(personIDs, id)
+	}
+	roleIDs := make([]uuid.UUID, 0, len(roleIDSet))
+	for id := range roleIDSet {
+		roleIDs = append(roleIDs, id)
 	}
 
 	peopleRows, err := s.cli.Person.
@@ -509,10 +599,9 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Projec
 	if err != nil {
 		return nil, err
 	}
-
-	people := make([]entities.Person, 0, len(peopleRows))
+	peopleMap := make(map[uuid.UUID]entities.Person)
 	for _, p := range peopleRows {
-		people = append(people, entities.Person{
+		peopleMap[p.ID] = entities.Person{
 			ID:          p.ID,
 			UserID:      p.UserID,
 			Name:        p.Name,
@@ -522,13 +611,45 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Projec
 			ORCiD:       &p.OrcidID,
 			AvatarUrl:   p.AvatarURL,
 			Description: p.Description,
-		})
+		}
+	}
+
+	// Fetch Roles
+	rolesRows, err := s.cli.ProjectRole.
+		Query().
+		Where(entprojectrole.IDIn(roleIDs...)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	rolesMap := make(map[uuid.UUID]entities.ProjectRole)
+	for _, r := range rolesRows {
+		rolesMap[r.ID] = entities.ProjectRole{
+			ID:   r.ID,
+			Key:  r.Key,
+			Name: r.Name,
+		}
+	}
+
+	members := make([]entities.ProjectMemberDetail, 0, len(proj.Members))
+	for _, m := range proj.Members {
+		p, okP := peopleMap[m.PersonID]
+		r, okR := rolesMap[m.ProjectRoleID]
+		if okP && okR {
+			members = append(members, entities.ProjectMemberDetail{
+				Person: p,
+				Role:   r,
+			})
+		}
 	}
 
 	productRows, err := s.cli.Product.
 		Query().
 		Where(productent.IDIn(proj.ProductIDs...)).
 		All(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	products := make([]entities.Product, 0, len(productRows))
 	for _, p := range productRows {
@@ -558,7 +679,7 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Projec
 	return &entities.ProjectDetails{
 		Project:       *proj,
 		OwningOrgNode: org,
-		People:        people,
+		Members:       members,
 		Products:      products,
 	}, nil
 }
@@ -684,6 +805,23 @@ func (s *service) getFromCache(ctx context.Context, projectID uuid.UUID) (*entit
 	}
 
 	return &proj, nil
+}
+
+func (s *service) GetProjectRoles(ctx context.Context) ([]entities.ProjectRole, error) {
+	roles, err := s.cli.ProjectRole.Query().All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []entities.ProjectRole
+	for _, r := range roles {
+		result = append(result, entities.ProjectRole{
+			ID:   r.ID,
+			Key:  r.Key,
+			Name: r.Name,
+		})
+	}
+	return result, nil
 }
 
 func (s *service) onStatusChange(ctx context.Context, e events.Event) error {

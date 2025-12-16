@@ -61,9 +61,9 @@ export default function ProjectEditRoute() {
       form.reset({
         title: project.title || "",
         description: project.description || "",
-        startDate: project.startDate ? new Date(project.startDate) : undefined,
-        endDate: project.endDate ? new Date(project.endDate) : undefined,
-        organisationID: project.organization?.id || EMPTY_UUID,
+        startDate: project.start_date ? new Date(project.start_date) : undefined,
+        endDate: project.end_date ? new Date(project.end_date) : undefined,
+        organisationID: project.owning_org_node?.id || EMPTY_UUID,
       });
     }
   }, [project, form]);
@@ -75,9 +75,9 @@ export default function ProjectEditRoute() {
         data: {
           title: values.title,
           description: values.description,
-          startDate: values.startDate.toISOString(),
-          endDate: values.endDate.toISOString(),
-          organisationID: values.organisationID,
+          start_date: values.startDate.toISOString(),
+          end_date: values.endDate.toISOString(),
+          owning_org_node_id: values.organisationID,
         },
       });
       toast({
@@ -155,6 +155,9 @@ export default function ProjectEditRoute() {
               form={form}
               onSubmit={onSubmit}
               isUpdating={isUpdating}
+              // project pass-through might need check if GeneralTab uses project props
+              // But looking at previous code, it just passed `project`.
+              // GeneralTab probably needs updating if it uses snake_case props?
               project={project}
             />
           </TabsContent>
@@ -162,8 +165,7 @@ export default function ProjectEditRoute() {
           <TabsContent value="people">
             <PeopleTab
               projectId={id!}
-              people={project?.people || []}
-              adminId={project?.projectAdmin}
+              members={project?.members || []}
               onRefresh={refetchProject}
             />
           </TabsContent>

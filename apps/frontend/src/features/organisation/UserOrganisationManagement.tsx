@@ -33,7 +33,7 @@ const MembershipCard = ({ membership }: { membership: EffectiveMembershipRespons
         <div className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start">
                 <div>
-                    <h3 className="font-semibold text-lg">{membership.organisationName || `Organization ${membership.scopeRootID}`}</h3>
+                    <h3 className="font-semibold text-lg">{membership.organisationName}</h3>
                     <p className="text-sm text-gray-500">{membership.roleKey} Role</p>
                 </div>
                 <div className="flex gap-2">

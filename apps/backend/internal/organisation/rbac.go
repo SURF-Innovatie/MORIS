@@ -212,6 +212,25 @@ func (s *rbacService) CreateScope(ctx context.Context, roleKey string, rootNodeI
 		return nil, err
 	}
 
+	// Check if scope already exists
+	existing, err := s.cli.RoleScope.
+		Query().
+		Where(
+			entrolescope.RoleIDEQ(role.ID),
+			entrolescope.RootNodeIDEQ(rootNodeID),
+		).
+		Only(ctx)
+
+	if err == nil {
+		return &entities.RoleScope{
+			ID:         existing.ID,
+			RoleID:     existing.RoleID,
+			RootNodeID: existing.RootNodeID,
+		}, nil
+	} else if !ent.IsNotFound(err) {
+		return nil, err
+	}
+
 	row, err := s.cli.RoleScope.
 		Create().
 		SetRoleID(role.ID).

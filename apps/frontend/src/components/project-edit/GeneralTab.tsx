@@ -74,7 +74,7 @@ export function GeneralTab({
           <CardContent>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Building2 className="h-4 w-4" />
-              <span>Organization ID: {project?.organization?.id || "N/A"}</span>
+              <span>{project?.owning_org_node?.name || "N/A"}</span>
             </div>
           </CardContent>
         </Card>

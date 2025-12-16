@@ -23,10 +23,15 @@ type Project struct {
 	ProductIDs      []uuid.UUID
 }
 
+type ProjectMemberDetail struct {
+	Person Person
+	Role   ProjectRole
+}
+
 type ProjectDetails struct {
 	Project       Project
 	OwningOrgNode OrganisationNode
-	People        []Person
+	Members       []ProjectMemberDetail
 	Products      []Product
 }
 

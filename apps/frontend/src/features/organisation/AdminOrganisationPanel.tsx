@@ -35,12 +35,19 @@ export const AdminOrganisationPanel = () => {
 
 const OrganisationNodeItem = ({ node }: { node: OrganisationResponse }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const { data: children } = useGetOrganisationNodesIdChildren(node.id!, { query: { enabled: isExpanded } });
+    const { data: children, isFetched } = useGetOrganisationNodesIdChildren(node.id!);
+
+    // If we have fetched and there are no children, we hide the chevron
+    const isEmpty = isFetched && children?.length === 0;
 
     return (
         <div className="ml-4 border-l pl-4">
             <div className="flex items-center gap-2 py-2">
-                <button onClick={() => setIsExpanded(!isExpanded)} className="p-1 hover:bg-gray-100 rounded">
+                <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className={`p-1 hover:bg-gray-100 rounded ${isEmpty ? "invisible" : ""}`}
+                    disabled={isEmpty}
+                >
                     {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                 </button>
                 <span className="font-medium">{node.name}</span>
@@ -51,12 +58,11 @@ const OrganisationNodeItem = ({ node }: { node: OrganisationResponse }) => {
                     </Link>
                 </div>
             </div>
-            {isExpanded && (
+            {isExpanded && !isEmpty && (
                 <div className="ml-4">
                     {children?.map((child) => (
                         <OrganisationNodeItem key={child.id} node={child} />
                     ))}
-                    {children?.length === 0 && <div className="text-gray-500 italic text-sm">No children</div>}
                 </div>
             )}
         </div>

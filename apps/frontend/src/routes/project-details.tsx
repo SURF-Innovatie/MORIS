@@ -15,6 +15,7 @@ export default function ProjectDetailsRoute() {
     data: project,
     isLoading,
     error,
+    refetch,
   } = useGetProjectsId(id!, {
     query: {
       enabled: !!id,
@@ -46,7 +47,7 @@ export default function ProjectDetailsRoute() {
 
       <main className="container flex-1 py-8 space-y-8">
         <ProjectOverview project={project} />
-        <ProjectTeamList project={project} />
+        <ProjectTeamList project={project} onRefresh={refetch} />
         <ProjectProductList project={project} />
       </main>
     </div>

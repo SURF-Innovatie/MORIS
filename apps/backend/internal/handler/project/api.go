@@ -6,9 +6,11 @@ func MountProjectRoutes(r chi.Router, h *Handler) {
 	r.Route("/projects", func(r chi.Router) {
 		r.Get("/", h.GetAllProjects)
 		r.Post("/", h.StartProject)
+		r.Get("/roles", h.GetProjectRoles)
 		r.Get("/{id}", h.GetProject)
 		r.Put("/{id}", h.UpdateProject)
 		r.Post("/{id}/people/{personId}", h.AddPerson)
+		r.Put("/{id}/people/{personId}", h.UpdatePerson)
 		r.Delete("/{id}/people/{personId}", h.RemovePerson)
 		r.Post("/{id}/products/{productID}", h.AddProduct)
 		r.Delete("/{id}/products/{productID}", h.RemoveProduct)

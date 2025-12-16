@@ -2,9 +2,8 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import {
     useGetOrganisationNodesIdMembershipsEffective,
+    getGetOrganisationNodesIdMembershipsEffectiveQueryKey,
     useGetOrganisationRoles,
-    // usePostOrganisationScopes, // Not directly exposed? Usually integrated into AddMembership or separate?
-    // Backend has CreateScope separate.
     usePostOrganisationScopes,
     usePostOrganisationMemberships,
     useDeleteOrganisationMembershipsId
@@ -16,6 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
 import { UserSearchSelect } from "@/components/user/UserSearchSelect";
 import { EffectiveMembershipResponse } from "@/api/generated-orval/model";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 export const RoleManagement = () => {
     const { nodeId } = useParams<{ nodeId: string }>();
@@ -46,7 +46,7 @@ export const RoleManagement = () => {
                                 <td className="px-4 py-3">{m.person?.name}</td>
                                 <td className="px-4 py-3 capitalize">{m.roleKey}</td>
                                 <td className="px-4 py-3 text-right">
-                                    <RemoveMemberButton membershipId={m.membershipId} />
+                                    <RemoveMemberButton membershipId={m.membershipId!} nodeId={nodeId!} />
                                 </td>
                             </tr>
                         ))}
@@ -62,53 +62,22 @@ export const RoleManagement = () => {
 
 const AddMemberDialog = ({ nodeId, roles }: { nodeId: string, roles: any[] }) => {
     const [open, setOpen] = useState(false);
-    const [personId, setPersonId] = useState(""); // Simplified: Input ID directly for now
+    const [personId, setPersonId] = useState("");
     const [roleKey, setRoleKey] = useState("");
 
     const queryClient = useQueryClient();
-
-    // Two step process: Ensure Scope Exists -> Add Membership
-    // But typically UI handles this. 
-    // Backend API: CreateScope(roleKey, rootNodeID) -> returns ID.
-    // AddMembership(personID, roleScopeID).
 
     const { mutateAsync: createScope } = usePostOrganisationScopes();
     const { mutateAsync: addMembership } = usePostOrganisationMemberships();
 
     const handleAdd = async () => {
         try {
-            // 1. Create or Get Scope
-            // The createScope endpoint likely returns existing if strict? No, backend implementation of CreateScope:
-            // "role, err := QueryRole... Create()...Save(ctx)". It attempts to create.
-            // If uniqueness constraint exists on (RoleID, RootNodeID), it fails?
-            // "ent" usually fails on unique constraint.
-            // I should have handled "GetOrCreate" in backend or handling error.
-            // Assuming for now I can create it or I need to find it first.
-            // But I don't have "ListScopes".
-            // Implementation Gaps!
-
-            // Workaround: Try Create, if fail (409/500), assume it exists? No, that's brittle.
-            // But wait, ListEffectiveMemberships gives me ScopeID if anyone is member.
-            // But if no one is member, I don't know ScopeID.
-            // So creating it is safer.
-            // I'll assume backend allows valid duplicate creation or I need unique constraint handling.
-            // Actually, backend `CreateScope` blindly calls `Create()`. If unique constraint on `(role_id, root_node_id)` exists, it fails.
-            // I should check schema. 
-
-            // For this version, I'll attempt create.
             const scopeRes = await createScope({ data: { roleKey, rootNodeId: nodeId } });
-            // scopeRes is the response object? Orval returns AxiosResponse?
-            // If Orval config is default, it returns data directly if configured so. 
-            // My usage suggests returns data.
-            // Let's assume standard Axios response or data.
-            // Based on previous usage: `const { data: roots }`.
-            // So mutateAsync returns... data?
-
             const scopeId = (scopeRes as any).id || (scopeRes as any).data?.id;
 
             await addMembership({ data: { personId: personId, roleScopeId: scopeId } });
 
-            queryClient.invalidateQueries({ queryKey: ['/organisation-nodes', nodeId, 'memberships'] });
+            queryClient.invalidateQueries({ queryKey: getGetOrganisationNodesIdMembershipsEffectiveQueryKey(nodeId) });
             setOpen(false);
             setPersonId("");
             setRoleKey("");
@@ -149,19 +118,34 @@ const AddMemberDialog = ({ nodeId, roles }: { nodeId: string, roles: any[] }) =>
     );
 };
 
-const RemoveMemberButton = ({ membershipId }: { membershipId: string }) => {
+const RemoveMemberButton = ({ membershipId, nodeId }: { membershipId: string, nodeId: string }) => {
+    const [showConfirm, setShowConfirm] = useState(false);
     const queryClient = useQueryClient();
-    const { mutate: remove } = useDeleteOrganisationMembershipsId({
+    const { mutate: remove, isPending } = useDeleteOrganisationMembershipsId({
         mutation: {
             onSuccess: () => {
-                queryClient.invalidateQueries({ predicate: (query) => query.queryKey.includes('memberships') });
+                queryClient.invalidateQueries({ queryKey: getGetOrganisationNodesIdMembershipsEffectiveQueryKey(nodeId) });
+                setShowConfirm(false);
             }
         }
     });
 
     return (
-        <Button variant="ghost" size="icon" onClick={() => remove({ id: membershipId })}>
-            <Trash2 size={16} className="text-red-500" />
-        </Button>
+        <>
+            <Button variant="ghost" size="icon" onClick={() => setShowConfirm(true)}>
+                <Trash2 size={16} className="text-red-500" />
+            </Button>
+
+            <ConfirmationModal
+                isOpen={showConfirm}
+                onClose={() => setShowConfirm(false)}
+                onConfirm={() => remove({ id: membershipId })}
+                title="Remove Member"
+                description="Are you sure you want to remove this member? This action cannot be undone."
+                confirmLabel="Remove"
+                variant="destructive"
+                isLoading={isPending}
+            />
+        </>
     );
 };

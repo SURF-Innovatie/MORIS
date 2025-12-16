@@ -245,6 +245,46 @@ func (h *Handler) RemovePerson(w http.ResponseWriter, r *http.Request) {
 	_ = httputil.WriteJSON(w, http.StatusOK, projectdto.FromEntity(*proj))
 }
 
+// UpdatePerson godoc
+// @Summary Update a person's role in a project
+// @Description Updates the role of a person in the specified project
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Project ID (UUID)"
+// @Param personId path string true "Person ID (UUID)"
+// @Param body body projectdto.UpdateMemberRequest true "Role details"
+// @Success 200 {object} projectdto.Response
+// @Failure 400 {string} string "invalid project id, person id or body"
+// @Failure 500 {string} string "internal server error"
+// @Router /projects/{id}/people/{personId} [put]
+func (h *Handler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
+	id, err := httputil.ParseUUIDParam(r, "id")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
+		return
+	}
+
+	personID, err := httputil.ParseUUIDParam(r, "personId")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid person id", nil)
+		return
+	}
+
+	req := projectdto.UpdateMemberRequest{}
+	if !httputil.ReadJSON(w, r, &req) {
+		return
+	}
+
+	proj, err := h.svc.UpdateMemberRole(r.Context(), id, personID, req.Role)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	_ = httputil.WriteJSON(w, http.StatusOK, projectdto.FromEntity(*proj))
+}
+
 // AddProduct godoc
 // @Summary Add a product to a project
 // @Description Adds an existing product to the specified project using its ID
@@ -376,4 +416,32 @@ func (h *Handler) GetPendingEvents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, resp)
+}
+
+// GetProjectRoles godoc
+// @Summary Get project roles
+// @Description Retrieves a list of all available project roles
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {array} projectdto.RoleResponse
+// @Failure 500 {string} string "internal server error"
+// @Router /projects/roles [get]
+func (h *Handler) GetProjectRoles(w http.ResponseWriter, r *http.Request) {
+	roles, err := h.svc.GetProjectRoles(r.Context())
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	resps := make([]projectdto.RoleResponse, 0, len(roles))
+	for _, role := range roles {
+		resps = append(resps, projectdto.RoleResponse{
+			Key:  role.Key,
+			Name: role.Name,
+		})
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, resps)
 }
