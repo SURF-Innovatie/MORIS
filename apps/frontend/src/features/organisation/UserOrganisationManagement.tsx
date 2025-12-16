@@ -3,8 +3,10 @@ import { useGetOrganisationMembershipsMine, usePostOrganisationNodesIdChildren }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { EffectiveMembershipResponse } from "@/api/generated-orval/model";
 
 export const UserOrganisationManagement = () => {
     const { data: memberships, isLoading } = useGetOrganisationMembershipsMine();
@@ -24,26 +26,26 @@ export const UserOrganisationManagement = () => {
     );
 };
 
-const MembershipCard = ({ membership }: { membership: any }) => {
-    // membership is EffectiveMembershipResponse
-    // Fields: membershipID, personID, roleScopeID, scopeRootID, roleID, roleKey, hasAdminRights
-    // We don't have Node Name here?
-    // Backend ListEffectiveMemberships (and ListMyMemberships) returns EffectiveMembershipResponse struct.
-    // It DOES NOT include Node Name!
-    // This is a missing feature in backend response. I need the node name to display it.
-    // I should update backend to include Node Name or Node details.
-
-    // For now, I will display Role Key.
+const MembershipCard = ({ membership }: { membership: EffectiveMembershipResponse }) => {
     const canManage = membership.hasAdminRights;
 
     return (
         <div className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start">
                 <div>
-                    <h3 className="font-semibold text-lg">Organization {membership.scopeRootID}</h3>
+                    <h3 className="font-semibold text-lg">{membership.organisationName || `Organization ${membership.scopeRootID}`}</h3>
                     <p className="text-sm text-gray-500">{membership.roleKey} Role</p>
                 </div>
-                {canManage && <CreateChildDialog parentId={membership.scopeRootID} />}
+                <div className="flex gap-2">
+                    {canManage && (
+                        <Button variant="outline" size="sm" asChild>
+                            <Link to={`/dashboard/organisations/${membership.scopeRootId}/members`}>
+                                <Users size={14} className="mr-1" /> Members
+                            </Link>
+                        </Button>
+                    )}
+                    {canManage && <CreateChildDialog parentId={membership.scopeRootId!} />}
+                </div>
             </div>
         </div>
     );

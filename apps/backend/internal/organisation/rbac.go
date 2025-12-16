@@ -6,6 +6,7 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	entmembership "github.com/SURF-Innovatie/MORIS/ent/membership"
+	orgnode "github.com/SURF-Innovatie/MORIS/ent/organisationnode"
 	entclosure "github.com/SURF-Innovatie/MORIS/ent/organisationnodeclosure"
 	entorgrole "github.com/SURF-Innovatie/MORIS/ent/organisationrole"
 	entrolescope "github.com/SURF-Innovatie/MORIS/ent/rolescope"
@@ -18,6 +19,7 @@ type RBACService interface {
 	ListRoles(ctx context.Context) ([]entities.OrganisationRole, error)
 
 	CreateScope(ctx context.Context, roleKey string, rootNodeID uuid.UUID) (*entities.RoleScope, error)
+	GetScope(ctx context.Context, id uuid.UUID) (*entities.RoleScope, error)
 	AddMembership(ctx context.Context, personID uuid.UUID, roleScopeID uuid.UUID) (*entities.Membership, error)
 	RemoveMembership(ctx context.Context, membershipID uuid.UUID) error
 
@@ -31,12 +33,94 @@ type EffectiveMembership struct {
 	MembershipID uuid.UUID
 	PersonID     uuid.UUID
 
-	RoleScopeID uuid.UUID
-	ScopeRootID uuid.UUID
+	RoleScopeID      uuid.UUID
+	ScopeRootID      uuid.UUID
+	OrganisationName string
 
 	RoleID         uuid.UUID
 	RoleKey        string
 	HasAdminRights bool
+
+	Person entities.Person
+}
+
+func (s *rbacService) ListEffectiveMemberships(ctx context.Context, nodeID uuid.UUID) ([]EffectiveMembership, error) {
+	// all ancestors of nodeID (including itself)
+	ancestors, err := s.cli.OrganisationNodeClosure.
+		Query().
+		Where(entclosure.DescendantIDEQ(nodeID)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ancestorIDs := make([]uuid.UUID, 0, len(ancestors))
+	for _, a := range ancestors {
+		ancestorIDs = append(ancestorIDs, a.AncestorID)
+	}
+
+	scopes, err := s.cli.RoleScope.
+		Query().
+		Where(entrolescope.RootNodeIDIn(ancestorIDs...)).
+		WithRole().
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(scopes) == 0 {
+		return []EffectiveMembership{}, nil
+	}
+
+	scopeIDs := make([]uuid.UUID, 0, len(scopes))
+	scopeByID := map[uuid.UUID]*ent.RoleScope{}
+	for _, sc := range scopes {
+		scopeIDs = append(scopeIDs, sc.ID)
+		scopeByID[sc.ID] = sc
+	}
+
+	memberships, err := s.cli.Membership.
+		Query().
+		Where(entmembership.RoleScopeIDIn(scopeIDs...)).
+		WithPerson().
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]EffectiveMembership, 0, len(memberships))
+	for _, m := range memberships {
+		sc := scopeByID[m.RoleScopeID]
+		if sc == nil || sc.Edges.Role == nil {
+			continue
+		}
+
+		p := m.Edges.Person
+		if p == nil {
+			continue
+		}
+
+		out = append(out, EffectiveMembership{
+			MembershipID:   m.ID,
+			PersonID:       m.PersonID,
+			RoleScopeID:    m.RoleScopeID,
+			ScopeRootID:    sc.RootNodeID,
+			RoleID:         sc.RoleID,
+			RoleKey:        sc.Edges.Role.Key,
+			HasAdminRights: sc.Edges.Role.HasAdminRights,
+			Person: entities.Person{
+				ID:          p.ID,
+				Name:        p.Name,
+				ORCiD:       &p.OrcidID,
+				GivenName:   p.GivenName,
+				FamilyName:  p.FamilyName,
+				Email:       p.Email,
+				AvatarUrl:   p.AvatarURL,
+				Description: p.Description,
+			},
+		})
+	}
+
+	return out, nil
 }
 
 type rbacService struct {
@@ -144,6 +228,18 @@ func (s *rbacService) CreateScope(ctx context.Context, roleKey string, rootNodeI
 	}, nil
 }
 
+func (s *rbacService) GetScope(ctx context.Context, id uuid.UUID) (*entities.RoleScope, error) {
+	row, err := s.cli.RoleScope.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &entities.RoleScope{
+		ID:         row.ID,
+		RoleID:     row.RoleID,
+		RootNodeID: row.RootNodeID,
+	}, nil
+}
+
 func (s *rbacService) AddMembership(ctx context.Context, personID uuid.UUID, roleScopeID uuid.UUID) (*entities.Membership, error) {
 	if _, err := s.cli.Person.Get(ctx, personID); err != nil {
 		return nil, err
@@ -170,68 +266,6 @@ func (s *rbacService) AddMembership(ctx context.Context, personID uuid.UUID, rol
 
 func (s *rbacService) RemoveMembership(ctx context.Context, membershipID uuid.UUID) error {
 	return s.cli.Membership.DeleteOneID(membershipID).Exec(ctx)
-}
-
-func (s *rbacService) ListEffectiveMemberships(ctx context.Context, nodeID uuid.UUID) ([]EffectiveMembership, error) {
-	// all ancestors of nodeID (including itself)
-	ancestors, err := s.cli.OrganisationNodeClosure.
-		Query().
-		Where(entclosure.DescendantIDEQ(nodeID)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	ancestorIDs := make([]uuid.UUID, 0, len(ancestors))
-	for _, a := range ancestors {
-		ancestorIDs = append(ancestorIDs, a.AncestorID)
-	}
-
-	scopes, err := s.cli.RoleScope.
-		Query().
-		Where(entrolescope.RootNodeIDIn(ancestorIDs...)).
-		WithRole().
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if len(scopes) == 0 {
-		return []EffectiveMembership{}, nil
-	}
-
-	scopeIDs := make([]uuid.UUID, 0, len(scopes))
-	scopeByID := map[uuid.UUID]*ent.RoleScope{}
-	for _, sc := range scopes {
-		scopeIDs = append(scopeIDs, sc.ID)
-		scopeByID[sc.ID] = sc
-	}
-
-	memberships, err := s.cli.Membership.
-		Query().
-		Where(entmembership.RoleScopeIDIn(scopeIDs...)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	out := make([]EffectiveMembership, 0, len(memberships))
-	for _, m := range memberships {
-		sc := scopeByID[m.RoleScopeID]
-		if sc == nil || sc.Edges.Role == nil {
-			continue
-		}
-		out = append(out, EffectiveMembership{
-			MembershipID:   m.ID,
-			PersonID:       m.PersonID,
-			RoleScopeID:    m.RoleScopeID,
-			ScopeRootID:    sc.RootNodeID,
-			RoleID:         sc.RoleID,
-			RoleKey:        sc.Edges.Role.Key,
-			HasAdminRights: sc.Edges.Role.HasAdminRights,
-		})
-	}
-
-	return out, nil
 }
 
 func (s *rbacService) GetApprovalNode(ctx context.Context, nodeID uuid.UUID) (*entities.OrganisationNode, error) {
@@ -349,6 +383,22 @@ func (s *rbacService) ListMyMemberships(ctx context.Context, personID uuid.UUID)
 		return nil, err
 	}
 
+	// Fetch node names
+	nodeIDs := make([]uuid.UUID, 0)
+	for _, m := range memberships {
+		if m.Edges.RoleScope != nil {
+			nodeIDs = append(nodeIDs, m.Edges.RoleScope.RootNodeID)
+		}
+	}
+	nodes, err := s.cli.OrganisationNode.Query().Where(orgnode.IDIn(nodeIDs...)).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	nodeNameByID := make(map[uuid.UUID]string)
+	for _, n := range nodes {
+		nodeNameByID[n.ID] = n.Name
+	}
+
 	out := make([]EffectiveMembership, 0, len(memberships))
 	for _, m := range memberships {
 		sc := m.Edges.RoleScope
@@ -356,13 +406,14 @@ func (s *rbacService) ListMyMemberships(ctx context.Context, personID uuid.UUID)
 			continue
 		}
 		out = append(out, EffectiveMembership{
-			MembershipID:   m.ID,
-			PersonID:       m.PersonID,
-			RoleScopeID:    m.RoleScopeID,
-			ScopeRootID:    sc.RootNodeID,
-			RoleID:         sc.RoleID,
-			RoleKey:        sc.Edges.Role.Key,
-			HasAdminRights: sc.Edges.Role.HasAdminRights,
+			MembershipID:     m.ID,
+			PersonID:         m.PersonID,
+			RoleScopeID:      m.RoleScopeID,
+			ScopeRootID:      sc.RootNodeID,
+			OrganisationName: nodeNameByID[sc.RootNodeID],
+			RoleID:           sc.RoleID,
+			RoleKey:          sc.Edges.Role.Key,
+			HasAdminRights:   sc.Edges.Role.HasAdminRights,
 		})
 	}
 	return out, nil

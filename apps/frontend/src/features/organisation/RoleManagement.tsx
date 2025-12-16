@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
 import { UserSearchSelect } from "@/components/user/UserSearchSelect";
+import { EffectiveMembershipResponse } from "@/api/generated-orval/model";
 
 export const RoleManagement = () => {
     const { nodeId } = useParams<{ nodeId: string }>();
@@ -40,12 +41,12 @@ export const RoleManagement = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y">
-                        {members?.map((m: any) => (
-                            <tr key={m.membershipID} className="bg-white">
-                                <td className="px-4 py-3">{m.personID}</td> {/* Name missing, only ID */}
+                        {members?.map((m: EffectiveMembershipResponse) => (
+                            <tr key={m.membershipId} className="bg-white">
+                                <td className="px-4 py-3">{m.person?.name}</td>
                                 <td className="px-4 py-3 capitalize">{m.roleKey}</td>
                                 <td className="px-4 py-3 text-right">
-                                    <RemoveMemberButton membershipId={m.membershipID} />
+                                    <RemoveMemberButton membershipId={m.membershipId} />
                                 </td>
                             </tr>
                         ))}

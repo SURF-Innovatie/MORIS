@@ -19,6 +19,7 @@ import AdminUsersRoute from "@/routes/admin-users";
 import AdminUserEditRoute from "@/routes/admin-user-edit";
 import { AdminOrganisationsRoute } from "@/routes/admin-organisations";
 import { UserOrganisationsRoute } from "@/routes/user-organisations";
+import { UserOrganisationRolesRoute } from "@/routes/user-organisation-roles";
 import { MultiRoleManagementRoute } from "@/routes/admin-organisation-roles";
 
 export function createAppRouter() {
@@ -63,6 +64,10 @@ export function createAppRouter() {
             {
               path: "organisations",
               element: <UserOrganisationsRoute />,
+            },
+            {
+              path: "organisations/:nodeId/members",
+              element: <UserOrganisationRolesRoute />,
             },
             {
               path: "admin",

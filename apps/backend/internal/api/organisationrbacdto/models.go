@@ -1,6 +1,9 @@
 package organisationrbacdto
 
-import "github.com/google/uuid"
+import (
+	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
+	"github.com/google/uuid"
+)
 
 type RoleResponse struct {
 	ID             uuid.UUID `json:"id"`
@@ -35,11 +38,12 @@ type MembershipResponse struct {
 }
 
 type EffectiveMembershipResponse struct {
-	MembershipID uuid.UUID `json:"membershipId"`
-	PersonID     uuid.UUID `json:"personId"`
+	MembershipID uuid.UUID              `json:"membershipId"`
+	Person       userdto.PersonResponse `json:"person"`
 
-	RoleScopeID uuid.UUID `json:"roleScopeId"`
-	ScopeRootID uuid.UUID `json:"scopeRootId"`
+	RoleScopeID      uuid.UUID `json:"roleScopeId"`
+	ScopeRootID      uuid.UUID `json:"scopeRootId"`
+	OrganisationName string    `json:"organisationName"`
 
 	RoleID         uuid.UUID `json:"roleId"`
 	RoleKey        string    `json:"roleKey"`
