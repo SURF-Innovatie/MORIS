@@ -234,3 +234,43 @@ func (h *RBACHandler) GetApprovalNode(w http.ResponseWriter, r *http.Request) {
 		ApprovalNodeID: n.ID,
 	})
 }
+
+// ListMyMemberships godoc
+// @Summary List my memberships
+// @Description Lists all memberships for the current user
+// @Tags organisation
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {array} organisationrbacdto.EffectiveMembershipResponse
+// @Failure 401 {string} string "unauthorized"
+// @Failure 500 {string} string "internal server error"
+// @Router /organisation-memberships/mine [get]
+func (h *RBACHandler) ListMyMemberships(w http.ResponseWriter, r *http.Request) {
+	user, ok := httputil.GetUserFromContext(r.Context())
+	if !ok {
+		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
+		return
+	}
+
+	ms, err := h.rbac.ListMyMemberships(r.Context(), user.Person.ID)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	out := make([]organisationrbacdto.EffectiveMembershipResponse, 0, len(ms))
+	for _, m := range ms {
+		out = append(out, organisationrbacdto.EffectiveMembershipResponse{
+			MembershipID:   m.MembershipID,
+			PersonID:       m.PersonID,
+			RoleScopeID:    m.RoleScopeID,
+			ScopeRootID:    m.ScopeRootID,
+			RoleID:         m.RoleID,
+			RoleKey:        m.RoleKey,
+			HasAdminRights: m.HasAdminRights,
+		})
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, out)
+}

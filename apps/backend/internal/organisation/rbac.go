@@ -22,7 +22,9 @@ type RBACService interface {
 	RemoveMembership(ctx context.Context, membershipID uuid.UUID) error
 
 	ListEffectiveMemberships(ctx context.Context, nodeID uuid.UUID) ([]EffectiveMembership, error)
+	ListMyMemberships(ctx context.Context, personID uuid.UUID) ([]EffectiveMembership, error)
 	GetApprovalNode(ctx context.Context, nodeID uuid.UUID) (*entities.OrganisationNode, error)
+	HasAdminAccess(ctx context.Context, personID uuid.UUID, nodeID uuid.UUID) (bool, error)
 }
 
 type EffectiveMembership struct {
@@ -283,4 +285,85 @@ func (s *rbacService) GetApprovalNode(ctx context.Context, nodeID uuid.UUID) (*e
 	}
 
 	return nil, fmt.Errorf("no approval node found: ensure an admin membership exists in some ancestor scope")
+}
+
+func (s *rbacService) HasAdminAccess(ctx context.Context, personID uuid.UUID, nodeID uuid.UUID) (bool, error) {
+	// 1. Get all ancestors (including self)
+	ancestors, err := s.cli.OrganisationNodeClosure.
+		Query().
+		Where(entclosure.DescendantIDEQ(nodeID)).
+		All(ctx)
+	if err != nil {
+		return false, err
+	}
+	ancestorIDs := make([]uuid.UUID, 0, len(ancestors))
+	for _, a := range ancestors {
+		ancestorIDs = append(ancestorIDs, a.AncestorID)
+	}
+
+	// 2. Find any admin role scopes on these nodes
+	// We want scopes where (RootNodeID IN ancestorIDs) AND (Role.HasAdminRights = true)
+	adminScopes, err := s.cli.RoleScope.
+		Query().
+		Where(
+			entrolescope.RootNodeIDIn(ancestorIDs...),
+			entrolescope.HasRoleWith(entorgrole.HasAdminRightsEQ(true)),
+		).
+		All(ctx)
+	if err != nil {
+		return false, err
+	}
+	if len(adminScopes) == 0 {
+		return false, nil
+	}
+
+	scopeIDs := make([]uuid.UUID, 0, len(adminScopes))
+	for _, sc := range adminScopes {
+		scopeIDs = append(scopeIDs, sc.ID)
+	}
+
+	// 3. Check if person is member of any of these scopes
+	count, err := s.cli.Membership.
+		Query().
+		Where(
+			entmembership.RoleScopeIDIn(scopeIDs...),
+			entmembership.PersonIDEQ(personID),
+		).
+		Count(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+func (s *rbacService) ListMyMemberships(ctx context.Context, personID uuid.UUID) ([]EffectiveMembership, error) {
+	memberships, err := s.cli.Membership.
+		Query().
+		Where(entmembership.PersonIDEQ(personID)).
+		WithRoleScope(func(q *ent.RoleScopeQuery) {
+			q.WithRole()
+		}).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]EffectiveMembership, 0, len(memberships))
+	for _, m := range memberships {
+		sc := m.Edges.RoleScope
+		if sc == nil || sc.Edges.Role == nil {
+			continue
+		}
+		out = append(out, EffectiveMembership{
+			MembershipID:   m.ID,
+			PersonID:       m.PersonID,
+			RoleScopeID:    m.RoleScopeID,
+			ScopeRootID:    sc.RootNodeID,
+			RoleID:         sc.RoleID,
+			RoleKey:        sc.Edges.Role.Key,
+			HasAdminRights: sc.Edges.Role.HasAdminRights,
+		})
+	}
+	return out, nil
 }

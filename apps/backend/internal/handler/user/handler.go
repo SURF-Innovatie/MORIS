@@ -341,3 +341,48 @@ func (h *Handler) ToggleActive(w http.ResponseWriter, r *http.Request) {
 
 	_ = httputil.WriteStatus(w)
 }
+
+// SearchUsers godoc
+// @Summary Search users/persons
+// @Description Search for persons by name or email. Non-admins are restricted to people they share a project with.
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param q query string true "Search query"
+// @Success 200 {object} []userdto.PersonResponse
+// @Failure 401 {string} string "unauthorized"
+// @Failure 500 {string} string "internal server error"
+// @Router /users/search [get]
+func (h *Handler) SearchUsers(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("q")
+	if query == "" {
+		_ = httputil.WriteJSON(w, http.StatusOK, []userdto.PersonResponse{})
+		return
+	}
+
+	authUser, ok := httputil.GetUserFromContext(r.Context())
+	if !ok {
+		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
+		return
+	}
+
+	var observerID *uuid.UUID
+	if !authUser.User.IsSysAdmin {
+		id := authUser.User.PersonID
+		observerID = &id
+	}
+
+	persons, err := h.svc.SearchPersons(r.Context(), query, observerID)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	out := make([]userdto.PersonResponse, 0, len(persons))
+	for _, p := range persons {
+		out = append(out, userdto.FromPersonEntity(p))
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, out)
+}

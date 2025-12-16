@@ -256,6 +256,16 @@ func main() {
 	}
 	logrus.Infof("Created organisation root node %s (%s)", orgRoot.Name, orgRoot.ID)
 
+	// Create closure for root node
+	if _, err := client.OrganisationNodeClosure.
+		Create().
+		SetAncestorID(orgRoot.ID).
+		SetDescendantID(orgRoot.ID).
+		SetDepth(0).
+		Save(ctx); err != nil {
+		logrus.Fatalf("failed creating closure for root node: %v", err)
+	}
+
 	for _, sp := range projects {
 		// People
 		var authorIDs []uuid.UUID
@@ -307,6 +317,28 @@ func main() {
 			}
 			orgNodeIDs[sp.Organisation] = orgNode.ID
 			logrus.Infof("Created organisation node %s (%s)", sp.Organisation, orgNode.ID)
+
+			// Create closures for child node
+			// 1. Self
+			if _, err := client.OrganisationNodeClosure.
+				Create().
+				SetAncestorID(orgNode.ID).
+				SetDescendantID(orgNode.ID).
+				SetDepth(0).
+				Save(ctx); err != nil {
+				logrus.Fatalf("failed creating self closure for node %q: %v", sp.Organisation, err)
+			}
+
+			// 2. Parent (orgRoot)
+			if _, err := client.OrganisationNodeClosure.
+				Create().
+				SetAncestorID(orgRoot.ID).
+				SetDescendantID(orgNode.ID).
+				SetDepth(1).
+				Save(ctx); err != nil {
+				logrus.Fatalf("failed creating parent closure for node %q: %v", sp.Organisation, err)
+			}
+
 		}
 
 		// Products (create once; reuse IDs later in event stream)

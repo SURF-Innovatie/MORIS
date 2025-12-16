@@ -4,6 +4,9 @@ import (
 	"context"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
+	en "github.com/SURF-Innovatie/MORIS/ent/event"
+	entperson "github.com/SURF-Innovatie/MORIS/ent/person"
+	entprojectroleassigned "github.com/SURF-Innovatie/MORIS/ent/projectroleassignedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
@@ -23,6 +26,7 @@ type Service interface {
 	GetApprovedEvents(ctx context.Context, userID uuid.UUID) ([]events.Event, error)
 	ListAll(ctx context.Context, limit, offset int) ([]*entities.UserAccount, int, error)
 	ToggleActive(ctx context.Context, id uuid.UUID, isActive bool) error
+	SearchPersons(ctx context.Context, query string, observerPersonID *uuid.UUID) ([]entities.Person, error)
 }
 
 type service struct {
@@ -156,4 +160,64 @@ func (s *service) ListAll(ctx context.Context, limit, offset int) ([]*entities.U
 		accounts = append(accounts, acc)
 	}
 	return accounts, total, nil
+}
+
+func (s *service) SearchPersons(ctx context.Context, query string, observerPersonID *uuid.UUID) ([]entities.Person, error) {
+	// Base query for persons by name or email
+	q := s.cli.Person.Query().
+		Where(
+			entperson.Or(
+				entperson.NameContainsFold(query),
+				entperson.EmailContainsFold(query),
+			),
+		)
+
+	// If observer is specified, restrict to persons in shared projects
+	if observerPersonID != nil {
+		// 1. Find projects where observer is a member
+		var projectIDs []uuid.UUID
+		if err := s.cli.ProjectRoleAssignedEvent.
+			Query().
+			Where(entprojectroleassigned.PersonIDEQ(*observerPersonID)).
+			QueryEvent().
+			Select(en.FieldProjectID).
+			Scan(ctx, &projectIDs); err != nil {
+			return nil, err
+		}
+
+		if len(projectIDs) == 0 {
+			// No shared projects -> no results (except maybe themselves? optional)
+			return []entities.Person{}, nil
+		}
+
+		// 2. Find all people in those projects
+		var memberPersonIDs []uuid.UUID
+		if err := s.cli.ProjectRoleAssignedEvent.
+			Query().
+			Where(entprojectroleassigned.HasEventWith(en.ProjectIDIn(projectIDs...))).
+			Select(entprojectroleassigned.FieldPersonID).
+			Scan(ctx, &memberPersonIDs); err != nil {
+			return nil, err
+		}
+
+		if len(memberPersonIDs) == 0 {
+			return []entities.Person{}, nil
+		}
+
+		// 3. Filter query by these IDs
+		q.Where(entperson.IDIn(memberPersonIDs...))
+	}
+
+	// Execute query
+	rows, err := q.Limit(20).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	persons := make([]entities.Person, 0, len(rows))
+	for _, r := range rows {
+		persons = append(persons, *(&entities.Person{}).FromEnt(r))
+	}
+
+	return persons, nil
 }

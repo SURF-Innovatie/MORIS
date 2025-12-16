@@ -30,5 +30,6 @@ func MountOrganisationRoutes(r chi.Router, h *Handler, rbac *RBACHandler) {
 	r.Route("/organisation-memberships", func(r chi.Router) {
 		r.Post("/", rbac.AddMembership)
 		r.Delete("/{id}", rbac.RemoveMembership)
+		r.Get("/mine", rbac.ListMyMemberships)
 	})
 }

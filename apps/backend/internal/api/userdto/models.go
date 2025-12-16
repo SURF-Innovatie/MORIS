@@ -54,3 +54,25 @@ func FromEntity(acc *entities.UserAccount) Response {
 		IsActive:    u.IsActive,
 	}
 }
+
+type PersonResponse struct {
+	ID         uuid.UUID `json:"id"`
+	Name       string    `json:"name"`
+	GivenName  *string   `json:"givenName"`
+	FamilyName *string   `json:"familyName"`
+	Email      string    `json:"email"`
+	AvatarURL  *string   `json:"avatarUrl"`
+	ORCiD      *string   `json:"orcid"`
+}
+
+func FromPersonEntity(p entities.Person) PersonResponse {
+	return PersonResponse{
+		ID:         p.ID,
+		Name:       p.Name,
+		GivenName:  p.GivenName,
+		FamilyName: p.FamilyName,
+		Email:      p.Email,
+		AvatarURL:  p.AvatarUrl,
+		ORCiD:      p.ORCiD,
+	}
+}

@@ -101,8 +101,11 @@ func main() {
 	productSvc := product.NewService(client)
 	productHandler := producthandler.NewHandler(productSvc)
 
+	rbacSvc := organisation.NewRBACService(client)
+	rbacHandler := organisationhandler.NewRBACHandler(rbacSvc)
+
 	organisationSvc := organisation.NewService(client)
-	organisationHandler := organisationhandler.NewHandler(organisationSvc)
+	organisationHandler := organisationhandler.NewHandler(organisationSvc, rbacSvc)
 
 	crossrefConfig := &crossref2.Config{
 		BaseURL:   "https://api.crossref.org",
@@ -114,9 +117,6 @@ func main() {
 
 	notifierSvc := notification.NewService(client)
 	errorLogSvc := errorlog.NewService(client)
-
-	rbacSvc := organisation.NewRBACService(client)
-	rbacHandler := organisationhandler.NewRBACHandler(rbacSvc)
 
 	eventSvc := event.NewService(esStore, client, notifierSvc)
 	eventSvc.RegisterNotificationHandler(&event.ProjectEventNotificationHandler{Cli: client})
