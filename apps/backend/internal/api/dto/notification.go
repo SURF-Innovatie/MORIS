@@ -1,4 +1,4 @@
-package notificationdto
+package dto
 
 import (
 	"time"
@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type Response struct {
+type NotificationResponse struct {
 	ID uuid.UUID `json:"id"`
 	// TODO: communicate information about the event
 	ProjectID uuid.UUID `json:"projectId"`
@@ -18,14 +18,14 @@ type Response struct {
 	SentAt    time.Time `json:"sentAt"`
 }
 
-func FromEntity(n entities.Notification) Response {
+func (r NotificationResponse) FromEntity(n entities.Notification) NotificationResponse {
 	projectId := uuid.Nil
 	eventId := uuid.Nil
 	if n.Event != nil {
 		projectId = n.Event.ProjectID
 		eventId = n.Event.ID
 	}
-	return Response{
+	return NotificationResponse{
 		ID:        n.Id,
 		Message:   n.Message,
 		Type:      n.Type,

@@ -1,7 +1,6 @@
-package authdto
+package dto
 
 import (
-	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
@@ -31,14 +30,15 @@ type LoginRequest struct {
 // LoginResponse swagger:model LoginResponse
 // Represents the response body for successful login.
 type LoginResponse struct {
-	Token string           `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
-	User  userdto.Response `json:"user"`
+	Token string       `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
+	User  UserResponse `json:"user"`
 }
 
 func FromEntity(token string, user *entities.UserAccount) LoginResponse {
+	var u UserResponse
 	return LoginResponse{
 		Token: token,
-		User:  userdto.FromEntity(user),
+		User:  u.FromEntity(user),
 	}
 }
 

@@ -11,7 +11,7 @@ type OrganisationNode struct {
 	Name     string
 }
 
-func OrganisationNodeFromEnt(row *ent.OrganisationNode) *OrganisationNode {
+func (o *OrganisationNode) FromEnt(row *ent.OrganisationNode) *OrganisationNode {
 	if row == nil {
 		return nil
 	}

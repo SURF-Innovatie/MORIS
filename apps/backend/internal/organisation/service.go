@@ -6,6 +6,7 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	orgnode "github.com/SURF-Innovatie/MORIS/ent/organisationnode"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
@@ -37,7 +38,7 @@ func (s *service) CreateRoot(ctx context.Context, name string) (*entities.Organi
 	if err != nil {
 		return nil, err
 	}
-	return entities.OrganisationNodeFromEnt(row), nil
+	return (&entities.OrganisationNode{}).FromEnt(row), nil
 }
 
 func (s *service) CreateChild(ctx context.Context, parentID uuid.UUID, name string) (*entities.OrganisationNode, error) {
@@ -54,7 +55,7 @@ func (s *service) CreateChild(ctx context.Context, parentID uuid.UUID, name stri
 	if err != nil {
 		return nil, err
 	}
-	return entities.OrganisationNodeFromEnt(row), nil
+	return (&entities.OrganisationNode{}).FromEnt(row), nil
 }
 
 func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.OrganisationNode, error) {
@@ -65,7 +66,7 @@ func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.Organisation
 	if err != nil {
 		return nil, err
 	}
-	return entities.OrganisationNodeFromEnt(row), nil
+	return (&entities.OrganisationNode{}).FromEnt(row), nil
 }
 
 func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID) (*entities.OrganisationNode, error) {
@@ -91,7 +92,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentI
 	if err != nil {
 		return nil, err
 	}
-	return entities.OrganisationNodeFromEnt(row), nil
+	return (&entities.OrganisationNode{}).FromEnt(row), nil
 }
 
 func (s *service) ListRoots(ctx context.Context) ([]entities.OrganisationNode, error) {
@@ -103,11 +104,7 @@ func (s *service) ListRoots(ctx context.Context) ([]entities.OrganisationNode, e
 		return nil, err
 	}
 
-	out := make([]entities.OrganisationNode, 0, len(rows))
-	for _, r := range rows {
-		out = append(out, *entities.OrganisationNodeFromEnt(r))
-	}
-	return out, nil
+	return transform.ToEntities[entities.OrganisationNode](rows), nil
 }
 
 func (s *service) ListChildren(ctx context.Context, parentID uuid.UUID) ([]entities.OrganisationNode, error) {
@@ -119,9 +116,5 @@ func (s *service) ListChildren(ctx context.Context, parentID uuid.UUID) ([]entit
 		return nil, err
 	}
 
-	out := make([]entities.OrganisationNode, 0, len(rows))
-	for _, r := range rows {
-		out = append(out, *entities.OrganisationNodeFromEnt(r))
-	}
-	return out, nil
+	return transform.ToEntities[entities.OrganisationNode](rows), nil
 }

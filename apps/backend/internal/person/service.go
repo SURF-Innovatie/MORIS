@@ -7,6 +7,7 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	pe "github.com/SURF-Innovatie/MORIS/ent/person"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 )
 
@@ -74,11 +75,7 @@ func (s *service) List(ctx context.Context) ([]*entities.Person, error) {
 	if err != nil {
 		return nil, err
 	}
-	out := make([]*entities.Person, 0, len(rows))
-	for _, r := range rows {
-		out = append(out, (&entities.Person{}).FromEnt(r))
-	}
-	return out, nil
+	return transform.ToEntitiesPtr[entities.Person](rows), nil
 }
 
 func (s *service) GetByEmail(ctx context.Context, email string) (*entities.Person, error) {

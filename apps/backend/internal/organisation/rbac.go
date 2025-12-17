@@ -349,7 +349,7 @@ func (s *rbacService) GetApprovalNode(ctx context.Context, nodeID uuid.UUID) (*e
 		if err != nil {
 			return nil, err
 		}
-		return entities.OrganisationNodeFromEnt(n), nil
+		return (&entities.OrganisationNode{}).FromEnt(n), nil
 	}
 
 	return nil, fmt.Errorf("no approval node found: ensure an admin membership exists in some ancestor scope")

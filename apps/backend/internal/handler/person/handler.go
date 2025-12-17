@@ -3,7 +3,8 @@ package person
 import (
 	"net/http"
 
-	"github.com/SURF-Innovatie/MORIS/internal/api/persondto"
+	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	personsvc "github.com/SURF-Innovatie/MORIS/internal/person"
@@ -24,13 +25,13 @@ func NewHandler(s personsvc.Service) *Handler {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param request body persondto.Request true "Person details"
-// @Success 200 {object} persondto.Response
+// @Param request body dto.PersonRequest true "Person details"
+// @Success 200 {object} dto.PersonResponse
 // @Failure 400 {string} string "Invalid body or missing required fields"
 // @Failure 500 {string} string "Internal server error"
 // @Router /people [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	var req persondto.Request
+	var req dto.PersonRequest
 	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
@@ -50,7 +51,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, persondto.FromEntity(*p))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.PersonResponse](*p))
 }
 
 // Get retrieves a person by ID
@@ -60,7 +61,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Person ID"
-// @Success 200 {object} persondto.Response
+// @Success 200 {object} dto.PersonResponse
 // @Failure 400 {string} string "Invalid ID"
 // @Failure 404 {string} string "Person not found"
 // @Router /people/{id} [get]
@@ -75,7 +76,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteError(w, r, http.StatusNotFound, err.Error(), nil)
 		return
 	}
-	_ = httputil.WriteJSON(w, http.StatusOK, persondto.FromEntity(*p))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.PersonResponse](*p))
 }
 
 // Update updates a person
@@ -86,8 +87,8 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Person ID"
-// @Param request body persondto.Request true "Person details"
-// @Success 200 {object} persondto.Response
+// @Param request body dto.PersonRequest true "Person details"
+// @Success 200 {object} dto.PersonResponse
 // @Failure 400 {string} string "Invalid body or ID"
 // @Failure 404 {string} string "Person not found"
 // @Failure 500 {string} string "Internal server error"
@@ -99,7 +100,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req persondto.Request
+	var req dto.PersonRequest
 	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
@@ -109,7 +110,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		GivenName:   req.GivenName,
 		FamilyName:  req.FamilyName,
 		Email:       req.Email,
-		AvatarUrl:   req.AvatarUrl,
+		AvatarUrl:   req.AvatarURL,
 		Description: req.Description,
 	})
 	if err != nil {
@@ -117,7 +118,5 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, persondto.FromEntity(*p))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.PersonResponse](*p))
 }
-
-// List implementation omitted for brevity.

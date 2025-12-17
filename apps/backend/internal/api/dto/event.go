@@ -1,4 +1,4 @@
-package eventdto
+package dto
 
 import (
 	"time"
@@ -24,51 +24,51 @@ type Event struct {
 	OrgNodeID     *uuid.UUID `json:"orgNodeId,omitempty"`
 }
 
-type Response struct {
+type EventResponse struct {
 	Events []Event `json:"events"`
 }
 
-func FromEntity(e events.Event) Event {
-	return FromEntityWithTitle(e, "")
+func (e Event) FromEntity(ev events.Event) Event {
+	return e.FromEntityWithTitle(ev, "")
 }
 
-func FromEntityWithTitle(e events.Event, projectTitle string) Event {
+func (e Event) FromEntityWithTitle(ev events.Event, projectTitle string) Event {
 	createdBy := uuid.Nil
-	if cb, ok := any(e).(interface{ CreatedByID() uuid.UUID }); ok {
+	if cb, ok := any(ev).(interface{ CreatedByID() uuid.UUID }); ok {
 		createdBy = cb.CreatedByID()
 	}
 
 	dtoEvent := Event{
-		ID:           e.GetID(),
-		ProjectID:    e.AggregateID(),
-		Type:         e.Type(),
-		Status:       e.GetStatus(),
+		ID:           ev.GetID(),
+		ProjectID:    ev.AggregateID(),
+		Type:         ev.Type(),
+		Status:       ev.GetStatus(),
 		CreatedBy:    createdBy,
-		At:           e.OccurredAt(),
-		Details:      e.String(),
+		At:           ev.OccurredAt(),
+		Details:      ev.String(),
 		ProjectTitle: projectTitle,
 	}
 
-	switch ev := e.(type) {
+	switch typedEv := ev.(type) {
 	case events.ProjectRoleAssigned:
-		dtoEvent.PersonID = &ev.PersonID
-		dtoEvent.ProjectRoleID = &ev.ProjectRoleID
+		dtoEvent.PersonID = &typedEv.PersonID
+		dtoEvent.ProjectRoleID = &typedEv.ProjectRoleID
 
 	case events.ProjectRoleUnassigned:
-		dtoEvent.PersonID = &ev.PersonID
-		dtoEvent.ProjectRoleID = &ev.ProjectRoleID
+		dtoEvent.PersonID = &typedEv.PersonID
+		dtoEvent.ProjectRoleID = &typedEv.ProjectRoleID
 
 	case events.ProductAdded:
-		dtoEvent.ProductID = &ev.ProductID
+		dtoEvent.ProductID = &typedEv.ProductID
 
 	case events.ProductRemoved:
-		dtoEvent.ProductID = &ev.ProductID
+		dtoEvent.ProductID = &typedEv.ProductID
 
 	case events.OwningOrgNodeChanged:
-		dtoEvent.OrgNodeID = &ev.OwningOrgNodeID
+		dtoEvent.OrgNodeID = &typedEv.OwningOrgNodeID
 
 	case events.ProjectStarted:
-		dtoEvent.OrgNodeID = &ev.OwningOrgNodeID
+		dtoEvent.OrgNodeID = &typedEv.OwningOrgNodeID
 	}
 
 	return dtoEvent

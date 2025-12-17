@@ -3,7 +3,8 @@ package organisation
 import (
 	"net/http"
 
-	"github.com/SURF-Innovatie/MORIS/internal/api/organisationdto"
+	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	organisationsvc "github.com/SURF-Innovatie/MORIS/internal/organisation"
 )
@@ -24,8 +25,8 @@ func NewHandler(s organisationsvc.Service, r organisationsvc.RBACService) *Handl
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param body body organisationdto.CreateRootRequest true "Create root node request"
-// @Success 200 {object} organisationdto.Response
+// @Param body body dto.OrganisationCreateRootRequest true "Create root node request"
+// @Success 200 {object} dto.OrganisationResponse
 // @Failure 401 {string} string "unauthorized"
 // @Failure 403 {string} string "forbidden"
 // @Failure 400 {string} string "name is required / invalid request body"
@@ -42,7 +43,7 @@ func (h *Handler) CreateRoot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req organisationdto.CreateRootRequest
+	var req dto.OrganisationCreateRootRequest
 	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
@@ -57,7 +58,7 @@ func (h *Handler) CreateRoot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, organisationdto.FromEntity(*node))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.OrganisationResponse](*node))
 }
 
 // CreateChild godoc
@@ -68,8 +69,8 @@ func (h *Handler) CreateRoot(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Parent node ID"
-// @Param body body organisationdto.CreateChildRequest true "Create child node request"
-// @Success 200 {object} organisationdto.Response
+// @Param body body dto.OrganisationCreateChildRequest true "Create child node request"
+// @Success 200 {object} dto.OrganisationResponse
 // @Failure 401 {string} string "unauthorized"
 // @Failure 403 {string} string "forbidden"
 // @Failure 400 {string} string "invalid id / name is required / invalid request body"
@@ -101,7 +102,7 @@ func (h *Handler) CreateChild(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var req organisationdto.CreateChildRequest
+	var req dto.OrganisationCreateChildRequest
 	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
@@ -116,7 +117,7 @@ func (h *Handler) CreateChild(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, organisationdto.FromEntity(*node))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.OrganisationResponse](*node))
 }
 
 // GetOrganisationNode godoc
@@ -127,7 +128,7 @@ func (h *Handler) CreateChild(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "OwningOrgNode node ID"
-// @Success 200 {object} organisationdto.Response
+// @Success 200 {object} dto.OrganisationResponse
 // @Failure 400 {string} string "invalid id"
 // @Failure 404 {string} string "not found"
 // @Failure 500 {string} string "internal server error"
@@ -145,7 +146,7 @@ func (h *Handler) GetOrganisationNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, organisationdto.FromEntity(*node))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.OrganisationResponse](*node))
 }
 
 // UpdateOrganisationNode godoc
@@ -156,8 +157,8 @@ func (h *Handler) GetOrganisationNode(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "OwningOrgNode node ID"
-// @Param body body organisationdto.UpdateRequest true "UpdateOrganisationNode organisation node request"
-// @Success 200 {object} organisationdto.Response
+// @Param body body dto.OrganisationUpdateRequest true "UpdateOrganisationNode organisation node request"
+// @Success 200 {object} dto.OrganisationResponse
 // @Failure 401 {string} string "unauthorized"
 // @Failure 403 {string} string "forbidden"
 // @Failure 400 {string} string "invalid id / name is required / invalid request body"
@@ -177,7 +178,7 @@ func (h *Handler) UpdateOrganisationNode(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	var req organisationdto.UpdateRequest
+	var req dto.OrganisationUpdateRequest
 	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
@@ -223,7 +224,7 @@ func (h *Handler) UpdateOrganisationNode(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, organisationdto.FromEntity(*node))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.OrganisationResponse](*node))
 }
 
 // ListRoots godoc
@@ -233,7 +234,7 @@ func (h *Handler) UpdateOrganisationNode(w http.ResponseWriter, r *http.Request)
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {array} organisationdto.Response
+// @Success 200 {array} dto.OrganisationResponse
 // @Failure 401 {string} string "unauthorized"
 // @Failure 500 {string} string "internal server error"
 // @Router /organisation-nodes/roots [get]
@@ -244,12 +245,7 @@ func (h *Handler) ListRoots(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	out := make([]organisationdto.Response, 0, len(nodes))
-	for _, n := range nodes {
-		out = append(out, organisationdto.FromEntity(n))
-	}
-
-	_ = httputil.WriteJSON(w, http.StatusOK, out)
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOs[dto.OrganisationResponse](nodes))
 }
 
 // ListChildren godoc
@@ -260,7 +256,7 @@ func (h *Handler) ListRoots(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Parent node ID"
-// @Success 200 {array} organisationdto.Response
+// @Success 200 {array} dto.OrganisationResponse
 // @Failure 401 {string} string "unauthorized"
 // @Failure 400 {string} string "invalid id"
 // @Failure 500 {string} string "internal server error"
@@ -278,10 +274,5 @@ func (h *Handler) ListChildren(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	out := make([]organisationdto.Response, 0, len(nodes))
-	for _, n := range nodes {
-		out = append(out, organisationdto.FromEntity(n))
-	}
-
-	_ = httputil.WriteJSON(w, http.StatusOK, out)
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOs[dto.OrganisationResponse](nodes))
 }
