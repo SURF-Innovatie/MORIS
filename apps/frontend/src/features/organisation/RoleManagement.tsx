@@ -57,6 +57,7 @@ export const RoleManagement = () => {
             <tr>
               <th className="px-4 py-3">User</th>
               <th className="px-4 py-3">Role</th>
+              <th className="px-4 py-3">Owning Organisation</th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
@@ -65,6 +66,7 @@ export const RoleManagement = () => {
               <tr key={m.membershipId} className="bg-white">
                 <td className="px-4 py-3">{m.person?.name}</td>
                 <td className="px-4 py-3 capitalize">{m.roleKey}</td>
+                <td className="px-4 py-3 capitalize">{m.scopeRootOrganisation?.name}</td>
                 <td className="px-4 py-3 text-right">
                   <RemoveMemberButton
                     membershipId={m.membershipId!}

@@ -3,6 +3,7 @@ package organisation
 import (
 	"net/http"
 
+	"github.com/SURF-Innovatie/MORIS/internal/api/organisationdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/organisationrbacdto"
 	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
@@ -191,14 +192,13 @@ func (h *RBACHandler) ListEffectiveMemberships(w http.ResponseWriter, r *http.Re
 	out := make([]organisationrbacdto.EffectiveMembershipResponse, 0, len(ms))
 	for _, m := range ms {
 		out = append(out, organisationrbacdto.EffectiveMembershipResponse{
-			MembershipID:     m.MembershipID,
-			Person:           userdto.FromPersonEntity(m.Person),
-			RoleScopeID:      m.RoleScopeID,
-			ScopeRootID:      m.ScopeRootID,
-			OrganisationName: m.OrganisationName,
-			RoleID:           m.RoleID,
-			RoleKey:          m.RoleKey,
-			HasAdminRights:   m.HasAdminRights,
+			MembershipID:          m.MembershipID,
+			Person:                userdto.FromPersonEntity(m.Person),
+			RoleScopeID:           m.RoleScopeID,
+			ScopeRootOrganisation: organisationdto.FromEntity(*m.ScopeRootOrganisation),
+			RoleID:                m.RoleID,
+			RoleKey:               m.RoleKey,
+			HasAdminRights:        m.HasAdminRights,
 		})
 	}
 
@@ -264,14 +264,13 @@ func (h *RBACHandler) ListMyMemberships(w http.ResponseWriter, r *http.Request) 
 	out := make([]organisationrbacdto.EffectiveMembershipResponse, 0, len(ms))
 	for _, m := range ms {
 		out = append(out, organisationrbacdto.EffectiveMembershipResponse{
-			MembershipID:     m.MembershipID,
-			Person:           userdto.FromPersonEntity(m.Person),
-			RoleScopeID:      m.RoleScopeID,
-			ScopeRootID:      m.ScopeRootID,
-			OrganisationName: m.OrganisationName,
-			RoleID:           m.RoleID,
-			RoleKey:          m.RoleKey,
-			HasAdminRights:   m.HasAdminRights,
+			MembershipID:          m.MembershipID,
+			Person:                userdto.FromPersonEntity(m.Person),
+			RoleScopeID:           m.RoleScopeID,
+			ScopeRootOrganisation: organisationdto.FromEntity(*m.ScopeRootOrganisation),
+			RoleID:                m.RoleID,
+			RoleKey:               m.RoleKey,
+			HasAdminRights:        m.HasAdminRights,
 		})
 	}
 

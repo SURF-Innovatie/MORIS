@@ -6,7 +6,6 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	entmembership "github.com/SURF-Innovatie/MORIS/ent/membership"
-	orgnode "github.com/SURF-Innovatie/MORIS/ent/organisationnode"
 	entclosure "github.com/SURF-Innovatie/MORIS/ent/organisationnodeclosure"
 	entorgrole "github.com/SURF-Innovatie/MORIS/ent/organisationrole"
 	entrolescope "github.com/SURF-Innovatie/MORIS/ent/rolescope"
@@ -33,9 +32,8 @@ type EffectiveMembership struct {
 	MembershipID uuid.UUID
 	PersonID     uuid.UUID
 
-	RoleScopeID      uuid.UUID
-	ScopeRootID      uuid.UUID
-	OrganisationName string
+	RoleScopeID           uuid.UUID
+	ScopeRootOrganisation *entities.OrganisationNode
 
 	RoleID         uuid.UUID
 	RoleKey        string
@@ -94,19 +92,25 @@ func (s *rbacService) ListEffectiveMemberships(ctx context.Context, nodeID uuid.
 			continue
 		}
 
+		n, err := s.cli.OrganisationNode.Get(ctx, sc.RootNodeID)
+		if err != nil {
+			return nil, err
+		}
+		scopeRootOrg := entities.OrganisationNodeFromEnt(n)
+
 		p := m.Edges.Person
 		if p == nil {
 			continue
 		}
 
 		out = append(out, EffectiveMembership{
-			MembershipID:   m.ID,
-			PersonID:       m.PersonID,
-			RoleScopeID:    m.RoleScopeID,
-			ScopeRootID:    sc.RootNodeID,
-			RoleID:         sc.RoleID,
-			RoleKey:        sc.Edges.Role.Key,
-			HasAdminRights: sc.Edges.Role.HasAdminRights,
+			MembershipID:          m.ID,
+			PersonID:              m.PersonID,
+			RoleScopeID:           m.RoleScopeID,
+			ScopeRootOrganisation: scopeRootOrg,
+			RoleID:                sc.RoleID,
+			RoleKey:               sc.Edges.Role.Key,
+			HasAdminRights:        sc.Edges.Role.HasAdminRights,
 			Person: entities.Person{
 				ID:          p.ID,
 				Name:        p.Name,
@@ -424,14 +428,6 @@ func (s *rbacService) ListMyMemberships(ctx context.Context, personID uuid.UUID)
 			nodeIDs = append(nodeIDs, m.Edges.RoleScope.RootNodeID)
 		}
 	}
-	nodes, err := s.cli.OrganisationNode.Query().Where(orgnode.IDIn(nodeIDs...)).All(ctx)
-	if err != nil {
-		return nil, err
-	}
-	nodeNameByID := make(map[uuid.UUID]string)
-	for _, n := range nodes {
-		nodeNameByID[n.ID] = n.Name
-	}
 
 	out := make([]EffectiveMembership, 0, len(memberships))
 	for _, m := range memberships {
@@ -439,15 +435,20 @@ func (s *rbacService) ListMyMemberships(ctx context.Context, personID uuid.UUID)
 		if sc == nil || sc.Edges.Role == nil {
 			continue
 		}
+		n, err := s.cli.OrganisationNode.Get(ctx, sc.RootNodeID)
+		if err != nil {
+			return nil, err
+		}
+		scopeRootOrg := entities.OrganisationNodeFromEnt(n)
+
 		out = append(out, EffectiveMembership{
-			MembershipID:     m.ID,
-			PersonID:         m.PersonID,
-			RoleScopeID:      m.RoleScopeID,
-			ScopeRootID:      sc.RootNodeID,
-			OrganisationName: nodeNameByID[sc.RootNodeID],
-			RoleID:           sc.RoleID,
-			RoleKey:          sc.Edges.Role.Key,
-			HasAdminRights:   sc.Edges.Role.HasAdminRights,
+			MembershipID:          m.ID,
+			PersonID:              m.PersonID,
+			RoleScopeID:           m.RoleScopeID,
+			ScopeRootOrganisation: scopeRootOrg,
+			RoleID:                sc.RoleID,
+			RoleKey:               sc.Edges.Role.Key,
+			HasAdminRights:        sc.Edges.Role.HasAdminRights,
 		})
 	}
 	return out, nil
