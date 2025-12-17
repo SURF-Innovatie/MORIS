@@ -4,9 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/SURF-Innovatie/MORIS/internal/api/changelogdto"
-	"github.com/SURF-Innovatie/MORIS/internal/api/eventdto"
-	"github.com/SURF-Innovatie/MORIS/internal/api/projectdto"
+	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/SURF-Innovatie/MORIS/internal/project"
@@ -28,7 +27,7 @@ func NewHandler(svc project.Service) *Handler {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Project ID (UUID)"
-// @Success 200 {object} projectdto.Response
+// @Success 200 {object} dto.ProjectResponse
 // @Failure 400 {string} string "invalid project id"
 // @Failure 404 {string} string "project not found"
 // @Router /projects/{id} [get]
@@ -43,7 +42,7 @@ func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteError(w, r, http.StatusNotFound, err.Error(), nil)
 		return
 	}
-	_ = httputil.WriteJSON(w, http.StatusOK, projectdto.FromEntity(*proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProjectResponse](proj))
 }
 
 // StartProject godoc
@@ -53,13 +52,13 @@ func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param project body projectdto.Request true "Project details"
-// @Success 200 {object} projectdto.Response
+// @Param project body dto.ProjectRequest true "Project details"
+// @Success 200 {object} dto.ProjectResponse
 // @Failure 400 {string} string "invalid body or date format"
 // @Failure 500 {string} string "internal server error"
 // @Router /projects [post]
 func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
-	req := projectdto.Request{}
+	req := dto.ProjectRequest{}
 	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
@@ -90,7 +89,7 @@ func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, projectdto.FromEntity(*proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProjectResponse](proj))
 }
 
 // UpdateProject godoc
@@ -101,8 +100,8 @@ func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Project ID (UUID)"
-// @Param project body projectdto.Request true "Project details"
-// @Success 200 {object} projectdto.Response
+// @Param project body dto.ProjectRequest true "Project details"
+// @Success 200 {object} dto.ProjectResponse
 // @Failure 400 {string} string "invalid body, id or date format"
 // @Failure 404 {string} string "project not found"
 // @Failure 500 {string} string "internal server error"
@@ -114,7 +113,7 @@ func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := projectdto.Request{}
+	req := dto.ProjectRequest{}
 	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
@@ -149,7 +148,7 @@ func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, projectdto.FromEntity(*proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProjectResponse](proj))
 }
 
 // GetAllProjects godoc
@@ -159,7 +158,7 @@ func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {array} projectdto.Response
+// @Success 200 {array} dto.ProjectResponse
 // @Failure 500 {string} string "internal server error"
 // @Router /projects [get]
 func (h *Handler) GetAllProjects(w http.ResponseWriter, r *http.Request) {
@@ -169,10 +168,7 @@ func (h *Handler) GetAllProjects(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
-	resps := make([]projectdto.Response, 0, len(projs))
-	for _, p := range projs {
-		resps = append(resps, projectdto.FromEntity(*p))
-	}
+	resps := transform.ToDTOs[dto.ProjectResponse](projs)
 	_ = httputil.WriteJSON(w, http.StatusOK, resps)
 }
 
@@ -185,7 +181,7 @@ func (h *Handler) GetAllProjects(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Param id path string true "Project ID (UUID)"
 // @Param personId path string true "Person ID (UUID)"
-// @Success 200 {object} projectdto.Response
+// @Success 200 {object} dto.ProjectResponse
 // @Failure 400 {string} string "invalid project id or body"
 // @Failure 500 {string} string "internal server error"
 // @Router /projects/{id}/people/{personId} [post]
@@ -207,7 +203,7 @@ func (h *Handler) AddPerson(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
-	_ = httputil.WriteJSON(w, http.StatusOK, projectdto.FromEntity(*proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProjectResponse](proj))
 }
 
 // RemovePerson godoc
@@ -219,7 +215,7 @@ func (h *Handler) AddPerson(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Param id path string true "Project ID (UUID)"
 // @Param personId path string true "Person ID (UUID)"
-// @Success 200 {object} projectdto.Response
+// @Success 200 {object} dto.ProjectResponse
 // @Failure 400 {string} string "invalid project id or person id"
 // @Failure 500 {string} string "internal server error"
 // @Router /projects/{id}/people/{personId} [delete]
@@ -242,7 +238,7 @@ func (h *Handler) RemovePerson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, projectdto.FromEntity(*proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProjectResponse](proj))
 }
 
 // UpdatePerson godoc
@@ -254,8 +250,8 @@ func (h *Handler) RemovePerson(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Param id path string true "Project ID (UUID)"
 // @Param personId path string true "Person ID (UUID)"
-// @Param body body projectdto.UpdateMemberRequest true "Role details"
-// @Success 200 {object} projectdto.Response
+// @Param body body dto.ProjectUpdateMemberRequest true "Role details"
+// @Success 200 {object} dto.ProjectResponse
 // @Failure 400 {string} string "invalid project id, person id or body"
 // @Failure 500 {string} string "internal server error"
 // @Router /projects/{id}/people/{personId} [put]
@@ -272,7 +268,7 @@ func (h *Handler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := projectdto.UpdateMemberRequest{}
+	req := dto.ProjectUpdateMemberRequest{}
 	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
@@ -282,7 +278,7 @@ func (h *Handler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
-	_ = httputil.WriteJSON(w, http.StatusOK, projectdto.FromEntity(*proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProjectResponse](proj))
 }
 
 // AddProduct godoc
@@ -294,7 +290,7 @@ func (h *Handler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Param id path string true "Project ID (UUID)"
 // @Param productID path string true "Product ID (UUID)"
-// @Success 200 {object} projectdto.Response
+// @Success 200 {object} dto.ProjectResponse
 // @Failure 400 {string} string "invalid project id or product id"
 // @Failure 500 {string} string "internal server error"
 // @Router /projects/{id}/products/{productID} [post]
@@ -317,7 +313,7 @@ func (h *Handler) AddProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, projectdto.FromEntity(*proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProjectResponse](proj))
 }
 
 // RemoveProduct godoc
@@ -329,7 +325,7 @@ func (h *Handler) AddProduct(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Param id path string true "Project ID (UUID)"
 // @Param productID path string true "Product ID (UUID)"
-// @Success 200 {object} projectdto.Response
+// @Success 200 {object} dto.ProjectResponse
 // @Failure 400 {string} string "invalid project id or product id"
 // @Failure 500 {string} string "internal server error"
 // @Router /projects/{id}/products/{productID} [delete]
@@ -352,7 +348,7 @@ func (h *Handler) RemoveProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, projectdto.FromEntity(*proj))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProjectResponse](proj))
 }
 
 // GetChangelog godoc
@@ -363,7 +359,7 @@ func (h *Handler) RemoveProduct(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Project ID (UUID)"
-// @Success 200 {object} changelogdto.Changelog
+// @Success 200 {object} dto.Changelog
 // @Failure 400 {string} string "invalid project id"
 // @Failure 500 {string} string "internal server error"
 // @Router /projects/{id}/changelog [get]
@@ -380,7 +376,7 @@ func (h *Handler) GetChangelog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, changelogdto.FromEntity(*changeLog))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.Changelog](*changeLog))
 }
 
 // GetPendingEvents godoc
@@ -391,7 +387,7 @@ func (h *Handler) GetChangelog(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Project ID (UUID)"
-// @Success 200 {object} eventdto.Response
+// @Success 200 {object} dto.EventResponse
 // @Failure 400 {string} string "invalid project id"
 // @Failure 500 {string} string "internal server error"
 // @Router /projects/{id}/pending-events [get]
@@ -408,11 +404,11 @@ func (h *Handler) GetPendingEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := eventdto.Response{
-		Events: make([]eventdto.Event, 0, len(pendingEvents)),
+	resp := dto.EventResponse{
+		Events: make([]dto.Event, 0, len(pendingEvents)),
 	}
 	for _, e := range pendingEvents {
-		resp.Events = append(resp.Events, eventdto.FromEntity(e))
+		resp.Events = append(resp.Events, transform.ToDTOItem[dto.Event](e))
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, resp)
@@ -425,7 +421,7 @@ func (h *Handler) GetPendingEvents(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {array} projectdto.RoleResponse
+// @Success 200 {array} dto.ProjectRoleResponse
 // @Failure 500 {string} string "internal server error"
 // @Router /projects/roles [get]
 func (h *Handler) GetProjectRoles(w http.ResponseWriter, r *http.Request) {
@@ -435,9 +431,9 @@ func (h *Handler) GetProjectRoles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resps := make([]projectdto.RoleResponse, 0, len(roles))
+	resps := make([]dto.ProjectRoleResponse, 0, len(roles))
 	for _, role := range roles {
-		resps = append(resps, projectdto.RoleResponse{
+		resps = append(resps, dto.ProjectRoleResponse{
 			Key:  role.Key,
 			Name: role.Name,
 		})

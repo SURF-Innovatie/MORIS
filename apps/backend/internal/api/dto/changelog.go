@@ -1,4 +1,4 @@
-package changelogdto
+package dto
 
 import (
 	"time"
@@ -15,7 +15,7 @@ type Changelog struct {
 	Entries []ChangelogEntry `json:"entries"`
 }
 
-func FromEntity(log entities.ChangeLog) Changelog {
+func (c Changelog) FromEntity(log entities.ChangeLog) Changelog {
 	entries := make([]ChangelogEntry, 0, len(log.Entries))
 	for _, e := range log.Entries {
 		entries = append(entries, ChangelogEntry{

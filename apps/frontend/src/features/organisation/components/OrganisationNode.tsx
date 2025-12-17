@@ -19,7 +19,6 @@ export const OrganisationNode = ({
     node.id!
   );
 
-
   const isEmpty = isFetched && children?.length === 0;
 
   return (

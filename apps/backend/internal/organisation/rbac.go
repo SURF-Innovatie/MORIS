@@ -9,6 +9,7 @@ import (
 	entclosure "github.com/SURF-Innovatie/MORIS/ent/organisationnodeclosure"
 	entorgrole "github.com/SURF-Innovatie/MORIS/ent/organisationrole"
 	entrolescope "github.com/SURF-Innovatie/MORIS/ent/rolescope"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
@@ -96,7 +97,7 @@ func (s *rbacService) ListEffectiveMemberships(ctx context.Context, nodeID uuid.
 		if err != nil {
 			return nil, err
 		}
-		scopeRootOrg := entities.OrganisationNodeFromEnt(n)
+		scopeRootOrg := transform.ToEntityPtr[entities.OrganisationNode](n)
 
 		p := m.Edges.Person
 		if p == nil {
@@ -353,7 +354,7 @@ func (s *rbacService) GetApprovalNode(ctx context.Context, nodeID uuid.UUID) (*e
 		if err != nil {
 			return nil, err
 		}
-		return entities.OrganisationNodeFromEnt(n), nil
+		return (&entities.OrganisationNode{}).FromEnt(n), nil
 	}
 
 	return nil, fmt.Errorf("no approval node found: ensure an admin membership exists in some ancestor scope")
@@ -439,7 +440,7 @@ func (s *rbacService) ListMyMemberships(ctx context.Context, personID uuid.UUID)
 		if err != nil {
 			return nil, err
 		}
-		scopeRootOrg := entities.OrganisationNodeFromEnt(n)
+		scopeRootOrg := transform.ToEntityPtr[entities.OrganisationNode](n)
 
 		out = append(out, EffectiveMembership{
 			MembershipID:          m.ID,

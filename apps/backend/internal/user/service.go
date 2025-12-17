@@ -8,6 +8,7 @@ import (
 	entperson "github.com/SURF-Innovatie/MORIS/ent/person"
 	entprojectroleassigned "github.com/SURF-Innovatie/MORIS/ent/projectroleassignedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/user"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
@@ -214,10 +215,5 @@ func (s *service) SearchPersons(ctx context.Context, query string, observerPerso
 		return nil, err
 	}
 
-	persons := make([]entities.Person, 0, len(rows))
-	for _, r := range rows {
-		persons = append(persons, *(&entities.Person{}).FromEnt(r))
-	}
-
-	return persons, nil
+	return transform.ToEntities[entities.Person](rows), nil
 }

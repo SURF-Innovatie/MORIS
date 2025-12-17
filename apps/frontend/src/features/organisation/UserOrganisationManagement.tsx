@@ -2,9 +2,9 @@ import { useGetOrganisationMembershipsMine } from "@api/moris";
 import { Button } from "@/components/ui/button";
 import { Users, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
-import { EffectiveMembershipResponse } from "@/api/generated-orval/model";
 import { OrganisationNode } from "./components/OrganisationNode";
 import { CreateChildDialog } from "./components/CreateChildDialog";
+import { OrganisationEffectiveMembershipResponse } from "@/api/generated-orval/model";
 
 export const UserOrganisationManagement = () => {
   const { data: memberships, isLoading } = useGetOrganisationMembershipsMine();
@@ -15,12 +15,14 @@ export const UserOrganisationManagement = () => {
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">My Organizations</h1>
       <div className="space-y-2">
-        {memberships?.map((membership: any) => (
-          <UserOrganisationNode
-            key={membership.membershipID}
-            membership={membership}
-          />
-        ))}
+        {memberships?.map(
+          (membership: OrganisationEffectiveMembershipResponse) => (
+            <UserOrganisationNode
+              key={membership.membershipId}
+              membership={membership}
+            />
+          )
+        )}
         {memberships?.length === 0 && (
           <div className="text-gray-500">
             You are not a member of any organization.
@@ -34,15 +36,15 @@ export const UserOrganisationManagement = () => {
 const UserOrganisationNode = ({
   membership,
 }: {
-  membership: EffectiveMembershipResponse;
+  membership: OrganisationEffectiveMembershipResponse;
 }) => {
   const rootNode = {
-    id: membership.scopeRootId,
-    name: membership.organisationName,
+    id: membership.scopeRootOrganisation?.id,
+    name: membership.scopeRootOrganisation?.name,
   };
 
   const renderActions = (node: any) => {
-    const isRoot = node.id === membership.scopeRootId;
+    const isRoot = node.id === membership.scopeRootOrganisation?.id;
     const canManage = membership.hasAdminRights;
 
     return (

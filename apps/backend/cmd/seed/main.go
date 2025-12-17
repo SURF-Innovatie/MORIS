@@ -13,6 +13,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/organisationnode"
 	entprojectrole "github.com/SURF-Innovatie/MORIS/ent/projectrole"
 	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
@@ -628,7 +629,7 @@ func getOrCreateChild(ctx context.Context, cli *ent.Client, orgSvc organisation.
 		).
 		Only(ctx)
 	if err == nil {
-		return entities.OrganisationNodeFromEnt(row), nil
+		return transform.ToEntityPtr[entities.OrganisationNode](row), nil
 	}
 	if !ent.IsNotFound(err) {
 		return nil, err

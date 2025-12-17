@@ -3,9 +3,8 @@ package organisation
 import (
 	"net/http"
 
-	"github.com/SURF-Innovatie/MORIS/internal/api/organisationdto"
-	"github.com/SURF-Innovatie/MORIS/internal/api/organisationrbacdto"
-	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
+	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	organisationsvc "github.com/SURF-Innovatie/MORIS/internal/organisation"
 )
@@ -25,7 +24,7 @@ func NewRBACHandler(r organisationsvc.RBACService) *RBACHandler {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} organisationrbacdto.EnsureDefaultsResponse
+// @Success 200 {object} dto.OrganisationEnsureDefaultsResponse
 // @Failure 401 {string} string "unauthorized"
 // @Failure 500 {string} string "internal server error"
 // @Router /organisation-roles/ensure-defaults [post]
@@ -34,7 +33,7 @@ func (h *RBACHandler) EnsureDefaultRoles(w http.ResponseWriter, r *http.Request)
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
-	_ = httputil.WriteJSON(w, http.StatusOK, organisationrbacdto.EnsureDefaultsResponse{Status: "ok"})
+	_ = httputil.WriteJSON(w, http.StatusOK, dto.OrganisationEnsureDefaultsResponse{Status: "ok"})
 }
 
 // ListRoles godoc
@@ -44,7 +43,7 @@ func (h *RBACHandler) EnsureDefaultRoles(w http.ResponseWriter, r *http.Request)
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {array} organisationrbacdto.RoleResponse
+// @Success 200 {array} dto.OrganisationRoleResponse
 // @Failure 401 {string} string "unauthorized"
 // @Failure 500 {string} string "internal server error"
 // @Router /organisation-roles [get]
@@ -55,14 +54,7 @@ func (h *RBACHandler) ListRoles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	out := make([]organisationrbacdto.RoleResponse, 0, len(roles))
-	for _, ro := range roles {
-		out = append(out, organisationrbacdto.RoleResponse{
-			ID:             ro.ID,
-			Key:            ro.Key,
-			HasAdminRights: ro.HasAdminRights,
-		})
-	}
+	out := transform.ToDTOs[dto.OrganisationRoleResponse](roles)
 
 	_ = httputil.WriteJSON(w, http.StatusOK, out)
 }
@@ -74,14 +66,14 @@ func (h *RBACHandler) ListRoles(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param body body organisationrbacdto.CreateScopeRequest true "Create scope request"
-// @Success 200 {object} organisationrbacdto.RoleScopeResponse
+// @Param body body dto.OrganisationCreateScopeRequest true "Create scope request"
+// @Success 200 {object} dto.OrganisationRoleScopeResponse
 // @Failure 400 {string} string "invalid request body / roleKey is required"
 // @Failure 401 {string} string "unauthorized"
 // @Failure 500 {string} string "internal server error"
 // @Router /organisation-scopes [post]
 func (h *RBACHandler) CreateScope(w http.ResponseWriter, r *http.Request) {
-	var req organisationrbacdto.CreateScopeRequest
+	var req dto.OrganisationCreateScopeRequest
 	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
@@ -96,11 +88,7 @@ func (h *RBACHandler) CreateScope(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, organisationrbacdto.RoleScopeResponse{
-		ID:         sc.ID,
-		RoleID:     sc.RoleID,
-		RootNodeID: sc.RootNodeID,
-	})
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.OrganisationRoleScopeResponse](sc))
 }
 
 // AddMembership godoc
@@ -110,14 +98,14 @@ func (h *RBACHandler) CreateScope(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param body body organisationrbacdto.AddMembershipRequest true "Add membership request"
-// @Success 200 {object} organisationrbacdto.MembershipResponse
+// @Param body body dto.OrganisationAddMembershipRequest true "Add membership request"
+// @Success 200 {object} dto.OrganisationMembershipResponse
 // @Failure 400 {string} string "invalid request body"
 // @Failure 401 {string} string "unauthorized"
 // @Failure 500 {string} string "internal server error"
 // @Router /organisation-memberships [post]
 func (h *RBACHandler) AddMembership(w http.ResponseWriter, r *http.Request) {
-	var req organisationrbacdto.AddMembershipRequest
+	var req dto.OrganisationAddMembershipRequest
 	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
@@ -128,11 +116,7 @@ func (h *RBACHandler) AddMembership(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, organisationrbacdto.MembershipResponse{
-		ID:          m.ID,
-		PersonID:    m.PersonID,
-		RoleScopeID: m.RoleScopeID,
-	})
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.OrganisationMembershipResponse](m))
 }
 
 // RemoveMembership godoc
@@ -171,7 +155,7 @@ func (h *RBACHandler) RemoveMembership(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "OwningOrgNode node ID"
-// @Success 200 {array} organisationrbacdto.EffectiveMembershipResponse
+// @Success 200 {array} dto.OrganisationEffectiveMembershipResponse
 // @Failure 400 {string} string "invalid id"
 // @Failure 401 {string} string "unauthorized"
 // @Failure 500 {string} string "internal server error"
@@ -189,18 +173,7 @@ func (h *RBACHandler) ListEffectiveMemberships(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	out := make([]organisationrbacdto.EffectiveMembershipResponse, 0, len(ms))
-	for _, m := range ms {
-		out = append(out, organisationrbacdto.EffectiveMembershipResponse{
-			MembershipID:          m.MembershipID,
-			Person:                userdto.FromPersonEntity(m.Person),
-			RoleScopeID:           m.RoleScopeID,
-			ScopeRootOrganisation: organisationdto.FromEntity(*m.ScopeRootOrganisation),
-			RoleID:                m.RoleID,
-			RoleKey:               m.RoleKey,
-			HasAdminRights:        m.HasAdminRights,
-		})
-	}
+	out := transform.ToDTOs[dto.OrganisationEffectiveMembershipResponse](ms)
 
 	_ = httputil.WriteJSON(w, http.StatusOK, out)
 }
@@ -213,7 +186,7 @@ func (h *RBACHandler) ListEffectiveMemberships(w http.ResponseWriter, r *http.Re
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "OwningOrgNode node ID"
-// @Success 200 {object} organisationrbacdto.ApprovalNodeResponse
+// @Success 200 {object} dto.OrganisationApprovalNodeResponse
 // @Failure 400 {string} string "invalid id"
 // @Failure 401 {string} string "unauthorized"
 // @Failure 404 {string} string "not found"
@@ -232,9 +205,7 @@ func (h *RBACHandler) GetApprovalNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, organisationrbacdto.ApprovalNodeResponse{
-		ApprovalNodeID: n.ID,
-	})
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.OrganisationApprovalNodeResponse](n))
 }
 
 // ListMyMemberships godoc
@@ -244,7 +215,7 @@ func (h *RBACHandler) GetApprovalNode(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {array} organisationrbacdto.EffectiveMembershipResponse
+// @Success 200 {array} dto.OrganisationEffectiveMembershipResponse
 // @Failure 401 {string} string "unauthorized"
 // @Failure 500 {string} string "internal server error"
 // @Router /organisation-memberships/mine [get]
@@ -261,18 +232,7 @@ func (h *RBACHandler) ListMyMemberships(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	out := make([]organisationrbacdto.EffectiveMembershipResponse, 0, len(ms))
-	for _, m := range ms {
-		out = append(out, organisationrbacdto.EffectiveMembershipResponse{
-			MembershipID:          m.MembershipID,
-			Person:                userdto.FromPersonEntity(m.Person),
-			RoleScopeID:           m.RoleScopeID,
-			ScopeRootOrganisation: organisationdto.FromEntity(*m.ScopeRootOrganisation),
-			RoleID:                m.RoleID,
-			RoleKey:               m.RoleKey,
-			HasAdminRights:        m.HasAdminRights,
-		})
-	}
+	out := transform.ToDTOs[dto.OrganisationEffectiveMembershipResponse](ms)
 
 	_ = httputil.WriteJSON(w, http.StatusOK, out)
 }
