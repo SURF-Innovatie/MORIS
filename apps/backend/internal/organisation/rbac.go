@@ -267,6 +267,21 @@ func (s *rbacService) AddMembership(ctx context.Context, personID uuid.UUID, rol
 		return nil, err
 	}
 
+	// Check if membership already exists
+	exists, err := s.cli.Membership.
+		Query().
+		Where(
+			entmembership.PersonIDEQ(personID),
+			entmembership.RoleScopeIDEQ(roleScopeID),
+		).
+		Exist(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		return nil, fmt.Errorf("membership already exists")
+	}
+
 	row, err := s.cli.Membership.
 		Create().
 		SetPersonID(personID).
