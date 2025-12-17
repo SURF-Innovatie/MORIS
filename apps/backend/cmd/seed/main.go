@@ -10,6 +10,8 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
+	"github.com/SURF-Innovatie/MORIS/ent/organisationnode"
+	"github.com/SURF-Innovatie/MORIS/ent/organisationnodeclosure"
 	entprojectrole "github.com/SURF-Innovatie/MORIS/ent/projectrole"
 	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
@@ -244,27 +246,79 @@ func main() {
 		return id
 	}
 
-	// --- Seed People (persons + users) and Products (once) and Org Nodes (once) ---
-
-	// Create an organisation root node so your orgs form a tree (optional but convenient)
-	orgRoot, err := client.OrganisationNode.
-		Create().
-		SetName("Organisations").
-		Save(ctx)
+	orgRoot, err := createOrgNode(ctx, client, "Nederland", nil)
 	if err != nil {
 		logrus.Fatalf("failed creating organisation root node: %v", err)
 	}
-	logrus.Infof("Created organisation root node %s (%s)", orgRoot.Name, orgRoot.ID)
+	orgNodeIDs["Organisations"] = orgRoot.ID
 
-	// Create closure for root node
-	if _, err := client.OrganisationNodeClosure.
-		Create().
-		SetAncestorID(orgRoot.ID).
-		SetDescendantID(orgRoot.ID).
-		SetDepth(0).
-		Save(ctx); err != nil {
-		logrus.Fatalf("failed creating closure for root node: %v", err)
+	universities, err := getOrCreateChild(ctx, client, orgRoot, "Universities")
+	if err != nil {
+		logrus.Fatalf("create/get Universities node: %v", err)
 	}
+
+	uuLeaf, err := createPath(ctx, client, universities,
+		"Utrecht University",
+		"Faculty of Science",
+		"Department of Information and Computing Sciences",
+		"Cybersecurity Group",
+		"Post-Quantum Cryptography Lab",
+	)
+	if err != nil {
+		logrus.Fatalf("seed UU subtree: %v", err)
+	}
+	orgNodeIDs["Cybersecurity Lab – Utrecht University"] = uuLeaf.ID
+
+	tudLeaf, err := createPath(ctx, client, universities,
+		"TU Delft",
+		"Faculty of Electrical Engineering, Mathematics and Computer Science",
+		"Department of Intelligent Systems",
+		"Distributed Graphics Group",
+		"Wave Rendering Lab",
+	)
+	if err != nil {
+		logrus.Fatalf("seed TU Delft subtree: %v", err)
+	}
+	orgNodeIDs["Distributed Graphics Lab – TU Delft"] = tudLeaf.ID
+
+	researchInstitutes, err := getOrCreateChild(ctx, client, orgRoot, "Research Institutes")
+	if err != nil {
+		logrus.Fatalf("create/get Institutes node: %v", err)
+	}
+
+	medaiLeaf, err := createPath(ctx, client, researchInstitutes,
+		"MedTech & AI",
+		"MedAI Institute Rotterdam",
+		"Clinical Decision Systems",
+		"Adaptive Diagnostics Unit",
+	)
+	if err != nil {
+		logrus.Fatalf("seed MedAI subtree: %v", err)
+	}
+	orgNodeIDs["MedAI Institute Rotterdam"] = medaiLeaf.ID
+
+	agroLeaf, err := createPath(ctx, client, orgRoot,
+		"Applied Research",
+		"Agri & Food",
+		"AgroTech Consortium",
+		"AgroTech Research Group",
+		"Greenhouse Emissions Program",
+	)
+	if err != nil {
+		logrus.Fatalf("seed AgroTech subtree: %v", err)
+	}
+	orgNodeIDs["AgroTech Research Group"] = agroLeaf.ID
+
+	oceanLeaf, err := createPath(ctx, client, researchInstitutes,
+		"Ocean & Robotics",
+		"Ocean Robotics Centre",
+		"Leiden Site",
+		"Autonomous Swarms Division",
+	)
+	if err != nil {
+		logrus.Fatalf("seed Ocean subtree: %v", err)
+	}
+	orgNodeIDs["Ocean Robotics Centre Leiden"] = oceanLeaf.ID
 
 	for _, sp := range projects {
 		// People
@@ -304,41 +358,6 @@ func main() {
 				logrus.Fatalf("failed creating user for person %q: %v", name, err)
 			}
 			logrus.Infof("Created user for person %s", name)
-		}
-
-		if _, exists := orgNodeIDs[sp.Organisation]; !exists {
-			orgNode, err := client.OrganisationNode.
-				Create().
-				SetName(sp.Organisation).
-				SetParent(orgRoot).
-				Save(ctx)
-			if err != nil {
-				logrus.Fatalf("failed creating organisation node %q: %v", sp.Organisation, err)
-			}
-			orgNodeIDs[sp.Organisation] = orgNode.ID
-			logrus.Infof("Created organisation node %s (%s)", sp.Organisation, orgNode.ID)
-
-			// Create closures for child node
-			// 1. Self
-			if _, err := client.OrganisationNodeClosure.
-				Create().
-				SetAncestorID(orgNode.ID).
-				SetDescendantID(orgNode.ID).
-				SetDepth(0).
-				Save(ctx); err != nil {
-				logrus.Fatalf("failed creating self closure for node %q: %v", sp.Organisation, err)
-			}
-
-			// 2. Parent (orgRoot)
-			if _, err := client.OrganisationNodeClosure.
-				Create().
-				SetAncestorID(orgRoot.ID).
-				SetDescendantID(orgNode.ID).
-				SetDepth(1).
-				Save(ctx); err != nil {
-				logrus.Fatalf("failed creating parent closure for node %q: %v", sp.Organisation, err)
-			}
-
 		}
 
 		// Products (create once; reuse IDs later in event stream)
@@ -560,4 +579,85 @@ func main() {
 		}
 	}
 	logrus.Info("Notifications seeded.")
+}
+
+// createOrgNode creates an OrganisationNode and updates the closure table correctly.
+func createOrgNode(ctx context.Context, client *ent.Client, name string, parent *ent.OrganisationNode) (*ent.OrganisationNode, error) {
+	create := client.OrganisationNode.Create().SetName(name)
+	if parent != nil {
+		create.SetParent(parent)
+	}
+	n, err := create.Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := client.OrganisationNodeClosure.
+		Create().
+		SetAncestorID(n.ID).
+		SetDescendantID(n.ID).
+		SetDepth(0).
+		Save(ctx); err != nil {
+		return nil, err
+	}
+
+	if parent != nil {
+		ancRows, err := client.OrganisationNodeClosure.
+			Query().
+			Where(
+				organisationnodeclosure.DescendantIDEQ(parent.ID),
+			).
+			All(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		bulk := make([]*ent.OrganisationNodeClosureCreate, 0, len(ancRows))
+		for _, a := range ancRows {
+			bulk = append(bulk,
+				client.OrganisationNodeClosure.Create().
+					SetAncestorID(a.AncestorID).
+					SetDescendantID(n.ID).
+					SetDepth(a.Depth+1),
+			)
+		}
+		if len(bulk) > 0 {
+			if _, err := client.OrganisationNodeClosure.CreateBulk(bulk...).Save(ctx); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return n, nil
+}
+
+// createPath creates a path of OrganisationNodes under the given root.
+func createPath(ctx context.Context, client *ent.Client, root *ent.OrganisationNode, names ...string) (*ent.OrganisationNode, error) {
+	parent := root
+	var err error
+	for _, name := range names {
+		parent, err = createOrgNode(ctx, client, name, parent)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return parent, nil
+}
+
+// getOrCreateChild retrieves a child OrganisationNode by name under the given parent,
+func getOrCreateChild(ctx context.Context, client *ent.Client, parent *ent.OrganisationNode, name string) (*ent.OrganisationNode, error) {
+	n, err := client.OrganisationNode.
+		Query().
+		Where(
+			organisationnode.NameEQ(name),
+			organisationnode.ParentIDEQ(parent.ID),
+		).
+		Only(ctx)
+	if err == nil {
+		return n, nil
+	}
+	if !ent.IsNotFound(err) {
+		return nil, err
+	}
+	return createOrgNode(ctx, client, name, parent)
 }

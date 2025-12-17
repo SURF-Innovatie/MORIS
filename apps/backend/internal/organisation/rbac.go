@@ -140,7 +140,7 @@ func (s *rbacService) EnsureDefaultRoles(ctx context.Context) error {
 	defs := []def{
 		{key: "admin", admin: true},
 		{key: "researcher", admin: false},
-		{key: "students", admin: false},
+		{key: "student", admin: false},
 	}
 
 	for _, d := range defs {
