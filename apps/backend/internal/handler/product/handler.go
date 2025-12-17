@@ -3,7 +3,8 @@ package product
 import (
 	"net/http"
 
-	"github.com/SURF-Innovatie/MORIS/internal/api/productdto"
+	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	productsvc "github.com/SURF-Innovatie/MORIS/internal/product"
@@ -23,13 +24,14 @@ func NewHandler(svc productsvc.Service) *Handler {
 // @Tags products
 // @Accept json
 // @Produce json
-// @Param product body productdto.Request true "Product data"
-// @Success 200 {object} productdto.Response
+// @Security BearerAuth
+// @Param product body dto.ProductRequest true "Product data"
+// @Success 200 {object} dto.ProductResponse
 // @Failure 400 {string} string "invalid body"
 // @Failure 500 {string} string "internal server error"
 // @Router /products [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	var req productdto.Request
+	var req dto.ProductRequest
 	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
@@ -50,7 +52,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, productdto.FromEntity(*p))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProductResponse](*p))
 }
 
 // GetAll godoc
@@ -58,6 +60,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Description Returns all products
 // @Tags products
 // @Produce json
+// @Security BearerAuth
 // @Success 200 {array} entities.Product
 // @Failure 500 {string} string "internal server error"
 // @Router /products [get]
@@ -75,7 +78,8 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 // @Description Returns products associated with the current user
 // @Tags products
 // @Produce json
-// @Success 200 {array} productdto.Response
+// @Security BearerAuth
+// @Success 200 {array} dto.ProductResponse
 // @Failure 500 {string} string "internal server error"
 // @Router /products/me [get]
 func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
@@ -91,9 +95,9 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dtos := make([]productdto.Response, 0, len(products))
-	for _, p := range products {
-		dtos = append(dtos, productdto.FromEntity(*p))
+	dtos := make([]dto.ProductResponse, len(products))
+	for i, p := range products {
+		dtos[i] = transform.ToDTOItem[dto.ProductResponse](*p)
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, dtos)
@@ -104,8 +108,9 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 // @Description Get a single product by ID
 // @Tags products
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Product ID (UUID)"
-// @Success 200 {object} productdto.Response
+// @Success 200 {object} dto.ProductResponse
 // @Failure 400 {string} string "invalid id"
 // @Failure 500 {string} string "internal server error"
 // @Router /products/{id} [get]
@@ -120,7 +125,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
-	_ = httputil.WriteJSON(w, http.StatusOK, productdto.FromEntity(*p))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProductResponse](*p))
 }
 
 // Update godoc
@@ -129,9 +134,10 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 // @Tags products
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Product ID (UUID)"
-// @Param product body productdto.Request true "Product data"
-// @Success 200 {object} productdto.Response
+// @Param product body dto.ProductRequest true "Product data"
+// @Success 200 {object} dto.ProductResponse
 // @Failure 400 {string} string "invalid id or body"
 // @Failure 500 {string} string "internal server error"
 // @Router /products/{id} [put]
@@ -142,7 +148,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req productdto.Request
+	var req dto.ProductRequest
 	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
@@ -160,7 +166,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
-	_ = httputil.WriteJSON(w, http.StatusOK, productdto.FromEntity(*p))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProductResponse](*p))
 }
 
 // Delete godoc
@@ -168,6 +174,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 // @Description Delete a product by ID
 // @Tags products
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Product ID (UUID)"
 // @Success 200 {string} string "ok"
 // @Failure 400 {string} string "invalid id"

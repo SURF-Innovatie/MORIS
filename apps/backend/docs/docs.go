@@ -41,7 +41,7 @@ const docTemplate = `{
                 "tags": [
                     "admin"
                 ],
-                "summary": "Get all users (Admin only)",
+                "summary": "GetOrganisationNode all users (Admin only)",
                 "responses": {
                     "200": {
                         "description": "Admin user list",
@@ -145,7 +145,7 @@ const docTemplate = `{
                 "tags": [
                     "notifications"
                 ],
-                "summary": "Get notifications for the logged-in user",
+                "summary": "GetOrganisationNode notifications for the logged-in user",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -188,7 +188,7 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Get user profile",
+                "summary": "GetOrganisationNode user profile",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -217,7 +217,7 @@ const docTemplate = `{
                 "tags": [
                     "projects"
                 ],
-                "summary": "Get all projects",
+                "summary": "GetOrganisationNode all projects",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -293,7 +293,7 @@ const docTemplate = `{
                 "tags": [
                     "projects"
                 ],
-                "summary": "Get a project by ID",
+                "summary": "GetOrganisationNode a project by ID",
                 "parameters": [
                     {
                         "type": "string",
@@ -335,7 +335,7 @@ const docTemplate = `{
                 "tags": [
                     "projects"
                 ],
-                "summary": "Update a project",
+                "summary": "UpdateOrganisationNode a project",
                 "parameters": [
                     {
                         "type": "string",
@@ -568,7 +568,7 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
-                "summary": "Get total user count",
+                "summary": "GetOrganisationNode total user count",
                 "responses": {
                     "200": {
                         "description": "OK",

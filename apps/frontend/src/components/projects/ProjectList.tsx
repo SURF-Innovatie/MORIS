@@ -31,12 +31,12 @@ import { useGetProjects } from "@api/moris";
 import { ProjectResponse } from "@api/model";
 
 const getProjectStatus = (project: ProjectResponse) => {
-  if (!project.startDate || !project.endDate)
+  if (!project.start_date || !project.end_date)
     return { label: "Unknown", variant: "secondary" as const };
 
   const now = new Date();
-  const start = new Date(project.startDate);
-  const end = new Date(project.endDate);
+  const start = new Date(project.start_date);
+  const end = new Date(project.end_date);
 
   if (now < start) return { label: "Upcoming", variant: "secondary" as const };
   if (now > end) return { label: "Completed", variant: "outline" as const };
@@ -172,31 +172,31 @@ export const ProjectList = ({ showCreateButton = true }: ProjectListProps) => {
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
                     <Calendar className="h-3.5 w-3.5" />
                     <span>
-                      {formatDate(project.startDate)} -{" "}
-                      {formatDate(project.endDate)}
+                      {formatDate(project.start_date)} -{" "}
+                      {formatDate(project.end_date)}
                     </span>
                   </div>
 
                   <div className="flex items-center -space-x-2 overflow-hidden">
-                    {project.people && project.people.length > 0 ? (
+                    {project.members && project.members.length > 0 ? (
                       <>
-                        {project.people.slice(0, 4).map((person, i) => (
+                        {project.members.slice(0, 4).map((member, i) => (
                           <Avatar
                             key={i}
                             className="h-6 w-6 ring-2 ring-background"
                           >
                             <AvatarImage
-                              src={person.avatar_url || ""}
-                              alt={person.email}
+                              src={member.avatar_url || ""}
+                              alt={member.email}
                             />
                             <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
-                              {person.email?.charAt(0).toUpperCase() || "?"}
+                              {member.email?.charAt(0).toUpperCase() || "?"}
                             </AvatarFallback>
                           </Avatar>
                         ))}
-                        {project.people.length > 4 && (
+                        {project.members.length > 4 && (
                           <div className="h-6 w-6 rounded-full ring-2 ring-background bg-muted flex items-center justify-center text-[10px] font-medium text-muted-foreground text-center">
-                            +{project.people.length - 4}
+                            +{project.members.length - 4}
                           </div>
                         )}
                       </>
@@ -246,11 +246,11 @@ export const ProjectList = ({ showCreateButton = true }: ProjectListProps) => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {formatDate(project.startDate)} -{" "}
-                      {formatDate(project.endDate)}
+                      {formatDate(project.start_date)} -{" "}
+                      {formatDate(project.end_date)}
                     </TableCell>
                     <TableCell className="text-right">
-                      {project.people?.length || 0}
+                      {project.members?.length || 0}
                     </TableCell>
                     <TableCell>
                       <Button

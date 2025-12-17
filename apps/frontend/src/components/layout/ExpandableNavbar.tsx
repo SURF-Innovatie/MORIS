@@ -11,6 +11,7 @@ import {
   Calendar,
   Folder,
   Package,
+  Building2,
 } from "lucide-react";
 
 import { Button } from "../ui/button";
@@ -33,6 +34,7 @@ const NAV_GROUPS = [
     items: [
       { to: "/dashboard/projects", label: "Projects", icon: Folder },
       { to: "/dashboard/products", label: "Products", icon: Package },
+      { to: "/dashboard/organisations", label: "My Organisations", icon: Building2 },
       // { to: "/dashboard/datasets", label: "Datasets", icon: Database },
     ],
   },
@@ -59,6 +61,7 @@ export const ExpandableNavbar = () => {
           label: "Admin",
           items: [
             { to: "/dashboard/admin/users", label: "Users", icon: User },
+            { to: "/dashboard/admin/organisations", label: "Organisations", icon: Building2 },
           ],
         },
       ]

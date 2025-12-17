@@ -25,12 +25,37 @@ func Apply(p *entities.Project, e events.Event) {
 	switch ev := e.(type) {
 	case events.ProjectStarted:
 		p.Title = ev.Title
-		p.ProjectAdmin = ev.ProjectAdmin
 		p.Description = ev.Description
 		p.StartDate = ev.StartDate
 		p.EndDate = ev.EndDate
-		p.Organisation = ev.OrganisationID
-		p.People = ev.People
+		p.OwningOrgNodeID = ev.OwningOrgNodeID
+		p.Members = ev.Members
+
+	case events.OwningOrgNodeChanged:
+		p.OwningOrgNodeID = ev.OwningOrgNodeID
+
+	case events.ProjectRoleAssigned:
+		for _, m := range p.Members {
+			if m.PersonID == ev.PersonID && m.ProjectRoleID == ev.ProjectRoleID {
+				return // already assigned
+			}
+		}
+		p.Members = append(p.Members, entities.ProjectMember{
+			PersonID:      ev.PersonID,
+			ProjectRoleID: ev.ProjectRoleID,
+		})
+
+	case events.ProjectRoleUnassigned:
+		shouldRemove := -1
+		for i, m := range p.Members {
+			if m.PersonID == ev.PersonID && m.ProjectRoleID == ev.ProjectRoleID {
+				shouldRemove = i
+				break
+			}
+		}
+		if shouldRemove != -1 {
+			p.Members = append(p.Members[:shouldRemove], p.Members[shouldRemove+1:]...)
+		}
 
 	case events.TitleChanged:
 		p.Title = ev.Title
@@ -44,52 +69,27 @@ func Apply(p *entities.Project, e events.Event) {
 	case events.EndDateChanged:
 		p.EndDate = ev.EndDate
 
-	case events.OrganisationChanged:
-		p.Organisation = ev.OrganisationID
-
-	case events.PersonAdded:
-		if !hasItem(p.People, ev.Person.Id) {
-			p.People = append(p.People, ev.Person.Id)
-		}
-
-	case events.PersonRemoved:
-		p.People = filterItem(p.People, func(id uuid.UUID) bool {
-			return id != ev.Person.Id
-		})
-
 	case events.ProductAdded:
-		if !hasItem(p.Products, ev.Product.Id) {
-			p.Products = append(p.Products, ev.Product.Id)
+		for _, prod := range p.ProductIDs {
+			if prod == ev.ProductID {
+				return
+			}
 		}
+		p.ProductIDs = append(p.ProductIDs, ev.ProductID)
 
 	case events.ProductRemoved:
-		p.Products = filterItem(p.Products, func(id uuid.UUID) bool {
-			return id != ev.Product.Id
-		})
+		shouldRemove := -1
+		for i, p := range p.ProductIDs {
+			if p == ev.ProductID {
+				shouldRemove = i
+				break
+			}
+		}
+		if shouldRemove != -1 {
+			p.ProductIDs = append(p.ProductIDs[:shouldRemove], p.ProductIDs[shouldRemove+1:]...)
+		}
 
 	default:
 		// unknown event type: ignore to keep forward-compatible
 	}
-}
-
-func hasItem(list []uuid.UUID, id uuid.UUID) bool {
-	for _, p := range list {
-		if p == id {
-			return true
-		}
-	}
-	return false
-}
-
-func filterItem(list []uuid.UUID, keep func(uuid.UUID) bool) []uuid.UUID {
-	if len(list) == 0 {
-		return nil
-	}
-	out := list[:0]
-	for _, p := range list {
-		if keep(p) {
-			out = append(out, p)
-		}
-	}
-	return out
 }

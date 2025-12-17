@@ -101,8 +101,11 @@ func main() {
 	productSvc := product.NewService(client)
 	productHandler := producthandler.NewHandler(productSvc)
 
+	rbacSvc := organisation.NewRBACService(client)
+	rbacHandler := organisationhandler.NewRBACHandler(rbacSvc)
+
 	organisationSvc := organisation.NewService(client)
-	organisationHandler := organisationhandler.NewHandler(organisationSvc)
+	organisationHandler := organisationhandler.NewHandler(organisationSvc, rbacSvc)
 
 	crossrefConfig := &crossref2.Config{
 		BaseURL:   "https://api.crossref.org",
@@ -116,8 +119,8 @@ func main() {
 	errorLogSvc := errorlog.NewService(client)
 
 	eventSvc := event.NewService(esStore, client, notifierSvc)
-	eventSvc.RegisterNotificationHandler(&event.ProjectEventNotificationHandler{Notifier: notifierSvc, Cli: client})
-	eventSvc.RegisterNotificationHandler(&event.ApprovalRequestNotificationHandler{Notifier: notifierSvc, Cli: client})
+	eventSvc.RegisterNotificationHandler(&event.ProjectEventNotificationHandler{Cli: client})
+	eventSvc.RegisterNotificationHandler(&event.ApprovalRequestNotificationHandler{Cli: client, ES: esStore, RBAC: rbacSvc})
 	eventSvc.RegisterNotificationHandler(&event.ProductAddedNotificationHandler{Notifier: notifierSvc, Cli: client, ES: esStore})
 	eventSvc.RegisterNotificationHandler(&event.StatusUpdateNotificationHandler{Notifier: notifierSvc, Cli: client})
 	eventSvc.RegisterNotificationHandler(&event.ApprovalCleanupHandler{Cli: client})
@@ -147,10 +150,10 @@ func main() {
 		r.Group(func(r chi.Router) {
 			r.Use(authmiddleware.AuthMiddleware(authSvc))
 			projecthandler.MountProjectRoutes(r, projHandler)
+			organisationhandler.MountOrganisationRoutes(r, organisationHandler, rbacHandler)
 			eventHandler.MountEventRoutes(r, evtHandler)
 			personhandler.MountPersonRoutes(r, personHandler)
 			producthandler.MountProductRoutes(r, productHandler)
-			organisationhandler.MountOrganisationRoutes(r, organisationHandler)
 			notificationhandler.MountNotificationRoutes(r, notificationHandler)
 			userhandler.MountUserRoutes(r, userHandler)
 			crossrefhandler.MountCrossrefRoutes(r, crossrefHandler)

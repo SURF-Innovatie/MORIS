@@ -8,7 +8,6 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	notifservice "github.com/SURF-Innovatie/MORIS/internal/notification"
-	"github.com/google/uuid"
 )
 
 type StatusUpdateNotificationHandler struct {
@@ -23,34 +22,30 @@ func (h *StatusUpdateNotificationHandler) CanHandle(e events.Event) bool {
 
 // Friendly names mapping
 var eventFriendlyNames = map[string]string{
-	events.ProjectStartedType:      "Project Proposal",
-	events.TitleChangedType:        "Title Change",
-	events.DescriptionChangedType:  "Description Change",
-	events.StartDateChangedType:    "Start Date Change",
-	events.EndDateChangedType:      "End Date Change",
-	events.OrganisationChangedType: "Organisation Change",
-	events.PersonAddedType:         "Person Addition",
-	events.PersonRemovedType:       "Person Removal",
-	events.ProductAddedType:        "Product Addition",
-	events.ProductRemovedType:      "Product Removal",
+	events.ProjectStartedType:        "Project Proposal",
+	events.TitleChangedType:          "Title Change",
+	events.DescriptionChangedType:    "Description Change",
+	events.StartDateChangedType:      "Start Date Change",
+	events.EndDateChangedType:        "End Date Change",
+	events.OwningOrgNodeChangedType:  "Owning OwningOrgNode Node Change",
+	events.ProjectRoleAssignedType:   "Project Role Assignment",
+	events.ProjectRoleUnassignedType: "Project Role Unassignment",
+	events.ProductAddedType:          "Product Addition",
+	events.ProductRemovedType:        "Product Removal",
 }
 
 func (h *StatusUpdateNotificationHandler) Handle(ctx context.Context, e events.Event) error {
+	u, err := ResolveUser(ctx, h.Cli, e.CreatedByID())
+	if err != nil || u == nil {
+		return err
+	}
+
 	status := e.GetStatus()
-	creatorID := e.CreatedByID()
-	if creatorID == uuid.Nil {
-		return nil
-	}
-
-	user, err := h.Cli.User.Get(ctx, creatorID)
-	if err != nil {
-		return nil
-	}
-
 	eventType := e.Type()
+
 	friendlyName, ok := eventFriendlyNames[eventType]
 	if !ok {
-		friendlyName = eventType // Fallback to raw type if not in map
+		friendlyName = eventType
 	}
 
 	msg := fmt.Sprintf("Your request '%s' has been %s.", friendlyName, status)
@@ -58,7 +53,7 @@ func (h *StatusUpdateNotificationHandler) Handle(ctx context.Context, e events.E
 	_, err = h.Cli.Notification.
 		Create().
 		SetMessage(msg).
-		SetUser(user).
+		SetUser(u).
 		SetEventID(e.GetID()).
 		SetType(notification.TypeStatusUpdate).
 		Save(ctx)

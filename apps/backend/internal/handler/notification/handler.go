@@ -3,7 +3,8 @@ package notification
 import (
 	"net/http"
 
-	"github.com/SURF-Innovatie/MORIS/internal/api/notificationdto"
+	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/SURF-Innovatie/MORIS/internal/notification"
 	"github.com/sirupsen/logrus"
@@ -23,7 +24,8 @@ func NewHandler(svc notification.Service) *Handler {
 // @Tags notifications
 // @Accept json
 // @Produce json
-// @Success 200 {array} notificationdto.Response
+// @Security BearerAuth
+// @Success 200 {array} dto.NotificationResponse
 // @Failure 401 {string} string "unauthorized"
 // @Failure 500 {string} string "internal server error"
 // @Router /notifications [get]
@@ -41,11 +43,10 @@ func (h *Handler) GetNotifications(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var dtos []notificationdto.Response
+	var dtos []dto.NotificationResponse
 	for _, n := range notifications {
-		dtos = append(dtos, notificationdto.FromEntity(n))
+		dtos = append(dtos, transform.ToDTOItem[dto.NotificationResponse](n))
 	}
-
 	_ = httputil.WriteJSON(w, http.StatusOK, dtos)
 }
 
@@ -55,6 +56,7 @@ func (h *Handler) GetNotifications(w http.ResponseWriter, r *http.Request) {
 // @Tags notifications
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Notification ID"
 // @Success 200 {string} string "ok"
 // @Failure 401 {string} string "unauthorized"

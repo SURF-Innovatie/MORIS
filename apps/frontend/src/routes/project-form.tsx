@@ -44,9 +44,9 @@ export default function CreateProjectRoute() {
         data: {
           title: values.title,
           description: values.description,
-          startDate: values.startDate.toISOString(),
-          endDate: values.endDate.toISOString(),
-          organisationID: values.organisationID,
+          start_date: values.startDate.toISOString(),
+          end_date: values.endDate.toISOString(),
+          owning_org_node_id: values.organisationID,
         },
       });
       toast({

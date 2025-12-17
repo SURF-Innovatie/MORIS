@@ -11,7 +11,6 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	en "github.com/SURF-Innovatie/MORIS/ent/event"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 )
 
@@ -92,12 +91,11 @@ func (s *EntStore) Append(
 			if _, err := tx.ProjectStartedEvent.
 				Create().
 				SetEvent(evRow). // or SetEventID(evRow.ID)
-				SetProjectAdmin(v.ProjectAdmin).
 				SetTitle(v.Title).
 				SetDescription(v.Description).
 				SetStartDate(v.StartDate).
 				SetEndDate(v.EndDate).
-				SetOrganisationID(v.OrganisationID).
+				SetOwningOrgNodeID(v.OwningOrgNodeID).
 				Save(ctx); err != nil {
 				_ = tx.Rollback()
 				return err
@@ -215,13 +213,13 @@ func (s *EntStore) Append(
 				return err
 			}
 
-		case events.OrganisationChanged:
+		case events.OwningOrgNodeChanged:
 			evRow, err := tx.Event.
 				Create().
 				SetID(id).
 				SetProjectID(projectID).
 				SetVersion(version).
-				SetType(events.OrganisationChangedType).
+				SetType(events.OwningOrgNodeChangedType).
 				SetOccurredAt(now).
 				SetStatus(en.Status(e.GetStatus())).
 				SetCreatedBy(v.CreatedBy). // Added
@@ -234,22 +232,22 @@ func (s *EntStore) Append(
 				return err
 			}
 
-			if _, err := tx.OrganisationChangedEvent.
+			if _, err := tx.OwningOrgNodeChangedEvent.
 				Create().
 				SetEvent(evRow).
-				SetOrganisationID(v.OrganisationID).
+				SetOwningOrgNodeID(v.OwningOrgNodeID).
 				Save(ctx); err != nil {
 				_ = tx.Rollback()
 				return err
 			}
 
-		case events.PersonAdded:
+		case events.ProjectRoleAssigned:
 			evRow, err := tx.Event.
 				Create().
 				SetID(id).
 				SetProjectID(projectID).
 				SetVersion(version).
-				SetType(events.PersonAddedType).
+				SetType(events.ProjectRoleAssignedType).
 				SetOccurredAt(now).
 				SetStatus(en.Status(e.GetStatus())).
 				SetCreatedBy(v.CreatedBy). // Added
@@ -262,22 +260,23 @@ func (s *EntStore) Append(
 				return err
 			}
 
-			if _, err := tx.PersonAddedEvent.
+			if _, err := tx.ProjectRoleAssignedEvent.
 				Create().
 				SetEvent(evRow).
-				SetPersonID(v.Person.Id).
+				SetPersonID(v.PersonID).
+				SetProjectRoleID(v.ProjectRoleID).
 				Save(ctx); err != nil {
 				_ = tx.Rollback()
 				return err
 			}
 
-		case events.PersonRemoved:
+		case events.ProjectRoleUnassigned:
 			evRow, err := tx.Event.
 				Create().
 				SetID(id).
 				SetProjectID(projectID).
 				SetVersion(version).
-				SetType(events.PersonRemovedType).
+				SetType(events.ProjectRoleUnassignedType).
 				SetOccurredAt(now).
 				SetStatus(en.Status(e.GetStatus())).
 				SetCreatedBy(v.CreatedBy). // Added
@@ -290,10 +289,11 @@ func (s *EntStore) Append(
 				return err
 			}
 
-			if _, err := tx.PersonRemovedEvent.
+			if _, err := tx.ProjectRoleUnassignedEvent.
 				Create().
 				SetEvent(evRow).
-				SetPersonID(v.Person.Id).
+				SetPersonID(v.PersonID).
+				SetProjectRoleID(v.ProjectRoleID).
 				Save(ctx); err != nil {
 				_ = tx.Rollback()
 				return err
@@ -321,7 +321,7 @@ func (s *EntStore) Append(
 			if _, err := tx.ProductAddedEvent.
 				Create().
 				SetEvent(evRow).
-				SetProductID(v.Product.Id).
+				SetProductID(v.ProductID).
 				Save(ctx); err != nil {
 				_ = tx.Rollback()
 				return err
@@ -349,7 +349,7 @@ func (s *EntStore) Append(
 			if _, err := tx.ProductRemovedEvent.
 				Create().
 				SetEvent(evRow).
-				SetProductID(v.Product.Id).
+				SetProductID(v.ProductID).
 				Save(ctx); err != nil {
 				_ = tx.Rollback()
 				return err
@@ -391,13 +391,9 @@ func (s *EntStore) Load(
 		WithDescriptionChanged().
 		WithStartDateChanged().
 		WithEndDateChanged().
-		WithOrganisationChanged().
-		WithPersonAdded(func(q *ent.PersonAddedEventQuery) {
-			q.WithPerson()
-		}).
-		WithPersonRemoved(func(q *ent.PersonRemovedEventQuery) {
-			q.WithPerson()
-		}).
+		WithOwningOrgNodeChanged().
+		WithProjectRoleAssigned().
+		WithProjectRoleUnassigned().
 		WithProductAdded(func(q *ent.ProductAddedEventQuery) {
 			q.WithProduct()
 		}).
@@ -437,13 +433,9 @@ func (s *EntStore) LoadEvent(ctx context.Context, eventID uuid.UUID) (events.Eve
 		WithDescriptionChanged().
 		WithStartDateChanged().
 		WithEndDateChanged().
-		WithOrganisationChanged().
-		WithPersonAdded(func(q *ent.PersonAddedEventQuery) {
-			q.WithPerson()
-		}).
-		WithPersonRemoved(func(q *ent.PersonRemovedEventQuery) {
-			q.WithPerson()
-		}).
+		WithOwningOrgNodeChanged().
+		WithProjectRoleAssigned().
+		WithProjectRoleUnassigned().
 		WithProductAdded(func(q *ent.ProductAddedEventQuery) {
 			q.WithProduct()
 		}).
@@ -474,14 +466,13 @@ func (s *EntStore) mapEventRow(r *ent.Event) (events.Event, error) {
 			return nil, fmt.Errorf("missing ProjectStarted edge for event %s", r.ID)
 		}
 		return events.ProjectStarted{
-			Base:           base,
-			ProjectAdmin:   payload.ProjectAdmin,
-			Title:          payload.Title,
-			Description:    payload.Description,
-			StartDate:      payload.StartDate,
-			EndDate:        payload.EndDate,
-			OrganisationID: payload.OrganisationID,
-			People:         nil, // driven by PersonAdded events
+			Base:            base,
+			Title:           payload.Title,
+			Description:     payload.Description,
+			StartDate:       payload.StartDate,
+			EndDate:         payload.EndDate,
+			OwningOrgNodeID: payload.OwningOrgNodeID,
+			Members:         nil,
 		}, nil
 
 	case events.TitleChangedType:
@@ -524,76 +515,36 @@ func (s *EntStore) mapEventRow(r *ent.Event) (events.Event, error) {
 			EndDate: payload.EndDate,
 		}, nil
 
-	case events.OrganisationChangedType:
-		payload := r.Edges.OrganisationChanged
+	case events.OwningOrgNodeChangedType:
+		payload := r.Edges.OwningOrgNodeChanged
 		if payload == nil {
 			return nil, fmt.Errorf("missing OrganisationChanged edge for event %s", r.ID)
 		}
-		return events.OrganisationChanged{
-			Base:           base,
-			OrganisationID: payload.OrganisationID,
+		return events.OwningOrgNodeChanged{
+			Base:            base,
+			OwningOrgNodeID: payload.OwningOrgNodeID,
 		}, nil
 
-	case events.PersonAddedType:
-		payload := r.Edges.PersonAdded
+	case events.ProjectRoleAssignedType:
+		payload := r.Edges.ProjectRoleAssigned
 		if payload == nil {
-			return nil, fmt.Errorf("missing PersonAdded edge for event %s", r.ID)
+			return nil, fmt.Errorf("missing ProjectRoleAssigned edge for event %s", r.ID)
 		}
-		var person entities.Person
-		if payload.Edges.Person != nil {
-			p := payload.Edges.Person
-			var orcid *string
-			if p.OrcidID != "" {
-				orcid = &p.OrcidID
-			}
-			person = entities.Person{
-				Id:          p.ID,
-				Name:        p.Name,
-				Email:       p.Email,
-				AvatarUrl:   p.AvatarURL,
-				Description: p.Description,
-				UserID:      p.UserID,
-				ORCiD:       orcid,
-				GivenName:   p.GivenName,
-				FamilyName:  p.FamilyName,
-			}
-		} else {
-			person = entities.Person{Id: payload.PersonID}
-		}
-		return events.PersonAdded{
-			Base:   base,
-			Person: person,
+		return events.ProjectRoleAssigned{
+			Base:          base,
+			PersonID:      payload.PersonID,
+			ProjectRoleID: payload.ProjectRoleID,
 		}, nil
 
-	case events.PersonRemovedType:
-		payload := r.Edges.PersonRemoved
+	case events.ProjectRoleUnassignedType:
+		payload := r.Edges.ProjectRoleUnassigned
 		if payload == nil {
-			return nil, fmt.Errorf("missing PersonRemoved edge for event %s", r.ID)
+			return nil, fmt.Errorf("missing ProjectRoleUnassigned edge for event %s", r.ID)
 		}
-		var person entities.Person
-		if payload.Edges.Person != nil {
-			p := payload.Edges.Person
-			var orcid *string
-			if p.OrcidID != "" {
-				orcid = &p.OrcidID
-			}
-			person = entities.Person{
-				Id:          p.ID,
-				Name:        p.Name,
-				Email:       p.Email,
-				AvatarUrl:   p.AvatarURL,
-				Description: p.Description,
-				UserID:      p.UserID,
-				ORCiD:       orcid,
-				GivenName:   p.GivenName,
-				FamilyName:  p.FamilyName,
-			}
-		} else {
-			person = entities.Person{Id: payload.PersonID}
-		}
-		return events.PersonRemoved{
-			Base:   base,
-			Person: person,
+		return events.ProjectRoleUnassigned{
+			Base:          base,
+			PersonID:      payload.PersonID,
+			ProjectRoleID: payload.ProjectRoleID,
 		}, nil
 
 	case events.ProductAddedType:
@@ -601,30 +552,9 @@ func (s *EntStore) mapEventRow(r *ent.Event) (events.Event, error) {
 		if payload == nil {
 			return nil, fmt.Errorf("missing ProductAdded edge for event %s", r.ID)
 		}
-		var product entities.Product
-		if payload.Edges.Product != nil {
-			p := payload.Edges.Product
-			lang := ""
-			if p.Language != nil {
-				lang = *p.Language
-			}
-			doi := ""
-			if p.Doi != nil {
-				doi = *p.Doi
-			}
-			product = entities.Product{
-				Id:       p.ID,
-				Name:     p.Name,
-				Type:     entities.ProductType(p.Type),
-				Language: lang,
-				DOI:      doi,
-			}
-		} else {
-			product = entities.Product{Id: payload.ProductID}
-		}
 		return events.ProductAdded{
-			Base:    base,
-			Product: product,
+			Base:      base,
+			ProductID: payload.ProductID,
 		}, nil
 
 	case events.ProductRemovedType:
@@ -632,30 +562,9 @@ func (s *EntStore) mapEventRow(r *ent.Event) (events.Event, error) {
 		if payload == nil {
 			return nil, fmt.Errorf("missing ProductRemoved edge for event %s", r.ID)
 		}
-		var product entities.Product
-		if payload.Edges.Product != nil {
-			p := payload.Edges.Product
-			lang := ""
-			if p.Language != nil {
-				lang = *p.Language
-			}
-			doi := ""
-			if p.Doi != nil {
-				doi = *p.Doi
-			}
-			product = entities.Product{
-				Id:       p.ID,
-				Name:     p.Name,
-				Type:     entities.ProductType(p.Type),
-				Language: lang,
-				DOI:      doi,
-			}
-		} else {
-			product = entities.Product{Id: payload.ProductID}
-		}
 		return events.ProductRemoved{
-			Base:    base,
-			Product: product,
+			Base:      base,
+			ProductID: payload.ProductID,
 		}, nil
 
 	default:
@@ -677,13 +586,9 @@ func (s *EntStore) LoadUserApprovedEvents(ctx context.Context, userID uuid.UUID)
 		WithDescriptionChanged().
 		WithStartDateChanged().
 		WithEndDateChanged().
-		WithOrganisationChanged().
-		WithPersonAdded(func(q *ent.PersonAddedEventQuery) {
-			q.WithPerson()
-		}).
-		WithPersonRemoved(func(q *ent.PersonRemovedEventQuery) {
-			q.WithPerson()
-		}).
+		WithOwningOrgNodeChanged().
+		WithProjectRoleAssigned().
+		WithProjectRoleUnassigned().
 		WithProductAdded(func(q *ent.ProductAddedEventQuery) {
 			q.WithProduct()
 		}).

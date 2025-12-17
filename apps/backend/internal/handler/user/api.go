@@ -13,6 +13,7 @@ func MountUserRoutes(r chi.Router, h *Handler) {
 
 		r.Delete("/{id}", h.DeleteUser)
 		r.Get("/{id}/events/approved", h.GetApprovedEvents)
+		r.Get("/search", h.SearchUsers)
 	})
 
 	r.Group(func(r chi.Router) {

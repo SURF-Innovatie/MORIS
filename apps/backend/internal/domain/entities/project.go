@@ -6,24 +6,33 @@ import (
 	"github.com/google/uuid"
 )
 
+type ProjectMember struct {
+	PersonID      uuid.UUID
+	ProjectRoleID uuid.UUID
+}
+
 type Project struct {
-	Id           uuid.UUID
-	ProjectAdmin uuid.UUID
-	Version      int
-	StartDate    time.Time
-	EndDate      time.Time
-	Title        string
-	Description  string
-	People       []uuid.UUID
-	Organisation uuid.UUID
-	Products     []uuid.UUID
+	Id              uuid.UUID
+	Version         int
+	StartDate       time.Time
+	EndDate         time.Time
+	Title           string
+	Description     string
+	Members         []ProjectMember
+	OwningOrgNodeID uuid.UUID
+	ProductIDs      []uuid.UUID
+}
+
+type ProjectMemberDetail struct {
+	Person Person
+	Role   ProjectRole
 }
 
 type ProjectDetails struct {
-	Project      Project
-	Organisation Organisation
-	People       []Person
-	Products     []Product
+	Project       Project
+	OwningOrgNode OrganisationNode
+	Members       []ProjectMemberDetail
+	Products      []Product
 }
 
 type ChangeLogEntry struct {

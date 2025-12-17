@@ -2,9 +2,34 @@ package organisation
 
 import "github.com/go-chi/chi/v5"
 
-func MountOrganisationRoutes(r chi.Router, h *Handler) {
-	r.Route("/organisations", func(r chi.Router) {
-		r.Post("/", h.Create)
-		r.Get("/{id}", h.Get)
+func MountOrganisationRoutes(r chi.Router, h *Handler, rbac *RBACHandler) {
+	r.Route("/organisation-nodes", func(r chi.Router) {
+		r.Post("/", h.CreateRoot)
+
+		r.Get("/roots", h.ListRoots)
+		r.Get("/{id}", h.GetOrganisationNode)
+		r.Patch("/{id}", h.UpdateOrganisationNode)
+
+		r.Post("/{id}/children", h.CreateChild)
+		r.Get("/{id}/children", h.ListChildren)
+
+		// RBAC on nodes
+		r.Get("/{id}/memberships/effective", rbac.ListEffectiveMemberships)
+		r.Get("/{id}/approval-node", rbac.GetApprovalNode)
+	})
+
+	r.Route("/organisation-roles", func(r chi.Router) {
+		r.Get("/", rbac.ListRoles)
+		r.Post("/ensure-defaults", rbac.EnsureDefaultRoles)
+	})
+
+	r.Route("/organisation-scopes", func(r chi.Router) {
+		r.Post("/", rbac.CreateScope)
+	})
+
+	r.Route("/organisation-memberships", func(r chi.Router) {
+		r.Post("/", rbac.AddMembership)
+		r.Delete("/{id}", rbac.RemoveMembership)
+		r.Get("/mine", rbac.ListMyMemberships)
 	})
 }

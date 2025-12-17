@@ -9,12 +9,12 @@ interface ProjectOverviewProps {
 }
 
 const getProjectStatus = (project: ProjectResponse) => {
-    if (!project.startDate || !project.endDate)
+    if (!project.start_date || !project.end_date)
         return { label: "Unknown", variant: "secondary" as const };
 
     const now = new Date();
-    const start = new Date(project.startDate);
-    const end = new Date(project.endDate);
+    const start = new Date(project.start_date);
+    const end = new Date(project.end_date);
 
     if (now < start) return { label: "Upcoming", variant: "secondary" as const };
     if (now > end) return { label: "Completed", variant: "outline" as const };
@@ -32,10 +32,10 @@ export function ProjectOverview({ project }: ProjectOverviewProps) {
                         <CardTitle className="text-2xl">{project.title}</CardTitle>
                         <div className="flex items-center gap-2 pt-2">
                             <Badge variant={status.variant}>{status.label}</Badge>
-                            {project.organization && (
+                            {project.owning_org_node && (
                                 <Badge variant="outline" className="flex items-center gap-1">
                                     <Building2 className="h-3 w-3" />
-                                    {project.organization.name}
+                                    {project.owning_org_node.name}
                                 </Badge>
                             )}
                         </div>
@@ -62,12 +62,12 @@ export function ProjectOverview({ project }: ProjectOverviewProps) {
                             <div className="flex items-center gap-2 text-sm">
                                 <Calendar className="h-4 w-4 text-muted-foreground" />
                                 <span>
-                                    {project.startDate
-                                        ? format(new Date(project.startDate), "MMMM d, yyyy")
+                                    {project.start_date
+                                        ? format(new Date(project.start_date), "MMMM d, yyyy")
                                         : "N/A"}{" "}
                                     -{" "}
-                                    {project.endDate
-                                        ? format(new Date(project.endDate), "MMMM d, yyyy")
+                                    {project.end_date
+                                        ? format(new Date(project.end_date), "MMMM d, yyyy")
                                         : "N/A"}
                                 </span>
                             </div>

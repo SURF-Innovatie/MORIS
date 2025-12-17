@@ -5,15 +5,12 @@ import (
 	"fmt"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
-	"github.com/SURF-Innovatie/MORIS/ent/organisation"
+	"github.com/SURF-Innovatie/MORIS/ent/organisationnode"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
-	notifservice "github.com/SURF-Innovatie/MORIS/internal/notification"
-	"github.com/google/uuid"
 )
 
 type ProjectEventNotificationHandler struct {
-	Notifier notifservice.Service
-	Cli      *ent.Client
+	Cli *ent.Client
 }
 
 func (h *ProjectEventNotificationHandler) CanHandle(e events.Event) bool {
@@ -23,37 +20,30 @@ func (h *ProjectEventNotificationHandler) CanHandle(e events.Event) bool {
 		events.DescriptionChanged,
 		events.StartDateChanged,
 		events.EndDateChanged,
-		events.OrganisationChanged:
+		events.OwningOrgNodeChanged:
 		return true
 	}
 	return false
 }
 
 func (h *ProjectEventNotificationHandler) Handle(ctx context.Context, e events.Event) error {
-	creatorID := e.CreatedByID()
-	if creatorID == uuid.Nil {
-		return nil
-	}
-
-	user, err := h.Cli.User.Get(ctx, creatorID)
-	if err != nil {
+	u, err := ResolveUser(ctx, h.Cli, e.CreatedByID())
+	if err != nil || u == nil {
 		return err
 	}
 
 	msg, err := h.buildMessage(ctx, e)
-	if err != nil {
+	if err != nil || msg == "" {
 		return err
-	}
-	if msg == "" {
-		return nil
 	}
 
 	_, err = h.Cli.Notification.
 		Create().
 		SetMessage(msg).
-		SetUser(user).
+		SetUser(u).
 		SetEventID(e.GetID()).
 		Save(ctx)
+
 	return err
 }
 
@@ -69,15 +59,15 @@ func (h *ProjectEventNotificationHandler) buildMessage(ctx context.Context, e ev
 		return fmt.Sprintf("Project start date changed to %s.", v.StartDate.Format("2006-01-02")), nil
 	case events.EndDateChanged:
 		return fmt.Sprintf("Project end date changed to %s.", v.EndDate.Format("2006-01-02")), nil
-	case events.OrganisationChanged:
-		org, err := h.Cli.Organisation.
+	case events.OwningOrgNodeChanged:
+		n, err := h.Cli.OrganisationNode.
 			Query().
-			Where(organisation.IDEQ(v.OrganisationID)).
-			First(ctx)
+			Where(organisationnode.IDEQ(v.OwningOrgNodeID)).
+			Only(ctx)
 		if err != nil {
 			return "", err
 		}
-		return fmt.Sprintf("Project organisation changed to '%s'.", org.Name), nil
+		return fmt.Sprintf("Project owning organisation node changed to '%s'.", n.Name), nil
 	default:
 		return "", nil
 	}

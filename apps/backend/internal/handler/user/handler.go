@@ -3,8 +3,8 @@ package user
 import (
 	"net/http"
 
-	"github.com/SURF-Innovatie/MORIS/internal/api/eventdto"
-	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
+	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/SURF-Innovatie/MORIS/internal/project"
@@ -27,13 +27,14 @@ func NewHandler(svc user.Service, projSvc project.Service) *Handler {
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param user body userdto.Request true "User creation payload"
-// @Success 200 {object} userdto.Response
+// @Security BearerAuth
+// @Param user body dto.UserRequest true "User creation payload"
+// @Success 200 {object} dto.UserResponse
 // @Failure 400 {string} string "invalid request body or missing person ID"
 // @Failure 500 {string} string "internal server error"
 // @Router /users [post]
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	var req userdto.Request
+	var req dto.UserRequest
 	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
@@ -58,7 +59,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, userdto.FromEntity(acc))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.UserResponse](acc))
 }
 
 // GetUser godoc
@@ -67,8 +68,9 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User ID (UUID)"
-// @Success 200 {object} userdto.Response
+// @Success 200 {object} dto.UserResponse
 // @Failure 400 {string} string "invalid id"
 // @Failure 500 {string} string "internal server error"
 // @Router /users/{id} [get]
@@ -85,7 +87,7 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, userdto.FromEntity(acc))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.UserResponse](acc))
 }
 
 // UpdateUser godoc
@@ -94,9 +96,10 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User ID (UUID)"
-// @Param user body userdto.Request true "User update payload"
-// @Success 200 {object} userdto.Response
+// @Param user body dto.UserRequest true "User update payload"
+// @Success 200 {object} dto.UserResponse
 // @Failure 400 {string} string "invalid id or request body"
 // @Failure 500 {string} string "internal server error"
 // @Router /users/{id} [put]
@@ -119,7 +122,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req userdto.Request
+	var req dto.UserRequest
 	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
@@ -140,7 +143,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, userdto.FromEntity(acc))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.UserResponse](acc))
 }
 
 // DeleteUser godoc
@@ -149,6 +152,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User ID (UUID)"
 // @Success 204 {string} string "no content"
 // @Failure 400 {string} string "invalid id"
@@ -192,8 +196,9 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User ID (UUID)"
-// @Success 200 {object} eventdto.Response
+// @Success 200 {object} dto.EventResponse
 // @Failure 400 {string} string "invalid id"
 // @Failure 500 {string} string "internal server error"
 // @Router /users/{id}/events/approved [get]
@@ -211,7 +216,7 @@ func (h *Handler) GetApprovedEvents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Map to DTO
-	dtos := make([]eventdto.Event, 0, len(events))
+	dtos := make([]dto.Event, 0, len(events))
 	for _, e := range events {
 
 		proj, _ := h.projSvc.GetProject(r.Context(), e.AggregateID())
@@ -220,10 +225,10 @@ func (h *Handler) GetApprovedEvents(w http.ResponseWriter, r *http.Request) {
 			projectTitle = proj.Project.Title
 		}
 
-		dtos = append(dtos, eventdto.FromEntityWithTitle(e, projectTitle))
+		dtos = append(dtos, dto.Event{}.FromEntityWithTitle(e, projectTitle))
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, eventdto.Response{Events: dtos})
+	_ = httputil.WriteJSON(w, http.StatusOK, dto.EventResponse{Events: dtos})
 }
 
 // ListUsers godoc
@@ -235,7 +240,7 @@ func (h *Handler) GetApprovedEvents(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Param page query int false "Page number (default 1)"
 // @Param page_size query int false "Page size (default 10)"
-// @Success 200 {object} userdto.PaginatedResponse
+// @Success 200 {object} dto.UserPaginatedResponse
 // @Failure 401 {object} httputil.BackendError "User not authenticated"
 // @Failure 403 {object} httputil.BackendError "Insufficient permissions"
 // @Router /admin/users/list [get]
@@ -261,19 +266,12 @@ func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dtos := make([]userdto.Response, 0, len(users))
-	for _, acc := range users {
-		dtos = append(dtos, userdto.FromEntity(acc))
-	}
-
-	totalPages := (total + pageSize - 1) / pageSize
-
-	resp := userdto.PaginatedResponse{
-		Data:       dtos,
+	resp := dto.UserPaginatedResponse{
+		Data:       transform.ToDTOs[dto.UserResponse](users),
 		Total:      total,
 		Page:       page,
 		PageSize:   pageSize,
-		TotalPages: totalPages,
+		TotalPages: (total + pageSize - 1) / pageSize,
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, resp)
@@ -287,7 +285,7 @@ func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "User ID"
-// @Param request body userdto.ToggleActiveRequest true "Toggle active status payload"
+// @Param request body dto.UserToggleActiveRequest true "Toggle active status payload"
 // @Success 200 {object} httputil.StatusResponse
 // @Failure 401 {object} httputil.BackendError "User not authenticated"
 // @Failure 403 {object} httputil.BackendError "Insufficient permissions"
@@ -323,7 +321,7 @@ func (h *Handler) ToggleActive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req userdto.ToggleActiveRequest
+	var req dto.UserToggleActiveRequest
 	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
@@ -335,4 +333,44 @@ func (h *Handler) ToggleActive(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = httputil.WriteStatus(w)
+}
+
+// SearchUsers godoc
+// @Summary Search users/persons
+// @Description Search for persons by name or email. Non-admins are restricted to people they share a project with.
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param q query string true "Search query"
+// @Success 200 {object} []dto.UserPersonResponse
+// @Failure 401 {string} string "unauthorized"
+// @Failure 500 {string} string "internal server error"
+// @Router /users/search [get]
+func (h *Handler) SearchUsers(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("q")
+	if query == "" {
+		_ = httputil.WriteJSON(w, http.StatusOK, []dto.UserPersonResponse{})
+		return
+	}
+
+	authUser, ok := httputil.GetUserFromContext(r.Context())
+	if !ok {
+		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
+		return
+	}
+
+	var observerID *uuid.UUID
+	if !authUser.User.IsSysAdmin {
+		id := authUser.User.PersonID
+		observerID = &id
+	}
+
+	persons, err := h.svc.SearchPersons(r.Context(), query, observerID)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOs[dto.UserPersonResponse](persons))
 }

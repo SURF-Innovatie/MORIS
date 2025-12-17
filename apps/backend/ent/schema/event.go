@@ -37,9 +37,9 @@ func (Event) Edges() []ent.Edge {
 		edge.To("description_changed", DescriptionChangedEvent.Type).Unique(),
 		edge.To("start_date_changed", StartDateChangedEvent.Type).Unique(),
 		edge.To("end_date_changed", EndDateChangedEvent.Type).Unique(),
-		edge.To("organisation_changed", OrganisationChangedEvent.Type).Unique(),
-		edge.To("person_added", PersonAddedEvent.Type).Unique(),
-		edge.To("person_removed", PersonRemovedEvent.Type).Unique(),
+		edge.To("project_role_assigned", ProjectRoleAssignedEvent.Type).Unique(),
+		edge.To("project_role_unassigned", ProjectRoleUnassignedEvent.Type).Unique(),
+		edge.To("owning_org_node_changed", OwningOrgNodeChangedEvent.Type).Unique(),
 		edge.To("product_added", ProductAddedEvent.Type).Unique(),
 		edge.To("product_removed", ProductRemovedEvent.Type).Unique(),
 	}

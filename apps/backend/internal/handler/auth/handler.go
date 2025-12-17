@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/external/orcid"
-	"github.com/SURF-Innovatie/MORIS/internal/api/authdto"
-	"github.com/SURF-Innovatie/MORIS/internal/api/userdto"
+	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	coreauth "github.com/SURF-Innovatie/MORIS/internal/auth"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
 )
@@ -33,13 +33,13 @@ func NewHandler(userService user.Service, authService coreauth.Service, orcidSer
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param credentials body authdto.LoginRequest true "User login credentials"
-// @Success 200 {object} authdto.LoginResponse
+// @Param credentials body dto.LoginRequest true "User login credentials"
+// @Success 200 {object} dto.LoginResponse
 // @Failure 400 {object} httputil.BackendError "Invalid request body"
 // @Failure 401 {object} httputil.BackendError "Invalid credentials"
 // @Router /login [post]
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
-	var req authdto.LoginRequest
+	var req dto.LoginRequest
 	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
@@ -50,7 +50,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := authdto.FromEntity(token, authUser)
+	resp := dto.FromEntity(token, authUser)
 	_ = httputil.WriteJSON(w, http.StatusOK, resp)
 }
 
@@ -61,7 +61,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} userdto.Response
+// @Success 200 {object} dto.UserResponse
 // @Failure 401 {object} httputil.BackendError "User not authenticated"
 // @Router /profile [get]
 func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
@@ -78,10 +78,10 @@ func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto := userdto.FromEntity(freshUser)
+	dtoResp := transform.ToDTOItem[dto.UserResponse](freshUser)
 
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(dto)
+	_ = json.NewEncoder(w).Encode(dtoResp)
 }
 
 // GetORCIDAuthURL godoc
@@ -91,7 +91,7 @@ func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} authdto.ORCIDAuthURLResponse
+// @Success 200 {object} dto.ORCIDAuthURLResponse
 // @Failure 401 {object} httputil.BackendError "User not authenticated"
 // @Failure 500 {object} httputil.BackendError "Internal server error"
 // @Router /auth/orcid/url [get]
@@ -114,7 +114,7 @@ func (h *Handler) GetORCIDAuthURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	resp := authdto.ORCIDAuthURLResponse{URL: url}
+	resp := dto.ORCIDAuthURLResponse{URL: url}
 	_ = json.NewEncoder(w).Encode(resp)
 }
 
@@ -125,7 +125,7 @@ func (h *Handler) GetORCIDAuthURL(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param request body authdto.LinkORCIDRequest true "ORCID link request"
+// @Param request body dto.LinkORCIDRequest true "ORCID link request"
 // @Success 200 {object} httputil.StatusResponse
 // @Failure 400 {object} httputil.BackendError "Invalid request"
 // @Failure 401 {object} httputil.BackendError "User not authenticated"
@@ -139,7 +139,7 @@ func (h *Handler) LinkORCID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req authdto.LinkORCIDRequest
+	var req dto.LinkORCIDRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		httputil.WriteError(w, r, http.StatusBadRequest, "Invalid request body", nil)
 		return
