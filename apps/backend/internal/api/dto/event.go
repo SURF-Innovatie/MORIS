@@ -42,7 +42,6 @@ func (e Event) FromEntityWithTitle(ev events.Event, projectTitle string) Event {
 		ID:           ev.GetID(),
 		ProjectID:    ev.AggregateID(),
 		Type:         ev.Type(),
-		Status:       ev.GetStatus(),
 		CreatedBy:    createdBy,
 		At:           ev.OccurredAt(),
 		Details:      ev.String(),

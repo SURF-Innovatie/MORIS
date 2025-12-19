@@ -10,6 +10,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	crossref2 "github.com/SURF-Innovatie/MORIS/external/crossref"
 	"github.com/SURF-Innovatie/MORIS/external/orcid"
+	"github.com/SURF-Innovatie/MORIS/internal/approvals"
 	"github.com/SURF-Innovatie/MORIS/internal/env"
 	"github.com/SURF-Innovatie/MORIS/internal/errorlog"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
@@ -132,7 +133,9 @@ func main() {
 	authHandler := authhandler.NewHandler(userSvc, authSvc, orcidSvc)
 	systemHandler := systemhandler.NewHandler()
 
-	projSvc := project.NewService(esStore, client, eventSvc, rdb)
+	apprSvc := approvals.NewService(client, approvals.NewDefaultPolicy(), approvals.Options{StrictMissingRequest: true})
+
+	projSvc := project.NewService(esStore, client, eventSvc, rdb, apprSvc)
 	projHandler := projecthandler.NewHandler(projSvc)
 
 	userHandler := userhandler.NewHandler(userSvc, projSvc)

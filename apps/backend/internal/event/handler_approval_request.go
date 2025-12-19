@@ -32,10 +32,6 @@ func (h *ApprovalRequestNotificationHandler) CanHandle(e events.Event) bool {
 }
 
 func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e events.Event) error {
-	if e.GetStatus() != "pending" {
-		return nil
-	}
-
 	projectID := e.AggregateID()
 
 	evts, _, err := h.ES.Load(ctx, projectID)

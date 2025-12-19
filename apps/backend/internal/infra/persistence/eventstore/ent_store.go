@@ -75,7 +75,6 @@ func (s *EntStore) Append(
 				SetProjectID(projectID).
 				SetVersion(version).
 				SetType(events.ProjectStartedType).
-				SetStatus(en.Status(e.GetStatus())).
 				SetOccurredAt(now).
 				SetCreatedBy(v.CreatedBy). // Added
 				Save(ctx)
@@ -108,9 +107,8 @@ func (s *EntStore) Append(
 				SetProjectID(projectID).
 				SetVersion(version).
 				SetType(events.TitleChangedType).
-				SetStatus(en.Status(e.GetStatus())).
 				SetOccurredAt(now).
-				SetCreatedBy(v.CreatedBy). // Added
+				SetCreatedBy(v.CreatedBy).
 				Save(ctx)
 			if err != nil {
 				_ = tx.Rollback()
@@ -136,9 +134,8 @@ func (s *EntStore) Append(
 				SetProjectID(projectID).
 				SetVersion(version).
 				SetType(events.DescriptionChangedType).
-				SetStatus(en.Status(e.GetStatus())).
 				SetOccurredAt(now).
-				SetCreatedBy(v.CreatedBy). // Added
+				SetCreatedBy(v.CreatedBy).
 				Save(ctx)
 			if err != nil {
 				_ = tx.Rollback()
@@ -165,8 +162,7 @@ func (s *EntStore) Append(
 				SetVersion(version).
 				SetType(events.StartDateChangedType).
 				SetOccurredAt(now).
-				SetStatus(en.Status(e.GetStatus())).
-				SetCreatedBy(v.CreatedBy). // Added
+				SetCreatedBy(v.CreatedBy).
 				Save(ctx)
 			if err != nil {
 				_ = tx.Rollback()
@@ -193,8 +189,7 @@ func (s *EntStore) Append(
 				SetVersion(version).
 				SetType(events.EndDateChangedType).
 				SetOccurredAt(now).
-				SetStatus(en.Status(e.GetStatus())).
-				SetCreatedBy(v.CreatedBy). // Added
+				SetCreatedBy(v.CreatedBy).
 				Save(ctx)
 			if err != nil {
 				_ = tx.Rollback()
@@ -221,8 +216,7 @@ func (s *EntStore) Append(
 				SetVersion(version).
 				SetType(events.OwningOrgNodeChangedType).
 				SetOccurredAt(now).
-				SetStatus(en.Status(e.GetStatus())).
-				SetCreatedBy(v.CreatedBy). // Added
+				SetCreatedBy(v.CreatedBy).
 				Save(ctx)
 			if err != nil {
 				_ = tx.Rollback()
@@ -249,8 +243,7 @@ func (s *EntStore) Append(
 				SetVersion(version).
 				SetType(events.ProjectRoleAssignedType).
 				SetOccurredAt(now).
-				SetStatus(en.Status(e.GetStatus())).
-				SetCreatedBy(v.CreatedBy). // Added
+				SetCreatedBy(v.CreatedBy).
 				Save(ctx)
 			if err != nil {
 				_ = tx.Rollback()
@@ -278,8 +271,7 @@ func (s *EntStore) Append(
 				SetVersion(version).
 				SetType(events.ProjectRoleUnassignedType).
 				SetOccurredAt(now).
-				SetStatus(en.Status(e.GetStatus())).
-				SetCreatedBy(v.CreatedBy). // Added
+				SetCreatedBy(v.CreatedBy).
 				Save(ctx)
 			if err != nil {
 				_ = tx.Rollback()
@@ -307,8 +299,7 @@ func (s *EntStore) Append(
 				SetVersion(version).
 				SetType(events.ProductAddedType).
 				SetOccurredAt(now).
-				SetStatus(en.Status(e.GetStatus())).
-				SetCreatedBy(v.CreatedBy). // Added
+				SetCreatedBy(v.CreatedBy).
 				Save(ctx)
 			if err != nil {
 				_ = tx.Rollback()
@@ -335,8 +326,7 @@ func (s *EntStore) Append(
 				SetVersion(version).
 				SetType(events.ProductRemovedType).
 				SetOccurredAt(now).
-				SetStatus(en.Status(e.GetStatus())).
-				SetCreatedBy(v.CreatedBy). // Added
+				SetCreatedBy(v.CreatedBy).
 				Save(ctx)
 			if err != nil {
 				_ = tx.Rollback()
@@ -362,20 +352,6 @@ func (s *EntStore) Append(
 	}
 
 	return tx.Commit()
-}
-
-func (s *EntStore) UpdateEventStatus(ctx context.Context, eventID uuid.UUID, status string) error {
-	// Validate status enum
-	switch status {
-	case "pending", "approved", "rejected":
-	default:
-		return fmt.Errorf("invalid status: %s", status)
-	}
-
-	return s.cli.Event.
-		UpdateOneID(eventID).
-		SetStatus(en.Status(status)).
-		Exec(ctx)
 }
 
 func (s *EntStore) Load(
@@ -456,7 +432,6 @@ func (s *EntStore) mapEventRow(r *ent.Event) (events.Event, error) {
 		ProjectID: r.ProjectID,
 		At:        r.OccurredAt,
 		CreatedBy: r.CreatedBy,
-		Status:    string(r.Status),
 	}
 
 	switch r.Type {
@@ -578,7 +553,6 @@ func (s *EntStore) LoadUserApprovedEvents(ctx context.Context, userID uuid.UUID)
 		Query().
 		Where(
 			en.CreatedByEQ(userID),
-			en.StatusEQ(en.StatusApproved),
 		).
 		Order(ent.Desc(en.FieldOccurredAt)).
 		WithProjectStarted().

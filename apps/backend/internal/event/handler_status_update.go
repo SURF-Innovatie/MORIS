@@ -16,8 +16,7 @@ type StatusUpdateNotificationHandler struct {
 }
 
 func (h *StatusUpdateNotificationHandler) CanHandle(e events.Event) bool {
-	status := e.GetStatus()
-	return status == "approved" || status == "rejected"
+	return false
 }
 
 // Friendly names mapping
@@ -40,7 +39,6 @@ func (h *StatusUpdateNotificationHandler) Handle(ctx context.Context, e events.E
 		return err
 	}
 
-	status := e.GetStatus()
 	eventType := e.Type()
 
 	friendlyName, ok := eventFriendlyNames[eventType]
@@ -48,7 +46,7 @@ func (h *StatusUpdateNotificationHandler) Handle(ctx context.Context, e events.E
 		friendlyName = eventType
 	}
 
-	msg := fmt.Sprintf("Your request '%s' has been %s.", friendlyName, status)
+	msg := fmt.Sprintf("Your request '%s' has been %s.", friendlyName)
 
 	_, err = h.Cli.Notification.
 		Create().

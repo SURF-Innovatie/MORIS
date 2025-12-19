@@ -13,9 +13,9 @@ type ApprovalCleanupHandler struct {
 	Cli *ent.Client
 }
 
+// TODO: fix or remove?
 func (h *ApprovalCleanupHandler) CanHandle(e events.Event) bool {
-	status := e.GetStatus()
-	return status == "approved" || status == "rejected"
+	return false
 }
 
 func (h *ApprovalCleanupHandler) Handle(ctx context.Context, e events.Event) error {

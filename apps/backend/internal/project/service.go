@@ -9,12 +9,14 @@ import (
 	"time"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
+	"github.com/SURF-Innovatie/MORIS/ent/approvalrequest"
 	en "github.com/SURF-Innovatie/MORIS/ent/event"
 	organisationent "github.com/SURF-Innovatie/MORIS/ent/organisationnode"
 	personent "github.com/SURF-Innovatie/MORIS/ent/person"
 	productent "github.com/SURF-Innovatie/MORIS/ent/product"
 	entprojectrole "github.com/SURF-Innovatie/MORIS/ent/projectrole"
 	entprojectroleassigned "github.com/SURF-Innovatie/MORIS/ent/projectroleassignedevent"
+	"github.com/SURF-Innovatie/MORIS/internal/approvals"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/commands"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
@@ -47,10 +49,11 @@ type Service interface {
 }
 
 type service struct {
-	cli    *ent.Client
-	es     eventstore.Store
-	evtSvc event.Service
-	redis  *redis.Client
+	cli     *ent.Client
+	es      eventstore.Store
+	evtSvc  event.Service
+	redis   *redis.Client
+	apprSvc approvals.Service
 }
 
 type StartProjectParams struct {
@@ -69,9 +72,8 @@ type UpdateProjectParams struct {
 	EndDate         time.Time
 }
 
-func NewService(es eventstore.Store, cli *ent.Client, evtSvc event.Service, rdb *redis.Client) Service {
-	s := &service{es: es, cli: cli, evtSvc: evtSvc, redis: rdb}
-	evtSvc.RegisterStatusChangeHandler(s.onStatusChange)
+func NewService(es eventstore.Store, cli *ent.Client, evtSvc event.Service, rdb *redis.Client, apprSvc approvals.Service) Service {
+	s := &service{es: es, cli: cli, evtSvc: evtSvc, redis: rdb, apprSvc: apprSvc}
 	return s
 }
 
@@ -102,7 +104,6 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 			ID:        uuid.New(),
 			ProjectID: projectID,
 			At:        now,
-			Status:    string(en.StatusApproved),
 			CreatedBy: user.ID,
 		},
 		Title:           params.Title,
@@ -125,7 +126,6 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 		proj,
 		user.PersonID,
 		"admin",
-		en.StatusApproved,
 	)
 	if err != nil {
 		return nil, err
@@ -167,35 +167,35 @@ func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params Update
 
 	var newEvents []events.Event
 
-	if evt, err := commands.ChangeTitle(id, user.ID, proj, params.Title, en.StatusApproved); err != nil {
+	if evt, err := commands.ChangeTitle(id, user.ID, proj, params.Title); err != nil {
 		return nil, err
 	} else if evt != nil {
 		newEvents = append(newEvents, evt)
 		projection.Apply(proj, evt)
 	}
 
-	if evt, err := commands.ChangeDescription(id, user.ID, proj, params.Description, en.StatusApproved); err != nil {
+	if evt, err := commands.ChangeDescription(id, user.ID, proj, params.Description); err != nil {
 		return nil, err
 	} else if evt != nil {
 		newEvents = append(newEvents, evt)
 		projection.Apply(proj, evt)
 	}
 
-	if evt, err := commands.ChangeStartDate(id, user.ID, proj, params.StartDate, en.StatusApproved); err != nil {
+	if evt, err := commands.ChangeStartDate(id, user.ID, proj, params.StartDate); err != nil {
 		return nil, err
 	} else if evt != nil {
 		newEvents = append(newEvents, evt)
 		projection.Apply(proj, evt)
 	}
 
-	if evt, err := commands.ChangeEndDate(id, user.ID, proj, params.EndDate, en.StatusApproved); err != nil {
+	if evt, err := commands.ChangeEndDate(id, user.ID, proj, params.EndDate); err != nil {
 		return nil, err
 	} else if evt != nil {
 		newEvents = append(newEvents, evt)
 		projection.Apply(proj, evt)
 	}
 
-	if evt, err := commands.ChangeOwningOrgNode(id, user.ID, proj, params.OwningOrgNodeID, en.StatusApproved); err != nil {
+	if evt, err := commands.ChangeOwningOrgNode(id, user.ID, proj, params.OwningOrgNodeID); err != nil {
 		return nil, err
 	} else if evt != nil {
 		newEvents = append(newEvents, evt)
@@ -279,19 +279,35 @@ func (s *service) GetAllProjects(ctx context.Context) ([]*entities.ProjectDetail
 }
 
 func (s *service) GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.Event, error) {
-	evts, _, err := s.es.Load(ctx, projectID)
-	if err != nil {
+	ids := []uuid.UUID{}
+	if err := s.cli.ApprovalRequest.
+		Query().
+		Where(
+			approvalrequest.ProjectIDEQ(projectID),
+			approvalrequest.StatusEQ(approvalrequest.StatusOpen),
+		).
+		Select(approvalrequest.FieldEventID).
+		Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 
-	var pending []events.Event
-	for _, e := range evts {
-		if e.GetStatus() == "pending" {
-			pending = append(pending, e)
+	if len(ids) == 0 {
+		return []events.Event{}, nil
+	}
+
+	out := make([]events.Event, 0, len(ids))
+	for _, id := range ids {
+		evt, err := s.es.LoadEvent(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		if evt != nil {
+			out = append(out, evt)
 		}
 	}
 
-	return pending, nil
+	sort.Slice(out, func(i, j int) bool { return out[i].OccurredAt().After(out[j].OccurredAt()) })
+	return out, nil
 }
 
 func (s *service) AddPerson(ctx context.Context, projectID uuid.UUID, personId uuid.UUID) (*entities.ProjectDetails, error) {
@@ -305,7 +321,7 @@ func (s *service) AddPerson(ctx context.Context, projectID uuid.UUID, personId u
 		return nil, err
 	}
 
-	evt, err := commands.AssignProjectRole(projectID, user.ID, proj, personId, "contributor", en.StatusPending)
+	evt, err := commands.AssignProjectRole(projectID, user.ID, proj, personId, "contributor")
 	if err != nil {
 		return nil, err
 	}
@@ -337,7 +353,7 @@ func (s *service) RemovePerson(ctx context.Context, projectID uuid.UUID, personI
 		return nil, err
 	}
 
-	evt, err := commands.UnassignProjectRole(projectID, user.ID, proj, personID, "contributor", en.StatusApproved)
+	evt, err := commands.UnassignProjectRole(projectID, user.ID, proj, personID, "contributor")
 	if err != nil {
 		return nil, err
 	}
@@ -410,7 +426,6 @@ func (s *service) UpdateMemberRole(
 			proj,
 			personID,
 			rk,
-			en.StatusApproved, // TODO: Maybe change to pending?
 		)
 		if err != nil {
 			return nil, err
@@ -429,7 +444,6 @@ func (s *service) UpdateMemberRole(
 			proj,
 			personID,
 			roleKey,
-			en.StatusApproved,
 		)
 		if err != nil {
 			return nil, err
@@ -479,7 +493,7 @@ func (s *service) AddProduct(
 		return nil, err
 	}
 
-	evt, err := commands.AddProduct(projectID, user.ID, proj, productID, en.StatusApproved)
+	evt, err := commands.AddProduct(projectID, user.ID, proj, productID)
 	if err != nil {
 		return nil, err
 	}
@@ -531,7 +545,7 @@ func (s *service) RemoveProduct(
 		return nil, err
 	}
 
-	evt, err := commands.RemoveProduct(projectID, user.ID, proj, productID, en.StatusApproved)
+	evt, err := commands.RemoveProduct(projectID, user.ID, proj, productID)
 	if err != nil {
 		return nil, err
 	}
@@ -733,7 +747,6 @@ func (s *service) GetChangeLog(ctx context.Context, id uuid.UUID) (*entities.Cha
 }
 
 func (s *service) fromDb(ctx context.Context, projectID uuid.UUID) (*entities.Project, error) {
-	// Try cache first
 	if proj, err := s.getFromCache(ctx, projectID); err == nil {
 		return proj, nil
 	}
@@ -746,12 +759,15 @@ func (s *service) fromDb(ctx context.Context, projectID uuid.UUID) (*entities.Pr
 		return nil, ErrNotFound
 	}
 
-	proj := projection.Reduce(projectID, evts)
+	eff, err := s.apprSvc.FilterEffective(ctx, projectID, evts)
+	if err != nil {
+		return nil, err
+	}
+
+	proj := projection.Reduce(projectID, eff)
 	proj.Version = version
 
-	// Update cache
 	_ = s.cacheProject(ctx, proj)
-
 	return proj, nil
 }
 
@@ -874,48 +890,6 @@ func (s *service) GetProjectRoles(ctx context.Context, id uuid.UUID) ([]entities
 	}
 
 	return out, nil
-}
-
-func (s *service) onStatusChange(ctx context.Context, e events.Event) error {
-	projectID := e.AggregateID()
-
-	evts, version, err := s.es.Load(ctx, projectID)
-	if err != nil {
-		return err
-	}
-	if len(evts) == 0 {
-		return ErrNotFound
-	}
-
-	proj := projection.Reduce(projectID, evts)
-	proj.Version = version
-
-	// Update cache
-	if err := s.cacheProject(ctx, proj); err != nil {
-		logrus.Errorf("failed to update project cache on status change: %v", err)
-	}
-
-	return nil
-}
-
-func memberHasRole(m entities.ProjectMember, roleKey string) bool {
-	for _, rk := range m.RoleKeys {
-		if rk == roleKey {
-			return true
-		}
-	}
-	return false
-}
-
-func removeRoleKeys(keys []string, roleKey string) []string {
-	n := 0
-	for _, rk := range keys {
-		if rk != roleKey {
-			keys[n] = rk
-			n++
-		}
-	}
-	return keys[:n]
 }
 
 func containsString(xs []string, x string) bool {

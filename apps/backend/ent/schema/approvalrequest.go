@@ -30,7 +30,7 @@ func (ApprovalRequest) Fields() []ent.Field {
 			Values("any_one", "all", "quorum").
 			Default("any_one"),
 
-		field.Int("quorum").Optional(),
+		field.Int("quorum").Optional().Nillable(),
 
 		field.Time("created_at").Default(time.Now),
 		field.Time("closed_at").Optional().Nillable(),
@@ -44,7 +44,8 @@ func (ApprovalRequest) Edges() []ent.Edge {
 			Unique().
 			Required(),
 
-		edge.To("assignees", ApprovalAssignee.Type),
+		edge.From("assignees", ApprovalAssignee.Type).
+			Ref("approval_request"),
 	}
 }
 

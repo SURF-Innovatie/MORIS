@@ -12,8 +12,6 @@ import (
 )
 
 type Service interface {
-	ApproveEvent(ctx context.Context, eventID uuid.UUID) error
-	RejectEvent(ctx context.Context, eventID uuid.UUID) error
 	HandleEvents(ctx context.Context, evts ...events.Event) error
 	RegisterNotificationHandler(handler NotificationHandler)
 	RegisterStatusChangeHandler(handler StatusChangeHandler)
@@ -59,47 +57,6 @@ func (s *service) HandleEvents(ctx context.Context, evts ...events.Event) error 
 		}
 	}
 	return nil
-}
-
-func (s *service) ApproveEvent(ctx context.Context, eventID uuid.UUID) error {
-	// 1. Update status
-	if err := s.es.UpdateEventStatus(ctx, eventID, "approved"); err != nil {
-		return err
-	}
-
-	event, err := s.es.LoadEvent(ctx, eventID)
-	if err != nil {
-		return err
-	}
-
-	// Notify status change handlers
-	for _, h := range s.statusChangeHandlers {
-		if err := h(ctx, event); err != nil {
-			logrus.Errorf("Error in status change handler: %v\n", err)
-		}
-	}
-
-	return s.HandleEvents(ctx, event)
-}
-
-func (s *service) RejectEvent(ctx context.Context, eventID uuid.UUID) error {
-	if err := s.es.UpdateEventStatus(ctx, eventID, "rejected"); err != nil {
-		return err
-	}
-
-	event, err := s.es.LoadEvent(ctx, eventID)
-	if err != nil {
-		return err
-	}
-
-	// Notify status change handlers
-	for _, h := range s.statusChangeHandlers {
-		if err := h(ctx, event); err != nil {
-			logrus.Errorf("Error in status change handler: %v\n", err)
-		}
-	}
-
-	return s.HandleEvents(ctx, event)
 }
 
 func (s *service) GetEvent(ctx context.Context, eventID uuid.UUID) (events.Event, error) {

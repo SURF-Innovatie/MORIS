@@ -17,62 +17,6 @@ func NewHandler(svc event.Service) *Handler {
 	return &Handler{svc: svc}
 }
 
-// ApproveEvent godoc
-// @Summary Approve an event
-// @Description Approves a pending event
-// @Tags events
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "Event ID (UUID)"
-// @Success 200 {object} map[string]string
-// @Failure 400 {string} string "invalid event id"
-// @Failure 500 {string} string "internal server error"
-// @Router /events/{id}/approve [post]
-func (h *Handler) ApproveEvent(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	id, err := httputil.ParseUUIDParam(r, "id")
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusBadRequest, "invalid event id", nil)
-		return
-	}
-
-	if err := h.svc.ApproveEvent(ctx, id); err != nil {
-		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
-		return
-	}
-
-	httputil.WriteStatus(w)
-}
-
-// RejectEvent godoc
-// @Summary Reject an event
-// @Description Rejects a pending event
-// @Tags events
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "Event ID (UUID)"
-// @Success 200 {object} map[string]string
-// @Failure 400 {string} string "invalid event id"
-// @Failure 500 {string} string "internal server error"
-// @Router /events/{id}/reject [post]
-func (h *Handler) RejectEvent(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	id, err := httputil.ParseUUIDParam(r, "id")
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusBadRequest, "invalid event id", nil)
-		return
-	}
-
-	if err := h.svc.RejectEvent(ctx, id); err != nil {
-		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
-		return
-	}
-
-	httputil.WriteStatus(w)
-}
-
 // GetEvent godoc
 // @Summary Get event details
 // @Description Retrieves details for a specific event by ID
@@ -103,7 +47,6 @@ func (h *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
 		ID:        e.GetID(),
 		ProjectID: e.AggregateID(),
 		Type:      e.Type(),
-		Status:    e.GetStatus(),
 		CreatedBy: e.CreatedByID(),
 		At:        e.OccurredAt(),
 		Details:   e.String(),

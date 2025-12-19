@@ -518,7 +518,6 @@ func main() {
 				ID:        uuid.New(),
 				ProjectID: projectID,
 				At:        time.Now().UTC(),
-				Status:    "approved",
 			},
 			Title:           sp.Title,
 			Description:     sp.Description,
@@ -578,7 +577,6 @@ func main() {
 					ID:        uuid.New(),
 					ProjectID: projectID,
 					At:        time.Now().UTC(),
-					Status:    "approved",
 				},
 				PersonID:       personID,
 				ProjectRoleKey: roleKey,
@@ -597,7 +595,6 @@ func main() {
 				Base: events.Base{
 					ProjectID: projectID,
 					At:        time.Now().UTC(),
-					Status:    "approved",
 				},
 				ProductID: productID,
 			}

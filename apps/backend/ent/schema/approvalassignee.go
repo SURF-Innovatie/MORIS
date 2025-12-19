@@ -36,8 +36,7 @@ func (ApprovalAssignee) Fields() []ent.Field {
 
 func (ApprovalAssignee) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("approval_request", ApprovalRequest.Type).
-			Ref("assignees").
+		edge.To("approval_request", ApprovalRequest.Type).
 			Field("approval_request_id").
 			Unique().
 			Required(),

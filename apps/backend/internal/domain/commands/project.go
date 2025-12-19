@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/SURF-Innovatie/MORIS/ent/event"
 	"github.com/google/uuid"
 
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
@@ -31,7 +30,7 @@ func StartProject(
 		return nil, errors.New("end date before start date")
 	}
 	return events.ProjectStarted{
-		Base:            base(id, actor, event.StatusApproved),
+		Base:            base(id, actor),
 		Title:           title,
 		Description:     description,
 		StartDate:       start,
@@ -42,47 +41,47 @@ func StartProject(
 }
 
 // ChangeTitle emits TitleChanged when different.
-func ChangeTitle(id uuid.UUID, actor uuid.UUID, cur *entities.Project, title string, status event.Status) (events.Event, error) {
+func ChangeTitle(id uuid.UUID, actor uuid.UUID, cur *entities.Project, title string) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
 	if title == "" || cur.Title == title {
 		return nil, nil
 	}
-	return events.TitleChanged{Base: base(id, actor, status), Title: title}, nil
+	return events.TitleChanged{Base: base(id, actor), Title: title}, nil
 }
 
 // ChangeDescription emits DescriptionChanged when different.
-func ChangeDescription(id uuid.UUID, actor uuid.UUID, cur *entities.Project, desc string, status event.Status) (events.Event, error) {
+func ChangeDescription(id uuid.UUID, actor uuid.UUID, cur *entities.Project, desc string) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
 	if cur.Description == desc {
 		return nil, nil
 	}
-	return events.DescriptionChanged{Base: base(id, actor, status), Description: desc}, nil
+	return events.DescriptionChanged{Base: base(id, actor), Description: desc}, nil
 }
 
 // ChangeStartDate emits StartDateChanged when the start date differs and is valid.
-func ChangeStartDate(id uuid.UUID, actor uuid.UUID, cur *entities.Project, start time.Time, status event.Status) (events.Event, error) {
+func ChangeStartDate(id uuid.UUID, actor uuid.UUID, cur *entities.Project, start time.Time) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
 	if cur.StartDate.Equal(start) {
 		return nil, nil
 	}
-	return events.StartDateChanged{Base: base(id, actor, status), StartDate: start}, nil
+	return events.StartDateChanged{Base: base(id, actor), StartDate: start}, nil
 }
 
 // ChangeEndDate emits EndDateChanged when the end date differs and is valid.
-func ChangeEndDate(id uuid.UUID, actor uuid.UUID, cur *entities.Project, end time.Time, status event.Status) (events.Event, error) {
+func ChangeEndDate(id uuid.UUID, actor uuid.UUID, cur *entities.Project, end time.Time) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
 	if cur.EndDate.Equal(end) {
 		return nil, nil
 	}
-	return events.EndDateChanged{Base: base(id, actor, status), EndDate: end}, nil
+	return events.EndDateChanged{Base: base(id, actor), EndDate: end}, nil
 }
 
 func ChangeOwningOrgNode(
@@ -90,7 +89,6 @@ func ChangeOwningOrgNode(
 	actor uuid.UUID,
 	cur *entities.Project,
 	orgNodeID uuid.UUID,
-	status event.Status,
 ) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
@@ -103,7 +101,7 @@ func ChangeOwningOrgNode(
 	}
 
 	return events.OwningOrgNodeChanged{
-		Base:            base(id, actor, status),
+		Base:            base(id, actor),
 		OwningOrgNodeID: orgNodeID,
 	}, nil
 }
@@ -123,7 +121,6 @@ func AssignProjectRole(
 	cur *entities.Project,
 	personID uuid.UUID,
 	projectRoleKey string,
-	status event.Status,
 ) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
@@ -140,7 +137,7 @@ func AssignProjectRole(
 	}
 
 	return events.ProjectRoleAssigned{
-		Base:           base(id, actor, status),
+		Base:           base(id, actor),
 		PersonID:       personID,
 		ProjectRoleKey: projectRoleKey,
 	}, nil
@@ -152,7 +149,6 @@ func UnassignProjectRole(
 	cur *entities.Project,
 	personID uuid.UUID,
 	projectRoleKey string,
-	status event.Status,
 ) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
@@ -173,7 +169,7 @@ func UnassignProjectRole(
 	}
 
 	return events.ProjectRoleUnassigned{
-		Base:           base(id, actor, status),
+		Base:           base(id, actor),
 		PersonID:       personID,
 		ProjectRoleKey: projectRoleKey,
 	}, nil
@@ -184,7 +180,6 @@ func SetOwningOrgNode(
 	actor uuid.UUID,
 	cur *entities.Project,
 	owningOrgNodeID uuid.UUID,
-	status event.Status,
 ) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
@@ -196,13 +191,13 @@ func SetOwningOrgNode(
 		return nil, nil
 	}
 	return events.OwningOrgNodeChanged{
-		Base:            base(id, actor, status),
+		Base:            base(id, actor),
 		OwningOrgNodeID: owningOrgNodeID,
 	}, nil
 }
 
 // AddProduct emits ProductAdded when not present
-func AddProduct(id uuid.UUID, actor uuid.UUID, cur *entities.Project, productID uuid.UUID, status event.Status) (events.Event, error) {
+func AddProduct(id uuid.UUID, actor uuid.UUID, cur *entities.Project, productID uuid.UUID) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
@@ -213,11 +208,11 @@ func AddProduct(id uuid.UUID, actor uuid.UUID, cur *entities.Project, productID 
 		}
 	}
 
-	return events.ProductAdded{Base: base(id, actor, status), ProductID: productID}, nil
+	return events.ProductAdded{Base: base(id, actor), ProductID: productID}, nil
 }
 
 // RemoveProduct emits ProductRemoved when present
-func RemoveProduct(id uuid.UUID, actor uuid.UUID, cur *entities.Project, productID uuid.UUID, status event.Status) (events.Event, error) {
+func RemoveProduct(id uuid.UUID, actor uuid.UUID, cur *entities.Project, productID uuid.UUID) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
@@ -230,9 +225,9 @@ func RemoveProduct(id uuid.UUID, actor uuid.UUID, cur *entities.Project, product
 	if !exist {
 		return nil, fmt.Errorf("product %s not found for project %s", productID, cur.Id)
 	}
-	return events.ProductRemoved{Base: base(id, actor, status), ProductID: productID}, nil
+	return events.ProductRemoved{Base: base(id, actor), ProductID: productID}, nil
 }
 
-func base(id uuid.UUID, actor uuid.UUID, status event.Status) events.Base {
-	return events.Base{ProjectID: id, At: time.Now().UTC(), ID: uuid.New(), CreatedBy: actor, Status: string(status)}
+func base(id uuid.UUID, actor uuid.UUID) events.Base {
+	return events.Base{ProjectID: id, At: time.Now().UTC(), ID: uuid.New(), CreatedBy: actor}
 }
