@@ -29,15 +29,20 @@ type ProjectRoleResponse struct {
 
 type ProjectMemberResponse struct {
 	PersonResponse
-	Role     string `json:"role"`
-	RoleName string `json:"role_name"`
+	Roles []ProjectRoleResponse
+}
+
+func (r ProjectRoleResponse) FromEntity(e entities.ProjectRole) ProjectRoleResponse {
+	return ProjectRoleResponse{
+		Key:  e.Key,
+		Name: e.Name,
+	}
 }
 
 func (r ProjectMemberResponse) FromEntity(e entities.ProjectMemberDetail) ProjectMemberResponse {
 	return ProjectMemberResponse{
 		PersonResponse: transform.ToDTOItem[PersonResponse](e.Person),
-		Role:           e.Role.Key,
-		RoleName:       e.Role.Name,
+		Roles:          transform.ToDTOs[ProjectRoleResponse](e.Roles),
 	}
 }
 

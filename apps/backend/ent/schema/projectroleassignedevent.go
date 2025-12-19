@@ -16,7 +16,7 @@ func (ProjectRoleAssignedEvent) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("event_id", uuid.UUID{}).Unique(),
 		field.UUID("person_id", uuid.UUID{}),
-		field.UUID("project_role_id", uuid.UUID{}),
+		field.String("role_key").NotEmpty(),
 	}
 }
 
@@ -33,18 +33,13 @@ func (ProjectRoleAssignedEvent) Edges() []ent.Edge {
 			Field("person_id").
 			Unique().
 			Required(),
-
-		edge.From("project_role", ProjectRole.Type).
-			Ref("assigned_events").
-			Field("project_role_id").
-			Unique().
-			Required(),
 	}
 }
+
 func (ProjectRoleAssignedEvent) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("event_id").Unique().StorageKey("ux_pra_event"),
 		index.Fields("person_id").StorageKey("ix_pra_person"),
-		index.Fields("project_role_id").StorageKey("ix_pra_role"),
+		index.Fields("role_key").StorageKey("ix_pra_role_key"),
 	}
 }

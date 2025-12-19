@@ -42,7 +42,7 @@ type Service interface {
 	UpdateMemberRole(ctx context.Context, projectID uuid.UUID, personID uuid.UUID, roleKey string) (*entities.ProjectDetails, error)
 	GetChangeLog(ctx context.Context, id uuid.UUID) (*entities.ChangeLog, error)
 	GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.Event, error)
-	GetProjectRoles(ctx context.Context) ([]entities.ProjectRole, error)
+	GetProjectRoles(ctx context.Context, id uuid.UUID) ([]entities.ProjectRole, error)
 	WarmupCache(ctx context.Context) error
 }
 
@@ -119,17 +119,12 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 	proj := projection.Reduce(projectID, []events.Event{startEvent})
 	proj.Version = 1
 
-	adminRoleID, err := s.projectRoleID(ctx, "admin") // or "lead" depending on your key
-	if err != nil {
-		return nil, err
-	}
-
 	ev, err := commands.AssignProjectRole(
 		projectID,
 		user.ID,
 		proj,
 		user.PersonID,
-		adminRoleID,
+		"admin",
 		en.StatusApproved,
 	)
 	if err != nil {
@@ -228,21 +223,6 @@ func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params Update
 	return s.buildProjectDetails(ctx, proj)
 }
 
-func (s *service) projectRoleID(ctx context.Context, key string) (uuid.UUID, error) {
-	var ids []uuid.UUID
-	if err := s.cli.ProjectRole.
-		Query().
-		Where(entprojectrole.KeyEQ(key)).
-		Select(entprojectrole.FieldID).
-		Scan(ctx, &ids); err != nil {
-		return uuid.Nil, err
-	}
-	if len(ids) == 0 {
-		return uuid.Nil, fmt.Errorf("project role not found: %s", key)
-	}
-	return ids[0], nil
-}
-
 // TODO, instead of a helper function there should be a currentUserService
 func currentUser(ctx context.Context, cli *ent.Client) (*ent.User, error) {
 	authUser, ok := httputil.GetUserFromContext(ctx)
@@ -325,12 +305,7 @@ func (s *service) AddPerson(ctx context.Context, projectID uuid.UUID, personId u
 		return nil, err
 	}
 
-	contribRoleID, err := s.projectRoleID(ctx, "contributor")
-	if err != nil {
-		return nil, err
-	}
-
-	evt, err := commands.AssignProjectRole(projectID, user.ID, proj, personId, contribRoleID, en.StatusPending)
+	evt, err := commands.AssignProjectRole(projectID, user.ID, proj, personId, "contributor", en.StatusPending)
 	if err != nil {
 		return nil, err
 	}
@@ -362,12 +337,7 @@ func (s *service) RemovePerson(ctx context.Context, projectID uuid.UUID, personI
 		return nil, err
 	}
 
-	contribRoleID, err := s.projectRoleID(ctx, "contributor")
-	if err != nil {
-		return nil, err
-	}
-
-	evt, err := commands.UnassignProjectRole(projectID, user.ID, proj, personID, contribRoleID, en.StatusApproved)
+	evt, err := commands.UnassignProjectRole(projectID, user.ID, proj, personID, "contributor", en.StatusApproved)
 	if err != nil {
 		return nil, err
 	}
@@ -404,12 +374,15 @@ func (s *service) UpdateMemberRole(
 		return nil, err
 	}
 
-	// 1. Find current role
-	var currentRoleID uuid.UUID
+	if roleKey == "" {
+		return nil, errors.New("roleKey is required")
+	}
+
+	var currentRoleKeys []string
 	found := false
 	for _, m := range proj.Members {
 		if m.PersonID == personID {
-			currentRoleID = m.ProjectRoleID
+			currentRoleKeys = append([]string(nil), m.RoleKeys...)
 			found = true
 			break
 		}
@@ -418,42 +391,65 @@ func (s *service) UpdateMemberRole(
 		return nil, errors.New("person is not a member of this project")
 	}
 
-	// 2. Resolve new role ID
-	newRoleID, err := s.projectRoleID(ctx, roleKey)
-	if err != nil {
-		return nil, err
-	}
+	targetRoleKeys := []string{roleKey}
 
-	if currentRoleID == newRoleID {
+	if len(currentRoleKeys) == 1 && currentRoleKeys[0] == roleKey {
 		return s.buildProjectDetails(ctx, proj)
 	}
 
-	// 3. Create Events
-	// Unassign old role
-	unassignEvt, err := commands.UnassignProjectRole(projectID, user.ID, proj, personID, currentRoleID, en.StatusApproved)
-	if err != nil {
-		return nil, err
+	newEvents := make([]events.Event, 0, len(currentRoleKeys)+1)
+
+	for _, rk := range currentRoleKeys {
+		if containsString(targetRoleKeys, rk) {
+			continue
+		}
+
+		unassignEvt, err := commands.UnassignProjectRole(
+			projectID,
+			user.ID,
+			proj,
+			personID,
+			rk,
+			en.StatusApproved, // TODO: Maybe change to pending?
+		)
+		if err != nil {
+			return nil, err
+		}
+		if unassignEvt != nil {
+			newEvents = append(newEvents, unassignEvt)
+			projection.Apply(proj, unassignEvt)
+			proj.Version++
+		}
 	}
 
-	// Assign new role
-	assignEvt, err := commands.AssignProjectRole(projectID, user.ID, proj, personID, newRoleID, en.StatusApproved)
-	if err != nil {
-		return nil, err
-	}
-
-	newEvents := []events.Event{}
-	if unassignEvt != nil {
-		newEvents = append(newEvents, unassignEvt)
-	}
-	if assignEvt != nil {
-		newEvents = append(newEvents, assignEvt)
+	if !containsString(currentRoleKeys, roleKey) {
+		assignEvt, err := commands.AssignProjectRole(
+			projectID,
+			user.ID,
+			proj,
+			personID,
+			roleKey,
+			en.StatusApproved,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if assignEvt != nil {
+			newEvents = append(newEvents, assignEvt)
+			projection.Apply(proj, assignEvt)
+			proj.Version++
+		}
 	}
 
 	if len(newEvents) == 0 {
 		return s.buildProjectDetails(ctx, proj)
 	}
 
-	// 4. Append and Apply
+	proj, err = s.fromDb(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, evt := range newEvents {
 		if err := s.es.Append(ctx, projectID, proj.Version, evt); err != nil {
 			return nil, err
@@ -575,91 +571,112 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Projec
 		return nil, errors.New("project is nil")
 	}
 
-	// Fetch People
 	personIDSet := map[uuid.UUID]struct{}{}
-	roleIDSet := map[uuid.UUID]struct{}{}
+	roleKeySet := map[string]struct{}{}
 
 	for _, m := range proj.Members {
 		personIDSet[m.PersonID] = struct{}{}
-		roleIDSet[m.ProjectRoleID] = struct{}{}
+		for _, rk := range m.RoleKeys {
+			if rk != "" {
+				roleKeySet[rk] = struct{}{}
+			}
+		}
 	}
+
 	personIDs := make([]uuid.UUID, 0, len(personIDSet))
 	for id := range personIDSet {
 		personIDs = append(personIDs, id)
 	}
-	roleIDs := make([]uuid.UUID, 0, len(roleIDSet))
-	for id := range roleIDSet {
-		roleIDs = append(roleIDs, id)
+
+	roleKeys := make([]string, 0, len(roleKeySet))
+	for k := range roleKeySet {
+		roleKeys = append(roleKeys, k)
 	}
 
-	peopleRows, err := s.cli.Person.
-		Query().
-		Where(personent.IDIn(personIDs...)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-	peopleMap := make(map[uuid.UUID]entities.Person)
-	for _, p := range peopleRows {
-		peopleMap[p.ID] = entities.Person{
-			ID:          p.ID,
-			UserID:      p.UserID,
-			Name:        p.Name,
-			GivenName:   p.GivenName,
-			FamilyName:  p.FamilyName,
-			Email:       p.Email,
-			ORCiD:       &p.OrcidID,
-			AvatarUrl:   p.AvatarURL,
-			Description: p.Description,
+	peopleMap := make(map[uuid.UUID]entities.Person, len(personIDs))
+	if len(personIDs) > 0 {
+		peopleRows, err := s.cli.Person.
+			Query().
+			Where(personent.IDIn(personIDs...)).
+			All(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, p := range peopleRows {
+			peopleMap[p.ID] = entities.Person{
+				ID:          p.ID,
+				UserID:      p.UserID,
+				Name:        p.Name,
+				GivenName:   p.GivenName,
+				FamilyName:  p.FamilyName,
+				Email:       p.Email,
+				ORCiD:       &p.OrcidID,
+				AvatarUrl:   p.AvatarURL,
+				Description: p.Description,
+			}
 		}
 	}
 
-	// Fetch Roles
-	rolesRows, err := s.cli.ProjectRole.
-		Query().
-		Where(entprojectrole.IDIn(roleIDs...)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-	rolesMap := make(map[uuid.UUID]entities.ProjectRole)
-	for _, r := range rolesRows {
-		rolesMap[r.ID] = entities.ProjectRole{
-			ID:   r.ID,
-			Key:  r.Key,
-			Name: r.Name,
+	rolesByKey := make(map[string]entities.ProjectRole, len(roleKeys))
+	if len(roleKeys) > 0 {
+		roleRows, err := s.cli.ProjectRole.
+			Query().
+			Where(entprojectrole.KeyIn(roleKeys...)).
+			All(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, r := range roleRows {
+			rolesByKey[r.Key] = entities.ProjectRole{
+				ID:   r.ID,
+				Key:  r.Key,
+				Name: r.Name,
+			}
 		}
 	}
 
 	members := make([]entities.ProjectMemberDetail, 0, len(proj.Members))
 	for _, m := range proj.Members {
 		p, okP := peopleMap[m.PersonID]
-		r, okR := rolesMap[m.ProjectRoleID]
-		if okP && okR {
-			members = append(members, entities.ProjectMemberDetail{
-				Person: p,
-				Role:   r,
+		if !okP {
+			continue
+		}
+
+		rs := make([]entities.ProjectRole, 0, len(m.RoleKeys))
+		for _, rk := range m.RoleKeys {
+			if r, ok := rolesByKey[rk]; ok {
+				rs = append(rs, r)
+			}
+		}
+
+		members = append(members, entities.ProjectMemberDetail{
+			Person: p,
+			Roles:  rs,
+		})
+	}
+
+	products := make([]entities.Product, 0)
+	if len(proj.ProductIDs) > 0 {
+		productRows, err := s.cli.Product.
+			Query().
+			Where(productent.IDIn(proj.ProductIDs...)).
+			All(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		products = make([]entities.Product, 0, len(productRows))
+		for _, p := range productRows {
+			products = append(products, entities.Product{
+				Id:       p.ID,
+				Name:     p.Name,
+				Language: derefString(p.Language),
+				Type:     entities.ProductType(p.Type),
+				DOI:      derefString(p.Doi),
 			})
 		}
-	}
-
-	productRows, err := s.cli.Product.
-		Query().
-		Where(productent.IDIn(proj.ProductIDs...)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	products := make([]entities.Product, 0, len(productRows))
-	for _, p := range productRows {
-		products = append(products, entities.Product{
-			Id:       p.ID,
-			Name:     p.Name,
-			Language: *p.Language,
-			Type:     entities.ProductType(p.Type),
-			DOI:      *p.Doi,
-		})
 	}
 
 	orgRow, err := s.cli.OrganisationNode.
@@ -682,6 +699,13 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Projec
 		Members:       members,
 		Products:      products,
 	}, nil
+}
+
+func derefString(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }
 
 func (s *service) GetChangeLog(ctx context.Context, id uuid.UUID) (*entities.ChangeLog, error) {
@@ -807,21 +831,49 @@ func (s *service) getFromCache(ctx context.Context, projectID uuid.UUID) (*entit
 	return &proj, nil
 }
 
-func (s *service) GetProjectRoles(ctx context.Context) ([]entities.ProjectRole, error) {
-	roles, err := s.cli.ProjectRole.Query().All(ctx)
+func (s *service) GetProjectRoles(ctx context.Context, id uuid.UUID) ([]entities.ProjectRole, error) {
+	proj, err := s.fromDb(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	var result []entities.ProjectRole
-	for _, r := range roles {
-		result = append(result, entities.ProjectRole{
+	roleKeySet := make(map[string]struct{})
+	for _, m := range proj.Members {
+		for _, rk := range m.RoleKeys {
+			if rk != "" {
+				roleKeySet[rk] = struct{}{}
+			}
+		}
+	}
+
+	if len(roleKeySet) == 0 {
+		return []entities.ProjectRole{}, nil
+	}
+
+	roleKeys := make([]string, 0, len(roleKeySet))
+	for k := range roleKeySet {
+		roleKeys = append(roleKeys, k)
+	}
+
+	rows, err := s.cli.ProjectRole.
+		Query().
+		Where(entprojectrole.KeyIn(roleKeys...)).
+		Order(ent.Asc(entprojectrole.FieldKey)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]entities.ProjectRole, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, entities.ProjectRole{
 			ID:   r.ID,
 			Key:  r.Key,
 			Name: r.Name,
 		})
 	}
-	return result, nil
+
+	return out, nil
 }
 
 func (s *service) onStatusChange(ctx context.Context, e events.Event) error {
@@ -844,4 +896,33 @@ func (s *service) onStatusChange(ctx context.Context, e events.Event) error {
 	}
 
 	return nil
+}
+
+func memberHasRole(m entities.ProjectMember, roleKey string) bool {
+	for _, rk := range m.RoleKeys {
+		if rk == roleKey {
+			return true
+		}
+	}
+	return false
+}
+
+func removeRoleKeys(keys []string, roleKey string) []string {
+	n := 0
+	for _, rk := range keys {
+		if rk != roleKey {
+			keys[n] = rk
+			n++
+		}
+	}
+	return keys[:n]
+}
+
+func containsString(xs []string, x string) bool {
+	for _, v := range xs {
+		if v == x {
+			return true
+		}
+	}
+	return false
 }

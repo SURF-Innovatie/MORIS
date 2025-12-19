@@ -15,11 +15,9 @@ type ProjectRole struct {
 func (ProjectRole) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New),
+		field.UUID("project_id", uuid.UUID{}).Default(uuid.New),
 
-		// stable identifier like "contributor", "lead"
-		field.String("key").NotEmpty().Unique(),
-
-		// optional human label; can equal key
+		field.String("key").NotEmpty(),
 		field.String("name").NotEmpty(),
 	}
 }
@@ -33,6 +31,6 @@ func (ProjectRole) Edges() []ent.Edge {
 
 func (ProjectRole) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("key").Unique(),
+		index.Fields("project_id", "key").Unique(),
 	}
 }

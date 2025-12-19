@@ -35,27 +35,9 @@ func Apply(p *entities.Project, e events.Event) {
 		p.OwningOrgNodeID = ev.OwningOrgNodeID
 
 	case events.ProjectRoleAssigned:
-		for _, m := range p.Members {
-			if m.PersonID == ev.PersonID && m.ProjectRoleID == ev.ProjectRoleID {
-				return // already assigned
-			}
-		}
-		p.Members = append(p.Members, entities.ProjectMember{
-			PersonID:      ev.PersonID,
-			ProjectRoleID: ev.ProjectRoleID,
-		})
-
+		ensureMemberHasRole(p, ev.PersonID, ev.ProjectRoleKey)
 	case events.ProjectRoleUnassigned:
-		shouldRemove := -1
-		for i, m := range p.Members {
-			if m.PersonID == ev.PersonID && m.ProjectRoleID == ev.ProjectRoleID {
-				shouldRemove = i
-				break
-			}
-		}
-		if shouldRemove != -1 {
-			p.Members = append(p.Members[:shouldRemove], p.Members[shouldRemove+1:]...)
-		}
+		removeRoleFromMember(p, ev.PersonID, ev.ProjectRoleKey)
 
 	case events.TitleChanged:
 		p.Title = ev.Title
@@ -91,5 +73,51 @@ func Apply(p *entities.Project, e events.Event) {
 
 	default:
 		// unknown event type: ignore to keep forward-compatible
+	}
+}
+
+func ensureMemberHasRole(p *entities.Project, personID uuid.UUID, roleKey string) {
+	for i := range p.Members {
+		if p.Members[i].PersonID != personID {
+			continue
+		}
+
+		for _, rk := range p.Members[i].RoleKeys {
+			if rk == roleKey {
+				return
+			}
+		}
+
+		p.Members[i].RoleKeys = append(p.Members[i].RoleKeys, roleKey)
+		return
+	}
+
+	p.Members = append(p.Members, entities.ProjectMember{
+		PersonID: personID,
+		RoleKeys: []string{roleKey},
+	})
+}
+
+func removeRoleFromMember(p *entities.Project, personID uuid.UUID, roleKey string) {
+	for i := range p.Members {
+		if p.Members[i].PersonID != personID {
+			continue
+		}
+
+		roles := p.Members[i].RoleKeys
+		n := 0
+		for _, rk := range roles {
+			if rk != roleKey {
+				roles[n] = rk
+				n++
+			}
+		}
+		roles = roles[:n]
+		p.Members[i].RoleKeys = roles
+
+		if len(p.Members[i].RoleKeys) == 0 {
+			p.Members = append(p.Members[:i], p.Members[i+1:]...)
+		}
+		return
 	}
 }

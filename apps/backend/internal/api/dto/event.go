@@ -18,10 +18,10 @@ type Event struct {
 	ProjectTitle string    `json:"projectTitle"`
 
 	// Optional “related object” pointers (IDs only)
-	PersonID      *uuid.UUID `json:"personId,omitempty"`
-	ProductID     *uuid.UUID `json:"productId,omitempty"`
-	ProjectRoleID *uuid.UUID `json:"projectRoleId,omitempty"`
-	OrgNodeID     *uuid.UUID `json:"orgNodeId,omitempty"`
+	PersonID       *uuid.UUID `json:"personId,omitempty"`
+	ProductID      *uuid.UUID `json:"productId,omitempty"`
+	ProjectRoleKey *string    `json:"projectRoleKey,omitempty"`
+	OrgNodeID      *uuid.UUID `json:"orgNodeId,omitempty"`
 }
 
 type EventResponse struct {
@@ -52,11 +52,11 @@ func (e Event) FromEntityWithTitle(ev events.Event, projectTitle string) Event {
 	switch typedEv := ev.(type) {
 	case events.ProjectRoleAssigned:
 		dtoEvent.PersonID = &typedEv.PersonID
-		dtoEvent.ProjectRoleID = &typedEv.ProjectRoleID
+		dtoEvent.ProjectRoleKey = &typedEv.ProjectRoleKey
 
 	case events.ProjectRoleUnassigned:
 		dtoEvent.PersonID = &typedEv.PersonID
-		dtoEvent.ProjectRoleID = &typedEv.ProjectRoleID
+		dtoEvent.ProjectRoleKey = &typedEv.ProjectRoleKey
 
 	case events.ProductAdded:
 		dtoEvent.ProductID = &typedEv.ProductID

@@ -108,12 +108,21 @@ func ChangeOwningOrgNode(
 	}, nil
 }
 
+func containsString(slice []string, str string) bool {
+	for _, s := range slice {
+		if s == str {
+			return true
+		}
+	}
+	return false
+}
+
 func AssignProjectRole(
 	id uuid.UUID,
 	actor uuid.UUID,
 	cur *entities.Project,
 	personID uuid.UUID,
-	projectRoleID uuid.UUID,
+	projectRoleKey string,
 	status event.Status,
 ) (events.Event, error) {
 	if id == uuid.Nil {
@@ -125,15 +134,15 @@ func AssignProjectRole(
 
 	// idempotency: don't assign same role twice
 	for _, m := range cur.Members {
-		if m.PersonID == personID && m.ProjectRoleID == projectRoleID {
+		if m.PersonID == personID && containsString(m.RoleKeys, projectRoleKey) {
 			return nil, nil
 		}
 	}
 
 	return events.ProjectRoleAssigned{
-		Base:          base(id, actor, status),
-		PersonID:      personID,
-		ProjectRoleID: projectRoleID,
+		Base:           base(id, actor, status),
+		PersonID:       personID,
+		ProjectRoleKey: projectRoleKey,
 	}, nil
 }
 
@@ -142,7 +151,7 @@ func UnassignProjectRole(
 	actor uuid.UUID,
 	cur *entities.Project,
 	personID uuid.UUID,
-	projectRoleID uuid.UUID,
+	projectRoleKey string,
 	status event.Status,
 ) (events.Event, error) {
 	if id == uuid.Nil {
@@ -154,7 +163,7 @@ func UnassignProjectRole(
 
 	found := false
 	for _, m := range cur.Members {
-		if m.PersonID == personID && m.ProjectRoleID == projectRoleID {
+		if m.PersonID == personID && containsString(m.RoleKeys, projectRoleKey) {
 			found = true
 			break
 		}
@@ -164,9 +173,9 @@ func UnassignProjectRole(
 	}
 
 	return events.ProjectRoleUnassigned{
-		Base:          base(id, actor, status),
-		PersonID:      personID,
-		ProjectRoleID: projectRoleID,
+		Base:           base(id, actor, status),
+		PersonID:       personID,
+		ProjectRoleKey: projectRoleKey,
 	}, nil
 }
 

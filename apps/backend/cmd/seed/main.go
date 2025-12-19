@@ -33,6 +33,9 @@ type seedProject struct {
 	Products     []seedProduct
 	Start        time.Time
 	End          time.Time
+
+	ExtraRoleKeys []string
+	PersonRoleKey map[string]string
 }
 
 type seedProduct struct {
@@ -145,10 +148,23 @@ func main() {
 
 	if _, err := client.ProjectRole.
 		Create().
-		SetKey("admin"). // or "lead" if you prefer; must match what you query later
+		SetKey("admin").
 		SetName("Project Lead").
 		Save(ctx); err != nil {
 		logrus.Fatalf("create project role admin: %v", err)
+	}
+
+	memberRoleID := mustRoleID(ctx, client, "member", "Member")
+	leadRoleID := mustRoleID(ctx, client, "lead", "Project Lead")
+
+	roleCatalog := map[string]struct {
+		key  string
+		name string
+	}{
+		"ethics_initiator": {"ethics_initiator", "Ethics Initiator"},
+		"ethics_reviewer":  {"ethics_reviewer", "Ethics Reviewer"},
+		"data_steward":     {"data_steward", "Data Steward"},
+		"publication_lead": {"publication_lead", "Publication Lead"},
 	}
 
 	projects := []seedProject{
@@ -163,6 +179,10 @@ func main() {
 				{Type: entities.Software, Language: "en", Name: "PQCryptoBench", DOI: "10.1234/pqcb.2024.001"},
 				{Type: entities.Dataset, Language: "en", Name: "Post-Quantum Benchmark Dataset", DOI: "10.1234/pqcb.2024.002"},
 			},
+			ExtraRoleKeys: []string{"publication_lead"},
+			PersonRoleKey: map[string]string{
+				"Prof. Jin-Ho Park": "ethics_reviewer",
+			},
 		},
 		{
 			Title:        "Microbial Methane Capture for Sustainable Farms",
@@ -173,6 +193,10 @@ func main() {
 			End:          time.Date(2025, 1, 3, 0, 0, 0, 0, time.UTC),
 			Products: []seedProduct{
 				{Type: entities.Dataset, Language: "en", Name: "Methane Emission Field Measurements", DOI: "10.1234/mmc.2024.001"},
+			},
+			ExtraRoleKeys: []string{"data_steward"},
+			PersonRoleKey: map[string]string{
+				"Sarah Vos": "ethics_reviewer",
 			},
 		},
 		{
@@ -186,6 +210,11 @@ func main() {
 				{Type: entities.Software, Language: "en", Name: "AIBench", DOI: "10.1234/alam.2024.001"},
 				{Type: entities.Dataset, Language: "en", Name: "AIBench Dataset", DOI: "10.1234/alam.2024.002"},
 			},
+			ExtraRoleKeys: []string{"ethics_initiator", "ethics_reviewer"},
+			PersonRoleKey: map[string]string{
+				"Dr. Mariam Bensaïd": "ethics_initiator",
+				"Konrad Schulz":      "data_steward",
+			},
 		},
 		{
 			Title:        "Wave-Based Holographic Rendering on Edge Devices",
@@ -197,6 +226,10 @@ func main() {
 			Products: []seedProduct{
 				{Type: entities.Software, Language: "en", Name: "WaveSoft", DOI: "10.1234/wbhp.2024.001"},
 			},
+			ExtraRoleKeys: []string{"publication_lead"},
+			PersonRoleKey: map[string]string{
+				"Prof. Hiro Tanaka": "publication_lead",
+			},
 		},
 		{
 			Title:        "Marine Drone Swarms for Microplastic Detection",
@@ -207,6 +240,12 @@ func main() {
 			End:          time.Date(2024, 7, 12, 0, 0, 0, 0, time.UTC),
 			Products: []seedProduct{
 				{Type: entities.Software, Language: "en", Name: "Marine Drone Swarms", DOI: "10.1234/mdsm.2024.001"},
+			},
+			ExtraRoleKeys: []string{"data_steward", "ethics_initiator", "ethics_reviewer"},
+			PersonRoleKey: map[string]string{
+				"Dr. Yara Mendes": "ethics_initiator",
+				"Akira Watanabe":  "data_steward",
+				"Stef Kranenburg": "ethics_reviewer",
 			},
 		},
 	}
@@ -494,29 +533,44 @@ func main() {
 
 		version := 1
 
-		// fetch project role IDs
-		contributorRoleID, err := client.ProjectRole.
-			Query().
-			Where(entprojectrole.KeyEQ("contributor")).
-			OnlyID(ctx)
-		if err != nil {
-			logrus.Fatalf("fetch contributor role id: %v", err)
+		roleIDByKey := map[string]uuid.UUID{
+			"member": memberRoleID,
+			"lead":   leadRoleID,
 		}
 
-		leadRoleID, err := client.ProjectRole.
-			Query().
-			Where(entprojectrole.KeyEQ("admin")).
-			OnlyID(ctx)
-		if err != nil {
-			logrus.Fatalf("fetch lead/admin role id: %v", err)
+		needed := map[string]struct{}{}
+		for _, k := range sp.ExtraRoleKeys {
+			needed[k] = struct{}{}
+		}
+		for _, rk := range sp.PersonRoleKey {
+			needed[rk] = struct{}{}
+		}
+
+		for k := range needed {
+			if k == "member" || k == "lead" {
+				continue
+			}
+
+			def, ok := roleCatalog[k]
+			if !ok {
+				logrus.Fatalf("unknown project role key in seed: %q", k)
+			}
+
+			roleIDByKey[k] = mustRoleID(ctx, client, def.key, def.name)
 		}
 
 		for _, name := range sp.People {
 			personID := mustPersonID(name)
 
-			roleID := contributorRoleID
+			roleKey := "member"
 			if name == testUserName {
-				roleID = leadRoleID // make test user the project lead/admin
+				roleKey = "lead"
+			}
+
+			if sp.PersonRoleKey != nil {
+				if rk, ok := sp.PersonRoleKey[name]; ok {
+					roleKey = rk
+				}
 			}
 
 			pevt := events.ProjectRoleAssigned{
@@ -526,8 +580,8 @@ func main() {
 					At:        time.Now().UTC(),
 					Status:    "approved",
 				},
-				PersonID:      personID,
-				ProjectRoleID: roleID,
+				PersonID:       personID,
+				ProjectRoleKey: roleKey,
 			}
 
 			if err := es.Append(ctx, projectID, version, pevt); err != nil {
@@ -635,4 +689,27 @@ func getOrCreateChild(ctx context.Context, cli *ent.Client, orgSvc organisation.
 		return nil, err
 	}
 	return orgSvc.CreateChild(ctx, parentID, name)
+}
+
+func getOrCreateProjectRole(ctx context.Context, cli *ent.Client, key, name string) (uuid.UUID, error) {
+	existing, err := cli.ProjectRole.Query().Where(entprojectrole.KeyEQ(key)).Only(ctx)
+	if err == nil {
+		return existing.ID, nil
+	}
+	if !ent.IsNotFound(err) {
+		return uuid.Nil, err
+	}
+	row, err := cli.ProjectRole.Create().SetKey(key).SetName(name).Save(ctx)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return row.ID, nil
+}
+
+func mustRoleID(ctx context.Context, cli *ent.Client, key, name string) uuid.UUID {
+	id, err := getOrCreateProjectRole(ctx, cli, key, name)
+	if err != nil {
+		logrus.Fatalf("get/create project role %q: %v", key, err)
+	}
+	return id
 }

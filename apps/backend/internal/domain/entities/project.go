@@ -7,8 +7,8 @@ import (
 )
 
 type ProjectMember struct {
-	PersonID      uuid.UUID
-	ProjectRoleID uuid.UUID
+	PersonID uuid.UUID
+	RoleKeys []string
 }
 
 type Project struct {
@@ -25,7 +25,7 @@ type Project struct {
 
 type ProjectMemberDetail struct {
 	Person Person
-	Role   ProjectRole
+	Roles  []ProjectRole
 }
 
 type ProjectDetails struct {

@@ -421,11 +421,18 @@ func (h *Handler) GetPendingEvents(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
+// @Param id path string true "Project ID (UUID)"
 // @Success 200 {array} dto.ProjectRoleResponse
 // @Failure 500 {string} string "internal server error"
-// @Router /projects/roles [get]
+// @Router /projects/{id}/roles [get]
 func (h *Handler) GetProjectRoles(w http.ResponseWriter, r *http.Request) {
-	roles, err := h.svc.GetProjectRoles(r.Context())
+	id, err := httputil.ParseUUIDParam(r, "id")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
+		return
+	}
+
+	roles, err := h.svc.GetProjectRoles(r.Context(), id)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return

@@ -264,7 +264,7 @@ func (s *EntStore) Append(
 				Create().
 				SetEvent(evRow).
 				SetPersonID(v.PersonID).
-				SetProjectRoleID(v.ProjectRoleID).
+				SetRoleKey(v.ProjectRoleKey).
 				Save(ctx); err != nil {
 				_ = tx.Rollback()
 				return err
@@ -293,7 +293,7 @@ func (s *EntStore) Append(
 				Create().
 				SetEvent(evRow).
 				SetPersonID(v.PersonID).
-				SetProjectRoleID(v.ProjectRoleID).
+				SetRoleKey(v.ProjectRoleKey).
 				Save(ctx); err != nil {
 				_ = tx.Rollback()
 				return err
@@ -531,9 +531,9 @@ func (s *EntStore) mapEventRow(r *ent.Event) (events.Event, error) {
 			return nil, fmt.Errorf("missing ProjectRoleAssigned edge for event %s", r.ID)
 		}
 		return events.ProjectRoleAssigned{
-			Base:          base,
-			PersonID:      payload.PersonID,
-			ProjectRoleID: payload.ProjectRoleID,
+			Base:           base,
+			PersonID:       payload.PersonID,
+			ProjectRoleKey: payload.RoleKey,
 		}, nil
 
 	case events.ProjectRoleUnassignedType:
@@ -542,9 +542,9 @@ func (s *EntStore) mapEventRow(r *ent.Event) (events.Event, error) {
 			return nil, fmt.Errorf("missing ProjectRoleUnassigned edge for event %s", r.ID)
 		}
 		return events.ProjectRoleUnassigned{
-			Base:          base,
-			PersonID:      payload.PersonID,
-			ProjectRoleID: payload.ProjectRoleID,
+			Base:           base,
+			PersonID:       payload.PersonID,
+			ProjectRoleKey: payload.RoleKey,
 		}, nil
 
 	case events.ProductAddedType:
