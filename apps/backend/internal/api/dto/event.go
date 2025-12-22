@@ -17,7 +17,7 @@ type Event struct {
 	Details      string    `json:"details"`
 	ProjectTitle string    `json:"projectTitle"`
 
-	// Optional “related object” pointers (IDs only)
+	// Optional "related object" pointers (IDs only)
 	PersonID      *uuid.UUID `json:"personId,omitempty"`
 	ProductID     *uuid.UUID `json:"productId,omitempty"`
 	ProjectRoleID *uuid.UUID `json:"projectRoleId,omitempty"`
@@ -26,6 +26,13 @@ type Event struct {
 
 type EventResponse struct {
 	Events []Event `json:"events"`
+}
+
+type EventTypeResponse struct {
+	Type         string `json:"type"`
+	FriendlyName string `json:"friendlyName"`
+	Allowed      bool   `json:"allowed"`
+	Description  string `json:"description,omitempty"`
 }
 
 func (e Event) FromEntity(ev events.Event) Event {
@@ -49,26 +56,13 @@ func (e Event) FromEntityWithTitle(ev events.Event, projectTitle string) Event {
 		ProjectTitle: projectTitle,
 	}
 
-	switch typedEv := ev.(type) {
-	case events.ProjectRoleAssigned:
-		dtoEvent.PersonID = &typedEv.PersonID
-		dtoEvent.ProjectRoleID = &typedEv.ProjectRoleID
-
-	case events.ProjectRoleUnassigned:
-		dtoEvent.PersonID = &typedEv.PersonID
-		dtoEvent.ProjectRoleID = &typedEv.ProjectRoleID
-
-	case events.ProductAdded:
-		dtoEvent.ProductID = &typedEv.ProductID
-
-	case events.ProductRemoved:
-		dtoEvent.ProductID = &typedEv.ProductID
-
-	case events.OwningOrgNodeChanged:
-		dtoEvent.OrgNodeID = &typedEv.OwningOrgNodeID
-
-	case events.ProjectStarted:
-		dtoEvent.OrgNodeID = &typedEv.OwningOrgNodeID
+	// Enrich with related IDs if available
+	if r, ok := ev.(events.HasRelatedIDs); ok {
+		ids := r.RelatedIDs()
+		dtoEvent.PersonID = ids.PersonID
+		dtoEvent.ProductID = ids.ProductID
+		dtoEvent.ProjectRoleID = ids.ProjectRoleID
+		dtoEvent.OrgNodeID = ids.OrgNodeID
 	}
 
 	return dtoEvent

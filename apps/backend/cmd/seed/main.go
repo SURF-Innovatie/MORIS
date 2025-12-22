@@ -474,7 +474,7 @@ func main() {
 	for _, sp := range projects {
 		projectID := uuid.New()
 
-		startEvent := events.ProjectStarted{
+		startEvent := &events.ProjectStarted{
 			Base: events.Base{
 				ID:        uuid.New(),
 				ProjectID: projectID,
@@ -519,7 +519,7 @@ func main() {
 				roleID = leadRoleID // make test user the project lead/admin
 			}
 
-			pevt := events.ProjectRoleAssigned{
+			pevt := &events.ProjectRoleAssigned{
 				Base: events.Base{
 					ID:        uuid.New(),
 					ProjectID: projectID,
@@ -539,7 +539,7 @@ func main() {
 		for _, prod := range sp.Products {
 			productID := mustProductID(prod.DOI)
 
-			pevt := events.ProductAdded{
+			pevt := &events.ProductAdded{
 				Base: events.Base{
 					ProjectID: projectID,
 					At:        time.Now().UTC(),

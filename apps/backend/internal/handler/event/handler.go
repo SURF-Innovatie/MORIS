@@ -109,16 +109,32 @@ func (h *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
 		Details:   e.String(),
 	}
 
-	switch ev := e.(type) {
-	case events.ProjectRoleAssigned:
-		dtoEvent.PersonID = &ev.PersonID
-	case events.ProjectRoleUnassigned:
-		dtoEvent.PersonID = &ev.PersonID
-	case events.ProductAdded:
-		dtoEvent.ProductID = &ev.ProductID
-	case events.ProductRemoved:
-		dtoEvent.ProductID = &ev.ProductID
+	// Enrich DTO with related IDs
+	if r, ok := e.(events.HasRelatedIDs); ok {
+		ids := r.RelatedIDs()
+		dtoEvent.PersonID = ids.PersonID
+		dtoEvent.ProductID = ids.ProductID
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, dtoEvent)
+}
+
+// ListEventTypes godoc
+// @Summary List all event types
+// @Description Lists all event types and whether the current user is allowed to trigger them
+// @Tags events
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} []dto.EventTypeResponse
+// @Failure 500 {string} string "internal server error"
+// @Router /events/types [get]
+func (h *Handler) ListEventTypes(w http.ResponseWriter, r *http.Request) {
+	types, err := h.svc.GetEventTypes(r.Context())
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, types)
 }

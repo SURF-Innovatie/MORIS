@@ -23,3 +23,27 @@ func (ProjectStarted) Type() string { return ProjectStartedType }
 func (e ProjectStarted) String() string {
 	return fmt.Sprintf("Project started: %s", e.Title)
 }
+
+func (e *ProjectStarted) Apply(project *entities.Project) {
+	project.Title = e.Title
+	project.Description = e.Description
+	project.StartDate = e.StartDate
+	project.EndDate = e.EndDate
+	project.OwningOrgNodeID = e.OwningOrgNodeID
+	project.Members = e.Members
+}
+
+func (e *ProjectStarted) NotificationMessage() string {
+	return fmt.Sprintf("Project '%s' has been started.", e.Title)
+}
+
+func (e *ProjectStarted) RelatedIDs() RelatedIDs {
+	return RelatedIDs{OrgNodeID: &e.OwningOrgNodeID}
+}
+
+func init() {
+	RegisterMeta(EventMeta{
+		Type:         ProjectStartedType,
+		FriendlyName: "Project Proposal",
+	}, func() Event { return &ProjectStarted{} })
+}

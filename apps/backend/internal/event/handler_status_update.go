@@ -15,36 +15,23 @@ type StatusUpdateNotificationHandler struct {
 	Cli      *ent.Client
 }
 
-func (h *StatusUpdateNotificationHandler) CanHandle(e events.Event) bool {
-	status := e.GetStatus()
-	return status == "approved" || status == "rejected"
-}
-
-// Friendly names mapping
-var eventFriendlyNames = map[string]string{
-	events.ProjectStartedType:        "Project Proposal",
-	events.TitleChangedType:          "Title Change",
-	events.DescriptionChangedType:    "Description Change",
-	events.StartDateChangedType:      "Start Date Change",
-	events.EndDateChangedType:        "End Date Change",
-	events.OwningOrgNodeChangedType:  "Owning OwningOrgNode Node Change",
-	events.ProjectRoleAssignedType:   "Project Role Assignment",
-	events.ProjectRoleUnassignedType: "Project Role Unassignment",
-	events.ProductAddedType:          "Product Addition",
-	events.ProductRemovedType:        "Product Removal",
-}
-
 func (h *StatusUpdateNotificationHandler) Handle(ctx context.Context, e events.Event) error {
+	status := e.GetStatus()
+	if status != "approved" && status != "rejected" {
+		return nil
+	}
+
 	u, err := ResolveUser(ctx, h.Cli, e.CreatedByID())
 	if err != nil || u == nil {
 		return err
 	}
 
-	status := e.GetStatus()
+	// status is already retrieved above
 	eventType := e.Type()
 
-	friendlyName, ok := eventFriendlyNames[eventType]
-	if !ok {
+	meta := events.GetMeta(eventType)
+	friendlyName := meta.FriendlyName
+	if friendlyName == "" {
 		friendlyName = eventType
 	}
 

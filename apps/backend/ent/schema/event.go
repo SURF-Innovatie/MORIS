@@ -3,8 +3,8 @@ package schema
 import (
 	"time"
 
+	"entgo.io/contrib/entoas"
 	"entgo.io/ent"
-	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 )
@@ -24,23 +24,15 @@ func (Event) Fields() []ent.Field {
 			Values("pending", "approved", "rejected").
 			Default("pending"),
 		field.UUID("created_by", uuid.UUID{}).
-			Optional(), // Optional for now to avoid breaking existing data, or we can set a default if we have a system user
+			Optional(),
 		field.Time("occurred_at").
 			Default(time.Now),
+		field.JSON("data", map[string]interface{}{}).
+			Default(func() map[string]interface{} { return map[string]interface{}{} }).
+			Annotations(entoas.Skip(true)),
 	}
 }
 
 func (Event) Edges() []ent.Edge {
-	return []ent.Edge{
-		edge.To("project_started", ProjectStartedEvent.Type).Unique(),
-		edge.To("title_changed", TitleChangedEvent.Type).Unique(),
-		edge.To("description_changed", DescriptionChangedEvent.Type).Unique(),
-		edge.To("start_date_changed", StartDateChangedEvent.Type).Unique(),
-		edge.To("end_date_changed", EndDateChangedEvent.Type).Unique(),
-		edge.To("project_role_assigned", ProjectRoleAssignedEvent.Type).Unique(),
-		edge.To("project_role_unassigned", ProjectRoleUnassignedEvent.Type).Unique(),
-		edge.To("owning_org_node_changed", OwningOrgNodeChangedEvent.Type).Unique(),
-		edge.To("product_added", ProductAddedEvent.Type).Unique(),
-		edge.To("product_removed", ProductRemovedEvent.Type).Unique(),
-	}
+	return nil
 }

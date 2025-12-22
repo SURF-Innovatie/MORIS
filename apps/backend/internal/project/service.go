@@ -14,7 +14,6 @@ import (
 	personent "github.com/SURF-Innovatie/MORIS/ent/person"
 	productent "github.com/SURF-Innovatie/MORIS/ent/product"
 	entprojectrole "github.com/SURF-Innovatie/MORIS/ent/projectrole"
-	entprojectroleassigned "github.com/SURF-Innovatie/MORIS/ent/projectroleassignedevent"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/commands"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
@@ -97,7 +96,7 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 		return nil, err
 	}
 
-	startEvent := events.ProjectStarted{
+	startEvent := &events.ProjectStarted{
 		Base: events.Base{
 			ID:        uuid.New(),
 			ProjectID: projectID,
@@ -259,26 +258,31 @@ func (s *service) GetAllProjects(ctx context.Context) ([]*entities.ProjectDetail
 		return nil, err
 	}
 
-	var memberProjectIDs []uuid.UUID
-	if err := s.cli.ProjectRoleAssignedEvent.
+	evts, err := s.cli.Event.
 		Query().
-		Where(entprojectroleassigned.PersonIDEQ(user.PersonID)).
-		QueryEvent().
-		Select(en.FieldProjectID).
-		Scan(ctx, &memberProjectIDs); err != nil {
+		Where(en.TypeEQ(events.ProjectRoleAssignedType)).
+		All(ctx)
+	if err != nil {
 		return nil, err
 	}
 
-	uniqueIDs := make(map[uuid.UUID]struct{}, len(memberProjectIDs))
-	for _, id := range memberProjectIDs {
-		uniqueIDs[id] = struct{}{}
+	uniqueIDs := make(map[uuid.UUID]struct{})
+	for _, e := range evts {
+
+		// Safer to marshal/unmarshal to struct
+		b, _ := json.Marshal(e.Data)
+		var payload *events.ProjectRoleAssigned
+		if err := json.Unmarshal(b, &payload); err == nil {
+			if payload.PersonID == user.PersonID {
+				uniqueIDs[e.ProjectID] = struct{}{}
+			}
+		}
 	}
 
 	projects := make([]*entities.ProjectDetails, 0, len(uniqueIDs))
 	for id := range uniqueIDs {
 		proj, err := s.fromDb(ctx, id)
 		if err != nil {
-			// Skip if not found (shouldn't happen if consistent)
 			continue
 		}
 
@@ -738,11 +742,10 @@ func (s *service) WarmupCache(ctx context.Context) error {
 
 	logrus.Info("Starting cache warmup...")
 
-	// Get all project IDs from ProjectStartedEvent
-	// We use the generated client to query specific event types to find all projects
+	// Get all project IDs from ProjectStarted events
 	var projectIDs []uuid.UUID
-	if err := s.cli.ProjectStartedEvent.Query().
-		QueryEvent().
+	if err := s.cli.Event.Query().
+		Where(en.TypeEQ(events.ProjectStartedType)).
 		Select(en.FieldProjectID).
 		Scan(ctx, &projectIDs); err != nil {
 		return err

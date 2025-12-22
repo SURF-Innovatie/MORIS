@@ -3,10 +3,11 @@ package user
 import (
 	"context"
 
+	"encoding/json"
+
 	"github.com/SURF-Innovatie/MORIS/ent"
 	en "github.com/SURF-Innovatie/MORIS/ent/event"
 	entperson "github.com/SURF-Innovatie/MORIS/ent/person"
-	entprojectroleassigned "github.com/SURF-Innovatie/MORIS/ent/projectroleassignedevent"
 	"github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
@@ -176,14 +177,29 @@ func (s *service) SearchPersons(ctx context.Context, query string, observerPerso
 	// If observer is specified, restrict to persons in shared projects
 	if observerPersonID != nil {
 		// 1. Find projects where observer is a member
-		var projectIDs []uuid.UUID
-		if err := s.cli.ProjectRoleAssignedEvent.
+		// Fetch all role assignment events to filter for observer
+		allRoleEvents, err := s.cli.Event.
 			Query().
-			Where(entprojectroleassigned.PersonIDEQ(*observerPersonID)).
-			QueryEvent().
-			Select(en.FieldProjectID).
-			Scan(ctx, &projectIDs); err != nil {
+			Where(en.TypeEQ(events.ProjectRoleAssignedType)).
+			All(ctx)
+		if err != nil {
 			return nil, err
+		}
+
+		projectIDsMap := make(map[uuid.UUID]struct{})
+		for _, e := range allRoleEvents {
+			b, _ := json.Marshal(e.Data)
+			var payload events.ProjectRoleAssigned
+			if err := json.Unmarshal(b, &payload); err == nil {
+				if payload.PersonID == *observerPersonID {
+					projectIDsMap[e.ProjectID] = struct{}{}
+				}
+			}
+		}
+
+		var projectIDs []uuid.UUID
+		for id := range projectIDsMap {
+			projectIDs = append(projectIDs, id)
 		}
 
 		if len(projectIDs) == 0 {
@@ -192,13 +208,21 @@ func (s *service) SearchPersons(ctx context.Context, query string, observerPerso
 		}
 
 		// 2. Find all people in those projects
+
+		memberPersonIDsMap := make(map[uuid.UUID]struct{})
+		for _, e := range allRoleEvents {
+			if _, ok := projectIDsMap[e.ProjectID]; ok {
+				b, _ := json.Marshal(e.Data)
+				var payload events.ProjectRoleAssigned
+				if err := json.Unmarshal(b, &payload); err == nil {
+					memberPersonIDsMap[payload.PersonID] = struct{}{}
+				}
+			}
+		}
+
 		var memberPersonIDs []uuid.UUID
-		if err := s.cli.ProjectRoleAssignedEvent.
-			Query().
-			Where(entprojectroleassigned.HasEventWith(en.ProjectIDIn(projectIDs...))).
-			Select(entprojectroleassigned.FieldPersonID).
-			Scan(ctx, &memberPersonIDs); err != nil {
-			return nil, err
+		for id := range memberPersonIDsMap {
+			memberPersonIDs = append(memberPersonIDs, id)
 		}
 
 		if len(memberPersonIDs) == 0 {

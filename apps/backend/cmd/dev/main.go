@@ -119,11 +119,10 @@ func main() {
 	errorLogSvc := errorlog.NewService(client)
 
 	eventSvc := event.NewService(esStore, client, notifierSvc)
-	eventSvc.RegisterNotificationHandler(&event.ProjectEventNotificationHandler{Cli: client})
+
+	eventSvc.RegisterNotificationHandler(&event.ProjectEventNotificationHandler{Cli: client, ES: esStore})
 	eventSvc.RegisterNotificationHandler(&event.ApprovalRequestNotificationHandler{Cli: client, ES: esStore, RBAC: rbacSvc})
-	eventSvc.RegisterNotificationHandler(&event.ProductAddedNotificationHandler{Notifier: notifierSvc, Cli: client, ES: esStore})
-	eventSvc.RegisterNotificationHandler(&event.StatusUpdateNotificationHandler{Notifier: notifierSvc, Cli: client})
-	eventSvc.RegisterNotificationHandler(&event.ApprovalCleanupHandler{Cli: client})
+	eventSvc.RegisterNotificationHandler(&event.StatusUpdateNotificationHandler{Cli: client})
 	evtHandler := eventHandler.NewHandler(eventSvc)
 
 	notificationHandler := notificationhandler.NewHandler(notifierSvc)
