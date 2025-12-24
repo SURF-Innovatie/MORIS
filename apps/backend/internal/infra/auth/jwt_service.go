@@ -89,7 +89,7 @@ func (s *service) generateJWT(usr *entities.UserAccount) (string, error) {
 
 // ValidateToken validates a JWT token and returns the user info
 func (s *service) ValidateToken(tokenString string) (*entities.UserAccount, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}

@@ -58,9 +58,8 @@ func (s *EntStore) Append(
 	version := expectedVersion
 	now := time.Now().UTC()
 
-	// Use a bulk creation approach for efficiency, or simple loop
-	// We'll use a loop for now to easier error handling
-	for _, e := range list {
+	builders := make([]*ent.EventCreate, len(list))
+	for i, e := range list {
 		version++
 
 		id := e.GetID()
@@ -79,7 +78,7 @@ func (s *EntStore) Append(
 			return fmt.Errorf("failed to marshal event %T: %w", e, err)
 		}
 
-		err = tx.Event.
+		builders[i] = tx.Event.
 			Create().
 			SetID(id).
 			SetProjectID(projectID).
@@ -88,16 +87,15 @@ func (s *EntStore) Append(
 			SetStatus(en.Status(e.GetStatus())).
 			SetOccurredAt(now).
 			SetCreatedBy(createdBy).
-			SetData(dataMap).
-			Exec(ctx)
+			SetData(dataMap)
+	}
 
-		if err != nil {
-			_ = tx.Rollback()
-			if ent.IsConstraintError(err) {
-				return ErrConcurrency
-			}
-			return err
+	if err := tx.Event.CreateBulk(builders...).Exec(ctx); err != nil {
+		_ = tx.Rollback()
+		if ent.IsConstraintError(err) {
+			return ErrConcurrency
 		}
+		return err
 	}
 
 	return tx.Commit()
@@ -217,12 +215,12 @@ func (s *EntStore) mapEventRow(r *ent.Event) (events.Event, error) {
 	return evt, nil
 }
 
-func eventToMap(e events.Event) (map[string]interface{}, error) {
+func eventToMap(e events.Event) (map[string]any, error) {
 	b, err := json.Marshal(e)
 	if err != nil {
 		return nil, err
 	}
-	var m map[string]interface{}
+	var m map[string]any
 	err = json.Unmarshal(b, &m)
 	return m, err
 }
