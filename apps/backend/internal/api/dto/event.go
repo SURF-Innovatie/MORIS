@@ -8,14 +8,14 @@ import (
 )
 
 type Event struct {
-	ID           uuid.UUID `json:"id"`
-	ProjectID    uuid.UUID `json:"projectId"`
-	Type         string    `json:"type"`
-	Status       string    `json:"status"`
-	CreatedBy    uuid.UUID `json:"createdBy"`
-	At           time.Time `json:"at"`
-	Details      string    `json:"details"`
-	ProjectTitle string    `json:"projectTitle"`
+	ID           uuid.UUID     `json:"id"`
+	ProjectID    uuid.UUID     `json:"projectId"`
+	Type         string        `json:"type"`
+	Status       events.Status `json:"status"`
+	CreatedBy    uuid.UUID     `json:"createdBy"`
+	At           time.Time     `json:"at"`
+	Details      string        `json:"details"`
+	ProjectTitle string        `json:"projectTitle"`
 
 	// Optional "related object" pointers (IDs only)
 	PersonID      *uuid.UUID `json:"personId,omitempty"`

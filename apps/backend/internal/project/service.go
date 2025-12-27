@@ -14,6 +14,7 @@ import (
 	personent "github.com/SURF-Innovatie/MORIS/ent/person"
 	productent "github.com/SURF-Innovatie/MORIS/ent/product"
 	entprojectrole "github.com/SURF-Innovatie/MORIS/ent/projectrole"
+	"github.com/SURF-Innovatie/MORIS/internal/app/commandbus"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/commands"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
@@ -50,6 +51,8 @@ type service struct {
 	es     eventstore.Store
 	evtSvc event.Service
 	redis  *redis.Client
+
+	exec *commandbus.Executor[entities.Project]
 }
 
 type StartProjectParams struct {
@@ -70,6 +73,14 @@ type UpdateProjectParams struct {
 
 func NewService(es eventstore.Store, cli *ent.Client, evtSvc event.Service, rdb *redis.Client) Service {
 	s := &service{es: es, cli: cli, evtSvc: evtSvc, redis: rdb}
+
+	s.exec = commandbus.NewExecutor[entities.Project](
+		es,
+		evtSvc,
+		Reducer{},
+		NewReducer{},
+	)
+
 	evtSvc.RegisterStatusChangeHandler(s.onStatusChange)
 	return s
 }
@@ -89,141 +100,111 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 	}
 
 	projectID := uuid.New()
-	now := time.Now().UTC()
 
 	user, err := currentUser(ctx, s.cli)
 	if err != nil {
 		return nil, err
 	}
 
-	startEvent := &events.ProjectStarted{
-		Base: events.Base{
-			ID:        uuid.New(),
-			ProjectID: projectID,
-			At:        now,
-			Status:    string(en.StatusApproved),
-			CreatedBy: user.ID,
-		},
-		Title:           params.Title,
-		Description:     params.Description,
-		StartDate:       params.StartDate,
-		EndDate:         params.EndDate,
-		OwningOrgNodeID: params.OwningOrgNodeID,
-	}
-
-	if err := s.es.Append(ctx, projectID, 0, startEvent); err != nil {
-		return nil, err
-	}
-
-	proj := projection.Reduce(projectID, []events.Event{startEvent})
-	proj.Version = 1
-
-	adminRoleID, err := s.projectRoleID(ctx, "admin") // or "lead" depending on your key
+	adminRoleID, err := s.projectRoleID(ctx, "admin")
 	if err != nil {
 		return nil, err
 	}
 
-	ev, err := commands.AssignProjectRole(
-		projectID,
-		user.ID,
-		proj,
-		user.PersonID,
-		adminRoleID,
-		en.StatusApproved,
-	)
+	proj, err := s.exec.Execute(ctx, projectID, func(ctx context.Context, cur *entities.Project) ([]events.Event, error) {
+		var out []events.Event
+
+		startEvt, err := commands.StartProject(
+			projectID,
+			user.ID,
+			params.Title,
+			params.Description,
+			params.StartDate,
+			params.EndDate,
+			nil,
+			params.OwningOrgNodeID,
+		)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, startEvt)
+
+		projection.Apply(cur, startEvt)
+
+		// 2) Assign admin role
+		assignEvt, err := commands.AssignProjectRole(
+			projectID,
+			user.ID,
+			cur,
+			user.PersonID,
+			adminRoleID,
+			events.StatusApproved,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if assignEvt != nil {
+			out = append(out, assignEvt)
+			projection.Apply(cur, assignEvt)
+		}
+
+		return out, nil
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	if err := s.es.Append(ctx, projectID, proj.Version, ev); err != nil {
-		return nil, err
-	}
+	_ = s.cacheProject(ctx, proj)
 
-	projection.Apply(proj, ev)
-
-	// Cache the project
-	if err := s.cacheProject(ctx, proj); err != nil {
-		// Log error but continue, caching failure shouldn't stop flow
-		logrus.Errorf("failed to cache project: %v", err)
-	}
-
-	// user is already fetched at the beginning of the function
-	_ = s.evtSvc.HandleEvents(ctx, startEvent)
-
-	resp, err := s.buildProjectDetails(ctx, proj)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	return s.buildProjectDetails(ctx, proj)
 }
 
 func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params UpdateProjectParams) (*entities.ProjectDetails, error) {
-	proj, err := s.fromDb(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
 	user, err := currentUser(ctx, s.cli)
 	if err != nil {
 		return nil, err
 	}
 
-	var newEvents []events.Event
+	proj, err := s.exec.Execute(ctx, id, func(ctx context.Context, cur *entities.Project) ([]events.Event, error) {
+		var out []events.Event
 
-	if evt, err := commands.ChangeTitle(id, user.ID, proj, params.Title, en.StatusApproved); err != nil {
-		return nil, err
-	} else if evt != nil {
-		newEvents = append(newEvents, evt)
-		projection.Apply(proj, evt)
-	}
-
-	if evt, err := commands.ChangeDescription(id, user.ID, proj, params.Description, en.StatusApproved); err != nil {
-		return nil, err
-	} else if evt != nil {
-		newEvents = append(newEvents, evt)
-		projection.Apply(proj, evt)
-	}
-
-	if evt, err := commands.ChangeStartDate(id, user.ID, proj, params.StartDate, en.StatusApproved); err != nil {
-		return nil, err
-	} else if evt != nil {
-		newEvents = append(newEvents, evt)
-		projection.Apply(proj, evt)
-	}
-
-	if evt, err := commands.ChangeEndDate(id, user.ID, proj, params.EndDate, en.StatusApproved); err != nil {
-		return nil, err
-	} else if evt != nil {
-		newEvents = append(newEvents, evt)
-		projection.Apply(proj, evt)
-	}
-
-	if evt, err := commands.ChangeOwningOrgNode(id, user.ID, proj, params.OwningOrgNodeID, en.StatusApproved); err != nil {
-		return nil, err
-	} else if evt != nil {
-		newEvents = append(newEvents, evt)
-		projection.Apply(proj, evt)
-	}
-
-	if len(newEvents) == 0 {
-		return s.buildProjectDetails(ctx, proj)
-	}
-
-	for _, evt := range newEvents {
-		if err := s.es.Append(ctx, id, proj.Version, evt); err != nil {
+		if e, err := commands.ChangeTitle(id, user.ID, cur, params.Title, events.StatusApproved); err != nil {
 			return nil, err
+		} else {
+			emit(cur, &out, e)
 		}
-		proj.Version++
+
+		if e, err := commands.ChangeDescription(id, user.ID, cur, params.Description, events.StatusApproved); err != nil {
+			return nil, err
+		} else {
+			emit(cur, &out, e)
+		}
+
+		if e, err := commands.ChangeStartDate(id, user.ID, cur, params.StartDate, events.StatusApproved); err != nil {
+			return nil, err
+		} else {
+			emit(cur, &out, e)
+		}
+
+		if e, err := commands.ChangeEndDate(id, user.ID, cur, params.EndDate, events.StatusApproved); err != nil {
+			return nil, err
+		} else {
+			emit(cur, &out, e)
+		}
+
+		if e, err := commands.ChangeOwningOrgNode(id, user.ID, cur, params.OwningOrgNodeID, events.StatusApproved); err != nil {
+			return nil, err
+		} else {
+			emit(cur, &out, e)
+		}
+
+		return out, nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	// Update cache
-	if err := s.cacheProject(ctx, proj); err != nil {
-		logrus.Errorf("failed to update project cache: %v\n", err)
-	}
-
-	_ = s.evtSvc.HandleEvents(ctx, newEvents...)
-
+	_ = s.cacheProject(ctx, proj)
 	return s.buildProjectDetails(ctx, proj)
 }
 
@@ -319,11 +300,6 @@ func (s *service) GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]
 }
 
 func (s *service) AddPerson(ctx context.Context, projectID uuid.UUID, personId uuid.UUID) (*entities.ProjectDetails, error) {
-	proj, err := s.fromDb(ctx, projectID)
-	if err != nil {
-		return nil, err
-	}
-
 	user, err := currentUser(ctx, s.cli)
 	if err != nil {
 		return nil, err
@@ -334,33 +310,24 @@ func (s *service) AddPerson(ctx context.Context, projectID uuid.UUID, personId u
 		return nil, err
 	}
 
-	evt, err := commands.AssignProjectRole(projectID, user.ID, proj, personId, contribRoleID, en.StatusPending)
+	proj, err := s.exec.Execute(ctx, projectID, func(ctx context.Context, cur *entities.Project) ([]events.Event, error) {
+		var out []events.Event
+		e, err := commands.AssignProjectRole(projectID, user.ID, cur, personId, contribRoleID, events.StatusPending)
+		if err != nil {
+			return nil, err
+		}
+		emit(cur, &out, e)
+		return out, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	if evt == nil {
-		return s.buildProjectDetails(ctx, proj)
-	}
-
-	if err := s.es.Append(ctx, projectID, proj.Version, evt); err != nil {
-		return nil, err
-	}
-
-	_ = s.evtSvc.HandleEvents(ctx, evt)
-
-	projection.Apply(proj, evt)
-	proj.Version++
 
 	_ = s.cacheProject(ctx, proj)
 	return s.buildProjectDetails(ctx, proj)
 }
 
 func (s *service) RemovePerson(ctx context.Context, projectID uuid.UUID, personID uuid.UUID) (*entities.ProjectDetails, error) {
-	proj, err := s.fromDb(ctx, projectID)
-	if err != nil {
-		return nil, err
-	}
-
 	user, err := currentUser(ctx, s.cli)
 	if err != nil {
 		return nil, err
@@ -371,22 +338,18 @@ func (s *service) RemovePerson(ctx context.Context, projectID uuid.UUID, personI
 		return nil, err
 	}
 
-	evt, err := commands.UnassignProjectRole(projectID, user.ID, proj, personID, contribRoleID, en.StatusApproved)
+	proj, err := s.exec.Execute(ctx, projectID, func(ctx context.Context, cur *entities.Project) ([]events.Event, error) {
+		var out []events.Event
+		e, err := commands.UnassignProjectRole(projectID, user.ID, cur, personID, contribRoleID, events.StatusApproved)
+		if err != nil {
+			return nil, err
+		}
+		emit(cur, &out, e)
+		return out, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	if evt == nil {
-		return s.buildProjectDetails(ctx, proj)
-	}
-
-	if err := s.es.Append(ctx, projectID, proj.Version, evt); err != nil {
-		return nil, err
-	}
-
-	_ = s.evtSvc.HandleEvents(ctx, evt)
-
-	projection.Apply(proj, evt)
-	proj.Version++
 
 	_ = s.cacheProject(ctx, proj)
 	return s.buildProjectDetails(ctx, proj)
@@ -398,180 +361,101 @@ func (s *service) UpdateMemberRole(
 	personID uuid.UUID,
 	roleKey string,
 ) (*entities.ProjectDetails, error) {
-	proj, err := s.fromDb(ctx, projectID)
-	if err != nil {
-		return nil, err
-	}
-
 	user, err := currentUser(ctx, s.cli)
 	if err != nil {
 		return nil, err
 	}
 
-	// 1. Find current role
-	var currentRoleID uuid.UUID
-	found := false
-	for _, m := range proj.Members {
-		if m.PersonID == personID {
-			currentRoleID = m.ProjectRoleID
-			found = true
-			break
-		}
-	}
-	if !found {
-		return nil, errors.New("person is not a member of this project")
-	}
-
-	// 2. Resolve new role ID
 	newRoleID, err := s.projectRoleID(ctx, roleKey)
 	if err != nil {
 		return nil, err
 	}
 
-	if currentRoleID == newRoleID {
-		return s.buildProjectDetails(ctx, proj)
-	}
+	proj, err := s.exec.Execute(ctx, projectID, func(ctx context.Context, cur *entities.Project) ([]events.Event, error) {
+		var currentRoleID uuid.UUID
+		found := false
+		for _, m := range cur.Members {
+			if m.PersonID == personID {
+				currentRoleID = m.ProjectRoleID
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, errors.New("person is not a member of this project")
+		}
+		if currentRoleID == newRoleID {
+			return nil, nil
+		}
 
-	// 3. Create Events
-	// Unassign old role
-	unassignEvt, err := commands.UnassignProjectRole(projectID, user.ID, proj, personID, currentRoleID, en.StatusApproved)
-	if err != nil {
-		return nil, err
-	}
+		var out []events.Event
 
-	// Assign new role
-	assignEvt, err := commands.AssignProjectRole(projectID, user.ID, proj, personID, newRoleID, en.StatusApproved)
-	if err != nil {
-		return nil, err
-	}
-
-	newEvents := []events.Event{}
-	if unassignEvt != nil {
-		newEvents = append(newEvents, unassignEvt)
-	}
-	if assignEvt != nil {
-		newEvents = append(newEvents, assignEvt)
-	}
-
-	if len(newEvents) == 0 {
-		return s.buildProjectDetails(ctx, proj)
-	}
-
-	// 4. Append and Apply
-	for _, evt := range newEvents {
-		if err := s.es.Append(ctx, projectID, proj.Version, evt); err != nil {
+		unassignEvt, err := commands.UnassignProjectRole(projectID, user.ID, cur, personID, currentRoleID, events.StatusApproved)
+		if err != nil {
 			return nil, err
 		}
-		projection.Apply(proj, evt)
-		proj.Version++
+		emit(cur, &out, unassignEvt)
+
+		assignEvt, err := commands.AssignProjectRole(projectID, user.ID, cur, personID, newRoleID, events.StatusApproved)
+		if err != nil {
+			return nil, err
+		}
+		emit(cur, &out, assignEvt)
+
+		return out, nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	_ = s.evtSvc.HandleEvents(ctx, newEvents...)
 	_ = s.cacheProject(ctx, proj)
-
 	return s.buildProjectDetails(ctx, proj)
 }
 
-func (s *service) AddProduct(
-	ctx context.Context,
-	projectID uuid.UUID,
-	productID uuid.UUID,
-) (*entities.ProjectDetails, error) {
-	proj, err := s.fromDb(ctx, projectID)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *service) AddProduct(ctx context.Context, projectID uuid.UUID, productID uuid.UUID) (*entities.ProjectDetails, error) {
 	user, err := currentUser(ctx, s.cli)
 	if err != nil {
 		return nil, err
 	}
 
-	evt, err := commands.AddProduct(projectID, user.ID, proj, productID, en.StatusApproved)
-	if err != nil {
-		return nil, err
-	}
-	if evt == nil {
-		resp, err := s.buildProjectDetails(ctx, proj)
+	proj, err := s.exec.Execute(ctx, projectID, func(ctx context.Context, cur *entities.Project) ([]events.Event, error) {
+		var out []events.Event
+		e, err := commands.AddProduct(projectID, user.ID, cur, productID, events.StatusApproved)
 		if err != nil {
 			return nil, err
 		}
-
-		return resp, nil
-	}
-
-	if err := s.es.Append(ctx, projectID, proj.Version, evt); err != nil {
-		return nil, err
-	}
-
-	projection.Apply(proj, evt)
-	proj.Version += 1
-
-	// Update cache
-	if err := s.cacheProject(ctx, proj); err != nil {
-		logrus.Errorf("failed to update project cache: %v", err)
-	}
-
-	// notify all users about the new product (temporary for demo)
-	// Handled by EventService now
-	_ = s.evtSvc.HandleEvents(ctx, evt)
-
-	resp, err := s.buildProjectDetails(ctx, proj)
+		emit(cur, &out, e)
+		return out, nil
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	return resp, nil
+	_ = s.cacheProject(ctx, proj)
+	return s.buildProjectDetails(ctx, proj)
 }
 
-func (s *service) RemoveProduct(
-	ctx context.Context,
-	projectID uuid.UUID,
-	productID uuid.UUID,
-) (*entities.ProjectDetails, error) {
-	proj, err := s.fromDb(ctx, projectID)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *service) RemoveProduct(ctx context.Context, projectID uuid.UUID, productID uuid.UUID) (*entities.ProjectDetails, error) {
 	user, err := currentUser(ctx, s.cli)
 	if err != nil {
 		return nil, err
 	}
 
-	evt, err := commands.RemoveProduct(projectID, user.ID, proj, productID, en.StatusApproved)
-	if err != nil {
-		return nil, err
-	}
-	if evt == nil {
-		resp, err := s.buildProjectDetails(ctx, proj)
+	proj, err := s.exec.Execute(ctx, projectID, func(ctx context.Context, cur *entities.Project) ([]events.Event, error) {
+		var out []events.Event
+		e, err := commands.RemoveProduct(projectID, user.ID, cur, productID, events.StatusApproved)
 		if err != nil {
 			return nil, err
 		}
-
-		return resp, nil
-	}
-
-	if err := s.es.Append(ctx, projectID, proj.Version, evt); err != nil {
-		return nil, err
-	}
-
-	_ = s.evtSvc.HandleEvents(ctx, evt)
-
-	projection.Apply(proj, evt)
-	proj.Version += 1
-
-	// Update cache
-	if err := s.cacheProject(ctx, proj); err != nil {
-		logrus.Errorf("failed to update project cache: %v", err)
-	}
-
-	resp, err := s.buildProjectDetails(ctx, proj)
+		emit(cur, &out, e)
+		return out, nil
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	return resp, nil
+	_ = s.cacheProject(ctx, proj)
+	return s.buildProjectDetails(ctx, proj)
 }
 
 func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Project) (*entities.ProjectDetails, error) {
@@ -847,4 +731,12 @@ func (s *service) onStatusChange(ctx context.Context, e events.Event) error {
 	}
 
 	return nil
+}
+
+func emit(cur *entities.Project, out *[]events.Event, e events.Event) {
+	if e == nil {
+		return
+	}
+	*out = append(*out, e)
+	projection.Apply(cur, e)
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/SURF-Innovatie/MORIS/ent/event"
 	"github.com/google/uuid"
 
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
@@ -31,7 +30,7 @@ func StartProject(
 		return nil, errors.New("end date before start date")
 	}
 	return &events.ProjectStarted{
-		Base:            base(id, actor, event.StatusApproved),
+		Base:            base(id, actor, events.StatusApproved),
 		Title:           title,
 		Description:     description,
 		StartDate:       start,
@@ -42,7 +41,7 @@ func StartProject(
 }
 
 // ChangeTitle emits TitleChanged when different.
-func ChangeTitle(id uuid.UUID, actor uuid.UUID, cur *entities.Project, title string, status event.Status) (events.Event, error) {
+func ChangeTitle(id uuid.UUID, actor uuid.UUID, cur *entities.Project, title string, status events.Status) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
@@ -53,7 +52,7 @@ func ChangeTitle(id uuid.UUID, actor uuid.UUID, cur *entities.Project, title str
 }
 
 // ChangeDescription emits DescriptionChanged when different.
-func ChangeDescription(id uuid.UUID, actor uuid.UUID, cur *entities.Project, desc string, status event.Status) (events.Event, error) {
+func ChangeDescription(id uuid.UUID, actor uuid.UUID, cur *entities.Project, desc string, status events.Status) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
@@ -64,7 +63,7 @@ func ChangeDescription(id uuid.UUID, actor uuid.UUID, cur *entities.Project, des
 }
 
 // ChangeStartDate emits StartDateChanged when the start date differs and is valid.
-func ChangeStartDate(id uuid.UUID, actor uuid.UUID, cur *entities.Project, start time.Time, status event.Status) (events.Event, error) {
+func ChangeStartDate(id uuid.UUID, actor uuid.UUID, cur *entities.Project, start time.Time, status events.Status) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
@@ -75,7 +74,7 @@ func ChangeStartDate(id uuid.UUID, actor uuid.UUID, cur *entities.Project, start
 }
 
 // ChangeEndDate emits EndDateChanged when the end date differs and is valid.
-func ChangeEndDate(id uuid.UUID, actor uuid.UUID, cur *entities.Project, end time.Time, status event.Status) (events.Event, error) {
+func ChangeEndDate(id uuid.UUID, actor uuid.UUID, cur *entities.Project, end time.Time, status events.Status) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
@@ -90,7 +89,7 @@ func ChangeOwningOrgNode(
 	actor uuid.UUID,
 	cur *entities.Project,
 	orgNodeID uuid.UUID,
-	status event.Status,
+	status events.Status,
 ) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
@@ -114,7 +113,7 @@ func AssignProjectRole(
 	cur *entities.Project,
 	personID uuid.UUID,
 	projectRoleID uuid.UUID,
-	status event.Status,
+	status events.Status,
 ) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
@@ -143,7 +142,7 @@ func UnassignProjectRole(
 	cur *entities.Project,
 	personID uuid.UUID,
 	projectRoleID uuid.UUID,
-	status event.Status,
+	status events.Status,
 ) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
@@ -175,7 +174,7 @@ func SetOwningOrgNode(
 	actor uuid.UUID,
 	cur *entities.Project,
 	owningOrgNodeID uuid.UUID,
-	status event.Status,
+	status events.Status,
 ) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
@@ -193,7 +192,7 @@ func SetOwningOrgNode(
 }
 
 // AddProduct emits ProductAdded when not present
-func AddProduct(id uuid.UUID, actor uuid.UUID, cur *entities.Project, productID uuid.UUID, status event.Status) (events.Event, error) {
+func AddProduct(id uuid.UUID, actor uuid.UUID, cur *entities.Project, productID uuid.UUID, status events.Status) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
@@ -208,7 +207,7 @@ func AddProduct(id uuid.UUID, actor uuid.UUID, cur *entities.Project, productID 
 }
 
 // RemoveProduct emits ProductRemoved when present
-func RemoveProduct(id uuid.UUID, actor uuid.UUID, cur *entities.Project, productID uuid.UUID, status event.Status) (events.Event, error) {
+func RemoveProduct(id uuid.UUID, actor uuid.UUID, cur *entities.Project, productID uuid.UUID, status events.Status) (events.Event, error) {
 	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
@@ -224,6 +223,6 @@ func RemoveProduct(id uuid.UUID, actor uuid.UUID, cur *entities.Project, product
 	return &events.ProductRemoved{Base: base(id, actor, status), ProductID: productID}, nil
 }
 
-func base(id uuid.UUID, actor uuid.UUID, status event.Status) events.Base {
-	return events.Base{ProjectID: id, At: time.Now().UTC(), ID: uuid.New(), CreatedBy: actor, Status: string(status)}
+func base(id uuid.UUID, actor uuid.UUID, status events.Status) events.Base {
+	return events.Base{ProjectID: id, At: time.Now().UTC(), ID: uuid.New(), CreatedBy: actor, Status: status}
 }

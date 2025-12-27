@@ -193,7 +193,7 @@ func (s *EntStore) mapEventRow(r *ent.Event) (events.Event, error) {
 		ProjectID: r.ProjectID,
 		At:        r.OccurredAt,
 		CreatedBy: r.CreatedBy,
-		Status:    string(r.Status),
+		Status:    events.Status(r.Status),
 	}
 
 	evt, err := events.Create(r.Type)

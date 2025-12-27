@@ -22,7 +22,7 @@ func Apply(p *entities.Project, e events.Event) {
 		return
 	}
 
-	// Only apply approved events to the projection
+	// TODO: Rework this when implementing event statuses properly
 	if e.GetStatus() == "pending" || e.GetStatus() == "rejected" {
 		return
 	}
@@ -30,7 +30,4 @@ func Apply(p *entities.Project, e events.Event) {
 	if applier, ok := e.(events.Applier); ok {
 		applier.Apply(p)
 	}
-
-	// Legacy or specialized handling (if any remaining) could stay here,
-	// but all known events are now ProjectAppliers.
 }

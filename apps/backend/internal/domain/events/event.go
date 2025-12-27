@@ -19,7 +19,7 @@ type Event interface {
 	Type() string
 	String() string
 	CreatedByID() uuid.UUID
-	GetStatus() string
+	GetStatus() Status
 	SetBase(Base)
 }
 
@@ -114,14 +114,14 @@ type Base struct {
 	ProjectID uuid.UUID `json:"projectId"`
 	At        time.Time `json:"at"`
 	CreatedBy uuid.UUID `json:"createdBy"`
-	Status    string    `json:"status"`
+	Status    Status    `json:"status"`
 }
 
 func (b Base) AggregateID() uuid.UUID { return b.ProjectID }
 func (b Base) OccurredAt() time.Time  { return b.At }
 func (b Base) GetID() uuid.UUID       { return b.ID }
 func (b Base) CreatedByID() uuid.UUID { return b.CreatedBy }
-func (b Base) GetStatus() string      { return b.Status }
+func (b Base) GetStatus() Status      { return b.Status }
 func (b *Base) SetBase(base Base)     { *b = base }
 
 // Registry
@@ -134,11 +134,6 @@ var (
 func RegisterMeta(meta EventMeta, factory func() Event) {
 	eventRegistry[meta.Type] = factory
 	eventMetas[meta.Type] = meta
-}
-
-// Register is kept for backward compatibility during migration
-func Register(eventType string, factory func() Event) {
-	eventRegistry[eventType] = factory
 }
 
 // Create instantiates an event by type
