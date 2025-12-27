@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 
 	_ "github.com/SURF-Innovatie/MORIS/api/swag-docs"
@@ -10,6 +11,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	crossref2 "github.com/SURF-Innovatie/MORIS/external/crossref"
 	"github.com/SURF-Innovatie/MORIS/external/orcid"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/env"
 	"github.com/SURF-Innovatie/MORIS/internal/errorlog"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
@@ -89,6 +91,10 @@ func main() {
 		logrus.Infof("Connected to Redis at %s:%s", env.Global.CacheHost, env.Global.CachePort)
 	}
 	defer rdb.Close()
+
+	if err := events.ValidateRegistrations(); err != nil {
+		log.Fatalf("event registration invalid: %v", err)
+	}
 
 	// Create services
 	esStore := eventstore.NewEntStore(client)

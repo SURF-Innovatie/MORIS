@@ -15,7 +15,6 @@ import (
 	productent "github.com/SURF-Innovatie/MORIS/ent/product"
 	entprojectrole "github.com/SURF-Innovatie/MORIS/ent/projectrole"
 	"github.com/SURF-Innovatie/MORIS/internal/app/commandbus"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/commands"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
@@ -114,42 +113,42 @@ func (s *service) StartProject(ctx context.Context, params StartProjectParams) (
 	proj, err := s.exec.Execute(ctx, projectID, func(ctx context.Context, cur *entities.Project) ([]events.Event, error) {
 		var out []events.Event
 
-		startEvt, err := commands.StartProject(
+		startEvt, err := events.DecideProjectStarted(
 			projectID,
 			user.ID,
-			params.Title,
-			params.Description,
-			params.StartDate,
-			params.EndDate,
-			nil,
-			params.OwningOrgNodeID,
-		)
-		if err != nil {
-			return nil, err
-		}
-		out = append(out, startEvt)
-
-		projection.Apply(cur, startEvt)
-
-		// 2) Assign admin role
-		assignEvt, err := commands.AssignProjectRole(
-			projectID,
-			user.ID,
-			cur,
-			user.PersonID,
-			adminRoleID,
+			events.ProjectStartedInput{
+				Title:           params.Title,
+				Description:     params.Description,
+				StartDate:       params.StartDate,
+				EndDate:         params.EndDate,
+				Members:         nil,
+				OwningOrgNodeID: params.OwningOrgNodeID,
+			},
 			events.StatusApproved,
 		)
 		if err != nil {
 			return nil, err
 		}
-		if assignEvt != nil {
-			out = append(out, assignEvt)
-			projection.Apply(cur, assignEvt)
+		emit(cur, &out, startEvt)
+
+		assignEvt, err := events.DecideProjectRoleAssigned(
+			projectID,
+			user.ID,
+			cur,
+			events.ProjectRoleAssignedInput{
+				PersonID:      user.PersonID,
+				ProjectRoleID: adminRoleID,
+			},
+			events.StatusApproved,
+		)
+		if err != nil {
+			return nil, err
 		}
+		emit(cur, &out, assignEvt)
 
 		return out, nil
 	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -168,31 +167,51 @@ func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params Update
 	proj, err := s.exec.Execute(ctx, id, func(ctx context.Context, cur *entities.Project) ([]events.Event, error) {
 		var out []events.Event
 
-		if e, err := commands.ChangeTitle(id, user.ID, cur, params.Title, events.StatusApproved); err != nil {
+		if e, err := events.DecideTitleChanged(
+			id, user.ID, cur,
+			events.TitleChangedInput{Title: params.Title},
+			events.StatusApproved,
+		); err != nil {
 			return nil, err
 		} else {
 			emit(cur, &out, e)
 		}
 
-		if e, err := commands.ChangeDescription(id, user.ID, cur, params.Description, events.StatusApproved); err != nil {
+		if e, err := events.DecideDescriptionChanged(
+			id, user.ID, cur,
+			events.DescriptionChangedInput{Description: params.Description},
+			events.StatusApproved,
+		); err != nil {
 			return nil, err
 		} else {
 			emit(cur, &out, e)
 		}
 
-		if e, err := commands.ChangeStartDate(id, user.ID, cur, params.StartDate, events.StatusApproved); err != nil {
+		if e, err := events.DecideStartDateChanged(
+			id, user.ID, cur,
+			events.StartDateChangedInput{StartDate: params.StartDate},
+			events.StatusApproved,
+		); err != nil {
 			return nil, err
 		} else {
 			emit(cur, &out, e)
 		}
 
-		if e, err := commands.ChangeEndDate(id, user.ID, cur, params.EndDate, events.StatusApproved); err != nil {
+		if e, err := events.DecideEndDateChanged(
+			id, user.ID, cur,
+			events.EndDateChangedInput{EndDate: params.EndDate},
+			events.StatusApproved,
+		); err != nil {
 			return nil, err
 		} else {
 			emit(cur, &out, e)
 		}
 
-		if e, err := commands.ChangeOwningOrgNode(id, user.ID, cur, params.OwningOrgNodeID, events.StatusApproved); err != nil {
+		if e, err := events.DecideOwningOrgNodeChanged(
+			id, user.ID, cur,
+			events.OwningOrgNodeChangedInput{OwningOrgNodeID: params.OwningOrgNodeID},
+			events.StatusApproved,
+		); err != nil {
 			return nil, err
 		} else {
 			emit(cur, &out, e)
@@ -200,6 +219,7 @@ func (s *service) UpdateProject(ctx context.Context, id uuid.UUID, params Update
 
 		return out, nil
 	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +332,11 @@ func (s *service) AddPerson(ctx context.Context, projectID uuid.UUID, personId u
 
 	proj, err := s.exec.Execute(ctx, projectID, func(ctx context.Context, cur *entities.Project) ([]events.Event, error) {
 		var out []events.Event
-		e, err := commands.AssignProjectRole(projectID, user.ID, cur, personId, contribRoleID, events.StatusPending)
+		e, err := events.DecideProjectRoleAssigned(
+			projectID, user.ID, cur,
+			events.ProjectRoleAssignedInput{PersonID: personId, ProjectRoleID: contribRoleID},
+			events.StatusPending,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -340,7 +364,11 @@ func (s *service) RemovePerson(ctx context.Context, projectID uuid.UUID, personI
 
 	proj, err := s.exec.Execute(ctx, projectID, func(ctx context.Context, cur *entities.Project) ([]events.Event, error) {
 		var out []events.Event
-		e, err := commands.UnassignProjectRole(projectID, user.ID, cur, personID, contribRoleID, events.StatusApproved)
+		e, err := events.DecideProjectRoleUnassigned(
+			projectID, user.ID, cur,
+			events.ProjectRoleUnassignedInput{PersonID: personID, ProjectRoleID: contribRoleID},
+			events.StatusApproved,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -390,13 +418,21 @@ func (s *service) UpdateMemberRole(
 
 		var out []events.Event
 
-		unassignEvt, err := commands.UnassignProjectRole(projectID, user.ID, cur, personID, currentRoleID, events.StatusApproved)
+		unassignEvt, err := events.DecideProjectRoleUnassigned(
+			projectID, user.ID, cur,
+			events.ProjectRoleUnassignedInput{PersonID: personID, ProjectRoleID: currentRoleID},
+			events.StatusApproved,
+		)
 		if err != nil {
 			return nil, err
 		}
 		emit(cur, &out, unassignEvt)
 
-		assignEvt, err := commands.AssignProjectRole(projectID, user.ID, cur, personID, newRoleID, events.StatusApproved)
+		assignEvt, err := events.DecideProjectRoleAssigned(
+			projectID, user.ID, cur,
+			events.ProjectRoleAssignedInput{PersonID: personID, ProjectRoleID: newRoleID},
+			events.StatusApproved,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -420,7 +456,11 @@ func (s *service) AddProduct(ctx context.Context, projectID uuid.UUID, productID
 
 	proj, err := s.exec.Execute(ctx, projectID, func(ctx context.Context, cur *entities.Project) ([]events.Event, error) {
 		var out []events.Event
-		e, err := commands.AddProduct(projectID, user.ID, cur, productID, events.StatusApproved)
+		e, err := events.DecideProductAdded(
+			projectID, user.ID, cur,
+			events.ProductAddedInput{ProductID: productID},
+			events.StatusApproved,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -443,7 +483,11 @@ func (s *service) RemoveProduct(ctx context.Context, projectID uuid.UUID, produc
 
 	proj, err := s.exec.Execute(ctx, projectID, func(ctx context.Context, cur *entities.Project) ([]events.Event, error) {
 		var out []events.Event
-		e, err := commands.RemoveProduct(projectID, user.ID, cur, productID, events.StatusApproved)
+		e, err := events.DecideProductRemoved(
+			projectID, user.ID, cur,
+			events.ProductRemovedInput{ProductID: productID},
+			events.StatusApproved,
+		)
 		if err != nil {
 			return nil, err
 		}

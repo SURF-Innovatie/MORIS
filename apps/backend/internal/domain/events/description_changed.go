@@ -2,10 +2,14 @@ package events
 
 import (
 	"context"
+	"errors"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/google/uuid"
 )
+
+const DescriptionChangedType = "project.description_changed"
 
 type DescriptionChanged struct {
 	Base
@@ -26,6 +30,32 @@ func (e *DescriptionChanged) NotificationMessage() string {
 	return "Project description has been updated."
 }
 
+type DescriptionChangedInput struct {
+	Description string
+}
+
+func DecideDescriptionChanged(
+	projectID uuid.UUID,
+	actor uuid.UUID,
+	cur *entities.Project,
+	in DescriptionChangedInput,
+	status Status,
+) (*DescriptionChanged, error) {
+	if projectID == uuid.Nil {
+		return nil, errors.New("project id is required")
+	}
+	if cur == nil {
+		return nil, errors.New("current project is required")
+	}
+	if cur.Description == in.Description {
+		return nil, nil
+	}
+	return &DescriptionChanged{
+		Base:        NewBase(projectID, actor, status),
+		Description: in.Description,
+	}, nil
+}
+
 func init() {
 	RegisterMeta(EventMeta{
 		Type:         DescriptionChangedType,
@@ -34,4 +64,10 @@ func init() {
 			return true
 		},
 	}, func() Event { return &DescriptionChanged{} })
+
+	RegisterDecider[DescriptionChangedInput](DescriptionChangedType,
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur any, in DescriptionChangedInput, status Status) (Event, error) {
+			p := cur.(*entities.Project)
+			return DecideDescriptionChanged(projectID, actor, p, in, status)
+		})
 }

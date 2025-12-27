@@ -94,20 +94,6 @@ func (m EventMeta) IsAllowed(ctx context.Context, event Event, client *ent.Clien
 	return m.CheckAllowed(ctx, event, client)
 }
 
-// Event type constants
-const (
-	ProjectStartedType        = "project.started"
-	TitleChangedType          = "project.title_changed"
-	DescriptionChangedType    = "project.description_changed"
-	StartDateChangedType      = "project.start_date_changed"
-	EndDateChangedType        = "project.end_date_changed"
-	ProductAddedType          = "project.product_added"
-	ProductRemovedType        = "project.product_removed"
-	ProjectRoleAssignedType   = "project.role_assigned"
-	ProjectRoleUnassignedType = "project.role_revoked"
-	OwningOrgNodeChangedType  = "project.owning_org_node_changed"
-)
-
 // Base struct provides common event fields
 type Base struct {
 	ID        uuid.UUID `json:"id"`
@@ -115,6 +101,15 @@ type Base struct {
 	At        time.Time `json:"at"`
 	CreatedBy uuid.UUID `json:"createdBy"`
 	Status    Status    `json:"status"`
+}
+
+func NewBase(projectID, actor uuid.UUID, status Status) Base {
+	return Base{
+		ProjectID: projectID,
+		At:        time.Now().UTC(),
+		CreatedBy: actor,
+		Status:    status,
+	}
 }
 
 func (b Base) AggregateID() uuid.UUID { return b.ProjectID }

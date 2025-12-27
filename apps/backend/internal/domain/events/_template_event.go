@@ -19,6 +19,8 @@ import (
 	"github.com/google/uuid"
 )
 
+const TemplateEventType = "project.template"
+
 // -----------------------------------------------------------------------------
 // Step 1: Define your event struct
 // -----------------------------------------------------------------------------
@@ -36,7 +38,7 @@ type TemplateEvent struct {
 // -----------------------------------------------------------------------------
 
 func (TemplateEvent) isEvent()     {}
-func (TemplateEvent) Type() string { return "project.template" }
+func (TemplateEvent) Type() string { return TemplateEventType }
 func (e TemplateEvent) String() string {
 	return fmt.Sprintf("Template event: %s", e.SomeStringField)
 }
@@ -71,31 +73,76 @@ func (e *TemplateEvent) RelatedIDs() RelatedIDs {
 }
 
 // -----------------------------------------------------------------------------
-// Step 4: Register the event (REQUIRED - uncomment and customize)
+// Step 4: Decision (REQUIRED)
 // -----------------------------------------------------------------------------
-//
-// func init() {
-// 	RegisterMeta(EventMeta{
-// 		Type:         "project.template",  // Must match Type() return value
-// 		FriendlyName: "Template Event",    // Human-readable name for UI
-//
-// 		// Optional: Define when approval is required (nil = never)
-// 		CheckApproval: func(ctx context.Context, event Event, client *ent.Client) bool {
-// 			return false // or add custom logic
-// 		},
-//
-// 		// Optional: Define when notifications should be sent (nil = never)
-// 		CheckNotification: func(ctx context.Context, event Event, client *ent.Client) bool {
-// 			return true // or add custom logic
-// 		},
-//
-// 		// Optional: Define who can trigger this event (nil = everyone)
-// 		CheckAllowed: func(ctx context.Context, event Event, client *ent.Client) bool {
-// 			// Example: client.Project.Query().Where(...)
-// 			return true
-// 		},
-// 	}, func() Event { return &TemplateEvent{} })
-// }
+
+type TemplateEventInput struct {
+	SomeStringField string
+	SomeUUIDField   uuid.UUID
+}
+
+func DecideTemplateEvent(
+	ctx context.Context,
+	projectID uuid.UUID,
+	actor uuid.UUID,
+	cur *entities.Project,
+	in TemplateEventInput,
+	status Status,
+) (*TemplateEvent, error) {
+	if projectID == uuid.Nil {
+		return nil, errors.New("project id is required")
+	}
+	if actor == uuid.Nil {
+		return nil, errors.New("actor id is required")
+	}
+	if cur == nil {
+		return nil, errors.New("current project is required")
+	}
+
+	// Idempotency / invariants go here:
+	// if cur.Title == in.SomeStringField { return nil, nil }
+
+	return &TemplateEvent{
+		Base:            NewBase(projectID, actor, status),
+		SomeStringField: in.SomeStringField,
+		SomeUUIDField:   in.SomeUUIDField,
+	}, nil
+}
+
+// -----------------------------------------------------------------------------
+// Step 5: Register the event (REQUIRED - uncomment and customize)
+// -----------------------------------------------------------------------------
+func init() {
+	RegisterMeta(EventMeta{
+		Type:         "project.template", // Must match Type() return value
+		FriendlyName: "Template Event",   // Human-readable name for UI
+
+		// Optional: Define when approval is required (nil = never)
+		CheckApproval: func(ctx context.Context, event Event, client *ent.Client) bool {
+			return false // or add custom logic
+		},
+
+		// Optional: Define when notifications should be sent (nil = never)
+		CheckNotification: func(ctx context.Context, event Event, client *ent.Client) bool {
+			return true // or add custom logic
+		},
+
+		// Optional: Define who can trigger this event (nil = everyone)
+		CheckAllowed: func(ctx context.Context, event Event, client *ent.Client) bool {
+			// Example: client.Project.Query().Where(...)
+			return true
+		},
+		RegisterDecider[TemplateEventInput]("project.template",
+			func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur any, in TemplateEventInput, status Status) (Event, error) {
+				p, ok := cur.(*entities.Project)
+				if !ok {
+					return nil, fmt.Errorf("expected *entities.Project, got %T", cur)
+				}
+				return DecideTemplateEvent(ctx, projectID, actor, p, in, status)
+			},
+		),
+	}, func() Event { return &TemplateEvent{} })
+}
 
 // Unused import guard (remove when uncommenting init)
 var _ = context.Background

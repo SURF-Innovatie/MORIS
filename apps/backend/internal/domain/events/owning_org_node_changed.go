@@ -2,11 +2,14 @@ package events
 
 import (
 	"context"
+	"errors"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
+
+const OwningOrgNodeChangedType = "project.owning_org_node_changed"
 
 type OwningOrgNodeChanged struct {
 	Base
@@ -27,6 +30,36 @@ func (e *OwningOrgNodeChanged) RelatedIDs() RelatedIDs {
 	return RelatedIDs{OrgNodeID: &e.OwningOrgNodeID}
 }
 
+type OwningOrgNodeChangedInput struct {
+	OwningOrgNodeID uuid.UUID
+}
+
+func DecideOwningOrgNodeChanged(
+	projectID uuid.UUID,
+	actor uuid.UUID,
+	cur *entities.Project,
+	in OwningOrgNodeChangedInput,
+	status Status,
+) (*OwningOrgNodeChanged, error) {
+	if projectID == uuid.Nil {
+		return nil, errors.New("project id is required")
+	}
+	if in.OwningOrgNodeID == uuid.Nil {
+		return nil, errors.New("organisation node id is required")
+	}
+	if cur == nil {
+		return nil, errors.New("current project is required")
+	}
+	if cur.OwningOrgNodeID == in.OwningOrgNodeID {
+		return nil, nil
+	}
+
+	return &OwningOrgNodeChanged{
+		Base:            NewBase(projectID, actor, status),
+		OwningOrgNodeID: in.OwningOrgNodeID,
+	}, nil
+}
+
 func init() {
 	RegisterMeta(EventMeta{
 		Type:         OwningOrgNodeChangedType,
@@ -35,4 +68,10 @@ func init() {
 			return true
 		},
 	}, func() Event { return &OwningOrgNodeChanged{} })
+
+	RegisterDecider[OwningOrgNodeChangedInput](OwningOrgNodeChangedType,
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur any, in OwningOrgNodeChangedInput, status Status) (Event, error) {
+			p := cur.(*entities.Project)
+			return DecideOwningOrgNodeChanged(projectID, actor, p, in, status)
+		})
 }
