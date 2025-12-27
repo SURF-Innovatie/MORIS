@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 
 	_ "github.com/SURF-Innovatie/MORIS/api/swag-docs"
@@ -10,6 +11,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	crossref2 "github.com/SURF-Innovatie/MORIS/external/crossref"
 	"github.com/SURF-Innovatie/MORIS/external/orcid"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/env"
 	"github.com/SURF-Innovatie/MORIS/internal/errorlog"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
@@ -90,6 +92,10 @@ func main() {
 	}
 	defer rdb.Close()
 
+	if err := events.ValidateRegistrations(); err != nil {
+		log.Fatalf("event registration invalid: %v", err)
+	}
+
 	// Create services
 	esStore := eventstore.NewEntStore(client)
 	personSvc := person.NewService(client)
@@ -119,11 +125,10 @@ func main() {
 	errorLogSvc := errorlog.NewService(client)
 
 	eventSvc := event.NewService(esStore, client, notifierSvc)
-	eventSvc.RegisterNotificationHandler(&event.ProjectEventNotificationHandler{Cli: client})
+
+	eventSvc.RegisterNotificationHandler(&event.ProjectEventNotificationHandler{Cli: client, ES: esStore})
 	eventSvc.RegisterNotificationHandler(&event.ApprovalRequestNotificationHandler{Cli: client, ES: esStore, RBAC: rbacSvc})
-	eventSvc.RegisterNotificationHandler(&event.ProductAddedNotificationHandler{Notifier: notifierSvc, Cli: client, ES: esStore})
-	eventSvc.RegisterNotificationHandler(&event.StatusUpdateNotificationHandler{Notifier: notifierSvc, Cli: client})
-	eventSvc.RegisterNotificationHandler(&event.ApprovalCleanupHandler{Cli: client})
+	eventSvc.RegisterNotificationHandler(&event.StatusUpdateNotificationHandler{Cli: client})
 	evtHandler := eventHandler.NewHandler(eventSvc)
 
 	notificationHandler := notificationhandler.NewHandler(notifierSvc)

@@ -1,12 +1,16 @@
 package events
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
+
+const ProjectStartedType = "project.started"
 
 type ProjectStarted struct {
 	Base
@@ -22,4 +26,69 @@ func (ProjectStarted) isEvent()     {}
 func (ProjectStarted) Type() string { return ProjectStartedType }
 func (e ProjectStarted) String() string {
 	return fmt.Sprintf("Project started: %s", e.Title)
+}
+
+func (e *ProjectStarted) Apply(project *entities.Project) {
+	project.Title = e.Title
+	project.Description = e.Description
+	project.StartDate = e.StartDate
+	project.EndDate = e.EndDate
+	project.OwningOrgNodeID = e.OwningOrgNodeID
+	project.Members = e.Members
+}
+
+func (e *ProjectStarted) NotificationMessage() string {
+	return fmt.Sprintf("Project '%s' has been started.", e.Title)
+}
+
+func (e *ProjectStarted) RelatedIDs() RelatedIDs {
+	return RelatedIDs{OrgNodeID: &e.OwningOrgNodeID}
+}
+
+type ProjectStartedInput struct {
+	Title           string
+	Description     string
+	StartDate       time.Time
+	EndDate         time.Time
+	Members         []entities.ProjectMember
+	OwningOrgNodeID uuid.UUID
+}
+
+func DecideProjectStarted(
+	projectID uuid.UUID,
+	actor uuid.UUID,
+	in ProjectStartedInput,
+	status Status,
+) (*ProjectStarted, error) {
+	if projectID == uuid.Nil {
+		return nil, errors.New("project id is required")
+	}
+	if in.Title == "" {
+		return nil, errors.New("title is required")
+	}
+	if in.EndDate.Before(in.StartDate) {
+		return nil, errors.New("end date before start date")
+	}
+
+	return &ProjectStarted{
+		Base:            NewBase(projectID, actor, status),
+		Title:           in.Title,
+		Description:     in.Description,
+		StartDate:       in.StartDate,
+		EndDate:         in.EndDate,
+		Members:         in.Members,
+		OwningOrgNodeID: in.OwningOrgNodeID,
+	}, nil
+}
+
+func init() {
+	RegisterMeta(EventMeta{
+		Type:         ProjectStartedType,
+		FriendlyName: "Project Proposal",
+	}, func() Event { return &ProjectStarted{} })
+
+	RegisterDecider[ProjectStartedInput](ProjectStartedType,
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur any, in ProjectStartedInput, status Status) (Event, error) {
+			return DecideProjectStarted(projectID, actor, in, status)
+		})
 }

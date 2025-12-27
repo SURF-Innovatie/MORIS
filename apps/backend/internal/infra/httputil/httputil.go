@@ -26,10 +26,10 @@ type StatusResponse struct {
 // BackendError is a standardized error response structure, referenced by Swagger
 // used by Swagger for API documentation
 type BackendError struct {
-	Code    int         `json:"code" example:"400"`
-	Status  string      `json:"status" example:"Bad Request"`
-	Errors  interface{} `json:"errors,omitempty"`                                       // Can be map[string]string or []string or null
-	Message string      `json:"message,omitempty" example:"Detailed error description"` // Custom message
+	Code    int    `json:"code" example:"400"`
+	Status  string `json:"status" example:"Bad Request"`
+	Errors  any    `json:"errors,omitempty"`                                       // Can be map[string]string or []string or null
+	Message string `json:"message,omitempty" example:"Detailed error description"` // Custom message
 }
 
 // ContextKey is a custom type for context keys
@@ -60,7 +60,7 @@ func GetUserIDFromContext(ctx context.Context) string {
 // WriteError writes a standardized error response
 // It automatically handles environment-specific masking of errors.
 // It also stores the full error details in the request entity for middleware logging.
-func WriteError(w http.ResponseWriter, r *http.Request, code int, message string, errs interface{}) error {
+func WriteError(w http.ResponseWriter, r *http.Request, code int, message string, errs any) error {
 	// Store full error details in the request context specifically for the middleware to pick up.
 	// This allows the middleware to log the original error details even if the response is sanitized for production.
 	if container, ok := r.Context().Value(ContextKeyErrorDetails).(*ErrorDetailsContainer); ok {
@@ -118,7 +118,7 @@ func ReadJSON(w http.ResponseWriter, r *http.Request, v any) bool {
 // ErrorDetailsContainer is used to pass error details from handler to middleware via context
 type ErrorDetailsContainer struct {
 	Message    string
-	Errors     interface{}
+	Errors     any
 	StatusCode int
 }
 

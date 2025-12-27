@@ -67,7 +67,7 @@ type Journal struct {
 	Publisher           string                   `json:"publisher"`
 	Coverage            *CombinedJournalCoverage `json:"coverage"`
 	Title               string                   `json:"title"`
-	Subjects            []interface{}            `json:"subjects"`
+	Subjects            []any                    `json:"subjects"`
 	CoverageType        *JournalCoverageType     `json:"coverage-type"`
 	Flags               *JournalFlags            `json:"flags"`
 	ISSN                []string                 `json:"ISSN"`
@@ -352,8 +352,8 @@ type MultipleJournalsMessage struct {
 
 // Query represents search query information
 type Query struct {
-	StartIndex  int         `json:"start-index,omitempty"`
-	SearchTerms interface{} `json:"search-terms,omitempty"`
+	StartIndex  int `json:"start-index,omitempty"`
+	SearchTerms any `json:"search-terms,omitempty"`
 }
 
 // Facets represents facets (empty placeholder for compatibility)

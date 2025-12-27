@@ -40,8 +40,5 @@ func (Person) Edges() []ent.Edge {
 			Ref("person"),
 
 		edge.To("products", Product.Type),
-
-		edge.To("project_role_assigned_events", ProjectRoleAssignedEvent.Type),
-		edge.To("project_role_unassigned_events", ProjectRoleUnassignedEvent.Type),
 	}
 }

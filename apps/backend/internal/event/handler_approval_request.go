@@ -2,7 +2,6 @@ package event
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/notification"
@@ -21,18 +20,13 @@ type ApprovalRequestNotificationHandler struct {
 	RBAC orgsvc.RBACService
 }
 
-func (h *ApprovalRequestNotificationHandler) CanHandle(e events.Event) bool {
-	// Add other “needs approval” events here too
-	switch e.(type) {
-	case events.ProjectRoleAssigned, events.ProjectRoleUnassigned:
-		return true
-	default:
-		return false
-	}
-}
-
 func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e events.Event) error {
 	if e.GetStatus() != "pending" {
+		return nil
+	}
+
+	meta := events.GetMeta(e.Type())
+	if !meta.NeedsApproval(ctx, e, h.Cli) {
 		return nil
 	}
 
@@ -95,12 +89,8 @@ func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e event
 }
 
 func (h *ApprovalRequestNotificationHandler) buildApprovalMessage(ctx context.Context, e events.Event, projectTitle string) (string, error) {
-	switch e.(type) {
-	case events.ProjectRoleAssigned:
-		return fmt.Sprintf("Approval requested: role assigned in project '%s'.", projectTitle), nil
-	case events.ProjectRoleUnassigned:
-		return fmt.Sprintf("Approval requested: role unassigned in project '%s'.", projectTitle), nil
-	default:
-		return "", nil
+	if n, ok := e.(events.ApprovalNotifier); ok {
+		return n.ApprovalMessage(projectTitle), nil
 	}
+	return "", nil
 }
