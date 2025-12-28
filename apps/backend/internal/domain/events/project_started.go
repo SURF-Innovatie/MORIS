@@ -46,12 +46,12 @@ func (e *ProjectStarted) RelatedIDs() RelatedIDs {
 }
 
 type ProjectStartedInput struct {
-	Title           string
-	Description     string
-	StartDate       time.Time
-	EndDate         time.Time
-	Members         []entities.ProjectMember
-	OwningOrgNodeID uuid.UUID
+	Title           string                   `json:"title"`
+	Description     string                   `json:"description"`
+	StartDate       time.Time                `json:"start_date"`
+	EndDate         time.Time                `json:"end_date"`
+	Members         []entities.ProjectMember `json:"members_ids"`
+	OwningOrgNodeID uuid.UUID                `json:"owning_org_node_id"`
 }
 
 func DecideProjectStarted(
@@ -88,7 +88,9 @@ func init() {
 	}, func() Event { return &ProjectStarted{} })
 
 	RegisterDecider[ProjectStartedInput](ProjectStartedType,
-		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur any, in ProjectStartedInput, status Status) (Event, error) {
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in ProjectStartedInput, status Status) (Event, error) {
 			return DecideProjectStarted(projectID, actor, in, status)
 		})
+
+	RegisterInputType(ProjectStartedType, ProjectStartedInput{})
 }

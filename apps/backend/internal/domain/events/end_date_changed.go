@@ -33,7 +33,7 @@ func (e *EndDateChanged) NotificationMessage() string {
 }
 
 type EndDateChangedInput struct {
-	EndDate time.Time
+	EndDate time.Time `json:"end_date"`
 }
 
 func DecideEndDateChanged(
@@ -68,8 +68,9 @@ func init() {
 	}, func() Event { return &EndDateChanged{} })
 
 	RegisterDecider[EndDateChangedInput](EndDateChangedType,
-		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur any, in EndDateChangedInput, status Status) (Event, error) {
-			p := cur.(*entities.Project)
-			return DecideEndDateChanged(projectID, actor, p, in, status)
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in EndDateChangedInput, status Status) (Event, error) {
+			return DecideEndDateChanged(projectID, actor, cur, in, status)
 		})
+
+	RegisterInputType(EndDateChangedType, EndDateChangedInput{})
 }

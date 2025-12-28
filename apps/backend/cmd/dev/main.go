@@ -24,6 +24,7 @@ import (
 	personhandler "github.com/SURF-Innovatie/MORIS/internal/handler/person"
 	producthandler "github.com/SURF-Innovatie/MORIS/internal/handler/product"
 	projecthandler "github.com/SURF-Innovatie/MORIS/internal/handler/project"
+	commandHandler "github.com/SURF-Innovatie/MORIS/internal/handler/project/command"
 	systemhandler "github.com/SURF-Innovatie/MORIS/internal/handler/system"
 	userhandler "github.com/SURF-Innovatie/MORIS/internal/handler/user"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/auth"
@@ -33,6 +34,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/person"
 	"github.com/SURF-Innovatie/MORIS/internal/product"
 	"github.com/SURF-Innovatie/MORIS/internal/project"
+	"github.com/SURF-Innovatie/MORIS/internal/project/command"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
 	logger "github.com/chi-middleware/logrus-logger"
 	"github.com/go-chi/chi/v5"
@@ -140,6 +142,9 @@ func main() {
 	projSvc := project.NewService(esStore, client, eventSvc, rdb)
 	projHandler := projecthandler.NewHandler(projSvc)
 
+	projCmdSvc := command.NewService(esStore, client, eventSvc)
+	projCmdHandler := commandHandler.NewHandler(projCmdSvc)
+
 	userHandler := userhandler.NewHandler(userSvc, projSvc)
 
 	// Router
@@ -154,7 +159,10 @@ func main() {
 		systemhandler.MountRoutes(r, systemHandler)
 		r.Group(func(r chi.Router) {
 			r.Use(authmiddleware.AuthMiddleware(authSvc))
-			projecthandler.MountProjectRoutes(r, projHandler)
+			r.Route("/projects", func(r chi.Router) {
+				projecthandler.MountProjectRoutes(r, projHandler)
+				commandHandler.MountProjectCommandRouter(r, projCmdHandler)
+			})
 			organisationhandler.MountOrganisationRoutes(r, organisationHandler, rbacHandler)
 			eventHandler.MountEventRoutes(r, evtHandler)
 			personhandler.MountPersonRoutes(r, personHandler)

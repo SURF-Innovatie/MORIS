@@ -45,8 +45,8 @@ func (e *ProjectRoleAssigned) ApprovalMessage(projectTitle string) string {
 }
 
 type ProjectRoleAssignedInput struct {
-	PersonID      uuid.UUID
-	ProjectRoleID uuid.UUID
+	PersonID      uuid.UUID `json:"person_id"`
+	ProjectRoleID uuid.UUID `json:"project_role_id"`
 }
 
 func DecideProjectRoleAssigned(
@@ -89,8 +89,9 @@ func init() {
 	}, func() Event { return &ProjectRoleAssigned{} })
 
 	RegisterDecider[ProjectRoleAssignedInput](ProjectRoleAssignedType,
-		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur any, in ProjectRoleAssignedInput, status Status) (Event, error) {
-			p := cur.(*entities.Project)
-			return DecideProjectRoleAssigned(projectID, actor, p, in, status)
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in ProjectRoleAssignedInput, status Status) (Event, error) {
+			return DecideProjectRoleAssigned(projectID, actor, cur, in, status)
 		})
+
+	RegisterInputType(ProjectRoleAssignedType, ProjectRoleAssignedInput{})
 }

@@ -33,7 +33,7 @@ func (e *StartDateChanged) NotificationMessage() string {
 }
 
 type StartDateChangedInput struct {
-	StartDate time.Time
+	StartDate time.Time `json:"start_date"`
 }
 
 func DecideStartDateChanged(
@@ -68,8 +68,9 @@ func init() {
 	}, func() Event { return &StartDateChanged{} })
 
 	RegisterDecider[StartDateChangedInput](StartDateChangedType,
-		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur any, in StartDateChangedInput, status Status) (Event, error) {
-			p := cur.(*entities.Project)
-			return DecideStartDateChanged(projectID, actor, p, in, status)
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in StartDateChangedInput, status Status) (Event, error) {
+			return DecideStartDateChanged(projectID, actor, cur, in, status)
 		})
+
+	RegisterInputType(StartDateChangedType, StartDateChangedInput{})
 }

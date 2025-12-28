@@ -31,7 +31,7 @@ func (e *OwningOrgNodeChanged) RelatedIDs() RelatedIDs {
 }
 
 type OwningOrgNodeChangedInput struct {
-	OwningOrgNodeID uuid.UUID
+	OwningOrgNodeID uuid.UUID `json:"owning_org_node_id"`
 }
 
 func DecideOwningOrgNodeChanged(
@@ -70,8 +70,9 @@ func init() {
 	}, func() Event { return &OwningOrgNodeChanged{} })
 
 	RegisterDecider[OwningOrgNodeChangedInput](OwningOrgNodeChangedType,
-		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur any, in OwningOrgNodeChangedInput, status Status) (Event, error) {
-			p := cur.(*entities.Project)
-			return DecideOwningOrgNodeChanged(projectID, actor, p, in, status)
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in OwningOrgNodeChangedInput, status Status) (Event, error) {
+			return DecideOwningOrgNodeChanged(projectID, actor, cur, in, status)
 		})
+
+	RegisterInputType(OwningOrgNodeChangedType, OwningOrgNodeChangedInput{})
 }

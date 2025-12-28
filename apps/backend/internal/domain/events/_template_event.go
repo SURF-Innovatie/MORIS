@@ -132,16 +132,19 @@ func init() {
 			// Example: client.Project.Query().Where(...)
 			return true
 		},
-		RegisterDecider[TemplateEventInput]("project.template",
-			func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur any, in TemplateEventInput, status Status) (Event, error) {
-				p, ok := cur.(*entities.Project)
-				if !ok {
-					return nil, fmt.Errorf("expected *entities.Project, got %T", cur)
-				}
-				return DecideTemplateEvent(ctx, projectID, actor, p, in, status)
-			},
-		),
 	}, func() Event { return &TemplateEvent{} })
+
+	RegisterDecider[TemplateEventInput](TemplateEventType,
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur any, in TemplateEventInput, status Status) (Event, error) {
+			p, ok := cur.(*entities.Project)
+			if !ok {
+				return nil, fmt.Errorf("expected *entities.Project, got %T", cur)
+			}
+			return DecideTemplateEvent(ctx, projectID, actor, p, in, status)
+		},
+	)
+
+	RegisterInputType(TemplateEventType, TemplateEventInput{})
 }
 
 // Unused import guard (remove when uncommenting init)

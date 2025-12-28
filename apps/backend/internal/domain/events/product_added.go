@@ -36,7 +36,7 @@ func (e *ProductAdded) NotificationMessage() string {
 }
 
 type ProductAddedInput struct {
-	ProductID uuid.UUID
+	ProductID uuid.UUID `json:"product_id"`
 }
 
 func DecideProductAdded(
@@ -78,8 +78,9 @@ func init() {
 	}, func() Event { return &ProductAdded{} })
 
 	RegisterDecider[ProductAddedInput](ProductAddedType,
-		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur any, in ProductAddedInput, status Status) (Event, error) {
-			p := cur.(*entities.Project)
-			return DecideProductAdded(projectID, actor, p, in, status)
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in ProductAddedInput, status Status) (Event, error) {
+			return DecideProductAdded(projectID, actor, cur, in, status)
 		})
+
+	RegisterInputType(ProductAddedType, ProductAddedInput{})
 }

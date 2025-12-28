@@ -41,7 +41,7 @@ func (e *ProductRemoved) RelatedIDs() RelatedIDs {
 }
 
 type ProductRemovedInput struct {
-	ProductID uuid.UUID
+	ProductID uuid.UUID `json:"product_id"`
 }
 
 func DecideProductRemoved(
@@ -88,8 +88,9 @@ func init() {
 	}, func() Event { return &ProductRemoved{} })
 
 	RegisterDecider[ProductRemovedInput](ProductRemovedType,
-		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur any, in ProductRemovedInput, status Status) (Event, error) {
-			p := cur.(*entities.Project)
-			return DecideProductRemoved(projectID, actor, p, in, status)
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in ProductRemovedInput, status Status) (Event, error) {
+			return DecideProductRemoved(projectID, actor, cur, in, status)
 		})
+
+	RegisterInputType(ProductRemovedType, ProductRemovedInput{})
 }

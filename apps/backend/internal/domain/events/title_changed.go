@@ -73,12 +73,10 @@ func init() {
 	}, func() Event { return &TitleChanged{} })
 
 	RegisterDecider[TitleChangedInput](TitleChangedType,
-		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur any, in TitleChangedInput, status Status) (Event, error) {
-			p, ok := cur.(*entities.Project)
-			if !ok {
-				return nil, fmt.Errorf("expected *entities.Project, got %T", cur)
-			}
-			return DecideTitleChanged(projectID, actor, p, in, status)
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in TitleChangedInput, status Status) (Event, error) {
+			return DecideTitleChanged(projectID, actor, cur, in, status)
 		},
 	)
+
+	RegisterInputType(TitleChangedType, TitleChangedInput{})
 }

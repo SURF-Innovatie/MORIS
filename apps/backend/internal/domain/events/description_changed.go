@@ -31,7 +31,7 @@ func (e *DescriptionChanged) NotificationMessage() string {
 }
 
 type DescriptionChangedInput struct {
-	Description string
+	Description string `json:"description"`
 }
 
 func DecideDescriptionChanged(
@@ -66,8 +66,10 @@ func init() {
 	}, func() Event { return &DescriptionChanged{} })
 
 	RegisterDecider[DescriptionChangedInput](DescriptionChangedType,
-		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur any, in DescriptionChangedInput, status Status) (Event, error) {
-			p := cur.(*entities.Project)
-			return DecideDescriptionChanged(projectID, actor, p, in, status)
-		})
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in DescriptionChangedInput, status Status) (Event, error) {
+			return DecideDescriptionChanged(projectID, actor, cur, in, status)
+		},
+	)
+
+	RegisterInputType(DescriptionChangedType, DescriptionChangedInput{})
 }
