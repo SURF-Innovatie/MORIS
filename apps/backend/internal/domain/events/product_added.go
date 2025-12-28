@@ -45,7 +45,7 @@ func DecideProductAdded(
 	cur *entities.Project,
 	in ProductAddedInput,
 	status Status,
-) (*ProductAdded, error) {
+) (Event, error) {
 	if projectID == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}

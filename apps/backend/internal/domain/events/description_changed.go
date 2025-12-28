@@ -40,7 +40,7 @@ func DecideDescriptionChanged(
 	cur *entities.Project,
 	in DescriptionChangedInput,
 	status Status,
-) (*DescriptionChanged, error) {
+) (Event, error) {
 	if projectID == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}

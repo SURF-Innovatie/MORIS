@@ -32,28 +32,33 @@ func (e *TitleChanged) NotificationMessage() string {
 }
 
 type TitleChangedInput struct {
-	Title string
+	Title string `json:"title"`
 }
 
 func DecideTitleChanged(
-	projectID uuid.UUID,
+	id uuid.UUID,
 	actor uuid.UUID,
 	cur *entities.Project,
 	in TitleChangedInput,
 	status Status,
-) (*TitleChanged, error) {
-	if projectID == uuid.Nil {
+) (Event, error) {
+	if id == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
 	if cur == nil {
-		return nil, errors.New("current project is required")
+		return nil, errors.New("project is nil")
 	}
-	if in.Title == "" || cur.Title == in.Title {
+
+	// no-op rules
+	if in.Title == "" {
+		return nil, nil
+	}
+	if cur.Title == in.Title {
 		return nil, nil
 	}
 
 	return &TitleChanged{
-		Base:  NewBase(projectID, actor, status),
+		Base:  NewBase(id, actor, status),
 		Title: in.Title,
 	}, nil
 }

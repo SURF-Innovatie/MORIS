@@ -50,7 +50,7 @@ func DecideProductRemoved(
 	cur *entities.Project,
 	in ProductRemovedInput,
 	status Status,
-) (*ProductRemoved, error) {
+) (Event, error) {
 	if projectID == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}

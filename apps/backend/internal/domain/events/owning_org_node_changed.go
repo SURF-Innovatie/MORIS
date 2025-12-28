@@ -40,7 +40,7 @@ func DecideOwningOrgNodeChanged(
 	cur *entities.Project,
 	in OwningOrgNodeChangedInput,
 	status Status,
-) (*OwningOrgNodeChanged, error) {
+) (Event, error) {
 	if projectID == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}

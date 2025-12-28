@@ -1,11 +1,10 @@
-package commands_test
+package events_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/SURF-Innovatie/MORIS/ent/event"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/commands"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
@@ -17,17 +16,14 @@ type MemoryStream struct {
 }
 
 func NewStream() *MemoryStream {
-	return &MemoryStream{
-		events: make([]events.Event, 0),
-	}
+	return &MemoryStream{events: make([]events.Event, 0)}
 }
 
-func (s *MemoryStream) Append(id uuid.UUID, ev events.Event) {
+func (s *MemoryStream) Append(ev events.Event) {
 	s.events = append(s.events, ev)
 }
 
 func (s *MemoryStream) Events(id uuid.UUID) []events.Event {
-	// Simple filter by AggregateID
 	var res []events.Event
 	for _, e := range s.events {
 		if e.AggregateID() == id {
@@ -42,7 +38,6 @@ func (s *MemoryStream) Reduce(id uuid.UUID) *entities.Project {
 }
 
 func Test_ProjectLifecycle(t *testing.T) {
-	// Arrange
 	stream := NewStream()
 	id := uuid.New()
 
@@ -58,15 +53,30 @@ func Test_ProjectLifecycle(t *testing.T) {
 		{PersonID: personID, ProjectRoleID: roleID},
 	}
 
-	// StartProject
-	ev, err := commands.StartProject(id, actor, "Alpha", "First", start, end, members, org)
+	var ev events.Event
+	var err error
+
+	// StartProject (decider)
+	ev, err = events.DecideProjectStarted(
+		id,
+		actor,
+		events.ProjectStartedInput{
+			Title:           "Alpha",
+			Description:     "First",
+			StartDate:       start,
+			EndDate:         end,
+			Members:         members,
+			OwningOrgNodeID: org,
+		},
+		events.StatusApproved,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if ev == nil {
 		t.Fatal("expected start event")
 	}
-	stream.Append(id, ev)
+	stream.Append(ev)
 
 	// Reduce -> check initial state
 	cur := stream.Reduce(id)
@@ -76,7 +86,6 @@ func Test_ProjectLifecycle(t *testing.T) {
 	if cur.Description != "First" {
 		t.Fatalf("desc got %q", cur.Description)
 	}
-	// Org name is not in projection unless hydrated from DB, but ID is there
 	if cur.OwningOrgNodeID != org {
 		t.Fatalf("org ID mismatch")
 	}
@@ -84,23 +93,35 @@ func Test_ProjectLifecycle(t *testing.T) {
 		t.Fatalf("members mismatch")
 	}
 
-	// ChangeTitle
-	ev, err = commands.ChangeTitle(id, actor, cur, "Alpha v2", event.StatusApproved)
+	// ChangeTitle (decider)
+	ev, err = events.DecideTitleChanged(
+		id,
+		actor,
+		cur,
+		events.TitleChangedInput{Title: "Alpha v2"},
+		events.StatusApproved,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if ev == nil {
 		t.Fatal("expected title change event")
 	}
-	stream.Append(id, ev)
-	// Apply only last event to current projection
+	stream.Append(ev)
 	projection.Apply(cur, ev)
 	if cur.Title != "Alpha v2" {
 		t.Fatalf("title got %q", cur.Title)
 	}
 
 	// No-op ChangeTitle
-	ev, err = commands.ChangeTitle(id, actor, cur, "Alpha v2", event.StatusApproved)
+	ev, err = events.DecideTitleChanged(
+		id,
+		actor,
+		cur,
+		events.TitleChangedInput{Title: "Alpha v2"},
+		events.StatusApproved,
+	)
+	fmt.Printf("e == nil? %v, type=%T\n", ev == nil, ev)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,14 +131,20 @@ func Test_ProjectLifecycle(t *testing.T) {
 
 	// ChangeStartDate
 	newStart := start.AddDate(0, 0, 1)
-	ev, err = commands.ChangeStartDate(id, actor, cur, newStart, event.StatusApproved)
+	ev, err = events.DecideStartDateChanged(
+		id,
+		actor,
+		cur,
+		events.StartDateChangedInput{StartDate: newStart},
+		events.StatusApproved,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if ev == nil {
 		t.Fatal("expected start date changed")
 	}
-	stream.Append(id, ev)
+	stream.Append(ev)
 	projection.Apply(cur, ev)
 	if !cur.StartDate.Equal(newStart) {
 		t.Fatalf("start date not updated")
@@ -126,14 +153,24 @@ func Test_ProjectLifecycle(t *testing.T) {
 	// AddPerson (AssignProjectRole)
 	newPerson := uuid.New()
 	newRole := uuid.New()
-	ev, err = commands.AssignProjectRole(id, actor, cur, newPerson, newRole, event.StatusApproved)
+
+	ev, err = events.DecideProjectRoleAssigned(
+		id,
+		actor,
+		cur,
+		events.ProjectRoleAssignedInput{
+			PersonID:      newPerson,
+			ProjectRoleID: newRole,
+		},
+		events.StatusApproved,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if ev == nil {
 		t.Fatal("expected role assigned")
 	}
-	stream.Append(id, ev)
+	stream.Append(ev)
 	projection.Apply(cur, ev)
 
 	if !hasMember(cur, newPerson) {
@@ -141,14 +178,23 @@ func Test_ProjectLifecycle(t *testing.T) {
 	}
 
 	// RemovePerson (UnassignProjectRole)
-	ev, err = commands.UnassignProjectRole(id, actor, cur, newPerson, newRole, event.StatusApproved)
+	ev, err = events.DecideProjectRoleUnassigned(
+		id,
+		actor,
+		cur,
+		events.ProjectRoleUnassignedInput{
+			PersonID:      newPerson,
+			ProjectRoleID: newRole,
+		},
+		events.StatusApproved,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if ev == nil {
 		t.Fatal("expected role unassigned")
 	}
-	stream.Append(id, ev)
+	stream.Append(ev)
 	projection.Apply(cur, ev)
 
 	if hasMember(cur, newPerson) {

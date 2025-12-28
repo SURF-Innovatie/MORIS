@@ -42,7 +42,7 @@ func DecideStartDateChanged(
 	cur *entities.Project,
 	in StartDateChangedInput,
 	status Status,
-) (*StartDateChanged, error) {
+) (Event, error) {
 	if projectID == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}

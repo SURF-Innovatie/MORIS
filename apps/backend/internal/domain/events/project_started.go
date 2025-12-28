@@ -59,7 +59,7 @@ func DecideProjectStarted(
 	actor uuid.UUID,
 	in ProjectStartedInput,
 	status Status,
-) (*ProjectStarted, error) {
+) (Event, error) {
 	if projectID == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}

@@ -55,7 +55,7 @@ func DecideProjectRoleAssigned(
 	cur *entities.Project,
 	in ProjectRoleAssignedInput,
 	status Status,
-) (*ProjectRoleAssigned, error) {
+) (Event, error) {
 	if projectID == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
