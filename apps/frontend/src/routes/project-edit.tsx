@@ -1,14 +1,21 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { z } from "zod";
 import { Loader2, ArrowLeft, Eye } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { useGetProjectsId, usePutProjectsId } from "@api/moris";
+import { useGetProjectsId } from "@api/moris";
+import {
+  createTitleChangedEvent,
+  createDescriptionChangedEvent,
+  createStartDateChangedEvent,
+  createEndDateChangedEvent,
+  createOwningOrgNodeChangedEvent,
+} from "@/api/events";
 
 import { GeneralTab } from "@/components/project-edit/GeneralTab";
 import { PeopleTab } from "@/components/project-edit/PeopleTab";
@@ -44,11 +51,10 @@ export default function ProjectEditRoute() {
     },
   });
 
-  const { mutateAsync: updateProject, isPending: isUpdating } =
-    usePutProjectsId();
+  const [isSaving, setIsSaving] = useState(false);
 
   const form = useForm<z.infer<typeof projectFormSchema>>({
-    resolver: zodResolver(projectFormSchema),
+    resolver: standardSchemaResolver(projectFormSchema),
     defaultValues: {
       title: "",
       description: "",
@@ -61,7 +67,9 @@ export default function ProjectEditRoute() {
       form.reset({
         title: project.title || "",
         description: project.description || "",
-        startDate: project.start_date ? new Date(project.start_date) : undefined,
+        startDate: project.start_date
+          ? new Date(project.start_date)
+          : undefined,
         endDate: project.end_date ? new Date(project.end_date) : undefined,
         organisationID: project.owning_org_node?.id || EMPTY_UUID,
       });
@@ -69,17 +77,68 @@ export default function ProjectEditRoute() {
   }, [project, form]);
 
   async function onSubmit(values: z.infer<typeof projectFormSchema>) {
+    if (!project) return;
+
+    setIsSaving(true);
     try {
-      await updateProject({
-        id: id!,
-        data: {
-          title: values.title,
-          description: values.description,
-          start_date: values.startDate.toISOString(),
-          end_date: values.endDate.toISOString(),
-          owning_org_node_id: values.organisationID,
-        },
-      });
+      const promises: Promise<any>[] = [];
+
+      // Compare and emit events for changed fields
+      if (values.title !== project.title) {
+        promises.push(createTitleChangedEvent(id!, { title: values.title }));
+      }
+
+      if (values.description !== project.description) {
+        promises.push(
+          createDescriptionChangedEvent(id!, {
+            description: values.description,
+          })
+        );
+      }
+
+      const currentStartDate = project.start_date
+        ? new Date(project.start_date).toISOString()
+        : null;
+      if (values.startDate.toISOString() !== currentStartDate) {
+        promises.push(
+          createStartDateChangedEvent(id!, {
+            start_date: values.startDate.toISOString(),
+          })
+        );
+      }
+
+      const currentEndDate = project.end_date
+        ? new Date(project.end_date).toISOString()
+        : null;
+      if (values.endDate.toISOString() !== currentEndDate) {
+        promises.push(
+          createEndDateChangedEvent(id!, {
+            end_date: values.endDate.toISOString(),
+          })
+        );
+      }
+
+      const currentOrgNodeId = project.owning_org_node?.id || EMPTY_UUID;
+      if (values.organisationID !== currentOrgNodeId) {
+        promises.push(
+          createOwningOrgNodeChangedEvent(id!, {
+            owning_org_node_id: values.organisationID,
+          })
+        );
+      }
+
+      if (promises.length === 0) {
+        toast({
+          title: "No changes",
+          description: "No changes were detected to save.",
+        });
+        setIsSaving(false);
+        return;
+      }
+
+      await Promise.all(promises);
+      await refetchProject();
+
       toast({
         title: "Project updated",
         description: "The project details have been successfully saved.",
@@ -90,6 +149,8 @@ export default function ProjectEditRoute() {
         title: "Error",
         description: "Failed to update project. Please try again.",
       });
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -154,7 +215,7 @@ export default function ProjectEditRoute() {
             <GeneralTab
               form={form}
               onSubmit={onSubmit}
-              isUpdating={isUpdating}
+              isUpdating={isSaving}
               // project pass-through might need check if GeneralTab uses project props
               // But looking at previous code, it just passed `project`.
               // GeneralTab probably needs updating if it uses snake_case props?

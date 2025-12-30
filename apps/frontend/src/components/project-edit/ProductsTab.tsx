@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { z } from "zod";
 import { Loader2, Plus, Search, Trash2, ExternalLink } from "lucide-react";
 
@@ -31,12 +31,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useGetCrossrefWorks, usePostProducts } from "@api/moris";
 import {
-  useGetCrossrefWorks,
-  usePostProjectsIdProductsProductID,
-  useDeleteProjectsIdProductsProductID,
-  usePostProducts,
-} from "@api/moris";
+  createProductAddedEvent,
+  createProductRemovedEvent,
+} from "@/api/events";
 import { Product, ProductType } from "@api/model";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
@@ -63,22 +62,12 @@ export function ProductsTab({
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof doiFormSchema>>({
-    resolver: zodResolver(doiFormSchema),
+    resolver: standardSchemaResolver(doiFormSchema),
     defaultValues: {
       doi: "",
     },
   });
 
-  // API hooks
-  // We don't use the hook directly for search because we want to trigger it manually
-  // But we can use the query client or just a direct fetch if needed,
-  // or better, use the generated hook in a way that allows manual triggering.
-  // Orval generates react-query hooks. We can use `useQuery` with `enabled: false` but that's for caching.
-  // For a search action, a mutation or direct axios call might be better, OR just use the hook with a state variable.
-
-  // Let's use a direct call to the generated hook's underlying fetcher if possible, or just use the hook with a key.
-  // Actually, for a "search" button, it's often easier to just use the hook with a state variable for the DOI,
-  // and `enabled: !!doi`.
   const [searchDoi, setSearchDoi] = useState<string | null>(null);
 
   const {
@@ -124,10 +113,6 @@ export function ProductsTab({
   }
 
   const { mutateAsync: createProduct } = usePostProducts();
-  const { mutateAsync: addProductToProject } =
-    usePostProjectsIdProductsProductID();
-  const { mutateAsync: removeProductFromProject } =
-    useDeleteProjectsIdProductsProductID();
 
   function onSearch(values: z.infer<typeof doiFormSchema>) {
     setIsSearching(true);
@@ -149,21 +134,24 @@ export function ProductsTab({
         },
       });
 
-      // 2. Link it to the project
-      await addProductToProject({
-        id: projectId,
-        productID: newProduct.id!,
-      });
+      // 2. Link it to the project via event
+      if (newProduct && newProduct.id) {
+        await createProductAddedEvent(projectId, {
+          product_id: newProduct.id,
+        });
 
-      toast({
-        title: "Product added",
-        description: "The product has been successfully added to the project.",
-      });
-      setIsDialogOpen(false);
-      form.reset();
-      setSearchedProduct(null);
-      onRefresh();
+        toast({
+          title: "Product added",
+          description:
+            "The product has been successfully added to the project.",
+        });
+        setIsDialogOpen(false);
+        form.reset();
+        setSearchedProduct(null);
+        onRefresh();
+      }
     } catch (error) {
+      console.error(error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -176,10 +164,10 @@ export function ProductsTab({
     if (!productToDelete) return;
 
     try {
-      await removeProductFromProject({
-        id: projectId,
-        productID: productToDelete,
+      await createProductRemovedEvent(projectId, {
+        product_id: productToDelete,
       });
+
       toast({
         title: "Product removed",
         description: "The product has been removed from the project.",
@@ -187,6 +175,7 @@ export function ProductsTab({
       setProductToDelete(null);
       onRefresh();
     } catch (error) {
+      console.error(error);
       toast({
         variant: "destructive",
         title: "Error",

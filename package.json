@@ -15,11 +15,14 @@
     "stop-db": "podman compose down db"
   },
   "devDependencies": {
-    "turbo": "^2.6.x",
-    "pnpm": "^10.x.x",
-    "typescript": "^5.x.x",
-    "prettier": "^3.x.x",
+    "dotenv": "^17.x.x",
     "eslint": "^9.x.x",
-    "dotenv": "^17.x.x"
+    "pnpm": "^10.x.x",
+    "prettier": "^3.x.x",
+    "turbo": "^2.6.x",
+    "typescript": "^5.x.x"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "4.1.3"
   }
 }

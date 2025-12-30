@@ -20,21 +20,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AddPersonDialog } from "./AddPersonDialog";
-import { EditRoleDialog } from "@/components/projects/EditRoleDialog";
-
-import { MemberResponse } from "@api/model";
+import { EditRoleDialog } from "@/components/project-edit/EditRoleDialog";
+import { ProjectMemberResponse } from "@/api/generated-orval/model";
 
 interface PeopleTabProps {
   projectId: string;
-  members: MemberResponse[];
+  members: ProjectMemberResponse[];
   onRefresh: () => void;
 }
 
-export function PeopleTab({
-  projectId,
-  members,
-  onRefresh,
-}: PeopleTabProps) {
+export function PeopleTab({ projectId, members, onRefresh }: PeopleTabProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -49,7 +44,12 @@ export function PeopleTab({
       <CardContent>
         <div className="space-y-4">
           {members.map((member) => (
-            <MemberRow key={member.id} member={member} projectId={projectId} onRefresh={onRefresh} />
+            <MemberRow
+              key={member.id}
+              member={member}
+              projectId={projectId}
+              onRefresh={onRefresh}
+            />
           ))}
         </div>
       </CardContent>
@@ -57,17 +57,23 @@ export function PeopleTab({
   );
 }
 
-function MemberRow({ member, projectId, onRefresh }: { member: MemberResponse; projectId: string; onRefresh: () => void }) {
+function MemberRow({
+  member,
+  projectId,
+  onRefresh,
+}: {
+  member: ProjectMemberResponse;
+  projectId: string;
+  onRefresh: () => void;
+}) {
   const [editOpen, setEditOpen] = useState(false);
 
   return (
     <>
-      <div
-        className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors"
-      >
+      <div className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors">
         <div className="flex items-center gap-4">
           <Avatar className="h-10 w-10 border">
-            <AvatarImage src={member.avatar_url || ""} />
+            <AvatarImage src={member.avatarUrl || ""} />
             <AvatarFallback className="font-semibold text-primary">
               {(member.name || "Unknown")
                 .split(" ")
@@ -92,9 +98,7 @@ function MemberRow({ member, projectId, onRefresh }: { member: MemberResponse; p
                 {member.role_name || member.role}
               </Badge>
             </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              {member.email}
-            </p>
+            <p className="text-sm text-muted-foreground mt-1">{member.email}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
