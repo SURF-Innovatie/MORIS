@@ -21,6 +21,7 @@ require (
 	ariga.io/atlas v0.32.1-0.20250325101103-175b25e1c1b9 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
+	github.com/alicebob/miniredis/v2 v2.35.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -50,6 +51,7 @@ require (
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
 	github.com/swaggo/files/v2 v2.0.0 // indirect
+	github.com/yuin/gopher-lua v1.1.1 // indirect
 	github.com/zclconf/go-cty v1.14.4 // indirect
 	github.com/zclconf/go-cty-yaml v1.1.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect

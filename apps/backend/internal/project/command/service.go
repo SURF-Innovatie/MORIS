@@ -10,6 +10,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	"github.com/SURF-Innovatie/MORIS/internal/project"
@@ -22,24 +23,31 @@ type Service interface {
 }
 
 type service struct {
-	cli    *ent.Client
-	es     eventstore.Store
-	evtSvc event.Service
-	exec   *commandbus.Executor[entities.Project]
+	cli       *ent.Client
+	es        eventstore.Store
+	evtSvc    event.Service
+	exec      *commandbus.Executor[entities.Project]
+	cache     cache.ProjectCache
+	refresher cache.ProjectCacheRefresher
 }
 
-func NewService(es eventstore.Store, cli *ent.Client, evtSvc event.Service) Service {
-	return &service{
-		cli:    cli,
-		es:     es,
-		evtSvc: evtSvc,
+func NewService(es eventstore.Store, cli *ent.Client, evtSvc event.Service, pc cache.ProjectCache, ref cache.ProjectCacheRefresher) Service {
+	s := &service{
+		cli:       cli,
+		es:        es,
+		evtSvc:    evtSvc,
+		cache:     pc,
+		refresher: ref,
 		exec: commandbus.NewExecutor[entities.Project](
 			es,
 			evtSvc,
-			project.Reducer{},    // reuse existing reducer
-			project.NewReducer{}, // for project.started etc.
+			project.Reducer{},
+			project.NewReducer{},
 		),
 	}
+
+	evtSvc.RegisterStatusChangeHandler(s.onStatusChange)
+	return s
 }
 
 func (s *service) ListAvailableEvents(ctx context.Context, projectID *uuid.UUID) ([]dto.AvailableEvent, error) {
@@ -54,8 +62,7 @@ func (s *service) ListAvailableEvents(ctx context.Context, projectID *uuid.UUID)
 	for _, m := range metas {
 		allowed := true
 		needsApproval := false
-
-		var schema = events.GetInputSchema(m.Type)
+		schema := events.GetInputSchema(m.Type)
 
 		out = append(out, dto.AvailableEvent{
 			Type:          m.Type,
@@ -69,7 +76,6 @@ func (s *service) ListAvailableEvents(ctx context.Context, projectID *uuid.UUID)
 	return out, nil
 }
 
-// TODO: Finish this
 func (s *service) ExecuteEvent(ctx context.Context, req dto.ExecuteEventRequest) (*entities.Project, error) {
 	if req.ProjectID == uuid.Nil {
 		return nil, fmt.Errorf("projectId is required")
@@ -108,8 +114,7 @@ func (s *service) ExecuteEvent(ctx context.Context, req dto.ExecuteEventRequest)
 			return nil, fmt.Errorf("not allowed to execute %s", req.Type)
 		}
 
-		if meta.NeedsApproval(ctx, e, s.cli) {
-		}
+		_ = meta.NeedsApproval(ctx, e, s.cli)
 
 		return []events.Event{e}, nil
 	})
@@ -117,7 +122,17 @@ func (s *service) ExecuteEvent(ctx context.Context, req dto.ExecuteEventRequest)
 		return nil, err
 	}
 
+	_ = s.cache.SetProject(ctx, proj)
+
 	return proj, nil
+}
+
+func (s *service) onStatusChange(ctx context.Context, e events.Event) error {
+	if s.refresher == nil {
+		return nil
+	}
+	_, err := s.refresher.Refresh(ctx, e.AggregateID())
+	return err
 }
 
 func currentUser(ctx context.Context, cli *ent.Client) (*ent.User, error) {

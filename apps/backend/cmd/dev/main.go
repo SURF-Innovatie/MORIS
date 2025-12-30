@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	_ "github.com/SURF-Innovatie/MORIS/api/swag-docs"
 	"github.com/SURF-Innovatie/MORIS/ent"
@@ -28,6 +29,7 @@ import (
 	systemhandler "github.com/SURF-Innovatie/MORIS/internal/handler/system"
 	userhandler "github.com/SURF-Innovatie/MORIS/internal/handler/user"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/auth"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	"github.com/SURF-Innovatie/MORIS/internal/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/organisation"
@@ -139,10 +141,13 @@ func main() {
 	authHandler := authhandler.NewHandler(userSvc, authSvc, orcidSvc)
 	systemHandler := systemhandler.NewHandler()
 
-	projSvc := project.NewService(esStore, client, eventSvc, rdb)
+	cacheSvc := cache.NewRedisProjectCache(rdb, 24*time.Hour)
+	refreshSvc := cache.NewEventstoreProjectCacheRefresher(esStore, cacheSvc)
+
+	projSvc := project.NewService(esStore, client, eventSvc, cacheSvc, refreshSvc)
 	projHandler := projecthandler.NewHandler(projSvc)
 
-	projCmdSvc := command.NewService(esStore, client, eventSvc)
+	projCmdSvc := command.NewService(esStore, client, eventSvc, cacheSvc, refreshSvc)
 	projCmdHandler := commandHandler.NewHandler(projCmdSvc)
 
 	userHandler := userhandler.NewHandler(userSvc, projSvc)

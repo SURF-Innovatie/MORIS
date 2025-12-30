@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	en "github.com/SURF-Innovatie/MORIS/ent/event"
@@ -19,10 +18,10 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
 
@@ -39,32 +38,23 @@ type Service interface {
 }
 
 type service struct {
-	cli    *ent.Client
-	es     eventstore.Store
-	evtSvc event.Service
-	redis  *redis.Client
+	cli       *ent.Client
+	es        eventstore.Store
+	evtSvc    event.Service
+	cache     cache.ProjectCache
+	refresher cache.ProjectCacheRefresher
 
 	exec *commandbus.Executor[entities.Project]
 }
 
-type StartProjectParams struct {
-	Title           string
-	Description     string
-	OwningOrgNodeID uuid.UUID
-	StartDate       time.Time
-	EndDate         time.Time
-}
-
-type UpdateProjectParams struct {
-	Title           string
-	Description     string
-	OwningOrgNodeID uuid.UUID
-	StartDate       time.Time
-	EndDate         time.Time
-}
-
-func NewService(es eventstore.Store, cli *ent.Client, evtSvc event.Service, rdb *redis.Client) Service {
-	s := &service{es: es, cli: cli, evtSvc: evtSvc, redis: rdb}
+func NewService(es eventstore.Store, cli *ent.Client, evtSvc event.Service, pc cache.ProjectCache, ref cache.ProjectCacheRefresher) Service {
+	s := &service{
+		es:        es,
+		cli:       cli,
+		evtSvc:    evtSvc,
+		cache:     pc,
+		refresher: ref,
+	}
 
 	s.exec = commandbus.NewExecutor[entities.Project](
 		es,
@@ -128,7 +118,6 @@ func (s *service) GetAllProjects(ctx context.Context) ([]*entities.ProjectDetail
 	uniqueIDs := make(map[uuid.UUID]struct{})
 	for _, e := range evts {
 
-		// Safer to marshal/unmarshal to struct
 		b, _ := json.Marshal(e.Data)
 		var payload *events.ProjectRoleAssigned
 		if err := json.Unmarshal(b, &payload); err == nil {
@@ -316,9 +305,10 @@ func (s *service) GetChangeLog(ctx context.Context, id uuid.UUID) (*entities.Cha
 }
 
 func (s *service) fromDb(ctx context.Context, projectID uuid.UUID) (*entities.Project, error) {
-	// Try cache first
-	if proj, err := s.getFromCache(ctx, projectID); err == nil {
-		return proj, nil
+	if s.cache != nil {
+		if proj, err := s.cache.GetProject(ctx, projectID); err == nil {
+			return proj, nil
+		}
 	}
 
 	evts, version, err := s.es.Load(ctx, projectID)
@@ -332,20 +322,17 @@ func (s *service) fromDb(ctx context.Context, projectID uuid.UUID) (*entities.Pr
 	proj := projection.Reduce(projectID, evts)
 	proj.Version = version
 
-	// Update cache
-	_ = s.cacheProject(ctx, proj)
-
+	_ = s.cache.SetProject(ctx, proj)
 	return proj, nil
 }
 
 func (s *service) WarmupCache(ctx context.Context) error {
-	if s.redis == nil {
+	if s.cache == nil {
 		logrus.Warn("Redis not initialized, skipping cache warmup")
 	}
 
 	logrus.Info("Starting cache warmup...")
 
-	// Get all project IDs from ProjectStarted events
 	var projectIDs []uuid.UUID
 	if err := s.cli.Event.Query().
 		Where(en.TypeEQ(events.ProjectStartedType)).
@@ -369,7 +356,7 @@ func (s *service) WarmupCache(ctx context.Context) error {
 		proj := projection.Reduce(id, evts)
 		proj.Version = version
 
-		if err := s.cacheProject(ctx, proj); err != nil {
+		if err := s.cache.SetProject(ctx, proj); err != nil {
 			logrus.Errorf("Failed to cache project %s: %v", id, err)
 		} else {
 			count++
@@ -378,39 +365,6 @@ func (s *service) WarmupCache(ctx context.Context) error {
 
 	logrus.Infof("Cache warmup completed. Cached %d projects.", count)
 	return nil
-}
-
-func (s *service) cacheProject(ctx context.Context, proj *entities.Project) error {
-	if s.redis == nil {
-		return nil
-	}
-
-	bytes, err := json.Marshal(proj)
-	if err != nil {
-		return err
-	}
-
-	key := fmt.Sprintf("project:%s", proj.Id.String())
-	return s.redis.Set(ctx, key, bytes, 24*time.Hour).Err()
-}
-
-func (s *service) getFromCache(ctx context.Context, projectID uuid.UUID) (*entities.Project, error) {
-	if s.redis == nil {
-		return nil, errors.New("redis not initialized")
-	}
-
-	key := fmt.Sprintf("project:%s", projectID.String())
-	val, err := s.redis.Get(ctx, key).Result()
-	if err != nil {
-		return nil, err
-	}
-
-	var proj entities.Project
-	if err := json.Unmarshal([]byte(val), &proj); err != nil {
-		return nil, err
-	}
-
-	return &proj, nil
 }
 
 func (s *service) GetProjectRoles(ctx context.Context) ([]entities.ProjectRole, error) {
@@ -433,6 +387,11 @@ func (s *service) GetProjectRoles(ctx context.Context) ([]entities.ProjectRole, 
 func (s *service) onStatusChange(ctx context.Context, e events.Event) error {
 	projectID := e.AggregateID()
 
+	if s.refresher != nil {
+		_, err := s.refresher.Refresh(ctx, projectID)
+		return err
+	}
+
 	evts, version, err := s.es.Load(ctx, projectID)
 	if err != nil {
 		return err
@@ -443,11 +402,6 @@ func (s *service) onStatusChange(ctx context.Context, e events.Event) error {
 
 	proj := projection.Reduce(projectID, evts)
 	proj.Version = version
-
-	// Update cache
-	if err := s.cacheProject(ctx, proj); err != nil {
-		logrus.Errorf("failed to update project cache on status change: %v", err)
-	}
-
+	_ = s.cache.SetProject(ctx, proj)
 	return nil
 }
