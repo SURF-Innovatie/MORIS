@@ -112,12 +112,12 @@ func NewBase(projectID, actor uuid.UUID, status Status) Base {
 	}
 }
 
-func (b Base) AggregateID() uuid.UUID { return b.ProjectID }
-func (b Base) OccurredAt() time.Time  { return b.At }
-func (b Base) GetID() uuid.UUID       { return b.ID }
-func (b Base) CreatedByID() uuid.UUID { return b.CreatedBy }
-func (b Base) GetStatus() Status      { return b.Status }
-func (b *Base) SetBase(base Base)     { *b = base }
+func (b *Base) AggregateID() uuid.UUID { return b.ProjectID }
+func (b *Base) OccurredAt() time.Time  { return b.At }
+func (b *Base) GetID() uuid.UUID       { return b.ID }
+func (b *Base) CreatedByID() uuid.UUID { return b.CreatedBy }
+func (b *Base) GetStatus() Status      { return b.Status }
+func (b *Base) SetBase(base Base)      { *b = base }
 
 // Registry
 var (

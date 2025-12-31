@@ -4,6 +4,22 @@ import customInstance from "./custom-axios";
 export type Datetime = string;
 
 
+export interface StartDateChangedInput {
+  start_date: Datetime;
+}
+
+export const createStartDateChangedEvent = (projectId: string, input: StartDateChangedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'project.start_date_changed',
+      input
+    }
+  });
+};
+
 export interface TemplateEventInput {
   SomeStringField: string;
   SomeUUIDField: string;
@@ -21,22 +37,6 @@ export const createTemplateEventEvent = (projectId: string, input: TemplateEvent
   });
 };
 
-export interface DescriptionChangedInput {
-  description: string;
-}
-
-export const createDescriptionChangedEvent = (projectId: string, input: DescriptionChangedInput) => {
-  return customInstance<any>({
-    url: `/projects/${projectId}/events`,
-    method: 'POST',
-    data: {
-      projectId,
-      type: 'project.description_changed',
-      input
-    }
-  });
-};
-
 export interface ProductAddedInput {
   product_id: string;
 }
@@ -48,6 +48,55 @@ export const createProductAddedEvent = (projectId: string, input: ProductAddedIn
     data: {
       projectId,
       type: 'project.product_added',
+      input
+    }
+  });
+};
+
+export interface ProductRemovedInput {
+  product_id: string;
+}
+
+export const createProductRemovedEvent = (projectId: string, input: ProductRemovedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'project.product_removed',
+      input
+    }
+  });
+};
+
+export interface ProjectRoleAssignedInput {
+  person_id: string;
+  project_role_id: string;
+}
+
+export const createProjectRoleAssignedEvent = (projectId: string, input: ProjectRoleAssignedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'project.project_role_assigned',
+      input
+    }
+  });
+};
+
+export interface EndDateChangedInput {
+  end_date: Datetime;
+}
+
+export const createEndDateChangedEvent = (projectId: string, input: EndDateChangedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'project.end_date_changed',
       input
     }
   });
@@ -91,33 +140,17 @@ export const createProjectStartedEvent = (projectId: string, input: ProjectStart
   });
 };
 
-export interface StartDateChangedInput {
-  start_date: Datetime;
+export interface DescriptionChangedInput {
+  description: string;
 }
 
-export const createStartDateChangedEvent = (projectId: string, input: StartDateChangedInput) => {
+export const createDescriptionChangedEvent = (projectId: string, input: DescriptionChangedInput) => {
   return customInstance<any>({
     url: `/projects/${projectId}/events`,
     method: 'POST',
     data: {
       projectId,
-      type: 'project.start_date_changed',
-      input
-    }
-  });
-};
-
-export interface EndDateChangedInput {
-  end_date: Datetime;
-}
-
-export const createEndDateChangedEvent = (projectId: string, input: EndDateChangedInput) => {
-  return customInstance<any>({
-    url: `/projects/${projectId}/events`,
-    method: 'POST',
-    data: {
-      projectId,
-      type: 'project.end_date_changed',
+      type: 'project.description_changed',
       input
     }
   });
@@ -134,39 +167,6 @@ export const createOwningOrgNodeChangedEvent = (projectId: string, input: Owning
     data: {
       projectId,
       type: 'project.owning_org_node_changed',
-      input
-    }
-  });
-};
-
-export interface ProductRemovedInput {
-  product_id: string;
-}
-
-export const createProductRemovedEvent = (projectId: string, input: ProductRemovedInput) => {
-  return customInstance<any>({
-    url: `/projects/${projectId}/events`,
-    method: 'POST',
-    data: {
-      projectId,
-      type: 'project.product_removed',
-      input
-    }
-  });
-};
-
-export interface ProjectRoleAssignedInput {
-  person_id: string;
-  project_role_id: string;
-}
-
-export const createProjectRoleAssignedEvent = (projectId: string, input: ProjectRoleAssignedInput) => {
-  return customInstance<any>({
-    url: `/projects/${projectId}/events`,
-    method: 'POST',
-    data: {
-      projectId,
-      type: 'project.project_role_assigned',
       input
     }
   });
