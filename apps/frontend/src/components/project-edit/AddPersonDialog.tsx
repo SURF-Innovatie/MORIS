@@ -84,7 +84,6 @@ export function AddPersonDialog({
           email: values.email,
           givenName: givenName,
           familyName: familyName,
-          user_id: "00000000-0000-0000-0000-000000000000", // Placeholder
         },
       });
 
@@ -189,9 +188,9 @@ export function AddPersonDialog({
                         </div>
                       ) : (
                         roles?.map((r) => (
-                          <SelectItem key={r.key} value={r.key || ""}>
-                            {r.name}
-                          </SelectItem>
+                            <SelectItem key={r.id} value={r.id || ""}>
+                              {r.name}
+                            </SelectItem>
                         ))
                       )}
                     </SelectContent>

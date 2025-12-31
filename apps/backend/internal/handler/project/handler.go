@@ -148,6 +148,7 @@ func (h *Handler) GetProjectRoles(w http.ResponseWriter, r *http.Request) {
 	resps := make([]dto.ProjectRoleResponse, 0, len(roles))
 	for _, role := range roles {
 		resps = append(resps, dto.ProjectRoleResponse{
+			ID:   role.ID,
 			Key:  role.Key,
 			Name: role.Name,
 		})

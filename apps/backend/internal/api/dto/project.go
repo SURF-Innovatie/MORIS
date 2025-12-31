@@ -23,8 +23,9 @@ type ProjectUpdateMemberRequest struct {
 }
 
 type ProjectRoleResponse struct {
-	Key  string `json:"key" example:"contributor"`
-	Name string `json:"name" example:"Contributor"`
+	ID   uuid.UUID `json:"id" example:"b990c264-b3c1-425f-88a1-69f22ba4a7a5"`
+	Key  string    `json:"key" example:"contributor"`
+	Name string    `json:"name" example:"Contributor"`
 }
 
 type ProjectMemberResponse struct {
