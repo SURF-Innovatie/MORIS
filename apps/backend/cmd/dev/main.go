@@ -3,9 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
+
+	logger "github.com/chi-middleware/logrus-logger"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	_ "github.com/lib/pq"
+	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 
 	_ "github.com/SURF-Innovatie/MORIS/api/swag-docs"
 	"github.com/SURF-Innovatie/MORIS/ent"
@@ -38,13 +45,6 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/project"
 	"github.com/SURF-Innovatie/MORIS/internal/project/command"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
-	logger "github.com/chi-middleware/logrus-logger"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	_ "github.com/lib/pq"
-	"github.com/redis/go-redis/v9"
-	"github.com/sirupsen/logrus"
-	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 // @title MORIS
@@ -97,7 +97,7 @@ func main() {
 	defer rdb.Close()
 
 	if err := events.ValidateRegistrations(); err != nil {
-		log.Fatalf("event registration invalid: %v", err)
+		logrus.Fatalf("event registration invalid: %v", err)
 	}
 
 	// Create services

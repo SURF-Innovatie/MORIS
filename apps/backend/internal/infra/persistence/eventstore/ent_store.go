@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
-	en "github.com/SURF-Innovatie/MORIS/ent/event"
+	en "github.com/SURF-Innovatie/MORIS/ent/event" //nolint:depguard
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 )
 

@@ -5,11 +5,14 @@
   "scripts": {
     "build": "go build -o bin/server ./cmd/dev/main.go",
     "start": "./bin/server",
-    "reset": "pnpm run db:generate && pnpm run api:generate && pnpm run db:seed",
+    "db:reset": "pnpm run generate:ent && pnpm run generate:swag && pnpm run db:seed",
     "dev": "wgo run ./cmd/dev/main.go",
     "db:seed": "go run ./cmd/seed/main.go",
-    "db:generate": "go generate ./ent/...",
-    "api:generate": "swag init -g cmd/dev/main.go --output api/swag-docs --parseDependency --parseInternal",
+    "generate:ent": "go generate ./ent/...",
+    "generate:swag": "swag init -g cmd/dev/main.go --output api/swag-docs --parseDependency --parseInternal",
+    "generate:events": "go generate ./internal/domain/events/...",
+    "api:generate": "pnpm run generate:swag && pnpm run generate:ent && pnpm run generate:events",
+    "lint": "golangci-lint run ./...",
     "test": "go test ./..."
   }
 }

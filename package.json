@@ -10,9 +10,10 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "generate-api": "turbo run generate-api",
-    "start-db": "podman compose up -d db",
-    "stop-db": "podman compose down db"
+    "lint": "turbo run lint",
+    "api:generate": "turbo run api:generate",
+    "db:start": "podman compose up -d db",
+    "db:stop": "podman compose down db"
   },
   "devDependencies": {
     "dotenv": "^17.x.x",

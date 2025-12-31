@@ -8,7 +8,7 @@ import (
 	"sort"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
-	en "github.com/SURF-Innovatie/MORIS/ent/event"
+	en "github.com/SURF-Innovatie/MORIS/ent/event" //nolint:depguard
 	organisationent "github.com/SURF-Innovatie/MORIS/ent/organisationnode"
 	personent "github.com/SURF-Innovatie/MORIS/ent/person"
 	productent "github.com/SURF-Innovatie/MORIS/ent/product"

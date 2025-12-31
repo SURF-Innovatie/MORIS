@@ -169,7 +169,7 @@ export function AddPersonDialog({
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Role (Optional)</FormLabel>
+                  <FormLabel>Role</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
