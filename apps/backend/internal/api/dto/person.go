@@ -6,26 +6,25 @@ import (
 )
 
 type PersonRequest struct {
-	UserID      uuid.UUID `json:"user_id"`
-	Name        string    `json:"name"`
-	GivenName   *string   `json:"givenName"`
-	FamilyName  *string   `json:"familyName"`
-	Email       string    `json:"email"`
-	ORCiD       *string   `json:"orcid"`
-	AvatarURL   *string   `json:"avatarUrl"`
-	Description *string   `json:"description"`
+	Name        string  `json:"name"`
+	GivenName   *string `json:"givenName,omitempty"`
+	FamilyName  *string `json:"familyName,omitempty"`
+	Email       string  `json:"email"`
+	ORCiD       *string `json:"orcid,omitempty"`
+	AvatarURL   *string `json:"avatarUrl,omitempty"`
+	Description *string `json:"description,omitempty"`
 }
 
 type PersonResponse struct {
 	ID          uuid.UUID `json:"id"`
 	UserID      uuid.UUID `json:"user_id"`
 	Name        string    `json:"name"`
-	GivenName   *string   `json:"givenName"`
-	FamilyName  *string   `json:"familyName"`
+	GivenName   *string   `json:"givenName,omitempty"`
+	FamilyName  *string   `json:"familyName,omitempty"`
 	Email       string    `json:"email"`
-	ORCiD       *string   `json:"orcid"`
-	AvatarURL   *string   `json:"avatarUrl"`
-	Description *string   `json:"description"`
+	ORCiD       *string   `json:"orcid,omitempty"`
+	AvatarURL   *string   `json:"avatarUrl,omitempty"`
+	Description *string   `json:"description,omitempty"`
 }
 
 func (r PersonResponse) FromEntity(e entities.Person) PersonResponse {

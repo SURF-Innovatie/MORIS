@@ -119,23 +119,6 @@ func (r *EntRepo) OrganisationNodeByID(ctx context.Context, id uuid.UUID) (entit
 	}, nil
 }
 
-func (r *EntRepo) ListProjectRoles(ctx context.Context) ([]entities.ProjectRole, error) {
-	rows, err := r.cli.ProjectRole.Query().All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	out := make([]entities.ProjectRole, 0, len(rows))
-	for _, pr := range rows {
-		out = append(out, entities.ProjectRole{
-			ID:   pr.ID,
-			Key:  pr.Key,
-			Name: pr.Name,
-		})
-	}
-	return out, nil
-}
-
 func (r *EntRepo) ProjectIDsForPerson(ctx context.Context, personID uuid.UUID) ([]uuid.UUID, error) {
 	evts, err := r.cli.Event.
 		Query().

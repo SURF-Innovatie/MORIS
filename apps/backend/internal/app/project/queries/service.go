@@ -29,18 +29,21 @@ type service struct {
 	es          eventstore.Store
 	loader      *load.Loader
 	currentUser appauth.CurrentUserProvider
+	roleRepo    ProjectRoleRepository
 }
 
 func NewService(
 	es eventstore.Store,
 	loader *load.Loader,
 	repo ProjectReadRepository,
+	roleRepo ProjectRoleRepository,
 	currentUser appauth.CurrentUserProvider,
 ) Service {
 	return &service{
 		es:          es,
 		loader:      loader,
 		repo:        repo,
+		roleRepo:    roleRepo,
 		currentUser: currentUser,
 	}
 }
@@ -191,5 +194,5 @@ func (s *service) GetChangeLog(ctx context.Context, id uuid.UUID) (*entities.Cha
 }
 
 func (s *service) GetProjectRoles(ctx context.Context) ([]entities.ProjectRole, error) {
-	return s.repo.ListProjectRoles(ctx)
+	return s.roleRepo.List(ctx)
 }

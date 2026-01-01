@@ -12,10 +12,12 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	crossref2 "github.com/SURF-Innovatie/MORIS/external/crossref"
 	"github.com/SURF-Innovatie/MORIS/external/orcid"
+	personsvc "github.com/SURF-Innovatie/MORIS/internal/app/person"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/cachewarmup"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/command"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/load"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
+	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/env"
 	"github.com/SURF-Innovatie/MORIS/internal/errorlog"
@@ -36,12 +38,14 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/entclient"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
+	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
+	projectmembershiprepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_membership"
 	projectquery "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_query"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/projectrole"
+	userrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/user"
 	"github.com/SURF-Innovatie/MORIS/internal/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/organisation"
-	"github.com/SURF-Innovatie/MORIS/internal/person"
 	"github.com/SURF-Innovatie/MORIS/internal/product"
-	"github.com/SURF-Innovatie/MORIS/internal/user"
 	logger "github.com/chi-middleware/logrus-logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -104,10 +108,15 @@ func main() {
 		log.Fatalf("event registration invalid: %v", err)
 	}
 
+	personRepo := personrepo.NewEntRepo(client)
+
+	userRepo := userrepo.NewEntRepo(client)
+	membershipRepo := projectmembershiprepo.NewEntRepo(client)
+
 	// Create services
 	esStore := eventstore.NewEntStore(client)
-	personSvc := person.NewService(client)
-	userSvc := user.NewService(client, personSvc, esStore)
+	personSvc := personsvc.NewService(personRepo)
+	userSvc := user.NewService(userRepo, personSvc, esStore, membershipRepo)
 	authSvc := auth.NewJWTService(client, userSvc, personSvc, env.Global.JWTSecret)
 	orcidSvc := orcid.NewService(client, userSvc)
 
@@ -158,8 +167,9 @@ func main() {
 	warmup := cachewarmup.NewService(repo, ldr, cacheSvc)
 	entProv := entclient.New(client)
 	curUser := auth.NewCurrentUserProvider(client)
+	roleRepo := projectrole.NewRepository(client)
 
-	projSvc := queries.NewService(esStore, ldr, repo, curUser)
+	projSvc := queries.NewService(esStore, ldr, repo, roleRepo, curUser)
 	projHandler := projecthandler.NewHandler(projSvc)
 
 	projCmdSvc := command.NewService(esStore, eventSvc, cacheSvc, refreshSvc, curUser, entProv)

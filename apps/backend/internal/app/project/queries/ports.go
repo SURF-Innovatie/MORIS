@@ -23,3 +23,7 @@ type ProjectReadRepository interface {
 type EventStore interface {
 	Load(ctx context.Context, projectID uuid.UUID) ([]events.Event, int, error)
 }
+
+type ProjectRoleRepository interface {
+	List(ctx context.Context) ([]entities.ProjectRole, error)
+}

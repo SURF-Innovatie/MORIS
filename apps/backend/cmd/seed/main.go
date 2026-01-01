@@ -11,12 +11,12 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	"github.com/SURF-Innovatie/MORIS/ent/organisationnode"
-	entprojectrole "github.com/SURF-Innovatie/MORIS/ent/projectrole"
 	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/projectrole"
 	"github.com/SURF-Innovatie/MORIS/internal/organisation"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
@@ -135,20 +135,13 @@ func main() {
 
 	es := eventstore.NewEntStore(client)
 
-	if _, err := client.ProjectRole.
-		Create().
-		SetKey("contributor").
-		SetName("Contributor").
-		Save(ctx); err != nil {
-		logrus.Fatalf("create project role contributor: %v", err)
-	}
+	roleRepo := projectrole.NewRepository(client)
 
-	if _, err := client.ProjectRole.
-		Create().
-		SetKey("admin"). // or "lead" if you prefer; must match what you query later
-		SetName("Project Lead").
-		Save(ctx); err != nil {
-		logrus.Fatalf("create project role admin: %v", err)
+	if err := roleRepo.Upsert(ctx, "contributor", "Contributor"); err != nil {
+		logrus.Fatalf("upsert project role contributor: %v", err)
+	}
+	if err := roleRepo.Upsert(ctx, "admin", "Project Lead"); err != nil {
+		logrus.Fatalf("upsert project role admin: %v", err)
 	}
 
 	projects := []seedProject{
@@ -495,21 +488,17 @@ func main() {
 		version := 1
 
 		// fetch project role IDs
-		contributorRoleID, err := client.ProjectRole.
-			Query().
-			Where(entprojectrole.KeyEQ("contributor")).
-			OnlyID(ctx)
+		contributorRole, err := roleRepo.GetByKey(ctx, "contributor")
 		if err != nil {
-			logrus.Fatalf("fetch contributor role id: %v", err)
+			logrus.Fatalf("fetch contributor role: %v", err)
+		}
+		leadRole, err := roleRepo.GetByKey(ctx, "admin")
+		if err != nil {
+			logrus.Fatalf("fetch admin role: %v", err)
 		}
 
-		leadRoleID, err := client.ProjectRole.
-			Query().
-			Where(entprojectrole.KeyEQ("admin")).
-			OnlyID(ctx)
-		if err != nil {
-			logrus.Fatalf("fetch lead/admin role id: %v", err)
-		}
+		contributorRoleID := contributorRole.ID
+		leadRoleID := leadRole.ID
 
 		for _, name := range sp.People {
 			personID := mustPersonID(name)
