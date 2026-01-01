@@ -12,6 +12,10 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	crossref2 "github.com/SURF-Innovatie/MORIS/external/crossref"
 	"github.com/SURF-Innovatie/MORIS/external/orcid"
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/cachewarmup"
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/command"
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/load"
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/env"
 	"github.com/SURF-Innovatie/MORIS/internal/errorlog"
@@ -30,13 +34,13 @@ import (
 	userhandler "github.com/SURF-Innovatie/MORIS/internal/handler/user"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/entclient"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
+	projectquery "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_query"
 	"github.com/SURF-Innovatie/MORIS/internal/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/organisation"
 	"github.com/SURF-Innovatie/MORIS/internal/person"
 	"github.com/SURF-Innovatie/MORIS/internal/product"
-	"github.com/SURF-Innovatie/MORIS/internal/project"
-	"github.com/SURF-Innovatie/MORIS/internal/project/command"
 	"github.com/SURF-Innovatie/MORIS/internal/user"
 	logger "github.com/chi-middleware/logrus-logger"
 	"github.com/go-chi/chi/v5"
@@ -133,7 +137,7 @@ func main() {
 	eventSvc.RegisterNotificationHandler(&event.ProjectEventNotificationHandler{Cli: client, ES: esStore})
 	eventSvc.RegisterNotificationHandler(&event.ApprovalRequestNotificationHandler{Cli: client, ES: esStore, RBAC: rbacSvc})
 	eventSvc.RegisterNotificationHandler(&event.StatusUpdateNotificationHandler{Cli: client})
-	evtHandler := eventHandler.NewHandler(eventSvc)
+	evtHandler := eventHandler.NewHandler(eventSvc, client)
 
 	notificationHandler := notificationhandler.NewHandler(notifierSvc)
 
@@ -144,10 +148,21 @@ func main() {
 	cacheSvc := cache.NewRedisProjectCache(rdb, 24*time.Hour)
 	refreshSvc := cache.NewEventstoreProjectCacheRefresher(esStore, cacheSvc)
 
-	projSvc := project.NewService(esStore, client, eventSvc, cacheSvc, refreshSvc)
+	eventSvc.RegisterStatusChangeHandler(func(ctx context.Context, e events.Event) error {
+		_, err := refreshSvc.Refresh(ctx, e.AggregateID())
+		return err
+	})
+
+	repo := projectquery.NewEntRepo(client)
+	ldr := load.New(esStore, cacheSvc)
+	warmup := cachewarmup.NewService(repo, ldr, cacheSvc)
+	entProv := entclient.New(client)
+	curUser := auth.NewCurrentUserProvider(client)
+
+	projSvc := queries.NewService(esStore, ldr, repo, curUser)
 	projHandler := projecthandler.NewHandler(projSvc)
 
-	projCmdSvc := command.NewService(esStore, client, eventSvc, cacheSvc, refreshSvc)
+	projCmdSvc := command.NewService(esStore, eventSvc, cacheSvc, refreshSvc, curUser, entProv)
 	projCmdHandler := commandHandler.NewHandler(projCmdSvc)
 
 	userHandler := userhandler.NewHandler(userSvc, projSvc)
@@ -180,8 +195,11 @@ func main() {
 
 	// Warmup cache in background
 	go func() {
-		if err := projSvc.WarmupCache(context.Background()); err != nil {
+		cached, err := warmup.WarmupProjects(context.Background())
+		if err != nil {
 			logrus.Errorf("Failed to warmup cache: %v", err)
+		} else {
+			logrus.Infof("Warmed up cache for %d projects", cached)
 		}
 	}()
 

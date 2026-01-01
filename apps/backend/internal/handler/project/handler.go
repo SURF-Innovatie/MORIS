@@ -4,17 +4,17 @@ import (
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
-	"github.com/SURF-Innovatie/MORIS/internal/project"
 )
 
 type Handler struct {
-	svc project.Service
+	svc queries.Service
 }
 
-func NewHandler(svc project.Service) *Handler {
+func NewHandler(svc queries.Service) *Handler {
 	return &Handler{svc: svc}
 }
 

@@ -4,8 +4,9 @@ import (
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/command"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
-	"github.com/SURF-Innovatie/MORIS/internal/project/command"
 )
 
 type Handler struct {
@@ -35,13 +36,24 @@ func (h *Handler) ListAvailableEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	events, err := h.svc.ListAvailableEvents(r.Context(), &id)
+	evs, err := h.svc.ListAvailableEvents(r.Context(), &id)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, events)
+	out := make([]dto.AvailableEvent, 0, len(evs))
+	for _, e := range evs {
+		out = append(out, dto.AvailableEvent{
+			Type:          e.Type,
+			FriendlyName:  e.FriendlyName,
+			NeedsApproval: e.NeedsApproval,
+			Allowed:       e.Allowed,
+			InputSchema:   e.InputSchema,
+		})
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, out)
 }
 
 // ExecuteEvent godoc
@@ -53,7 +65,7 @@ func (h *Handler) ListAvailableEvents(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Param id path string true "Project ID (UUID)"
 // @Param body body dto.ExecuteEventRequest true "Event execution request"
-// @Success 200 {object} object "Updated project"
+// @Success 200 {object} dto.ExecuteEventRequest "Updated project"
 // @Failure 400 {string} string "invalid request"
 // @Failure 404 {string} string "unknown event type"
 // @Failure 500 {string} string "internal server error"
@@ -65,15 +77,19 @@ func (h *Handler) ExecuteEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req dto.ExecuteEventRequest
-	if !httputil.ReadJSON(w, r, &req) {
+	var dtoReq dto.ExecuteEventRequest
+	if !httputil.ReadJSON(w, r, &dtoReq) {
 		return
 	}
 
-	// enforce path ID
-	req.ProjectID = projectID
+	appReq := command.ExecuteEventRequest{
+		ProjectID: projectID,
+		Type:      dtoReq.Type,
+		Status:    events.Status(dtoReq.Status),
+		Input:     dtoReq.Input,
+	}
 
-	proj, err := h.svc.ExecuteEvent(r.Context(), req)
+	proj, err := h.svc.ExecuteEvent(r.Context(), appReq)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return

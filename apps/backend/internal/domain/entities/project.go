@@ -28,13 +28,6 @@ type ProjectMemberDetail struct {
 	Role   ProjectRole
 }
 
-type ProjectDetails struct {
-	Project       Project
-	OwningOrgNode OrganisationNode
-	Members       []ProjectMemberDetail
-	Products      []Product
-}
-
 type ChangeLogEntry struct {
 	Event string
 	At    time.Time

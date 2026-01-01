@@ -3,6 +3,7 @@ package dto
 import (
 	"time"
 
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
@@ -11,7 +12,7 @@ import (
 // ProjectRequest represents the request body for starting a new project
 type ProjectRequest struct {
 	ProjectAdmin    uuid.UUID `json:"project_admin"`
-	Title           string    `json:"title" example:"New Project"`
+	Title           string    `json:"title" example:"NewService Project"`
 	Description     string    `json:"description" example:"This is a new project"`
 	OwningOrgNodeID uuid.UUID `json:"owning_org_node_id"`
 	StartDate       string    `json:"start_date" example:"2025-01-01T00:00:00Z"`
@@ -45,7 +46,7 @@ func (r ProjectMemberResponse) FromEntity(e entities.ProjectMemberDetail) Projec
 type ProjectResponse struct {
 	Id            uuid.UUID               `json:"id"`
 	Version       int                     `json:"version"`
-	Title         string                  `json:"title" example:"New Project"`
+	Title         string                  `json:"title" example:"NewService Project"`
 	Description   string                  `json:"description" example:"This is a new project"`
 	StartDate     time.Time               `json:"start_date" example:"2025-01-01T00:00:00Z"`
 	EndDate       time.Time               `json:"end_date" example:"2025-12-31T23:59:59Z"`
@@ -54,7 +55,7 @@ type ProjectResponse struct {
 	Products      []ProductResponse       `json:"products"`
 }
 
-func (r ProjectResponse) FromEntity(d *entities.ProjectDetails) ProjectResponse {
+func (r ProjectResponse) FromEntity(d *queries.ProjectDetails) ProjectResponse {
 	return ProjectResponse{
 		Id:            d.Project.Id,
 		Version:       d.Project.Version,
