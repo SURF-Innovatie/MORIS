@@ -26,7 +26,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
 import { UserSearchSelect } from "@/components/user/UserSearchSelect";
-import { EffectiveMembershipResponse } from "@/api/generated-orval/model";
+import { OrganisationEffectiveMembershipResponse } from "@/api/generated-orval/model";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { ErrorModal } from "@/components/ui/error-modal";
 
@@ -62,7 +62,7 @@ export const RoleManagement = () => {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {members?.map((m: EffectiveMembershipResponse) => (
+            {members?.map((m: OrganisationEffectiveMembershipResponse) => (
               <tr key={m.membershipId} className="bg-white">
                 <td className="px-4 py-3">{m.person?.name}</td>
                 <td className="px-4 py-3 capitalize">{m.roleKey}</td>
@@ -96,7 +96,7 @@ const AddMemberDialog = ({
 }: {
   nodeId: string;
   roles: any[];
-  members: EffectiveMembershipResponse[];
+  members: OrganisationEffectiveMembershipResponse[];
 }) => {
   const [open, setOpen] = useState(false);
   const [personId, setPersonId] = useState("");

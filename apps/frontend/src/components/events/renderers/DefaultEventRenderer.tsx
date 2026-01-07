@@ -1,9 +1,9 @@
 import { FC } from "react";
-import { Event } from "@/api/generated-orval/model";
+import { ProjectEvent } from "@/api/events";
 import { CalendarDays, User } from "lucide-react";
 import { format } from "date-fns";
 
-export const DefaultEventRenderer: FC<{ event: Event }> = ({ event }) => {
+export const DefaultEventRenderer: FC<{ event: ProjectEvent }> = ({ event }) => {
   // Format "project.person_added" -> "Person Added"
   const formattedType =
     event.type

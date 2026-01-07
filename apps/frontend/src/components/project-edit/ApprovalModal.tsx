@@ -15,6 +15,7 @@ import {
 } from "@/api/generated-orval/moris";
 import { useQueryClient } from "@tanstack/react-query";
 import { EventRenderer } from "@/components/events/EventRenderer";
+import { ProjectEvent } from "@/api/events";
 
 interface ApprovalModalProps {
   isOpen: boolean;
@@ -100,7 +101,7 @@ export function ApprovalModal({
         ) : event ? (
           <div className="py-4 space-y-4">
             <EventRenderer
-              event={event}
+              event={event as ProjectEvent}
               className="border rounded-lg p-4 bg-gray-50/50"
             />
 

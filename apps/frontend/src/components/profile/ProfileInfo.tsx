@@ -61,7 +61,7 @@ export function ProfileInfo({ user, refetchProfile }: ProfileInfoProps) {
                 data: {
                     name: editForm.name,
                     email: user.email,
-                    avatar_url: editForm.avatarUrl || undefined,
+                    avatarUrl: editForm.avatarUrl || undefined,
                     description: editForm.description || undefined,
                     user_id: user.id,
                 },

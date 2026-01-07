@@ -1,21 +1,21 @@
 import { FC } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Event } from "@/api/generated-orval/model";
+import { ProjectEvent, ProjectEventType } from "@/api/events";
 import { UserMinus } from "lucide-react";
 
-export const PersonRemovedEvent: FC<{ event: Event }> = ({ event }) => {
-  if (!event.person) {
+export const PersonRemovedEvent: FC<{ event: ProjectEvent }> = ({ event }) => {
+  if (event.type !== ProjectEventType.ProjectRoleUnassigned || !event.person) {
     return <div className="text-sm text-gray-600">{event.details}</div>;
   }
 
-  const { name, email, avatar_url, givenName, familyName } = event.person;
+  const { name, email, avatarUrl, givenName, familyName } = event.person;
   const initials = (givenName?.[0] || "") + (familyName?.[0] || "");
 
   return (
     <div className="flex items-center gap-3 opacity-75">
       <div className="relative">
         <Avatar className="h-10 w-10 border border-gray-200 grayscale">
-          <AvatarImage src={avatar_url} alt={name || "User"} />
+          <AvatarImage src={avatarUrl} alt={name || "User"} />
           <AvatarFallback className="bg-gray-100 text-gray-500 font-medium">
             {initials || "U"}
           </AvatarFallback>

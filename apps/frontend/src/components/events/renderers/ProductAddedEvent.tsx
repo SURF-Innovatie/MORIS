@@ -1,10 +1,10 @@
 import { FC } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Event } from "@/api/generated-orval/model";
+import { ProjectEvent, ProjectEventType } from "@/api/events";
 import { FileText } from "lucide-react";
 
-export const ProductAddedEvent: FC<{ event: Event }> = ({ event }) => {
-  if (!event.product) {
+export const ProductAddedEvent: FC<{ event: ProjectEvent }> = ({ event }) => {
+  if (event.type !== ProjectEventType.ProductAdded || !event.product) {
     return <div className="text-sm text-gray-600">{event.details}</div>;
   }
 

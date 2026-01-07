@@ -32,7 +32,7 @@ type Service interface {
 	GetProject(ctx context.Context, id uuid.UUID) (*entities.ProjectDetails, error)
 	GetAllProjects(ctx context.Context) ([]*entities.ProjectDetails, error)
 	GetChangeLog(ctx context.Context, id uuid.UUID) (*entities.ChangeLog, error)
-	GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.Event, error)
+	GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.DetailedEvent, error)
 	GetProjectRoles(ctx context.Context) ([]entities.ProjectRole, error)
 	WarmupCache(ctx context.Context) error
 }
@@ -150,7 +150,7 @@ func (s *service) GetAllProjects(ctx context.Context) ([]*entities.ProjectDetail
 	return projects, nil
 }
 
-func (s *service) GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.Event, error) {
+func (s *service) GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.DetailedEvent, error) {
 	evts, _, err := s.es.Load(ctx, projectID)
 	if err != nil {
 		return nil, err
@@ -163,7 +163,123 @@ func (s *service) GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]
 		}
 	}
 
-	return pending, nil
+	return s.enrichEvents(ctx, pending)
+}
+
+func (s *service) enrichEvents(ctx context.Context, evts []events.Event) ([]events.DetailedEvent, error) {
+	if len(evts) == 0 {
+		return nil, nil
+	}
+
+	// Collect IDs
+	personIDs := make(map[uuid.UUID]struct{})
+	productIDs := make(map[uuid.UUID]struct{})
+	roleIDs := make(map[uuid.UUID]struct{})
+	orgIDs := make(map[uuid.UUID]struct{})
+
+	for _, e := range evts {
+		if r, ok := e.(events.HasRelatedIDs); ok {
+			ids := r.RelatedIDs()
+			if ids.PersonID != nil {
+				personIDs[*ids.PersonID] = struct{}{}
+			}
+			if ids.ProductID != nil {
+				productIDs[*ids.ProductID] = struct{}{}
+			}
+			if ids.ProjectRoleID != nil {
+				roleIDs[*ids.ProjectRoleID] = struct{}{}
+			}
+			if ids.OrgNodeID != nil {
+				orgIDs[*ids.OrgNodeID] = struct{}{}
+			}
+		}
+	}
+
+	// Fetch Entities
+	// Persons
+	pIDs := make([]uuid.UUID, 0, len(personIDs))
+	for id := range personIDs {
+		pIDs = append(pIDs, id)
+	}
+	personsMap := make(map[uuid.UUID]entities.Person)
+	if len(pIDs) > 0 {
+		rows, err := s.cli.Person.Query().Where(personent.IDIn(pIDs...)).All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, r := range rows {
+			personsMap[r.ID] = *(&entities.Person{}).FromEnt(r)
+		}
+	}
+
+	// Products
+	prodIDs := make([]uuid.UUID, 0, len(productIDs))
+	for id := range productIDs {
+		prodIDs = append(prodIDs, id)
+	}
+	productsMap := make(map[uuid.UUID]entities.Product)
+	if len(prodIDs) > 0 {
+		rows, err := s.cli.Product.Query().Where(productent.IDIn(prodIDs...)).All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, r := range rows {
+			productsMap[r.ID] = entities.Product{
+				Id:       r.ID,
+				Name:     r.Name,
+				Language: *r.Language,
+				Type:     entities.ProductType(r.Type),
+				DOI:      *r.Doi,
+			}
+		}
+	}
+
+	// Roles
+	rIDs := make([]uuid.UUID, 0, len(roleIDs))
+	for id := range roleIDs {
+		rIDs = append(rIDs, id)
+	}
+	rolesMap := make(map[uuid.UUID]entities.ProjectRole)
+	if len(rIDs) > 0 {
+		rows, err := s.cli.ProjectRole.Query().Where(entprojectrole.IDIn(rIDs...)).All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, r := range rows {
+			rolesMap[r.ID] = entities.ProjectRole{
+				ID:   r.ID,
+				Key:  r.Key,
+				Name: r.Name,
+			}
+		}
+	}
+
+	// Construct DetailedEvents
+	result := make([]events.DetailedEvent, len(evts))
+	for i, e := range evts {
+		de := events.DetailedEvent{Event: e}
+		if r, ok := e.(events.HasRelatedIDs); ok {
+			ids := r.RelatedIDs()
+			if ids.PersonID != nil {
+				if p, ok := personsMap[*ids.PersonID]; ok {
+					de.Person = &p
+				}
+			}
+			if ids.ProductID != nil {
+				if p, ok := productsMap[*ids.ProductID]; ok {
+					de.Product = &p
+				}
+			}
+			if ids.ProjectRoleID != nil {
+				if r, ok := rolesMap[*ids.ProjectRoleID]; ok {
+					de.ProjectRole = &r
+				}
+			}
+		}
+		result[i] = de
+	}
+
+	return result, nil
 }
 
 func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Project) (*entities.ProjectDetails, error) {

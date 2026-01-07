@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/card";
 import { useGetUsersIdEventsApproved } from "@api/moris";
 import { EventRenderer } from "@/components/events/EventRenderer";
+import { ProjectEvent } from "@/api/events";
 
 interface ProfileActivityProps {
   userId: string;
@@ -41,7 +42,7 @@ export function ProfileActivity({ userId }: ProfileActivityProps) {
                 key={event.id}
                 className="flex flex-col gap-1 border-b pb-4 last:border-0 last:pb-0"
               >
-                <EventRenderer event={event} />
+                <EventRenderer event={event as ProjectEvent} />
               </div>
             ))}
           </div>

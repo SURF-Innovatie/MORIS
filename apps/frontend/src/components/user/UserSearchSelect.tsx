@@ -103,8 +103,8 @@ export const UserSearchSelect = ({ value, onSelect, disabled }: UserSearchSelect
 };
 
 const UserAvatar = ({ person }: { person: PersonResponse }) => {
-    if (person.avatar_url) {
-        return <img src={person.avatar_url} alt={person.name} className="h-6 w-6 rounded-full object-cover" />;
+    if (person.avatarUrl) {
+        return <img src={person.avatarUrl} alt={person.name} className="h-6 w-6 rounded-full object-cover" />;
     }
     return <UserIcon className="h-6 w-6 p-1 rounded-full bg-secondary text-secondary-foreground" />;
 };

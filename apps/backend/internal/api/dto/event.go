@@ -22,6 +22,15 @@ type Event struct {
 	ProductID     *uuid.UUID `json:"productId,omitempty"`
 	ProjectRoleID *uuid.UUID `json:"projectRoleId,omitempty"`
 	OrgNodeID     *uuid.UUID `json:"orgNodeId,omitempty"`
+
+	// Optional full related objects
+	Person      *PersonResponse      `json:"person,omitempty"`
+	Product     *ProductResponse     `json:"product,omitempty"`
+	ProjectRole *ProjectRoleResponse `json:"projectRole,omitempty"`
+	// OrgNode     *OrganisationNodeResponse `json:"orgNode,omitempty"` // TODO: Add DTO if needed
+
+	// The raw event data (input payload)
+	Data any `json:"data,omitempty"`
 }
 
 type EventResponse struct {
@@ -40,6 +49,42 @@ func (e Event) FromEntity(ev events.Event) Event {
 }
 
 func (e Event) FromEntityWithTitle(ev events.Event, projectTitle string) Event {
+	var coreEv events.Event = ev
+
+	// Check if ev is actually a DetailedEvent wrapper from our domain logic
+	// Note: We can't cast directly if 'ev' is the interface. 
+    // But FromEntity accepts `events.Event`. `DetailedEvent` does not implement `events.Event` directly?
+    // Wait, DetailedEvent is a struct in `entities`. It holds `Event`.
+    // The service will likely pass `DetailedEvent` to the handler, and the handler will call `FromDetailedEntity`.
+    // Let's add specific method for DetailedEvent.
+    
+    return e.fromCore(coreEv, projectTitle)
+}
+
+func (e Event) FromDetailedEntity(dev events.DetailedEvent) Event {
+	dto := e.fromCore(dev.Event, "")
+	
+	if dev.Person != nil {
+		p := PersonResponse{}.FromEntity(*dev.Person)
+		dto.Person = &p
+	}
+	if dev.Product != nil {
+		p := ProductResponse{}.FromEntity(*dev.Product)
+		dto.Product = &p
+	}
+	if dev.ProjectRole != nil {
+		r := ProjectRoleResponse{
+			ID: dev.ProjectRole.ID,
+			Key: dev.ProjectRole.Key,
+			Name: dev.ProjectRole.Name,
+		}
+		dto.ProjectRole = &r
+	}
+	
+	return dto
+}
+
+func (e Event) fromCore(ev events.Event, projectTitle string) Event {
 	createdBy := uuid.Nil
 	if cb, ok := any(ev).(interface{ CreatedByID() uuid.UUID }); ok {
 		createdBy = cb.CreatedByID()
@@ -54,6 +99,7 @@ func (e Event) FromEntityWithTitle(ev events.Event, projectTitle string) Event {
 		At:           ev.OccurredAt(),
 		Details:      ev.String(),
 		ProjectTitle: projectTitle,
+		Data:         ev,
 	}
 
 	// Enrich with related IDs if available

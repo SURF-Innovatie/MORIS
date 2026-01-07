@@ -1,20 +1,20 @@
 import { FC } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Event } from "@/api/generated-orval/model";
+import { ProjectEvent, ProjectEventType } from "@/api/events";
 
-export const PersonAddedEvent: FC<{ event: Event }> = ({ event }) => {
-  if (!event.person) {
+export const PersonAddedEvent: FC<{ event: ProjectEvent }> = ({ event }) => {
+  // Check if it's the right event type and has person data
+  if (event.type !== ProjectEventType.ProjectRoleAssigned || !event.person) {
     return <div className="text-sm text-gray-600">{event.details}</div>;
   }
 
-  const { name, email, avatar_url, orcid, givenName, familyName } =
-    event.person;
+  const { name, email, avatarUrl, orcid, givenName, familyName } = event.person;
   const initials = (givenName?.[0] || "") + (familyName?.[0] || "");
 
   return (
     <div className="flex items-center gap-3">
       <Avatar className="h-10 w-10 border border-gray-200">
-        <AvatarImage src={avatar_url} alt={name || "User"} />
+        <AvatarImage src={avatarUrl} alt={name || "User"} />
         <AvatarFallback className="bg-blue-100 text-blue-700 font-medium">
           {initials || "U"}
         </AvatarFallback>

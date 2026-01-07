@@ -1,26 +1,27 @@
 import { FC } from "react";
-import { Event } from "@/api/generated-orval/model";
+
 import { PersonAddedEvent } from "./renderers/PersonAddedEvent";
 import { PersonRemovedEvent } from "./renderers/PersonRemovedEvent";
 import { ProductAddedEvent } from "./renderers/ProductAddedEvent";
 import { ProductRemovedEvent } from "./renderers/ProductRemovedEvent";
 import { DefaultEventRenderer } from "./renderers/DefaultEventRenderer";
 
+import { ProjectEvent, ProjectEventType } from "@/api/events";
+
 interface EventRendererProps {
-  event: Event;
+  event: ProjectEvent; // Using the strict discriminated union
   className?: string;
 }
 
-const RENDERER_REGISTRY: Record<string, FC<{ event: Event }>> = {
-  "project.person_added": PersonAddedEvent,
-  "project.person_removed": PersonRemovedEvent,
-  "project.product_added": ProductAddedEvent,
-  "project.product_removed": ProductRemovedEvent,
+const RENDERER_REGISTRY: Partial<Record<ProjectEventType, FC<{ event: ProjectEvent }>>> = {
+  [ProjectEventType.ProjectRoleAssigned]: PersonAddedEvent,
+  [ProjectEventType.ProjectRoleUnassigned]: PersonRemovedEvent,
+  [ProjectEventType.ProductAdded]: ProductAddedEvent,
+  [ProjectEventType.ProductRemoved]: ProductRemovedEvent,
 };
 
 export const EventRenderer: FC<EventRendererProps> = ({ event, className }) => {
-  const Renderer =
-    (event.type && RENDERER_REGISTRY[event.type]) || DefaultEventRenderer;
+  const Renderer = RENDERER_REGISTRY[event.type as ProjectEventType] || DefaultEventRenderer;
 
   return (
     <div className={className}>
