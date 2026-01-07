@@ -22,6 +22,9 @@ import {
 import { AddPersonDialog } from "./AddPersonDialog";
 import { EditRoleDialog } from "@/components/project-edit/EditRoleDialog";
 import { ProjectMemberResponse } from "@/api/generated-orval/model";
+import { useAccess } from "@/context/AccessContext";
+import { Allowed } from "@/components/auth/Allowed";
+import { ProjectEventType } from "@/api/events";
 
 interface PeopleTabProps {
   projectId: string;
@@ -39,7 +42,9 @@ export function PeopleTab({ projectId, members, onRefresh }: PeopleTabProps) {
             Manage who has access to this project.
           </CardDescription>
         </div>
-        <AddPersonDialog projectId={projectId} onPersonAdded={onRefresh} />
+        <Allowed event={ProjectEventType.ProjectRoleAssigned}>
+          <AddPersonDialog projectId={projectId} onPersonAdded={onRefresh} />
+        </Allowed>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -67,40 +72,22 @@ function MemberRow({
   onRefresh: () => void;
 }) {
   const [editOpen, setEditOpen] = useState(false);
+  const { hasAccess } = useAccess();
+  const canEditRole = hasAccess(ProjectEventType.ProjectRoleAssigned);
+  const canRemove = hasAccess(ProjectEventType.ProjectRoleUnassigned);
+
+  if (!canEditRole && !canRemove) {
+    return (
+      <div className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors">
+        <MemberInfo member={member} />
+      </div>
+    );
+  }
 
   return (
     <>
       <div className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors">
-        <div className="flex items-center gap-4">
-          <Avatar className="h-10 w-10 border">
-            <AvatarImage src={member.avatarUrl || ""} />
-            <AvatarFallback className="font-semibold text-primary">
-              {(member.name || "Unknown")
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
-                .toUpperCase()
-                .slice(0, 2)}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <div className="flex items-center gap-2">
-              <p className="font-semibold leading-none">
-                {member.name || "Unknown"}
-              </p>
-              {member.role === "lead" && (
-                <Crown className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
-              )}
-              <Badge
-                variant="secondary"
-                className="text-[10px] h-5 px-1.5 font-normal capitalize"
-              >
-                {member.role_name || member.role}
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">{member.email}</p>
-          </div>
-        </div>
+        <MemberInfo member={member} />
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -110,13 +97,17 @@ function MemberRow({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                Edit Role
-              </DropdownMenuItem>
+              <Allowed event={ProjectEventType.ProjectRoleAssigned}>
+                <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                  Edit Role
+                </DropdownMenuItem>
+              </Allowed>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
-                Remove
-              </DropdownMenuItem>
+              <Allowed event={ProjectEventType.ProjectRoleUnassigned}>
+                <DropdownMenuItem className="text-destructive">
+                  Remove
+                </DropdownMenuItem>
+              </Allowed>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -130,5 +121,40 @@ function MemberRow({
         onSuccess={onRefresh}
       />
     </>
+  );
+}
+
+function MemberInfo({ member }: { member: ProjectMemberResponse }) {
+  return (
+    <div className="flex items-center gap-4">
+      <Avatar className="h-10 w-10 border">
+        <AvatarImage src={member.avatarUrl || ""} />
+        <AvatarFallback className="font-semibold text-primary">
+          {(member.name || "Unknown")
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase()
+            .slice(0, 2)}
+        </AvatarFallback>
+      </Avatar>
+      <div>
+        <div className="flex items-center gap-2">
+          <p className="font-semibold leading-none">
+            {member.name || "Unknown"}
+          </p>
+          {member.role === "lead" && (
+            <Crown className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
+          )}
+          <Badge
+            variant="secondary"
+            className="text-[10px] h-5 px-1.5 font-normal capitalize"
+          >
+            {member.role_name || member.role}
+          </Badge>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">{member.email}</p>
+      </div>
+    </div>
   );
 }

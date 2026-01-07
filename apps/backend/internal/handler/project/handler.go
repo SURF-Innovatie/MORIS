@@ -6,6 +6,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 
+	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/SURF-Innovatie/MORIS/internal/project"
 )
@@ -155,4 +156,28 @@ func (h *Handler) GetProjectRoles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, resps)
+}
+
+// GetAllowedEvents godoc
+// @Summary Get allowed events for a project
+// @Description Retrieves a list of events the user is allowed to perform on the project
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Project ID (UUID)"
+// @Success 200 {array} string
+// @Failure 400 {string} string "invalid project id"
+// @Failure 500 {string} string "internal server error"
+// @Router /projects/{id}/allowed-events [get]
+func (h *Handler) GetAllowedEvents(w http.ResponseWriter, r *http.Request) {
+	_, err := httputil.ParseUUIDParam(r, "id")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
+		return
+	}
+
+	allowedEvents := events.GetRegisteredEventTypes()
+
+	_ = httputil.WriteJSON(w, http.StatusOK, allowedEvents)
 }

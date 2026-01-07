@@ -27,6 +27,7 @@ type Field struct {
 
 type EventStruct struct {
 	Name         string
+	EnumKey      string
 	FunctionName string
 	Fields       []Field
 	EventType    string
@@ -211,10 +212,12 @@ func main() {
 				if strings.HasSuffix(structName, "Input") {
 					funcName = strings.TrimSuffix(structName, "Input")
 				}
+				enumKey := funcName
 				funcName += "Event"
 
 				structs = append(structs, EventStruct{
 					Name:         structName,
+					EnumKey:      enumKey,
 					FunctionName: funcName,
 					Fields:       fields,
 					EventType:    eventType,
@@ -230,6 +233,12 @@ func main() {
 import customInstance from "./custom-axios";
 
 export type Datetime = string;
+
+export enum ProjectEventType {
+{{range .}}
+  {{.EnumKey}} = '{{.EventType}}',
+{{end}}
+}
 
 {{range .}}
 export interface {{.Name}} {

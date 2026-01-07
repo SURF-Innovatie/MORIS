@@ -38,6 +38,8 @@ import {
 } from "@/api/events";
 import { Product, ProductType } from "@api/model";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { Allowed } from "@/components/auth/Allowed";
+import { ProjectEventType } from "@/api/events";
 
 // Schema for the DOI search form
 const doiFormSchema = z.object({
@@ -193,80 +195,82 @@ export function ProductsTab({
             Manage the products associated with this project.
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Product
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Add Product</DialogTitle>
-              <DialogDescription>
-                Search for a product by DOI to add it to the project.
-              </DialogDescription>
-            </DialogHeader>
-
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSearch)}
-                className="space-y-4"
-              >
-                <FormField
-                  control={form.control}
-                  name="doi"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>DOI</FormLabel>
-                      <div className="flex gap-2">
-                        <FormControl>
-                          <Input placeholder="10.1038/..." {...field} />
-                        </FormControl>
-                        <Button
-                          type="submit"
-                          disabled={isSearching || isLoadingCrossref}
-                        >
-                          {isSearching || isLoadingCrossref ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Search className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </form>
-            </Form>
-
-            {searchedProduct && (
-              <div className="mt-4 rounded-md border p-4">
-                <h4 className="font-medium">{searchedProduct.title}</h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  DOI: {searchedProduct.doi}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Type: {getProductTypeLabel(searchedProduct.type)}
-                </p>
-              </div>
-            )}
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setIsDialogOpen(false)}
-              >
-                Cancel
+        <Allowed event={ProjectEventType.ProductAdded}>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Product
               </Button>
-              <Button onClick={onAddProduct} disabled={!searchedProduct}>
-                Add to Project
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Add Product</DialogTitle>
+                <DialogDescription>
+                  Search for a product by DOI to add it to the project.
+                </DialogDescription>
+              </DialogHeader>
+
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSearch)}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={form.control}
+                    name="doi"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>DOI</FormLabel>
+                        <div className="flex gap-2">
+                          <FormControl>
+                            <Input placeholder="10.1038/..." {...field} />
+                          </FormControl>
+                          <Button
+                            type="submit"
+                            disabled={isSearching || isLoadingCrossref}
+                          >
+                            {isSearching || isLoadingCrossref ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Search className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </form>
+              </Form>
+
+              {searchedProduct && (
+                <div className="mt-4 rounded-md border p-4">
+                  <h4 className="font-medium">{searchedProduct.title}</h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    DOI: {searchedProduct.doi}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Type: {getProductTypeLabel(searchedProduct.type)}
+                  </p>
+                </div>
+              )}
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={onAddProduct} disabled={!searchedProduct}>
+                  Add to Project
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </Allowed>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -294,15 +298,17 @@ export function ProductsTab({
             </CardHeader>
             <CardContent>
               <div className="flex justify-end">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-destructive hover:text-destructive/90"
-                  onClick={() => setProductToDelete(product.id!)}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Remove
-                </Button>
+                <Allowed event={ProjectEventType.ProductRemoved}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive/90"
+                    onClick={() => setProductToDelete(product.id!)}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Remove
+                  </Button>
+                </Allowed>
               </div>
             </CardContent>
           </Card>

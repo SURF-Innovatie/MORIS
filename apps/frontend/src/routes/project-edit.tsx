@@ -23,8 +23,17 @@ import { ChangelogTab } from "@/components/project-edit/ChangelogTab";
 import { ProductsTab } from "@/components/project-edit/ProductsTab";
 import { projectFormSchema } from "@/lib/schemas/project";
 import { EMPTY_UUID } from "@/lib/constants";
+import { ProjectAccessProvider } from "@/context/ProjectAccessContext";
 
 export default function ProjectEditRoute() {
+  return (
+    <ProjectAccessProvider>
+      <ProjectEditForm />
+    </ProjectAccessProvider>
+  );
+}
+
+function ProjectEditForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();

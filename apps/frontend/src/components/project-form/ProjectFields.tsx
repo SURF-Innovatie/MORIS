@@ -25,9 +25,15 @@ import { ProjectFormValues } from "@/lib/schemas/project";
 
 interface ProjectFieldsProps {
   form: UseFormReturn<ProjectFormValues>;
+  disabledFields?: {
+    title?: boolean;
+    description?: boolean;
+    startDate?: boolean;
+    endDate?: boolean;
+  };
 }
 
-export function ProjectFields({ form }: ProjectFieldsProps) {
+export function ProjectFields({ form, disabledFields }: ProjectFieldsProps) {
   const [isStartDateOpen, setIsStartDateOpen] = useState(false);
   const [isEndDateOpen, setIsEndDateOpen] = useState(false);
   const startDate = form.watch("startDate");
@@ -41,7 +47,11 @@ export function ProjectFields({ form }: ProjectFieldsProps) {
           <FormItem className="max-w-2xl">
             <FormLabel>Title</FormLabel>
             <FormControl>
-              <Input placeholder="Project title" {...field} />
+              <Input
+                placeholder="Project title"
+                {...field}
+                disabled={disabledFields?.title}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -59,6 +69,7 @@ export function ProjectFields({ form }: ProjectFieldsProps) {
                 placeholder="Describe the project..."
                 className="min-h-[120px] resize-none"
                 {...field}
+                disabled={disabledFields?.description}
               />
             </FormControl>
             <FormDescription>
@@ -85,6 +96,7 @@ export function ProjectFields({ form }: ProjectFieldsProps) {
                         "w-full pl-3 text-left font-normal",
                         !field.value && "text-muted-foreground"
                       )}
+                      disabled={disabledFields?.startDate}
                     >
                       {field.value ? (
                         format(field.value, "PPP")
@@ -131,6 +143,7 @@ export function ProjectFields({ form }: ProjectFieldsProps) {
                         "w-full pl-3 text-left font-normal",
                         !field.value && "text-muted-foreground"
                       )}
+                      disabled={disabledFields?.endDate}
                     >
                       {field.value ? (
                         format(field.value, "PPP")

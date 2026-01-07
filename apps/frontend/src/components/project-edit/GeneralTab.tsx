@@ -13,6 +13,8 @@ import {
 import { ProjectFormValues } from "@/lib/schemas/project";
 import { ProjectResponse } from "@api/model";
 import { ProjectFields } from "@/components/project-form/ProjectFields";
+import { useAccess } from "@/context/AccessContext";
+import { ProjectEventType } from "@/api/events";
 
 interface GeneralTabProps {
   form: UseFormReturn<ProjectFormValues>;
@@ -27,6 +29,17 @@ export function GeneralTab({
   isUpdating,
   project,
 }: GeneralTabProps) {
+  const { hasAccess } = useAccess();
+
+  const disabledFields = {
+    title: !hasAccess(ProjectEventType.TitleChanged),
+    description: !hasAccess(ProjectEventType.DescriptionChanged),
+    startDate: !hasAccess(ProjectEventType.StartDateChanged),
+    endDate: !hasAccess(ProjectEventType.EndDateChanged),
+  };
+
+  const oneFieldEditable = !disabledFields.title || !disabledFields.description || !disabledFields.startDate || !disabledFields.endDate;
+
   return (
     <div className="grid gap-8 lg:grid-cols-3">
       <div className="lg:col-span-2 space-y-8">
@@ -43,10 +56,10 @@ export function GeneralTab({
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-6"
               >
-                <ProjectFields form={form} />
+                <ProjectFields form={form} disabledFields={disabledFields} />
 
                 <div className="flex justify-start">
-                  <Button type="submit" disabled={isUpdating}>
+                  <Button type="submit" disabled={isUpdating || !oneFieldEditable}>
                     {isUpdating ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
