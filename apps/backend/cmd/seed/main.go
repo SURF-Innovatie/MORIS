@@ -250,7 +250,7 @@ func main() {
 
 	orgSvc := organisation.NewService(client)
 
-	orgRoot, err := orgSvc.CreateRoot(ctx, "Nederland")
+	orgRoot, err := orgSvc.CreateRoot(ctx, "Nederland", nil)
 	if err != nil {
 		logrus.Fatalf("create root org node: %v", err)
 	}
@@ -610,7 +610,7 @@ func main() {
 func createPath(ctx context.Context, orgSvc organisation.Service, rootID uuid.UUID, names ...string) (uuid.UUID, error) {
 	parentID := rootID
 	for _, name := range names {
-		n, err := orgSvc.CreateChild(ctx, parentID, name)
+		n, err := orgSvc.CreateChild(ctx, parentID, name, nil)
 		if err != nil {
 			return uuid.Nil, err
 		}
@@ -634,5 +634,5 @@ func getOrCreateChild(ctx context.Context, cli *ent.Client, orgSvc organisation.
 	if !ent.IsNotFound(err) {
 		return nil, err
 	}
-	return orgSvc.CreateChild(ctx, parentID, name)
+	return orgSvc.CreateChild(ctx, parentID, name, nil)
 }

@@ -4,6 +4,7 @@ import "github.com/go-chi/chi/v5"
 
 func MountOrganisationRoutes(r chi.Router, h *Handler, rbac *RBACHandler) {
 	r.Route("/organisation-nodes", func(r chi.Router) {
+		r.Get("/ror/search", h.SearchROR)
 		r.Post("/", h.CreateRoot)
 
 		r.Get("/roots", h.ListRoots)

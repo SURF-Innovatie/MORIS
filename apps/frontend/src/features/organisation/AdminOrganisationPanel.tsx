@@ -18,6 +18,8 @@ import { Plus, Settings } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { OrganisationNode } from "./components/OrganisationNode";
 import { CreateChildDialog } from "./components/CreateChildDialog";
+import { RorSearchSelect } from "@/components/organisation/RorSearchSelect";
+import { EditOrganisationDialog } from "./components/EditOrganisationDialog";
 
 export const AdminOrganisationPanel = () => {
   const { data: roots, isLoading } = useGetOrganisationNodesRoots();
@@ -27,6 +29,7 @@ export const AdminOrganisationPanel = () => {
   const renderActions = (node: OrganisationResponse) => {
     return (
       <>
+        <EditOrganisationDialog node={node} />
         <CreateChildDialog parentId={node.id!} />
         <Link to={`/dashboard/admin/organisations/${node.id}/roles`}>
           <Button variant="ghost" size="sm">
@@ -59,6 +62,7 @@ export const AdminOrganisationPanel = () => {
 const CreateRootDialog = () => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [rorId, setRorId] = useState<string | undefined>(undefined);
   const queryClient = useQueryClient();
   const { mutate: createRoot, isPending } = usePostOrganisationNodes({
     mutation: {
@@ -68,6 +72,7 @@ const CreateRootDialog = () => {
         });
         setOpen(false);
         setName("");
+        setRorId(undefined);
       },
     },
   });
@@ -89,8 +94,15 @@ const CreateRootDialog = () => {
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
+          <RorSearchSelect
+            value={rorId}
+            onSelect={(id, item) => {
+               setRorId(id);
+               if (!name) setName(item.name);
+            }}
+          />
           <Button
-            onClick={() => createRoot({ data: { name } })}
+            onClick={() => createRoot({ data: { name, rorId } })}
             disabled={isPending || !name}
           >
             {isPending ? "Creating..." : "Create"}

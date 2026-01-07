@@ -52,7 +52,7 @@ func (h *Handler) CreateRoot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	node, err := h.svc.CreateRoot(r.Context(), req.Name)
+	node, err := h.svc.CreateRoot(r.Context(), req.Name, req.RorID)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -111,7 +111,7 @@ func (h *Handler) CreateChild(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	node, err := h.svc.CreateChild(r.Context(), parentID, req.Name)
+	node, err := h.svc.CreateChild(r.Context(), parentID, req.Name, req.RorID)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -218,7 +218,7 @@ func (h *Handler) UpdateOrganisationNode(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	node, err := h.svc.Update(r.Context(), id, req.Name, req.ParentID)
+	node, err := h.svc.Update(r.Context(), id, req.Name, req.ParentID, req.RorID)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusBadRequest, err.Error(), nil)
 		return
@@ -275,4 +275,38 @@ func (h *Handler) ListChildren(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOs[dto.OrganisationResponse](nodes))
+}
+
+// SearchROR godoc
+// @Summary Search ROR
+// @Description Search for organizations in ROR
+// @Tags organisation
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param q query string true "Search query"
+// @Success 200 {array} RORItem
+// @Failure 401 {string} string "unauthorized"
+// @Failure 500 {string} string "internal server error"
+// @Router /organisation-nodes/ror/search [get]
+func (h *Handler) SearchROR(w http.ResponseWriter, r *http.Request) {
+	_, ok := httputil.GetUserFromContext(r.Context())
+	if !ok {
+		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
+		return
+	}
+
+	query := r.URL.Query().Get("q")
+	if query == "" {
+		_ = httputil.WriteJSON(w, http.StatusOK, []RORItem{})
+		return
+	}
+
+	items, err := SearchROR(query)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, items)
 }

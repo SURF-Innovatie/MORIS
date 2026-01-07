@@ -16,6 +16,7 @@ func (OrganisationNode) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New),
 		field.String("name"),
+		field.String("ror_id").Optional().Nillable(),
 
 		// Explicit FK column (nullable => root nodes)
 		field.UUID("parent_id", uuid.UUID{}).

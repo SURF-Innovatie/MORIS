@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { RorSearchSelect } from "@/components/organisation/RorSearchSelect";
 
 interface CreateChildDialogProps {
   parentId: string;
@@ -25,6 +26,7 @@ export const CreateChildDialog = ({
 }: CreateChildDialogProps) => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [rorId, setRorId] = useState<string | undefined>(undefined);
   const queryClient = useQueryClient();
   const { mutate: createChild, isPending } = usePostOrganisationNodesIdChildren(
     {
@@ -41,6 +43,7 @@ export const CreateChildDialog = ({
           if (onSuccess) onSuccess();
           setOpen(false);
           setName("");
+          setRorId(undefined);
         },
       },
     }
@@ -65,8 +68,15 @@ export const CreateChildDialog = ({
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
+          <RorSearchSelect
+            value={rorId}
+            onSelect={(id, item) => {
+              setRorId(id);
+              if (!name) setName(item.name); // Auto-fill name if empty
+            }}
+          />
           <Button
-            onClick={() => createChild({ id: parentId, data: { name } })}
+            onClick={() => createChild({ id: parentId, data: { name, rorId } })}
             disabled={isPending || !name}
           >
             {isPending ? "Creating..." : "Create"}

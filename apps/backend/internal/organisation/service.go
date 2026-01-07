@@ -13,11 +13,11 @@ import (
 )
 
 type Service interface {
-	CreateRoot(ctx context.Context, name string) (*entities.OrganisationNode, error)
-	CreateChild(ctx context.Context, parentID uuid.UUID, name string) (*entities.OrganisationNode, error)
+	CreateRoot(ctx context.Context, name string, rorID *string) (*entities.OrganisationNode, error)
+	CreateChild(ctx context.Context, parentID uuid.UUID, name string, rorID *string) (*entities.OrganisationNode, error)
 
 	Get(ctx context.Context, id uuid.UUID) (*entities.OrganisationNode, error)
-	Update(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID) (*entities.OrganisationNode, error)
+	Update(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string) (*entities.OrganisationNode, error)
 
 	ListRoots(ctx context.Context) ([]entities.OrganisationNode, error)
 	ListChildren(ctx context.Context, parentID uuid.UUID) ([]entities.OrganisationNode, error)
@@ -66,7 +66,7 @@ func (s *service) insertAncestorClosures(ctx context.Context, tx *ent.Tx, parent
 	return err
 }
 
-func (s *service) CreateRoot(ctx context.Context, name string) (*entities.OrganisationNode, error) {
+func (s *service) CreateRoot(ctx context.Context, name string, rorID *string) (*entities.OrganisationNode, error) {
 	tx, err := s.cli.Tx(ctx)
 	if err != nil {
 		return nil, err
@@ -75,6 +75,7 @@ func (s *service) CreateRoot(ctx context.Context, name string) (*entities.Organi
 	row, err := tx.OrganisationNode.
 		Create().
 		SetName(name).
+		SetNillableRorID(rorID).
 		Save(ctx)
 	if err != nil {
 		return nil, err
@@ -91,7 +92,7 @@ func (s *service) CreateRoot(ctx context.Context, name string) (*entities.Organi
 	return transform.ToEntityPtr[entities.OrganisationNode](row), nil
 }
 
-func (s *service) CreateChild(ctx context.Context, parentID uuid.UUID, name string) (*entities.OrganisationNode, error) {
+func (s *service) CreateChild(ctx context.Context, parentID uuid.UUID, name string, rorID *string) (*entities.OrganisationNode, error) {
 	tx, err := s.cli.Tx(ctx)
 	if err != nil {
 		return nil, err
@@ -107,6 +108,7 @@ func (s *service) CreateChild(ctx context.Context, parentID uuid.UUID, name stri
 		Create().
 		SetName(name).
 		SetParent(parent).
+		SetNillableRorID(rorID).
 		Save(ctx)
 	if err != nil {
 		return nil, err
@@ -156,7 +158,7 @@ func (s *service) subtreeDepths(ctx context.Context, tx *ent.Tx, nodeID uuid.UUI
 	return depth, ids, nil
 }
 
-func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID) (*entities.OrganisationNode, error) {
+func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string) (*entities.OrganisationNode, error) {
 	tx, err := s.cli.Tx(ctx)
 	if err != nil {
 		return nil, err
@@ -168,7 +170,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentI
 		return nil, err
 	}
 
-	upd := tx.OrganisationNode.UpdateOneID(id).SetName(name)
+	upd := tx.OrganisationNode.UpdateOneID(id).SetName(name).SetNillableRorID(rorID)
 
 	var newParent *ent.OrganisationNode
 	if parentID == nil {
@@ -190,7 +192,8 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentI
 	}
 
 	// If parent unchanged, no closure updates needed.
-	oldParentID, hadOld := cur.ParentID, *cur.ParentID != uuid.Nil
+	oldParentID := cur.ParentID
+	hadOld := oldParentID != nil
 	newParentID, hadNew := uuid.Nil, parentID != nil
 	if hadNew {
 		newParentID = *parentID
