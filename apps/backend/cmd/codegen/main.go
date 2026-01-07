@@ -42,7 +42,9 @@ func main() {
 
 
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, sourceDir, nil, parser.ParseComments)
+	pkgs, err := parser.ParseDir(fset, sourceDir, func(fi os.FileInfo) bool {
+		return !strings.HasPrefix(fi.Name(), "_")
+	}, parser.ParseComments)
 	if err != nil {
 		log.Fatalf("Failed to parse directory: %v", err)
 	}
