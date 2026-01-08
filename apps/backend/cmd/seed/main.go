@@ -135,18 +135,31 @@ func main() {
 
 	es := eventstore.NewEntStore(client)
 
+	// --- Seed Roles / Scopes / Memberships for org tree ---
+
+	orgSvc := organisation.NewService(client)
+
+	orgRoot, err := orgSvc.CreateRoot(ctx, "Nederland", nil)
+	if err != nil {
+		logrus.Fatalf("create root org node: %v", err)
+	}
+	orgNodeIDs["Nederland"] = orgRoot.ID
+
+	// Create Default Project Roles linked to Root Node
 	if _, err := client.ProjectRole.
 		Create().
 		SetKey("contributor").
 		SetName("Contributor").
+		SetOrganisationNodeID(orgRoot.ID).
 		Save(ctx); err != nil {
 		logrus.Fatalf("create project role contributor: %v", err)
 	}
 
 	if _, err := client.ProjectRole.
 		Create().
-		SetKey("admin"). // or "lead" if you prefer; must match what you query later
+		SetKey("admin"). // or "lead"
 		SetName("Project Lead").
+		SetOrganisationNodeID(orgRoot.ID).
 		Save(ctx); err != nil {
 		logrus.Fatalf("create project role admin: %v", err)
 	}
@@ -247,14 +260,6 @@ func main() {
 		}
 		return id
 	}
-
-	orgSvc := organisation.NewService(client)
-
-	orgRoot, err := orgSvc.CreateRoot(ctx, "Nederland", nil)
-	if err != nil {
-		logrus.Fatalf("create root org node: %v", err)
-	}
-	orgNodeIDs["Nederland"] = orgRoot.ID
 
 	universities, err := getOrCreateChild(ctx, client, orgSvc, orgRoot.ID, "Universities")
 	if err != nil {

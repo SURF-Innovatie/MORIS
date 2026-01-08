@@ -129,18 +129,26 @@ func (h *Handler) GetPendingEvents(w http.ResponseWriter, r *http.Request) {
 	_ = httputil.WriteJSON(w, http.StatusOK, resp)
 }
 
-// GetProjectRoles godoc
-// @Summary Get project roles
-// @Description Retrieves a list of all available project roles
+// ListAvailableRoles godoc
+// @Summary List available roles for a project
+// @Description Retrieves all roles available to be assigned in a project (inherited from organisation hierarchy)
 // @Tags projects
 // @Accept json
 // @Produce json
 // @Security BearerAuth
+// @Param id path string true "Project ID (UUID)"
 // @Success 200 {array} dto.ProjectRoleResponse
+// @Failure 400 {string} string "invalid project id"
 // @Failure 500 {string} string "internal server error"
-// @Router /projects/roles [get]
-func (h *Handler) GetProjectRoles(w http.ResponseWriter, r *http.Request) {
-	roles, err := h.svc.GetProjectRoles(r.Context())
+// @Router /projects/{id}/roles [get]
+func (h *Handler) ListAvailableRoles(w http.ResponseWriter, r *http.Request) {
+	id, err := httputil.ParseUUIDParam(r, "id")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
+		return
+	}
+
+	roles, err := h.svc.ListAvailableRoles(r.Context(), id)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -157,6 +165,7 @@ func (h *Handler) GetProjectRoles(w http.ResponseWriter, r *http.Request) {
 
 	_ = httputil.WriteJSON(w, http.StatusOK, resps)
 }
+
 
 // GetAllowedEvents godoc
 // @Summary Get allowed events for a project

@@ -10,6 +10,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	en "github.com/SURF-Innovatie/MORIS/ent/event" //nolint:depguard
 	organisationent "github.com/SURF-Innovatie/MORIS/ent/organisationnode"
+	"github.com/SURF-Innovatie/MORIS/ent/organisationnodeclosure"
 	personent "github.com/SURF-Innovatie/MORIS/ent/person"
 	productent "github.com/SURF-Innovatie/MORIS/ent/product"
 	entprojectrole "github.com/SURF-Innovatie/MORIS/ent/projectrole"
@@ -33,7 +34,7 @@ type Service interface {
 	GetAllProjects(ctx context.Context) ([]*entities.ProjectDetails, error)
 	GetChangeLog(ctx context.Context, id uuid.UUID) (*entities.ChangeLog, error)
 	GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.DetailedEvent, error)
-	GetProjectRoles(ctx context.Context) ([]entities.ProjectRole, error)
+	ListAvailableRoles(ctx context.Context, projectID uuid.UUID) ([]entities.ProjectRole, error)
 	WarmupCache(ctx context.Context) error
 }
 
@@ -76,19 +77,43 @@ func (s *service) GetProject(ctx context.Context, id uuid.UUID) (*entities.Proje
 	return s.buildProjectDetails(ctx, proj)
 }
 
-func (s *service) projectRoleID(ctx context.Context, key string) (uuid.UUID, error) {
-	var ids []uuid.UUID
-	if err := s.cli.ProjectRole.
-		Query().
-		Where(entprojectrole.KeyEQ(key)).
-		Select(entprojectrole.FieldID).
-		Scan(ctx, &ids); err != nil {
+func (s *service) projectRoleID(ctx context.Context, key string, projectID uuid.UUID) (uuid.UUID, error) {
+	// First, find the project's owning organisation
+	proj, err := s.fromDb(ctx, projectID)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("getting project %s: %w", projectID, err)
+	}
+
+	// We need to find valid roles for this project.
+	// Since we don't have RoleService injected here, we must replicate the logic or use a simpler query.
+	// The Role Service logic traverses the closure.
+	// We can use the Closure table.
+	ancestorIDs, err := s.cli.OrganisationNodeClosure.Query().
+		Where(organisationnodeclosure.DescendantIDEQ(proj.OwningOrgNodeID)).
+		All(ctx)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("getting ancestors for org %s: %w", proj.OwningOrgNodeID, err)
+	}
+
+	validOrgIDs := make([]uuid.UUID, 0, len(ancestorIDs))
+	for _, a := range ancestorIDs {
+		validOrgIDs = append(validOrgIDs, a.AncestorID)
+	}
+
+	// Query role by Key restricted to these organisations
+	r, err := s.cli.ProjectRole.Query().
+		Where(
+			entprojectrole.KeyEQ(key),
+			entprojectrole.OrganisationNodeIDIn(validOrgIDs...),
+		).
+		First(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return uuid.Nil, fmt.Errorf("project role %q not found available for project %s", key, projectID)
+		}
 		return uuid.Nil, err
 	}
-	if len(ids) == 0 {
-		return uuid.Nil, fmt.Errorf("project role not found: %s", key)
-	}
-	return ids[0], nil
+	return r.ID, nil
 }
 
 // TODO, instead of a helper function there should be a currentUserService
@@ -483,21 +508,46 @@ func (s *service) WarmupCache(ctx context.Context) error {
 	return nil
 }
 
-func (s *service) GetProjectRoles(ctx context.Context) ([]entities.ProjectRole, error) {
-	roles, err := s.cli.ProjectRole.Query().All(ctx)
+
+func (s *service) ListAvailableRoles(ctx context.Context, projectID uuid.UUID) ([]entities.ProjectRole, error) {
+	// First, find the project's owning organisation
+	proj, err := s.fromDb(ctx, projectID)
+	if err != nil {
+		return nil, fmt.Errorf("getting project %s: %w", projectID, err)
+	}
+
+	// Use Closure table to find ancestors
+	ancestorIDs, err := s.cli.OrganisationNodeClosure.Query().
+		Where(organisationnodeclosure.DescendantIDEQ(proj.OwningOrgNodeID)).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("getting ancestors for org %s: %w", proj.OwningOrgNodeID, err)
+	}
+
+	validOrgIDs := make([]uuid.UUID, 0, len(ancestorIDs))
+	for _, a := range ancestorIDs {
+		validOrgIDs = append(validOrgIDs, a.AncestorID)
+	}
+
+	// Query roles
+	rows, err := s.cli.ProjectRole.Query().
+		Where(entprojectrole.OrganisationNodeIDIn(validOrgIDs...)).
+		Order(ent.Asc(entprojectrole.FieldKey)).
+		All(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var result []entities.ProjectRole
-	for _, r := range roles {
-		result = append(result, entities.ProjectRole{
-			ID:   r.ID,
-			Key:  r.Key,
-			Name: r.Name,
+	out := make([]entities.ProjectRole, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, entities.ProjectRole{
+			ID:                 r.ID,
+			Key:                r.Key,
+			Name:               r.Name,
+			OrganisationNodeID: r.OrganisationNodeID,
 		})
 	}
-	return result, nil
+	return out, nil
 }
 
 func (s *service) onStatusChange(ctx context.Context, e events.Event) error {

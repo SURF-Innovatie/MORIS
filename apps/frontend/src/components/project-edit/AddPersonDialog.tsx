@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { usePostPeople, useGetProjectsRoles } from "@api/moris";
+import { usePostPeople, useGetProjectsIdRoles } from "@api/moris";
 import { createProjectRoleAssignedEvent } from "@/api/events";
 
 const addPersonSchema = z.object({
@@ -54,7 +54,7 @@ export function AddPersonDialog({
 
   const { mutateAsync: createPerson, isPending: isCreatingPerson } =
     usePostPeople();
-  const { data: roles, isLoading: isLoadingRoles } = useGetProjectsRoles();
+  const { data: roles, isLoading: isLoadingRoles } = useGetProjectsIdRoles(projectId);
 
   const form = useForm<z.infer<typeof addPersonSchema>>({
     resolver: zodResolver(addPersonSchema),
@@ -188,9 +188,9 @@ export function AddPersonDialog({
                         </div>
                       ) : (
                         roles?.map((r) => (
-                            <SelectItem key={r.id} value={r.id || ""}>
-                              {r.name}
-                            </SelectItem>
+                          <SelectItem key={r.id} value={r.id || ""}>
+                            {r.name}
+                          </SelectItem>
                         ))
                       )}
                     </SelectContent>

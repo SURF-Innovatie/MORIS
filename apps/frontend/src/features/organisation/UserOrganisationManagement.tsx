@@ -1,6 +1,6 @@
 import { useGetOrganisationMembershipsMine } from "@api/moris";
 import { Button } from "@/components/ui/button";
-import { Users, Plus } from "lucide-react";
+import { Plus, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { OrganisationNode } from "./components/OrganisationNode";
 import { CreateChildDialog } from "./components/CreateChildDialog";
@@ -63,7 +63,7 @@ const UserOrganisationNode = ({
               className="h-7 text-xs px-2"
             >
               <Link to={`/dashboard/organisations/${node.id}/members`}>
-                <Users size={14} className="mr-1" /> Members
+                <Settings size={14} className="mr-1" /> Settings
               </Link>
             </Button>
             <CreateChildDialog

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import {
   useGetOrganisationNodesIdMembershipsEffective,
   getGetOrganisationNodesIdMembershipsEffectiveQueryKey,
@@ -30,61 +30,84 @@ import { OrganisationEffectiveMembershipResponse } from "@/api/generated-orval/m
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { ErrorModal } from "@/components/ui/error-modal";
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProjectRolesList } from "./components/ProjectRolesList";
+
 export const RoleManagement = () => {
   const { nodeId } = useParams<{ nodeId: string }>();
   const { data: members, isLoading } =
     useGetOrganisationNodesIdMembershipsEffective(nodeId!);
   const { data: roles } = useGetOrganisationRoles();
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentTab = searchParams.get("tab") || "members";
+
   if (isLoading) return <div>Loading...</div>;
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold">Members & Roles</h2>
-        {nodeId && (
-          <AddMemberDialog
-            nodeId={nodeId}
-            roles={roles || []}
-            members={members || []}
-          />
-        )}
+        <h1 className="text-2xl font-bold">Organisation Settings</h1>
       </div>
 
-      <div className="border rounded-lg overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-50 text-gray-700 font-medium">
-            <tr>
-              <th className="px-4 py-3">User</th>
-              <th className="px-4 py-3">Role</th>
-              <th className="px-4 py-3">Owning Organisation</th>
-              <th className="px-4 py-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {members?.map((m: OrganisationEffectiveMembershipResponse) => (
-              <tr key={m.membershipId} className="bg-white">
-                <td className="px-4 py-3">{m.person?.name}</td>
-                <td className="px-4 py-3 capitalize">{m.roleKey}</td>
-                <td className="px-4 py-3 capitalize">{m.scopeRootOrganisation?.name}</td>
-                <td className="px-4 py-3 text-right">
-                  <RemoveMemberButton
-                    membershipId={m.membershipId!}
-                    nodeId={nodeId!}
-                  />
-                </td>
-              </tr>
-            ))}
-            {members?.length === 0 && (
-              <tr>
-                <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
-                  No members found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Tabs value={currentTab} onValueChange={(val) => setSearchParams({ tab: val })} className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="members">Members & Permissions</TabsTrigger>
+          <TabsTrigger value="project-roles">Project Roles</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="members">
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Members</h2>
+                {nodeId && (
+                <AddMemberDialog
+                    nodeId={nodeId}
+                    roles={roles || []}
+                    members={members || []}
+                />
+                )}
+            </div>
+
+            <div className="border rounded-lg overflow-hidden">
+                <table className="w-full text-sm text-left">
+                <thead className="bg-gray-50 text-gray-700 font-medium">
+                    <tr>
+                    <th className="px-4 py-3">User</th>
+                    <th className="px-4 py-3">Role</th>
+                    <th className="px-4 py-3">Owning Organisation</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y">
+                    {members?.map((m: OrganisationEffectiveMembershipResponse) => (
+                    <tr key={m.membershipId} className="bg-white">
+                        <td className="px-4 py-3">{m.person?.name}</td>
+                        <td className="px-4 py-3 capitalize">{m.roleKey}</td>
+                        <td className="px-4 py-3 capitalize">{m.scopeRootOrganisation?.name}</td>
+                        <td className="px-4 py-3 text-right">
+                        <RemoveMemberButton
+                            membershipId={m.membershipId!}
+                            nodeId={nodeId!}
+                        />
+                        </td>
+                    </tr>
+                    ))}
+                    {members?.length === 0 && (
+                    <tr>
+                        <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                        No members found.
+                        </td>
+                    </tr>
+                    )}
+                </tbody>
+                </table>
+            </div>
+        </TabsContent>
+
+        <TabsContent value="project-roles">
+            {nodeId ? <ProjectRolesList nodeId={nodeId} /> : <div>Invalid Node ID</div>}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

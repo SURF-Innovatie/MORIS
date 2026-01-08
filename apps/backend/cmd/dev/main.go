@@ -114,8 +114,10 @@ func main() {
 	rbacSvc := organisation.NewRBACService(client)
 	rbacHandler := organisationhandler.NewRBACHandler(rbacSvc)
 
+	roleSvc := project.NewRoleService(client)
+	
 	organisationSvc := organisation.NewService(client)
-	organisationHandler := organisationhandler.NewHandler(organisationSvc, rbacSvc)
+	organisationHandler := organisationhandler.NewHandler(organisationSvc, rbacSvc, roleSvc)
 
 	crossrefConfig := &crossref2.Config{
 		BaseURL:   "https://api.crossref.org",
@@ -166,6 +168,7 @@ func main() {
 			r.Use(authmiddleware.AuthMiddleware(authSvc))
 			r.Route("/projects", func(r chi.Router) {
 				projecthandler.MountProjectRoutes(r, projHandler)
+				r.Get("/{id}/roles", projHandler.ListAvailableRoles)
 				commandHandler.MountProjectCommandRouter(r, projCmdHandler)
 			})
 			organisationhandler.MountOrganisationRoutes(r, organisationHandler, rbacHandler)

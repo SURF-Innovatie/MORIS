@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useGetProjectsRoles } from "@api/moris";
+import { useGetProjectsIdRoles } from "@api/moris";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -44,7 +44,7 @@ export function EditRoleDialog({
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: roles, isLoading: isLoadingRoles } = useGetProjectsRoles();
+  const { data: roles, isLoading: isLoadingRoles } = useGetProjectsIdRoles(projectId);
 
   const handleSave = async () => {
     if (!member.id) return;
@@ -104,7 +104,7 @@ export function EditRoleDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {roles?.map((r) => (
-                    <SelectItem key={r.key} value={r.key || ""}>
+                    <SelectItem key={r.id} value={r.id || ""}>
                       {r.name}
                     </SelectItem>
                   ))}

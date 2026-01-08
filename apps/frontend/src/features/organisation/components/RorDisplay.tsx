@@ -7,7 +7,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Check, Copy } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface RorDisplayProps {
   rorId: string;

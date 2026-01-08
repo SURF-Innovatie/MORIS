@@ -7,15 +7,18 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	organisationsvc "github.com/SURF-Innovatie/MORIS/internal/organisation"
+	"github.com/SURF-Innovatie/MORIS/internal/project"
+	"github.com/sirupsen/logrus"
 )
 
 type Handler struct {
-	svc  organisationsvc.Service
-	rbac organisationsvc.RBACService
+	svc     organisationsvc.Service
+	rbac    organisationsvc.RBACService
+	roleSvc project.RoleService
 }
 
-func NewHandler(s organisationsvc.Service, r organisationsvc.RBACService) *Handler {
-	return &Handler{svc: s, rbac: r}
+func NewHandler(s organisationsvc.Service, r organisationsvc.RBACService, rs project.RoleService) *Handler {
+	return &Handler{svc: s, rbac: r, roleSvc: rs}
 }
 
 // CreateRoot godoc
@@ -309,4 +312,154 @@ func (h *Handler) SearchROR(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, items)
+}
+
+// CreateProjectRole godoc
+// @Summary Create a project role for an organisation
+// @Description Creates a new custom project role defined at this organisation node
+// @Tags organisation
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Organisation ID"
+// @Param body body dto.ProjectRoleCreateRequest true "Create role request"
+// @Success 200 {object} dto.ProjectRoleResponse
+// @Failure 401 {string} string "unauthorized"
+// @Failure 403 {string} string "forbidden"
+// @Failure 400 {string} string "invalid id / invalid body"
+// @Failure 500 {string} string "internal server error"
+// @Router /organisation-nodes/{id}/roles [post]
+func (h *Handler) CreateProjectRole(w http.ResponseWriter, r *http.Request) {
+	user, ok := httputil.GetUserFromContext(r.Context())
+	if !ok {
+		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
+		return
+	}
+
+	id, err := httputil.ParseUUIDParam(r, "id")
+	if err != nil {
+		logrus.Debugf("CreateProjectRole: invalid id param: %v", err)
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
+		return
+	}
+
+	hasAccess, err := h.rbac.HasAdminAccess(r.Context(), user.Person.ID, id)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	if !hasAccess {
+		httputil.WriteError(w, r, http.StatusForbidden, "forbidden", nil)
+		return
+	}
+
+	var req dto.ProjectRoleCreateRequest
+	if !httputil.ReadJSON(w, r, &req) {
+		return
+	}
+	if req.Key == "" || req.Name == "" {
+		httputil.WriteError(w, r, http.StatusBadRequest, "key and name are required", nil)
+		return
+	}
+
+	role, err := h.roleSvc.Create(r.Context(), req.Key, req.Name, id)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, dto.ProjectRoleResponse{
+		ID:   role.ID,
+		Key:  role.Key,
+		Name: role.Name,
+	})
+}
+
+// DeleteProjectRole godoc
+// @Summary Delete a project role
+// @Description Deletes a custom project role defined at this organisation node
+// @Tags organisation
+// @Security BearerAuth
+// @Param id path string true "Organisation ID"
+// @Param roleId path string true "Role ID"
+// @Success 204 "no content"
+// @Failure 401 {string} string "unauthorized"
+// @Failure 403 {string} string "forbidden"
+// @Failure 400 {string} string "invalid id"
+// @Failure 500 {string} string "internal server error"
+// @Router /organisation-nodes/{id}/roles/{roleId} [delete]
+func (h *Handler) DeleteProjectRole(w http.ResponseWriter, r *http.Request) {
+	user, ok := httputil.GetUserFromContext(r.Context())
+	if !ok {
+		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
+		return
+	}
+
+	orgID, err := httputil.ParseUUIDParam(r, "id")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid org id", nil)
+		return
+	}
+
+	roleID, err := httputil.ParseUUIDParam(r, "roleId")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid role id", nil)
+		return
+	}
+
+	hasAccess, err := h.rbac.HasAdminAccess(r.Context(), user.Person.ID, orgID)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	if !hasAccess {
+		httputil.WriteError(w, r, http.StatusForbidden, "forbidden", nil)
+		return
+	}
+
+	err = h.roleSvc.Delete(r.Context(), roleID, orgID)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// ListProjectRoles godoc
+// @Summary List project roles defined at an organisation node
+// @Description Returns roles that are available to projects in this organisation (including inherited ones)
+// @Tags organisation
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Organisation ID"
+// @Success 200 {array} dto.ProjectRoleResponse
+// @Failure 401 {string} string "unauthorized"
+// @Failure 400 {string} string "invalid id"
+// @Failure 500 {string} string "internal server error"
+// @Router /organisation-nodes/{id}/roles [get]
+func (h *Handler) ListProjectRoles(w http.ResponseWriter, r *http.Request) {
+	id, err := httputil.ParseUUIDParam(r, "id")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
+		return
+	}
+
+	roles, err := h.roleSvc.ListAvailableForNode(r.Context(), id)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	resps := make([]dto.ProjectRoleResponse, 0, len(roles))
+	for _, role := range roles {
+		resps = append(resps, dto.ProjectRoleResponse{
+			ID:   role.ID,
+			Key:  role.Key,
+			Name: role.Name,
+		})
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, resps)
 }
