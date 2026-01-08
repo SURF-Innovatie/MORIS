@@ -12,6 +12,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	crossref2 "github.com/SURF-Innovatie/MORIS/external/crossref"
 	"github.com/SURF-Innovatie/MORIS/external/orcid"
+	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
 	personsvc "github.com/SURF-Innovatie/MORIS/internal/app/person"
 	appproduct "github.com/SURF-Innovatie/MORIS/internal/app/product"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/cachewarmup"
@@ -39,13 +40,13 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/entclient"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
+	notificationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/notification"
 	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
 	productrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/product"
 	projectmembershiprepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_membership"
 	projectquery "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_query"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/projectrole"
 	userrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/user"
-	"github.com/SURF-Innovatie/MORIS/internal/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/organisation"
 	logger "github.com/chi-middleware/logrus-logger"
 	"github.com/go-chi/chi/v5"
@@ -141,7 +142,8 @@ func main() {
 	crossrefSvc := crossref2.NewService(crossrefConfig)
 	crossrefHandler := crossrefhandler.NewHandler(crossrefSvc)
 
-	notifierSvc := notification.NewService(client)
+	notifRepo := notificationrepo.NewEntRepo(client)
+	notifierSvc := notification.NewService(notifRepo)
 	errorLogSvc := errorlog.NewService(client)
 
 	eventSvc := event.NewService(esStore, client, notifierSvc)

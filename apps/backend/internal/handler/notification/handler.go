@@ -4,95 +4,62 @@ import (
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	appnotif "github.com/SURF-Innovatie/MORIS/internal/app/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
-	"github.com/SURF-Innovatie/MORIS/internal/notification"
-	"github.com/sirupsen/logrus"
 )
 
 type Handler struct {
-	svc notification.Service
+	svc appnotif.Service
 }
 
-func NewHandler(svc notification.Service) *Handler {
+func NewHandler(svc appnotif.Service) *Handler {
 	return &Handler{svc: svc}
 }
 
-// GetNotifications godoc
-// @Summary Get notifications for the logged-in user
-// @Description Retrieves a list of notifications for the authenticated user
+// ListMe godoc
+// @Summary List notifications for current user
 // @Tags notifications
-// @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {array} dto.NotificationResponse
 // @Failure 401 {string} string "unauthorized"
 // @Failure 500 {string} string "internal server error"
-// @Router /notifications [get]
-func (h *Handler) GetNotifications(w http.ResponseWriter, r *http.Request) {
-	user, ok := httputil.GetUserFromContext(r.Context())
-	if !ok || user == nil {
+// @Router /notifications/me [get]
+func (h *Handler) ListMe(w http.ResponseWriter, r *http.Request) {
+	userCtx, ok := httputil.GetUserFromContext(r.Context())
+	if !ok || userCtx == nil {
 		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
 		return
 	}
 
-	notifications, err := h.svc.ListForUser(r.Context(), user.User.ID)
+	notifs, err := h.svc.ListForUser(r.Context(), userCtx.User.ID)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
-		logrus.Errorf("failed to list notifications for user %s: %v", user.User.ID, err)
 		return
 	}
 
-	var dtos []dto.NotificationResponse
-	for _, n := range notifications {
-		dtos = append(dtos, transform.ToDTOItem[dto.NotificationResponse](n))
-	}
-	_ = httputil.WriteJSON(w, http.StatusOK, dtos)
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOs[dto.NotificationResponse](notifs))
 }
 
-// MarkNotificationAsRead godoc
-// @Summary Mark a notification as read
-// @Description Marks a specific notification as read
+// MarkAsRead godoc
+// @Summary Mark notification as read
 // @Tags notifications
-// @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param id path string true "Notification ID"
+// @Param id path string true "Notification ID (UUID)"
 // @Success 200 {string} string "ok"
-// @Failure 401 {string} string "unauthorized"
+// @Failure 400 {string} string "invalid id"
 // @Failure 500 {string} string "internal server error"
-// @Router /notifications/{id}/read [put]
-func (h *Handler) MarkNotificationAsRead(w http.ResponseWriter, r *http.Request) {
-	user, ok := httputil.GetUserFromContext(r.Context())
-	if !ok || user == nil {
-		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
-		return
-	}
-
+// @Router /notifications/{id}/read [post]
+func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
 		return
 	}
 
-	notification, err := h.svc.Get(r.Context(), id)
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusNotFound, err.Error(), nil)
-		return
-	}
-
-	if notification.User.ID != user.User.ID {
-		httputil.WriteError(w, r, http.StatusForbidden, "forbidden", nil)
-		return
-	}
-
-	if notification.Read {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
-	err = h.svc.MarkAsRead(r.Context(), id)
-	if err != nil {
+	if err := h.svc.MarkAsRead(r.Context(), id); err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}

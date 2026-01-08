@@ -7,24 +7,35 @@ import (
 	"github.com/google/uuid"
 )
 
+type NotificationType string
+
+const (
+	NotificationInfo            NotificationType = "info"
+	NotificationApprovalRequest NotificationType = "approval_request"
+	NotificationStatusUpdate    NotificationType = "status_update"
+)
+
 type Notification struct {
-	Id      uuid.UUID
-	User    *ent.User
-	Event   *ent.Event
+	ID      uuid.UUID
+	UserID  uuid.UUID
+	EventID *uuid.UUID // optional
 	Message string
-	Type    string
+	Type    NotificationType
 	Read    bool
 	SentAt  time.Time
 }
 
-func (n *Notification) FromEnt(row *ent.Notification, u *ent.User, e *ent.Event) *Notification {
-	return &Notification{
-		Id:      row.ID,
-		User:    u,
-		Event:   e,
+func (n *Notification) FromEnt(row *ent.Notification) *Notification {
+	out := &Notification{
+		ID:      row.ID,
 		Message: row.Message,
-		Type:    row.Type.String(),
+		Type:    NotificationType(row.Type.String()),
 		Read:    row.Read,
 		SentAt:  row.SentAt,
+		UserID:  row.UserID,
 	}
+	if row.EventID != nil {
+		out.EventID = row.EventID
+	}
+	return out
 }

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
+	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
-	"github.com/SURF-Innovatie/MORIS/internal/notification"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
