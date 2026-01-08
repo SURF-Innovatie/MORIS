@@ -33,11 +33,14 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { usePostPeople, useGetProjectsIdRoles } from "@api/moris";
 import { createProjectRoleAssignedEvent } from "@/api/events";
+import { OrcidSearchSelect } from "@/components/profile/OrcidSearchSelect";
+import { OrcidPerson } from "@api/model";
 
 const addPersonSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   role: z.string().min(1, "Role is required"),
+  orcid: z.string().optional(),
 });
 
 interface AddPersonDialogProps {
@@ -62,6 +65,7 @@ export function AddPersonDialog({
       name: "",
       email: "",
       role: "",
+      orcid: "",
     },
   });
 
@@ -78,13 +82,16 @@ export function AddPersonDialog({
       const givenName = nameParts[0];
       const familyName = nameParts.slice(1).join(" ") || "Unknown";
 
+      const personData: any = {
+        name: values.name,
+        email: values.email,
+        givenName: givenName,
+        familyName: familyName,
+        orcid: values.orcid,
+      };
+
       const person = await createPerson({
-        data: {
-          name: values.name,
-          email: values.email,
-          givenName: givenName,
-          familyName: familyName,
-        },
+        data: personData,
       });
 
       // 2. Assign role to project (effectively adding them)
@@ -116,6 +123,23 @@ export function AddPersonDialog({
     }
   }
 
+  const handleOrcidSelect = (item: OrcidPerson) => {
+      if (item.orcid) {
+          form.setValue("orcid", item.orcid);
+      }
+      
+      let name = "";
+      if (item.credit_name) {
+          name = item.credit_name;
+      } else if (item.first_name || item.last_name) {
+          name = [item.first_name, item.last_name].filter(Boolean).join(" ");
+      }
+
+      if (name) {
+          form.setValue("name", name);
+      }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -133,6 +157,24 @@ export function AddPersonDialog({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            
+            <FormField
+              control={form.control}
+              name="orcid"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Search ORCID (Autofill)</FormLabel>
+                   <FormControl>
+                    <OrcidSearchSelect 
+                        value={field.value}
+                        onSelect={handleOrcidSelect}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="name"
@@ -211,3 +253,4 @@ export function AddPersonDialog({
     </Dialog>
   );
 }
+

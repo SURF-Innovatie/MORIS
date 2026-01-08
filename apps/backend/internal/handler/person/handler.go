@@ -45,6 +45,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		GivenName:  req.GivenName,
 		FamilyName: req.FamilyName,
 		Email:      req.Email,
+		ORCiD:      req.ORCiD,
 	})
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)

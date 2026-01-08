@@ -28,6 +28,7 @@ import (
 	eventHandler "github.com/SURF-Innovatie/MORIS/internal/handler/event"
 	authmiddleware "github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
 	notificationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/notification"
+	orcidhandler "github.com/SURF-Innovatie/MORIS/internal/handler/orcid"
 	organisationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/organisation"
 	personhandler "github.com/SURF-Innovatie/MORIS/internal/handler/person"
 	producthandler "github.com/SURF-Innovatie/MORIS/internal/handler/product"
@@ -105,7 +106,7 @@ func main() {
 	personSvc := person.NewService(client)
 	userSvc := user.NewService(client, personSvc, esStore)
 	authSvc := auth.NewJWTService(client, userSvc, personSvc, env.Global.JWTSecret)
-	orcidSvc := orcid.NewService(client, userSvc)
+	orcidSvc := orcid.NewService(client, userSvc, nil)
 
 	personHandler := personhandler.NewHandler(personSvc)
 	productSvc := product.NewService(client)
@@ -139,8 +140,10 @@ func main() {
 
 	notificationHandler := notificationhandler.NewHandler(notifierSvc)
 
+
 	// Create HTTP handler/controller
 	authHandler := authhandler.NewHandler(userSvc, authSvc, orcidSvc)
+	orcidHandler := orcidhandler.NewHandler(orcidSvc)
 	systemHandler := systemhandler.NewHandler()
 
 	cacheSvc := cache.NewRedisProjectCache(rdb, 24*time.Hour)
@@ -174,12 +177,14 @@ func main() {
 			organisationhandler.MountOrganisationRoutes(r, organisationHandler, rbacHandler)
 			eventHandler.MountEventRoutes(r, evtHandler)
 			personhandler.MountPersonRoutes(r, personHandler)
+			orcidhandler.MountRoutes(r, orcidHandler)
 			producthandler.MountProductRoutes(r, productHandler)
 			notificationhandler.MountNotificationRoutes(r, notificationHandler)
 			userhandler.MountUserRoutes(r, userHandler)
 			crossrefhandler.MountCrossrefRoutes(r, crossrefHandler)
 		})
 	})
+
 
 	// Warmup cache in background
 	go func() {

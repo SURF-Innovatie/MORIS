@@ -97,3 +97,55 @@ func (c *ORCIDConfig) ExchangeCode(ctx context.Context, code string) (string, er
 
 	return result.ORCID, nil
 }
+
+// GetPublicAPIURL returns the base URL for the public API
+func (c *ORCIDConfig) GetPublicAPIURL() string {
+	// ORCID Search API requires the /v3.0/ endpoint
+	// sandbox: https://pub.sandbox.orcid.org/v3.0/
+	// production: https://pub.orcid.org/v3.0/
+	
+	if strings.Contains(c.AuthURL, "sandbox") {
+		return "https://pub.sandbox.orcid.org/v3.0"
+	}
+	return "https://pub.orcid.org/v3.0"
+}
+
+// GetClientCredentialsToken retrieves an access token using client_credentials flow for public API access
+func (c *ORCIDConfig) GetClientCredentialsToken(ctx context.Context) (string, error) {
+	data := url.Values{}
+	data.Set("client_id", c.ClientID)
+	data.Set("client_secret", c.ClientSecret)
+	data.Set("grant_type", "client_credentials")
+	data.Set("scope", "/read-public")
+
+	req, err := http.NewRequestWithContext(ctx, "POST", c.TokenURL, strings.NewReader(data.Encode()))
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to obtain token: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("failed to obtain token, status: %d", resp.StatusCode)
+	}
+
+	var result struct {
+		AccessToken string `json:"access_token"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if result.AccessToken == "" {
+		return "", fmt.Errorf("no access token returned")
+	}
+
+	return result.AccessToken, nil
+}
