@@ -13,6 +13,7 @@ import (
 	crossref2 "github.com/SURF-Innovatie/MORIS/external/crossref"
 	"github.com/SURF-Innovatie/MORIS/external/orcid"
 	personsvc "github.com/SURF-Innovatie/MORIS/internal/app/person"
+	appproduct "github.com/SURF-Innovatie/MORIS/internal/app/product"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/cachewarmup"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/command"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/load"
@@ -39,13 +40,13 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/entclient"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
+	productrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/product"
 	projectmembershiprepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_membership"
 	projectquery "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_query"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/projectrole"
 	userrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/user"
 	"github.com/SURF-Innovatie/MORIS/internal/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/organisation"
-	"github.com/SURF-Innovatie/MORIS/internal/product"
 	logger "github.com/chi-middleware/logrus-logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -119,10 +120,12 @@ func main() {
 	userSvc := user.NewService(userRepo, personSvc, esStore, membershipRepo)
 	authSvc := auth.NewJWTService(client, userSvc, personSvc, env.Global.JWTSecret)
 	orcidSvc := orcid.NewService(client, userSvc)
+	curUser := auth.NewCurrentUserProvider(client)
 
 	personHandler := personhandler.NewHandler(personSvc)
-	productSvc := product.NewService(client)
-	productHandler := producthandler.NewHandler(productSvc)
+	productRepo := productrepo.NewEntRepo(client)
+	productSvc := appproduct.NewService(productRepo)
+	productHandler := producthandler.NewHandler(productSvc, curUser)
 
 	rbacSvc := organisation.NewRBACService(client)
 	rbacHandler := organisationhandler.NewRBACHandler(rbacSvc)
@@ -166,7 +169,6 @@ func main() {
 	ldr := load.New(esStore, cacheSvc)
 	warmup := cachewarmup.NewService(repo, ldr, cacheSvc)
 	entProv := entclient.New(client)
-	curUser := auth.NewCurrentUserProvider(client)
 	roleRepo := projectrole.NewRepository(client)
 
 	projSvc := queries.NewService(esStore, ldr, repo, roleRepo, curUser)
