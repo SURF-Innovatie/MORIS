@@ -16,7 +16,6 @@ type ProjectReadRepository interface {
 
 	ProjectIDsForPerson(ctx context.Context, personID uuid.UUID) ([]uuid.UUID, error)
 
-	ListProjectRoles(ctx context.Context) ([]entities.ProjectRole, error)
 	ProjectIDsStarted(ctx context.Context) ([]uuid.UUID, error)
 }
 

@@ -7,10 +7,10 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	userent "github.com/SURF-Innovatie/MORIS/ent/user"
+	"github.com/SURF-Innovatie/MORIS/internal/app/person"
+	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	coreauth "github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/person"
-	"github.com/SURF-Innovatie/MORIS/internal/user"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
