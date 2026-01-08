@@ -1,9 +1,9 @@
 package dto
 
 import (
+	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/organisation"
 	"github.com/google/uuid"
 )
 
@@ -75,7 +75,7 @@ type OrganisationEffectiveMembershipResponse struct {
 	HasAdminRights bool      `json:"hasAdminRights"`
 }
 
-func (r OrganisationEffectiveMembershipResponse) FromEntity(e organisation.EffectiveMembership) OrganisationEffectiveMembershipResponse {
+func (r OrganisationEffectiveMembershipResponse) FromEntity(e organisationrbac.EffectiveMembership) OrganisationEffectiveMembershipResponse {
 	return OrganisationEffectiveMembershipResponse{
 		MembershipID:          e.MembershipID,
 		Person:                transform.ToDTOItem[PersonResponse](e.Person),

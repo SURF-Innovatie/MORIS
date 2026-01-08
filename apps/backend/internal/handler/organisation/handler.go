@@ -4,17 +4,18 @@ import (
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	organisationsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation"
+	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
-	organisationsvc "github.com/SURF-Innovatie/MORIS/internal/organisation"
 )
 
 type Handler struct {
 	svc  organisationsvc.Service
-	rbac organisationsvc.RBACService
+	rbac rbacsvc.Service
 }
 
-func NewHandler(s organisationsvc.Service, r organisationsvc.RBACService) *Handler {
+func NewHandler(s organisationsvc.Service, r rbacsvc.Service) *Handler {
 	return &Handler{svc: s, rbac: r}
 }
 

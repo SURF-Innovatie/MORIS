@@ -13,6 +13,8 @@ import (
 	crossref2 "github.com/SURF-Innovatie/MORIS/external/crossref"
 	"github.com/SURF-Innovatie/MORIS/external/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
+	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
+	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	personsvc "github.com/SURF-Innovatie/MORIS/internal/app/person"
 	appproduct "github.com/SURF-Innovatie/MORIS/internal/app/product"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/cachewarmup"
@@ -41,13 +43,14 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/entclient"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	notificationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/notification"
+	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
+	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation_rbac"
 	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
 	productrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/product"
 	projectmembershiprepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_membership"
 	projectquery "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_query"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/projectrole"
 	userrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/user"
-	"github.com/SURF-Innovatie/MORIS/internal/organisation"
 	logger "github.com/chi-middleware/logrus-logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -128,10 +131,13 @@ func main() {
 	productSvc := appproduct.NewService(productRepo)
 	productHandler := producthandler.NewHandler(productSvc, curUser)
 
-	rbacSvc := organisation.NewRBACService(client)
+	orgRepo := organisationrepo.NewEntRepo(client)
+	rbacRepo := organisationrbacrepo.NewEntRepo(client)
+
+	rbacSvc := organisationrbac.NewService(rbacRepo)
 	rbacHandler := organisationhandler.NewRBACHandler(rbacSvc)
 
-	organisationSvc := organisation.NewService(client)
+	organisationSvc := organisation.NewService(orgRepo)
 	organisationHandler := organisationhandler.NewHandler(organisationSvc, rbacSvc)
 
 	crossrefConfig := &crossref2.Config{

@@ -4,16 +4,16 @@ import (
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
-	organisationsvc "github.com/SURF-Innovatie/MORIS/internal/organisation"
 )
 
 type RBACHandler struct {
-	rbac organisationsvc.RBACService
+	rbac rbacsvc.Service
 }
 
-func NewRBACHandler(r organisationsvc.RBACService) *RBACHandler {
+func NewRBACHandler(r rbacsvc.Service) *RBACHandler {
 	return &RBACHandler{rbac: r}
 }
 
