@@ -39,3 +39,23 @@ func (r OrganisationResponse) FromEntity(n entities.OrganisationNode) Organisati
 		RorID:    n.RorID,
 	}
 }
+
+type CustomFieldDefinitionCreateRequest struct {
+	Name            string  `json:"name"`
+	Type            string  `json:"type" example:"TEXT"` // TEXT, NUMBER, BOOLEAN, DATE
+	Description     *string `json:"description"`
+	Required        bool    `json:"required"`
+	ValidationRegex *string `json:"validation_regex"`
+	ExampleValue    *string `json:"example_value"`
+}
+
+type CustomFieldDefinitionResponse struct {
+	ID                 uuid.UUID `json:"id"`
+	OrganisationNodeID uuid.UUID `json:"organisation_node_id"`
+	Name               string    `json:"name"`
+	Type               string    `json:"type"`
+	Description        string    `json:"description"`
+	Required           bool      `json:"required"`
+	ValidationRegex    string    `json:"validation_regex"`
+	ExampleValue       string    `json:"example_value"`
+}

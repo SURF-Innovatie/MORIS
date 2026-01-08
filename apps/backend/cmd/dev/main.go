@@ -19,6 +19,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	crossref2 "github.com/SURF-Innovatie/MORIS/external/crossref"
 	"github.com/SURF-Innovatie/MORIS/external/orcid"
+	"github.com/SURF-Innovatie/MORIS/internal/customfield"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/env"
 	"github.com/SURF-Innovatie/MORIS/internal/errorlog"
@@ -116,9 +117,10 @@ func main() {
 	rbacHandler := organisationhandler.NewRBACHandler(rbacSvc)
 
 	roleSvc := project.NewRoleService(client)
+	customFieldSvc := customfield.NewService(client)
 	
 	organisationSvc := organisation.NewService(client)
-	organisationHandler := organisationhandler.NewHandler(organisationSvc, rbacSvc, roleSvc)
+	organisationHandler := organisationhandler.NewHandler(organisationSvc, rbacSvc, roleSvc, customFieldSvc)
 
 	crossrefConfig := &crossref2.Config{
 		BaseURL:   "https://api.crossref.org",
@@ -150,7 +152,7 @@ func main() {
 	refreshSvc := cache.NewEventstoreProjectCacheRefresher(esStore, cacheSvc)
 
 	projSvc := project.NewService(esStore, client, eventSvc, cacheSvc, refreshSvc)
-	projHandler := projecthandler.NewHandler(projSvc)
+	projHandler := projecthandler.NewHandler(projSvc, customFieldSvc)
 
 	projCmdSvc := command.NewService(esStore, client, eventSvc, cacheSvc, refreshSvc)
 	projCmdHandler := commandHandler.NewHandler(projCmdSvc)

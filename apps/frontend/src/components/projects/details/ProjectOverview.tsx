@@ -2,7 +2,8 @@ import { format } from "date-fns";
 import { Calendar, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ProjectResponse } from "@api/model";
+import { ProjectResponse, CustomFieldDefinitionResponse } from "@api/model";
+import { useGetOrganisationNodesIdCustomFields } from "@api/moris";
 
 interface ProjectOverviewProps {
     project: ProjectResponse;
@@ -23,6 +24,11 @@ const getProjectStatus = (project: ProjectResponse) => {
 
 export function ProjectOverview({ project }: ProjectOverviewProps) {
     const status = getProjectStatus(project);
+
+    const { data: customFields } = useGetOrganisationNodesIdCustomFields(
+        project.owning_org_node?.id!,
+        { query: { enabled: !!project.owning_org_node?.id } }
+    );
 
     return (
         <Card>
@@ -72,6 +78,38 @@ export function ProjectOverview({ project }: ProjectOverviewProps) {
                                 </span>
                             </div>
                         </div>
+
+                        {/* Custom Fields Display */}
+                        {project.custom_fields && Object.keys(project.custom_fields).length > 0 && customFields && (
+                            <div>
+                                <h3 className="text-sm font-medium text-muted-foreground mb-2 mt-4">
+                                    Additional Information
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {Object.entries(project.custom_fields).map(([id, value]) => {
+                                        const def = customFields.find(f => f.id === id);
+                                        if (!def) return null;
+                                        
+                                        let displayValue = String(value);
+                                        if (def.type === "BOOLEAN") displayValue = value ? "Yes" : "No";
+                                        if (def.type === "DATE" && value) {
+                                            try {
+                                                displayValue = format(new Date(value as string), "MMMM d, yyyy");
+                                            } catch (e) {
+                                                displayValue = String(value);
+                                            }
+                                        }
+
+                                        return (
+                                            <div key={id}>
+                                                <p className="text-xs text-muted-foreground">{def.name}</p>
+                                                <p className="text-sm font-medium">{displayValue}</p>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </CardContent>

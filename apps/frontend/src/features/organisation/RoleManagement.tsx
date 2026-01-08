@@ -32,6 +32,7 @@ import { ErrorModal } from "@/components/ui/error-modal";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjectRolesList } from "./components/ProjectRolesList";
+import { CustomFieldDefinitionsList } from "./components/CustomFieldDefinitionsList";
 
 export const RoleManagement = () => {
   const { nodeId } = useParams<{ nodeId: string }>();
@@ -54,6 +55,7 @@ export const RoleManagement = () => {
         <TabsList className="mb-4">
           <TabsTrigger value="members">Members & Permissions</TabsTrigger>
           <TabsTrigger value="project-roles">Project Roles</TabsTrigger>
+          <TabsTrigger value="custom-fields">Custom Fields</TabsTrigger>
         </TabsList>
 
         <TabsContent value="members">
@@ -106,6 +108,10 @@ export const RoleManagement = () => {
 
         <TabsContent value="project-roles">
             {nodeId ? <ProjectRolesList nodeId={nodeId} /> : <div>Invalid Node ID</div>}
+        </TabsContent>
+
+        <TabsContent value="custom-fields">
+            {nodeId ? <CustomFieldDefinitionsList nodeId={nodeId} /> : <div>Invalid Node ID</div>}
         </TabsContent>
       </Tabs>
     </div>

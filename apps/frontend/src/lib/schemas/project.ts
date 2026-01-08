@@ -6,6 +6,7 @@ export const projectFormSchema = z.object({
     startDate: z.date(),
     endDate: z.date(),
     organisationID: z.string().uuid("Invalid organisation ID"),
+    customFields: z.record(z.any()).optional(),
 });
 
 export type ProjectFormValues = z.infer<typeof projectFormSchema>;

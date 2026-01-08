@@ -17,10 +17,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { createProjectStartedEvent } from "@/api/events";
+import { createProjectStartedEvent, createCustomFieldValueSetEvent } from "@/api/events";
 
 import { projectFormSchema } from "@/lib/schemas/project";
 import { ProjectFields } from "@/components/project-form/ProjectFields";
+import { CustomFieldsRenderer } from "@/components/project-form/CustomFieldsRenderer";
 import { EMPTY_UUID } from "@/lib/constants";
 
 export default function CreateProjectRoute() {
@@ -50,6 +51,22 @@ export default function CreateProjectRoute() {
         members_ids: [],
         owning_org_node_id: values.organisationID,
       });
+
+      // Handle Custom Fields separately
+      if (values.customFields) {
+          const promises = Object.entries(values.customFields).map(([defId, value]) => {
+              let valStr = String(value);
+              if (value instanceof Date) valStr = value.toISOString();
+              
+              return createCustomFieldValueSetEvent(newProjectId, {
+                  project_id: newProjectId,
+                  definition_id: defId,
+                  value: valStr, // Sending string for now.
+              });
+          });
+          await Promise.all(promises);
+      }
+
       toast({
         title: "Project created",
         description: "The new project has been successfully created.",
@@ -93,6 +110,8 @@ export default function CreateProjectRoute() {
               </FormItem>
             )}
           />
+
+          <CustomFieldsRenderer form={form} organisationId={form.watch("organisationID")} />
 
           <div className="flex justify-end gap-4">
             <Button

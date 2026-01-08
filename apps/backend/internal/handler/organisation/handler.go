@@ -7,18 +7,20 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	organisationsvc "github.com/SURF-Innovatie/MORIS/internal/organisation"
+	"github.com/SURF-Innovatie/MORIS/internal/customfield"
 	"github.com/SURF-Innovatie/MORIS/internal/project"
 	"github.com/sirupsen/logrus"
 )
 
 type Handler struct {
-	svc     organisationsvc.Service
-	rbac    organisationsvc.RBACService
-	roleSvc project.RoleService
+	svc            organisationsvc.Service
+	rbac           organisationsvc.RBACService
+	roleSvc        project.RoleService
+	customFieldSvc customfield.Service
 }
 
-func NewHandler(s organisationsvc.Service, r organisationsvc.RBACService, rs project.RoleService) *Handler {
-	return &Handler{svc: s, rbac: r, roleSvc: rs}
+func NewHandler(s organisationsvc.Service, r organisationsvc.RBACService, rs project.RoleService, cfs customfield.Service) *Handler {
+	return &Handler{svc: s, rbac: r, roleSvc: rs, customFieldSvc: cfs}
 }
 
 // CreateRoot godoc
@@ -458,6 +460,165 @@ func (h *Handler) ListProjectRoles(w http.ResponseWriter, r *http.Request) {
 			ID:   role.ID,
 			Key:  role.Key,
 			Name: role.Name,
+		})
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, resps)
+}
+
+// CreateCustomField godoc
+// @Summary Create a custom field definition for an organisation
+// @Description Creates a new custom field definition at this organisation node
+// @Tags organisation
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Organisation ID"
+// @Param body body dto.CustomFieldDefinitionCreateRequest true "Create custom field definition request"
+// @Success 200 {object} dto.CustomFieldDefinitionResponse
+// @Failure 401 {string} string "unauthorized"
+// @Failure 403 {string} string "forbidden"
+// @Failure 400 {string} string "invalid id / invalid body"
+// @Failure 500 {string} string "internal server error"
+// @Router /organisation-nodes/{id}/custom-fields [post]
+func (h *Handler) CreateCustomField(w http.ResponseWriter, r *http.Request) {
+	user, ok := httputil.GetUserFromContext(r.Context())
+	if !ok {
+		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
+		return
+	}
+
+	id, err := httputil.ParseUUIDParam(r, "id")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
+		return
+	}
+
+	hasAccess, err := h.rbac.HasAdminAccess(r.Context(), user.Person.ID, id)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	if !hasAccess {
+		httputil.WriteError(w, r, http.StatusForbidden, "forbidden", nil)
+		return
+	}
+
+	var req dto.CustomFieldDefinitionCreateRequest
+	if !httputil.ReadJSON(w, r, &req) {
+		return
+	}
+	if req.Name == "" || req.Type == "" {
+		httputil.WriteError(w, r, http.StatusBadRequest, "name and type are required", nil)
+		return
+	}
+
+	fd, err := h.customFieldSvc.Create(r.Context(), id, req.Name, req.Type, req.Description, req.ValidationRegex, req.ExampleValue, req.Required)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, dto.CustomFieldDefinitionResponse{
+		ID:                 fd.ID,
+		OrganisationNodeID: fd.OrganisationNodeID,
+		Name:               fd.Name,
+		Type:               string(fd.Type),
+		Description:        fd.Description,
+		Required:           fd.Required,
+		ValidationRegex:    fd.ValidationRegex,
+		ExampleValue:       fd.ExampleValue,
+	})
+}
+
+// DeleteCustomField godoc
+// @Summary Delete a custom field definition
+// @Description Deletes a custom field definition at this organisation node
+// @Tags organisation
+// @Security BearerAuth
+// @Param id path string true "Organisation ID"
+// @Param fieldId path string true "Field Definition ID"
+// @Success 204 "no content"
+// @Failure 401 {string} string "unauthorized"
+// @Failure 403 {string} string "forbidden"
+// @Failure 400 {string} string "invalid id"
+// @Failure 500 {string} string "internal server error"
+// @Router /organisation-nodes/{id}/custom-fields/{fieldId} [delete]
+func (h *Handler) DeleteCustomField(w http.ResponseWriter, r *http.Request) {
+	user, ok := httputil.GetUserFromContext(r.Context())
+	if !ok {
+		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
+		return
+	}
+
+	orgID, err := httputil.ParseUUIDParam(r, "id")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid org id", nil)
+		return
+	}
+
+	fieldID, err := httputil.ParseUUIDParam(r, "fieldId")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid field id", nil)
+		return
+	}
+
+	hasAccess, err := h.rbac.HasAdminAccess(r.Context(), user.Person.ID, orgID)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	if !hasAccess {
+		httputil.WriteError(w, r, http.StatusForbidden, "forbidden", nil)
+		return
+	}
+
+	err = h.customFieldSvc.Delete(r.Context(), fieldID, orgID)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// ListCustomFields godoc
+// @Summary List custom field definitions at an organisation node
+// @Description Returns definitions that are available to projects in this organisation (including inherited ones)
+// @Tags organisation
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Organisation ID"
+// @Success 200 {array} dto.CustomFieldDefinitionResponse
+// @Failure 401 {string} string "unauthorized"
+// @Failure 400 {string} string "invalid id"
+// @Failure 500 {string} string "internal server error"
+// @Router /organisation-nodes/{id}/custom-fields [get]
+func (h *Handler) ListCustomFields(w http.ResponseWriter, r *http.Request) {
+	id, err := httputil.ParseUUIDParam(r, "id")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
+		return
+	}
+
+	defs, err := h.customFieldSvc.ListAvailableForNode(r.Context(), id)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	resps := make([]dto.CustomFieldDefinitionResponse, 0, len(defs))
+	for _, d := range defs {
+		resps = append(resps, dto.CustomFieldDefinitionResponse{
+			ID:                 d.ID,
+			OrganisationNodeID: d.OrganisationNodeID,
+			Name:               d.Name,
+			Type:               string(d.Type),
+			Description:        d.Description,
+			Required:           d.Required,
+			ValidationRegex:    d.ValidationRegex,
+			ExampleValue:       d.ExampleValue,
 		})
 	}
 

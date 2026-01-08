@@ -9,14 +9,16 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/SURF-Innovatie/MORIS/internal/project"
+	"github.com/SURF-Innovatie/MORIS/internal/customfield"
 )
 
 type Handler struct {
-	svc project.Service
+	svc            project.Service
+	customFieldSvc customfield.Service
 }
 
-func NewHandler(svc project.Service) *Handler {
-	return &Handler{svc: svc}
+func NewHandler(svc project.Service, cfs customfield.Service) *Handler {
+	return &Handler{svc: svc, customFieldSvc: cfs}
 }
 
 // GetProject godoc
@@ -189,4 +191,54 @@ func (h *Handler) GetAllowedEvents(w http.ResponseWriter, r *http.Request) {
 	allowedEvents := events.GetRegisteredEventTypes()
 
 	_ = httputil.WriteJSON(w, http.StatusOK, allowedEvents)
+}
+
+// ListAvailableCustomFields godoc
+// @Summary List available custom fields for a project
+// @Description Retrieves all custom fields available to be populated in a project (inherited from organisation hierarchy)
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Project ID (UUID)"
+// @Success 200 {array} dto.CustomFieldDefinitionResponse
+// @Failure 400 {string} string "invalid project id"
+// @Failure 500 {string} string "internal server error"
+// @Router /projects/{id}/custom-fields [get]
+func (h *Handler) ListAvailableCustomFields(w http.ResponseWriter, r *http.Request) {
+	id, err := httputil.ParseUUIDParam(r, "id")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
+		return
+	}
+
+	// 1. Get Project to find OwningOrgNode
+	proj, err := h.svc.GetProject(r.Context(), id)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusNotFound, "project not found", nil)
+		return
+	}
+
+	// 2. List definitions for that Org Node
+	defs, err := h.customFieldSvc.ListAvailableForNode(r.Context(), proj.OwningOrgNode.ID)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	resps := make([]dto.CustomFieldDefinitionResponse, 0, len(defs))
+	for _, d := range defs {
+		resps = append(resps, dto.CustomFieldDefinitionResponse{
+			ID:                 d.ID,
+			OrganisationNodeID: d.OrganisationNodeID,
+			Name:               d.Name,
+			Type:               string(d.Type),
+			Description:        d.Description,
+			Required:           d.Required,
+			ValidationRegex:    d.ValidationRegex,
+			ExampleValue:       d.ExampleValue,
+		})
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, resps)
 }

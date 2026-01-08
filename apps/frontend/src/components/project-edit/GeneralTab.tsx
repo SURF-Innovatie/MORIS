@@ -13,6 +13,7 @@ import {
 import { ProjectFormValues } from "@/lib/schemas/project";
 import { ProjectResponse } from "@api/model";
 import { ProjectFields } from "@/components/project-form/ProjectFields";
+import { CustomFieldsRenderer } from "@/components/project-form/CustomFieldsRenderer";
 import { useAccess } from "@/context/AccessContext";
 import { ProjectEventType } from "@/api/events";
 
@@ -57,6 +58,10 @@ export function GeneralTab({
                 className="space-y-6"
               >
                 <ProjectFields form={form} disabledFields={disabledFields} />
+                
+                {project?.owning_org_node?.id && (
+                    <CustomFieldsRenderer form={form} organisationId={project.owning_org_node.id} />
+                )}
 
                 <div className="flex justify-start">
                   <Button type="submit" disabled={isUpdating || !oneFieldEditable}>

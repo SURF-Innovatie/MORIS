@@ -15,6 +15,7 @@ import {
   createStartDateChangedEvent,
   createEndDateChangedEvent,
   createOwningOrgNodeChangedEvent,
+  createCustomFieldValueSetEvent,
 } from "@/api/events";
 
 import { GeneralTab } from "@/components/project-edit/GeneralTab";
@@ -81,6 +82,7 @@ function ProjectEditForm() {
           : undefined,
         endDate: project.end_date ? new Date(project.end_date) : undefined,
         organisationID: project.owning_org_node?.id || EMPTY_UUID,
+        customFields: project.custom_fields || {},
       });
     }
   }, [project, form]);
@@ -134,6 +136,30 @@ function ProjectEditForm() {
             owning_org_node_id: values.organisationID,
           })
         );
+      }
+
+      // Handle Custom Fields updates
+      if (values.customFields) {
+        const currentFields = project.custom_fields || {};
+        Object.entries(values.customFields).map(([defId, value]) => {
+          let valStr = String(value);
+          if (value instanceof Date) valStr = value.toISOString();
+          
+          let currentValStr = String(currentFields[defId]);
+          // Handle Date comparison if needed, or if current is undefined
+          if (currentFields[defId] === undefined) currentValStr = "";
+
+          if (valStr !== currentValStr) {
+             // For Boolean: form true -> "true", current true (bool) -> "true"
+             promises.push(
+               createCustomFieldValueSetEvent(id!, {
+                 project_id: id!,
+                 definition_id: defId,
+                 value: valStr,
+               })
+             );
+          }
+        });
       }
 
       if (promises.length === 0) {

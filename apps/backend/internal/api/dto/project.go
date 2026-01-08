@@ -57,6 +57,7 @@ type ProjectResponse struct {
 	OwningOrgNode OrganisationResponse    `json:"owning_org_node"`
 	Members       []ProjectMemberResponse `json:"members"`
 	Products      []ProductResponse       `json:"products"`
+	CustomFields  map[string]interface{}  `json:"custom_fields"`
 }
 
 func (r ProjectResponse) FromEntity(d *entities.ProjectDetails) ProjectResponse {
@@ -70,5 +71,6 @@ func (r ProjectResponse) FromEntity(d *entities.ProjectDetails) ProjectResponse 
 		OwningOrgNode: transform.ToDTOItem[OrganisationResponse](d.OwningOrgNode),
 		Members:       transform.ToDTOs[ProjectMemberResponse](d.Members),
 		Products:      transform.ToDTOs[ProductResponse](d.Products),
+		CustomFields:  d.Project.CustomFields,
 	}
 }
