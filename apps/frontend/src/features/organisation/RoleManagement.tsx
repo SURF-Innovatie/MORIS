@@ -41,6 +41,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjectRolesList } from "./components/ProjectRolesList";
 import { CustomFieldDefinitionsList } from "./components/CustomFieldDefinitionsList";
 
+import { OrganisationEditTab } from "./components/OrganisationEditTab";
+
 export const RoleManagement = () => {
   const { nodeId } = useParams<{ nodeId: string }>();
   const { data: members, isLoading } =
@@ -63,6 +65,7 @@ export const RoleManagement = () => {
           <TabsTrigger value="members">Members & Permissions</TabsTrigger>
           <TabsTrigger value="project-roles">Project Roles</TabsTrigger>
           <TabsTrigger value="custom-fields">Custom Fields</TabsTrigger>
+          <TabsTrigger value="edit">Edit</TabsTrigger>
         </TabsList>
 
         <TabsContent value="members">
@@ -123,6 +126,10 @@ export const RoleManagement = () => {
 
         <TabsContent value="custom-fields">
             {nodeId ? <CustomFieldDefinitionsList nodeId={nodeId} /> : <div>Invalid Node ID</div>}
+        </TabsContent>
+
+        <TabsContent value="edit">
+             {nodeId ? <OrganisationEditTab nodeId={nodeId} /> : <div>Invalid Node ID</div>}
         </TabsContent>
       </Tabs>
     </div>

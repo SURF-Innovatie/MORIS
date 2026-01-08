@@ -10,9 +10,9 @@ import (
 type Repository interface {
 	WithTx(ctx context.Context, fn func(ctx context.Context, tx Repository) error) error
 
-	CreateNode(ctx context.Context, name string, parentID *uuid.UUID, rorID *string) (*entities.OrganisationNode, error)
+	CreateNode(ctx context.Context, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error)
 	GetNode(ctx context.Context, id uuid.UUID) (*entities.OrganisationNode, error)
-	UpdateNode(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string) (*entities.OrganisationNode, error)
+	UpdateNode(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error)
 
 	ListRoots(ctx context.Context) ([]entities.OrganisationNode, error)
 	ListChildren(ctx context.Context, parentID uuid.UUID) ([]entities.OrganisationNode, error)

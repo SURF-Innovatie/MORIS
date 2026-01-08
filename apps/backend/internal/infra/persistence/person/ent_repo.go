@@ -54,7 +54,8 @@ func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, p entities.Person) (
 		SetNillableFamilyName(p.FamilyName).
 		SetEmail(p.Email).
 		SetNillableAvatarURL(p.AvatarUrl).
-		SetNillableDescription(p.Description)
+		SetNillableDescription(p.Description).
+		SetOrgCustomFields(p.OrgCustomFields)
 
 	q.SetNillableOrcidID(p.ORCiD)
 

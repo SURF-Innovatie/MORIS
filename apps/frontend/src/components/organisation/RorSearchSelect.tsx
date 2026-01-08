@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGetOrganisationNodesRorSearch } from "@api/moris";
 import { RORItem } from "@api/model";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,35 @@ export const RorSearchSelect = ({ value, onSelect, disabled }: RorSearchSelectPr
         { query: { enabled: open && query.length > 2 } }
     );
 
+    // Effect to fetch details if value is provided but we don't have the item (initial load)
+    // We reuse the search endpoint which supports searching by ID
+    const { data: valueLookup } = useGetOrganisationNodesRorSearch(
+        { q: value || "" },
+        { 
+            query: { 
+                enabled: !!value && !selectedItem,
+                staleTime: Infinity // Keep it cached
+            } 
+        }
+    );
+
+    useEffect(() => {
+        if (value && !selectedItem && valueLookup && valueLookup.length > 0) {
+            // Try to find exact ID match first
+            const match = valueLookup.find(i => i.id === value) || valueLookup[0];
+            if (match) {
+                setSelectedItem(match);
+            }
+        }
+    }, [value, selectedItem, valueLookup]);
+
+    // If value changes to undefined externally, clear selection
+    useEffect(() => {
+        if (!value && selectedItem) {
+            setSelectedItem(null);
+        }
+    }, [value]);
+
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -35,11 +64,11 @@ export const RorSearchSelect = ({ value, onSelect, disabled }: RorSearchSelectPr
                     className="w-full justify-between"
                     disabled={disabled}
                 >
-                    {selectedItem ? (
+                    {selectedItem || (value && valueLookup?.[0]) ? (
                         <div className="flex items-center gap-2 overflow-hidden">
                             <RorIcon width={16} height={16} className="shrink-0" />
                             <span className="truncate">
-                                {selectedItem.name} <span className="text-muted-foreground font-normal">({selectedItem.id?.replace(/^https?:\/\/ror\.org\//, "")})</span>
+                                {(selectedItem || valueLookup?.[0])?.name} <span className="text-muted-foreground font-normal">({(selectedItem || valueLookup?.[0])?.id?.replace(/^https?:\/\/ror\.org\//, "")})</span>
                             </span>
                         </div>
                     ) : (

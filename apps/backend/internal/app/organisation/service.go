@@ -9,11 +9,11 @@ import (
 )
 
 type Service interface {
-	CreateRoot(ctx context.Context, name string, rorID *string) (*entities.OrganisationNode, error)
-	CreateChild(ctx context.Context, parentID uuid.UUID, name string, rorID *string) (*entities.OrganisationNode, error)
+	CreateRoot(ctx context.Context, name string, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error)
+	CreateChild(ctx context.Context, parentID uuid.UUID, name string, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error)
 
 	Get(ctx context.Context, id uuid.UUID) (*entities.OrganisationNode, error)
-	Update(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string) (*entities.OrganisationNode, error)
+	Update(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error)
 
 	ListRoots(ctx context.Context) ([]entities.OrganisationNode, error)
 	ListChildren(ctx context.Context, parentID uuid.UUID) ([]entities.OrganisationNode, error)
@@ -29,10 +29,10 @@ func NewService(repo Repository, personRepo PersonRepository) Service {
 	return &service{repo: repo, personRepo: personRepo}
 }
 
-func (s *service) CreateRoot(ctx context.Context, name string, rorID *string) (*entities.OrganisationNode, error) {
+func (s *service) CreateRoot(ctx context.Context, name string, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error) {
 	var out *entities.OrganisationNode
 	err := s.repo.WithTx(ctx, func(ctx context.Context, tx Repository) error {
-		row, err := tx.CreateNode(ctx, name, nil, rorID)
+		row, err := tx.CreateNode(ctx, name, nil, rorID, description, avatarURL)
 		if err != nil {
 			return err
 		}
@@ -45,7 +45,7 @@ func (s *service) CreateRoot(ctx context.Context, name string, rorID *string) (*
 	return out, err
 }
 
-func (s *service) CreateChild(ctx context.Context, parentID uuid.UUID, name string, rorID *string) (*entities.OrganisationNode, error) {
+func (s *service) CreateChild(ctx context.Context, parentID uuid.UUID, name string, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error) {
 	var out *entities.OrganisationNode
 	err := s.repo.WithTx(ctx, func(ctx context.Context, tx Repository) error {
 		// ensure parent exists
@@ -53,7 +53,7 @@ func (s *service) CreateChild(ctx context.Context, parentID uuid.UUID, name stri
 			return err
 		}
 
-		row, err := tx.CreateNode(ctx, name, &parentID, rorID)
+		row, err := tx.CreateNode(ctx, name, &parentID, rorID, description, avatarURL)
 		if err != nil {
 			return err
 		}
@@ -116,7 +116,7 @@ func (s *service) UpdateMemberCustomFields(ctx context.Context, orgID uuid.UUID,
 	return err
 }
 
-func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string) (*entities.OrganisationNode, error) {
+func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error) {
 	var out *entities.OrganisationNode
 	err := s.repo.WithTx(ctx, func(ctx context.Context, tx Repository) error {
 		cur, err := tx.GetNode(ctx, id)
@@ -127,7 +127,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentI
 			return fmt.Errorf("node cannot be its own parent")
 		}
 
-		row, err := tx.UpdateNode(ctx, id, name, parentID, rorID)
+		row, err := tx.UpdateNode(ctx, id, name, parentID, rorID, description, avatarURL)
 		if err != nil {
 			return err
 		}

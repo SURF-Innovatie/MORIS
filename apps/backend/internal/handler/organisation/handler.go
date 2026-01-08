@@ -59,7 +59,7 @@ func (h *Handler) CreateRoot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	node, err := h.svc.CreateRoot(r.Context(), req.Name, req.RorID)
+	node, err := h.svc.CreateRoot(r.Context(), req.Name, req.RorID, req.Description, req.AvatarURL)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -118,7 +118,7 @@ func (h *Handler) CreateChild(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	node, err := h.svc.CreateChild(r.Context(), parentID, req.Name, req.RorID)
+	node, err := h.svc.CreateChild(r.Context(), parentID, req.Name, req.RorID, req.Description, req.AvatarURL)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -225,7 +225,7 @@ func (h *Handler) UpdateOrganisationNode(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	node, err := h.svc.Update(r.Context(), id, req.Name, req.ParentID, req.RorID)
+	node, err := h.svc.Update(r.Context(), id, req.Name, req.ParentID, req.RorID, req.Description, req.AvatarURL)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusBadRequest, err.Error(), nil)
 		return

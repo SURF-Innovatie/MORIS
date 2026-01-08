@@ -56,8 +56,8 @@ func (r *EntRepo) WithTx(ctx context.Context, fn func(ctx context.Context, tx or
 	return tx.Commit()
 }
 
-func (r *EntRepo) CreateNode(ctx context.Context, name string, parentID *uuid.UUID, rorID *string) (*entities.OrganisationNode, error) {
-	create := r.node().Create().SetName(name).SetNillableRorID(rorID)
+func (r *EntRepo) CreateNode(ctx context.Context, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error) {
+	create := r.node().Create().SetName(name).SetNillableRorID(rorID).SetNillableDescription(description).SetNillableAvatarURL(avatarURL)
 
 	if parentID != nil {
 		parent, err := r.node().Get(ctx, *parentID)
@@ -73,10 +73,12 @@ func (r *EntRepo) CreateNode(ctx context.Context, name string, parentID *uuid.UU
 	}
 
 	return &entities.OrganisationNode{
-		ID:       row.ID,
-		ParentID: row.ParentID,
-		Name:     row.Name,
-		RorID:    row.RorID,
+		ID:          row.ID,
+		ParentID:    row.ParentID,
+		Name:        row.Name,
+		RorID:       row.RorID,
+		Description: row.Description,
+		AvatarURL:   row.AvatarURL,
 	}, nil
 }
 
@@ -90,15 +92,17 @@ func (r *EntRepo) GetNode(ctx context.Context, id uuid.UUID) (*entities.Organisa
 	}
 
 	return &entities.OrganisationNode{
-		ID:       row.ID,
-		ParentID: row.ParentID,
-		Name:     row.Name,
-		RorID:    row.RorID,
+		ID:          row.ID,
+		ParentID:    row.ParentID,
+		Name:        row.Name,
+		RorID:       row.RorID,
+		Description: row.Description,
+		AvatarURL:   row.AvatarURL,
 	}, nil
 }
 
-func (r *EntRepo) UpdateNode(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string) (*entities.OrganisationNode, error) {
-	upd := r.node().UpdateOneID(id).SetName(name).SetNillableRorID(rorID)
+func (r *EntRepo) UpdateNode(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error) {
+	upd := r.node().UpdateOneID(id).SetName(name).SetNillableRorID(rorID).SetNillableDescription(description).SetNillableAvatarURL(avatarURL)
 
 	if parentID == nil {
 		upd = upd.ClearParent()
@@ -116,10 +120,12 @@ func (r *EntRepo) UpdateNode(ctx context.Context, id uuid.UUID, name string, par
 	}
 
 	return &entities.OrganisationNode{
-		ID:       row.ID,
-		ParentID: row.ParentID,
-		Name:     row.Name,
-		RorID:    row.RorID,
+		ID:          row.ID,
+		ParentID:    row.ParentID,
+		Name:        row.Name,
+		RorID:       row.RorID,
+		Description: row.Description,
+		AvatarURL:   row.AvatarURL,
 	}, nil
 }
 
@@ -135,10 +141,12 @@ func (r *EntRepo) ListRoots(ctx context.Context) ([]entities.OrganisationNode, e
 	out := make([]entities.OrganisationNode, 0, len(rows))
 	for _, row := range rows {
 		out = append(out, entities.OrganisationNode{
-			ID:       row.ID,
-			ParentID: row.ParentID,
-			Name:     row.Name,
-			RorID:    row.RorID,
+			ID:          row.ID,
+			ParentID:    row.ParentID,
+			Name:        row.Name,
+			RorID:       row.RorID,
+			Description: row.Description,
+			AvatarURL:   row.AvatarURL,
 		})
 	}
 	return out, nil
@@ -156,10 +164,12 @@ func (r *EntRepo) ListChildren(ctx context.Context, parentID uuid.UUID) ([]entit
 	out := make([]entities.OrganisationNode, 0, len(rows))
 	for _, row := range rows {
 		out = append(out, entities.OrganisationNode{
-			ID:       row.ID,
-			ParentID: row.ParentID,
-			Name:     row.Name,
-			RorID:    row.RorID,
+			ID:          row.ID,
+			ParentID:    row.ParentID,
+			Name:        row.Name,
+			RorID:       row.RorID,
+			Description: row.Description,
+			AvatarURL:   row.AvatarURL,
 		})
 	}
 	return out, nil
