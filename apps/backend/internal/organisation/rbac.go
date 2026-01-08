@@ -40,7 +40,8 @@ type EffectiveMembership struct {
 	RoleKey        string
 	HasAdminRights bool
 
-	Person entities.Person
+	Person       entities.Person
+	CustomFields map[string]interface{}
 }
 
 func (s *rbacService) ListEffectiveMemberships(ctx context.Context, nodeID uuid.UUID) ([]EffectiveMembership, error) {
@@ -112,6 +113,7 @@ func (s *rbacService) ListEffectiveMemberships(ctx context.Context, nodeID uuid.
 			RoleID:                sc.RoleID,
 			RoleKey:               sc.Edges.Role.Key,
 			HasAdminRights:        sc.Edges.Role.HasAdminRights,
+			CustomFields:          getCustomFieldsForNode(p.OrgCustomFields, nodeID),
 			Person: entities.Person{
 				ID:          p.ID,
 				Name:        p.Name,
@@ -417,17 +419,10 @@ func (s *rbacService) ListMyMemberships(ctx context.Context, personID uuid.UUID)
 		WithRoleScope(func(q *ent.RoleScopeQuery) {
 			q.WithRole()
 		}).
+		WithPerson().
 		All(ctx)
 	if err != nil {
 		return nil, err
-	}
-
-	// Fetch node names
-	nodeIDs := make([]uuid.UUID, 0)
-	for _, m := range memberships {
-		if m.Edges.RoleScope != nil {
-			nodeIDs = append(nodeIDs, m.Edges.RoleScope.RootNodeID)
-		}
 	}
 
 	out := make([]EffectiveMembership, 0, len(memberships))
@@ -450,7 +445,21 @@ func (s *rbacService) ListMyMemberships(ctx context.Context, personID uuid.UUID)
 			RoleID:                sc.RoleID,
 			RoleKey:               sc.Edges.Role.Key,
 			HasAdminRights:        sc.Edges.Role.HasAdminRights,
+			CustomFields:          getCustomFieldsForNode(m.Edges.Person.OrgCustomFields, sc.RootNodeID),
 		})
 	}
 	return out, nil
+}
+
+// Helper to safely get custom fields for a node
+func getCustomFieldsForNode(fields map[string]interface{}, nodeID uuid.UUID) map[string]interface{} {
+	if fields == nil {
+		return nil
+	}
+	if v, ok := fields[nodeID.String()]; ok {
+		if m, ok := v.(map[string]interface{}); ok {
+			return m
+		}
+	}
+	return nil
 }

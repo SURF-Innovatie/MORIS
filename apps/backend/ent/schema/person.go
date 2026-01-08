@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"entgo.io/contrib/entoas"
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -31,6 +32,9 @@ func (Person) Fields() []ent.Field {
 		field.String("description").
 			Optional().
 			Nillable(),
+		field.JSON("org_custom_fields", map[string]interface{}{}).
+			Optional().
+			Annotations(entoas.Skip(true)),
 	}
 }
 

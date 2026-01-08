@@ -16,6 +16,7 @@ func (CustomFieldDefinition) Fields() []ent.Field {
 		field.UUID("id", uuid.UUID{}).Default(uuid.New),
 		field.String("name").NotEmpty(),
 		field.Enum("type").Values("TEXT", "NUMBER", "BOOLEAN", "DATE"),
+		field.Enum("category").Values("PROJECT", "PERSON").Default("PROJECT"),
 		field.String("description").Optional(),
 		field.Bool("required").Default(false),
 		field.String("validation_regex").Optional(),

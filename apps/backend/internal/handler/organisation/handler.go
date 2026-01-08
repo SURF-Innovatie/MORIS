@@ -8,6 +8,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	organisationsvc "github.com/SURF-Innovatie/MORIS/internal/organisation"
 	"github.com/SURF-Innovatie/MORIS/internal/customfield"
+	"github.com/SURF-Innovatie/MORIS/ent/customfielddefinition"
 	"github.com/SURF-Innovatie/MORIS/internal/project"
 	"github.com/sirupsen/logrus"
 )
@@ -513,7 +514,7 @@ func (h *Handler) CreateCustomField(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fd, err := h.customFieldSvc.Create(r.Context(), id, req.Name, req.Type, req.Description, req.ValidationRegex, req.ExampleValue, req.Required)
+	fd, err := h.customFieldSvc.Create(r.Context(), id, req.Name, customfielddefinition.Type(req.Type), customfielddefinition.Category(req.Category), req.Description, req.ValidationRegex, req.ExampleValue, req.Required)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -524,6 +525,7 @@ func (h *Handler) CreateCustomField(w http.ResponseWriter, r *http.Request) {
 		OrganisationNodeID: fd.OrganisationNodeID,
 		Name:               fd.Name,
 		Type:               string(fd.Type),
+		Category:           string(fd.Category),
 		Description:        fd.Description,
 		Required:           fd.Required,
 		ValidationRegex:    fd.ValidationRegex,
@@ -590,6 +592,7 @@ func (h *Handler) DeleteCustomField(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Organisation ID"
+// @Param category query string false "Filter by category (PROJECT, PERSON)"
 // @Success 200 {array} dto.CustomFieldDefinitionResponse
 // @Failure 401 {string} string "unauthorized"
 // @Failure 400 {string} string "invalid id"
@@ -602,7 +605,13 @@ func (h *Handler) ListCustomFields(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	defs, err := h.customFieldSvc.ListAvailableForNode(r.Context(), id)
+	var category *customfielddefinition.Category
+	if c := r.URL.Query().Get("category"); c != "" {
+		val := customfielddefinition.Category(c)
+		category = &val
+	}
+
+	defs, err := h.customFieldSvc.ListAvailableForNode(r.Context(), id, category)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -615,6 +624,7 @@ func (h *Handler) ListCustomFields(w http.ResponseWriter, r *http.Request) {
 			OrganisationNodeID: d.OrganisationNodeID,
 			Name:               d.Name,
 			Type:               string(d.Type),
+			Category:           string(d.Category),
 			Description:        d.Description,
 			Required:           d.Required,
 			ValidationRegex:    d.ValidationRegex,
@@ -623,4 +633,64 @@ func (h *Handler) ListCustomFields(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, resps)
+}
+
+// UpdateMemberCustomFields godoc
+// @Summary Update custom fields for a member in an organisation context
+// @Description Updates the custom field values for a specific person within the context of an organisation
+// @Tags organisation
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Organisation ID"
+// @Param personId path string true "Person ID"
+// @Param body body dto.MemberCustomFieldUpdateValues true "Custom field values"
+// @Success 204 "no content"
+// @Failure 401 {string} string "unauthorized"
+// @Failure 403 {string} string "forbidden"
+// @Failure 400 {string} string "invalid id / invalid body"
+// @Failure 500 {string} string "internal server error"
+// @Router /organisation-nodes/{id}/members/{personId}/custom-fields [put]
+func (h *Handler) UpdateMemberCustomFields(w http.ResponseWriter, r *http.Request) {
+	user, ok := httputil.GetUserFromContext(r.Context())
+	if !ok {
+		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
+		return
+	}
+
+	orgID, err := httputil.ParseUUIDParam(r, "id")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid org id", nil)
+		return
+	}
+
+	personID, err := httputil.ParseUUIDParam(r, "personId")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid person id", nil)
+		return
+	}
+
+	// Check Admin Access
+	hasAccess, err := h.rbac.HasAdminAccess(r.Context(), user.Person.ID, orgID)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	if !hasAccess {
+		httputil.WriteError(w, r, http.StatusForbidden, "forbidden", nil)
+		return
+	}
+
+	var req dto.MemberCustomFieldUpdateValues
+	if !httputil.ReadJSON(w, r, &req) {
+		return
+	}
+
+	err = h.svc.UpdateMemberCustomFields(r.Context(), orgID, personID, req.Values)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

@@ -70,9 +70,10 @@ type OrganisationEffectiveMembershipResponse struct {
 	RoleScopeID           uuid.UUID            `json:"roleScopeId"`
 	ScopeRootOrganisation OrganisationResponse `json:"scopeRootOrganisation"`
 
-	RoleID         uuid.UUID `json:"roleId"`
-	RoleKey        string    `json:"roleKey"`
-	HasAdminRights bool      `json:"hasAdminRights"`
+	RoleID         uuid.UUID              `json:"roleId"`
+	RoleKey        string                 `json:"roleKey"`
+	HasAdminRights bool                   `json:"hasAdminRights"`
+	CustomFields   map[string]interface{} `json:"customFields"`
 }
 
 func (r OrganisationEffectiveMembershipResponse) FromEntity(e organisation.EffectiveMembership) OrganisationEffectiveMembershipResponse {
@@ -84,6 +85,7 @@ func (r OrganisationEffectiveMembershipResponse) FromEntity(e organisation.Effec
 		RoleID:                e.RoleID,
 		RoleKey:               e.RoleKey,
 		HasAdminRights:        e.HasAdminRights,
+		CustomFields:          e.CustomFields,
 	}
 }
 

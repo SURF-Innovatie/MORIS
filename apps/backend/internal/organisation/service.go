@@ -21,6 +21,7 @@ type Service interface {
 
 	ListRoots(ctx context.Context) ([]entities.OrganisationNode, error)
 	ListChildren(ctx context.Context, parentID uuid.UUID) ([]entities.OrganisationNode, error)
+	UpdateMemberCustomFields(ctx context.Context, orgID uuid.UUID, personID uuid.UUID, values map[string]interface{}) error
 }
 
 type service struct {
@@ -312,4 +313,24 @@ func (s *service) ListChildren(ctx context.Context, parentID uuid.UUID) ([]entit
 	}
 
 	return transform.ToEntities[entities.OrganisationNode](rows), nil
+}
+
+func (s *service) UpdateMemberCustomFields(ctx context.Context, orgID uuid.UUID, personID uuid.UUID, values map[string]interface{}) error {
+	p, err := s.cli.Person.Get(ctx, personID)
+	if err != nil {
+		return err
+	}
+
+	current := p.OrgCustomFields
+	if current == nil {
+		current = make(map[string]interface{})
+	}
+
+	current[orgID.String()] = values
+
+	_, err = s.cli.Person.UpdateOneID(personID).
+		SetOrgCustomFields(current).
+		Save(ctx)
+	
+	return err
 }

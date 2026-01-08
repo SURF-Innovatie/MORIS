@@ -52,6 +52,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 const createFieldSchema = z.object({
     name: z.string().min(1, "Name is required"),
     type: z.enum(["TEXT", "NUMBER", "BOOLEAN", "DATE"]),
+    category: z.enum(["PROJECT", "PERSON"]),
     description: z.string().optional(),
     required: z.boolean().default(false),
     validation_regex: z.string().optional(),
@@ -68,7 +69,7 @@ export const CustomFieldDefinitionsList = ({ nodeId }: CustomFieldDefinitionsLis
     const { toast } = useToast();
 
     const handleDelete = async (fieldId: string) => {
-        if (!confirm("Are you sure you want to delete this field? Data in projects might be lost or hidden.")) {
+        if (!confirm("Are you sure you want to delete this field? Data in projects or member profiles might be lost.")) {
             return;
         }
         try {
@@ -84,7 +85,7 @@ export const CustomFieldDefinitionsList = ({ nodeId }: CustomFieldDefinitionsLis
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium">Custom Project Fields</h3>
+                <h3 className="text-lg font-medium">Custom Fields</h3>
                 <AddCustomFieldDialog nodeId={nodeId} onSuccess={refetch} />
             </div>
 
@@ -93,6 +94,7 @@ export const CustomFieldDefinitionsList = ({ nodeId }: CustomFieldDefinitionsLis
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-[200px]">Name</TableHead>
+                            <TableHead>Category</TableHead>
                             <TableHead>Type</TableHead>
                             <TableHead>Required</TableHead>
                             <TableHead>Description</TableHead>
@@ -102,7 +104,7 @@ export const CustomFieldDefinitionsList = ({ nodeId }: CustomFieldDefinitionsLis
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="h-24 text-center">
+                                <TableCell colSpan={6} className="h-24 text-center">
                                     <div className="flex items-center justify-center">
                                         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                                     </div>
@@ -110,7 +112,7 @@ export const CustomFieldDefinitionsList = ({ nodeId }: CustomFieldDefinitionsLis
                             </TableRow>
                         ) : fields?.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                                     No custom fields defined.
                                 </TableCell>
                             </TableRow>
@@ -134,7 +136,12 @@ export const CustomFieldDefinitionsList = ({ nodeId }: CustomFieldDefinitionsLis
                                             )}
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-xs font-mono bg-gray-50 rounded px-2 py-1 inline-block mt-2">{field.type}</TableCell>
+                                    <TableCell>
+                                        <span className={`text-xs font-mono rounded px-2 py-1 inline-block ${field.category === 'PERSON' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                                            {field.category || 'PROJECT'}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell className="text-xs font-mono">{field.type}</TableCell>
                                     <TableCell>{field.required ? "Yes" : "No"}</TableCell>
                                     <TableCell className="text-muted-foreground max-w-[300px] truncate" title={field.description}>
                                         {field.description}
@@ -156,7 +163,7 @@ export const CustomFieldDefinitionsList = ({ nodeId }: CustomFieldDefinitionsLis
                 </Table>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-                Note: These fields will be available to all projects within this organisation and its sub-organisations.
+                Note: These fields will be available within this organisation and its sub-organisations.
             </p>
         </div>
     );
@@ -172,6 +179,7 @@ const AddCustomFieldDialog = ({ nodeId, onSuccess }: { nodeId: string; onSuccess
         defaultValues: {
             name: "",
             type: "TEXT",
+            category: "PROJECT",
             description: "",
             required: false,
             validation_regex: "",
@@ -254,6 +262,31 @@ const AddCustomFieldDialog = ({ nodeId, onSuccess }: { nodeId: string; onSuccess
                                 )}
                             />
                         </div>
+
+                        <FormField
+                            control={form.control}
+                            name="category"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Category</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select category" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="PROJECT">Project Field</SelectItem>
+                                            <SelectItem value="PERSON">Person Field</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormDescription>
+                                        Project fields appear on projects. Person fields appear on member profiles.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
                         <FormField
                             control={form.control}

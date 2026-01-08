@@ -27,6 +27,8 @@ func MountOrganisationRoutes(r chi.Router, h *Handler, rbac *RBACHandler) {
 		r.Post("/{id}/custom-fields", h.CreateCustomField)
 		r.Get("/{id}/custom-fields", h.ListCustomFields)
 		r.Delete("/{id}/custom-fields/{fieldId}", h.DeleteCustomField)
+		
+		r.Put("/{id}/members/{personId}/custom-fields", h.UpdateMemberCustomFields)
 	})
 
 	r.Route("/organisation-roles", func(r chi.Router) {

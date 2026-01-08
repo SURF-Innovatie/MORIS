@@ -10,6 +10,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/SURF-Innovatie/MORIS/internal/project"
 	"github.com/SURF-Innovatie/MORIS/internal/customfield"
+	"github.com/SURF-Innovatie/MORIS/ent/customfielddefinition"
 )
 
 type Handler struct {
@@ -220,7 +221,8 @@ func (h *Handler) ListAvailableCustomFields(w http.ResponseWriter, r *http.Reque
 	}
 
 	// 2. List definitions for that Org Node
-	defs, err := h.customFieldSvc.ListAvailableForNode(r.Context(), proj.OwningOrgNode.ID)
+	category := customfielddefinition.Category("PROJECT")
+	defs, err := h.customFieldSvc.ListAvailableForNode(r.Context(), proj.OwningOrgNode.ID, &category)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
