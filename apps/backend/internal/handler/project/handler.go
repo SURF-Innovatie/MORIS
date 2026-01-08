@@ -3,22 +3,21 @@ package project
 import (
 	"net/http"
 
+	"github.com/SURF-Innovatie/MORIS/ent/customfielddefinition"
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-
+	"github.com/SURF-Innovatie/MORIS/internal/customfield"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
-	"github.com/SURF-Innovatie/MORIS/internal/project"
-	"github.com/SURF-Innovatie/MORIS/internal/customfield"
-	"github.com/SURF-Innovatie/MORIS/ent/customfielddefinition"
 )
 
 type Handler struct {
-	svc            project.Service
+	svc            queries.Service
 	customFieldSvc customfield.Service
 }
 
-func NewHandler(svc project.Service, cfs customfield.Service) *Handler {
+func NewHandler(svc queries.Service, cfs customfield.Service) *Handler {
 	return &Handler{svc: svc, customFieldSvc: cfs}
 }
 
@@ -126,7 +125,7 @@ func (h *Handler) GetPendingEvents(w http.ResponseWriter, r *http.Request) {
 		Events: make([]dto.Event, 0, len(pendingEvents)),
 	}
 	for _, e := range pendingEvents {
-		resp.Events = append(resp.Events, dto.Event{}.FromDetailedEntity(e))
+		resp.Events = append(resp.Events, dto.Event{}.FromEntity(e))
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, resp)

@@ -3,24 +3,25 @@ package organisation
 import (
 	"net/http"
 
-	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
-	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
-	organisationsvc "github.com/SURF-Innovatie/MORIS/internal/organisation"
-	"github.com/SURF-Innovatie/MORIS/internal/customfield"
 	"github.com/SURF-Innovatie/MORIS/ent/customfielddefinition"
-	"github.com/SURF-Innovatie/MORIS/internal/project"
+	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	organisationsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation"
+	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
+	"github.com/SURF-Innovatie/MORIS/internal/app/projectrole"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
+	"github.com/SURF-Innovatie/MORIS/internal/customfield"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/sirupsen/logrus"
 )
 
 type Handler struct {
 	svc            organisationsvc.Service
-	rbac           organisationsvc.RBACService
-	roleSvc        project.RoleService
+	rbac           rbacsvc.Service
+	roleSvc        projectrole.Service
 	customFieldSvc customfield.Service
 }
 
-func NewHandler(s organisationsvc.Service, r organisationsvc.RBACService, rs project.RoleService, cfs customfield.Service) *Handler {
+func NewHandler(s organisationsvc.Service, r rbacsvc.Service, rs projectrole.Service, cfs customfield.Service) *Handler {
 	return &Handler{svc: s, rbac: r, roleSvc: rs, customFieldSvc: cfs}
 }
 

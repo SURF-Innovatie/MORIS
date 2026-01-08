@@ -4,20 +4,20 @@ import (
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
+	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
-	"github.com/SURF-Innovatie/MORIS/internal/project"
-	"github.com/SURF-Innovatie/MORIS/internal/user"
 	"github.com/google/uuid"
 )
 
 type Handler struct {
 	svc     user.Service
-	projSvc project.Service
+	projSvc queries.Service
 }
 
-func NewHandler(svc user.Service, projSvc project.Service) *Handler {
+func NewHandler(svc user.Service, projSvc queries.Service) *Handler {
 	return &Handler{svc: svc, projSvc: projSvc}
 }
 

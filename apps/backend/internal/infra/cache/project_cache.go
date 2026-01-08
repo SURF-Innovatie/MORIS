@@ -58,8 +58,11 @@ func (c *RedisProjectCache) GetProject(ctx context.Context, id uuid.UUID) (*enti
 }
 
 func (c *RedisProjectCache) SetProject(ctx context.Context, proj *entities.Project) error {
-	if c.rdb == nil || proj == nil {
-		return nil
+	if c.rdb == nil {
+		return ErrCacheNotInitialized
+	}
+	if proj == nil {
+		return errors.New("cannot cache nil project")
 	}
 
 	b, err := json.Marshal(proj)

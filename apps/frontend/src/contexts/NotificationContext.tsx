@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from "react";
-import { useGetNotifications, usePutNotificationsIdRead } from "@api/moris";
+import { useGetNotificationsMe, usePostNotificationsIdRead } from "@api/moris";
 import { NotificationResponse } from "@api/model";
 
 interface NotificationContextType {
@@ -19,13 +19,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         data: notifications = [],
         isLoading,
         refetch,
-    } = useGetNotifications({
+    } = useGetNotificationsMe({
         query: {
             refetchInterval: 30000, // Poll every 30 seconds
         },
     });
 
-    const { mutateAsync: markAsReadMutation } = usePutNotificationsIdRead();
+    const { mutateAsync: markAsReadMutation } = usePostNotificationsIdRead();
 
     const unreadCount = notifications?.filter((n) => !n.read).length ?? 0;
 

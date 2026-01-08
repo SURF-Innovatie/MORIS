@@ -6,10 +6,10 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/notification"
 	"github.com/SURF-Innovatie/MORIS/ent/user"
+	orgsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
-	orgsvc "github.com/SURF-Innovatie/MORIS/internal/organisation"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -17,7 +17,7 @@ import (
 type ApprovalRequestNotificationHandler struct {
 	Cli  *ent.Client
 	ES   eventstore.Store
-	RBAC orgsvc.RBACService
+	RBAC orgsvc.Service
 }
 
 func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e events.Event) error {

@@ -9,7 +9,7 @@ import (
 	"net/url"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
-	"github.com/SURF-Innovatie/MORIS/internal/user"
+	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/google/uuid"
 )
 

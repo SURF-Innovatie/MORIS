@@ -1,0 +1,19 @@
+package person
+
+import (
+	"context"
+
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/google/uuid"
+)
+
+type Repository interface {
+	Create(ctx context.Context, p entities.Person) (*entities.Person, error)
+	Get(ctx context.Context, id uuid.UUID) (*entities.Person, error)
+	Update(ctx context.Context, id uuid.UUID, p entities.Person) (*entities.Person, error)
+	List(ctx context.Context) ([]*entities.Person, error)
+	GetByEmail(ctx context.Context, email string) (*entities.Person, error)
+
+	// needed by user.SearchPersons (and generally useful)
+	Search(ctx context.Context, query string, limit int) ([]entities.Person, error)
+}

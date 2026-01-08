@@ -6,8 +6,8 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/notification"
+	notifservice "github.com/SURF-Innovatie/MORIS/internal/app/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
-	notifservice "github.com/SURF-Innovatie/MORIS/internal/notification"
 )
 
 type StatusUpdateNotificationHandler struct {

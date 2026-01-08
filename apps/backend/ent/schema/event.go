@@ -5,6 +5,7 @@ import (
 
 	"entgo.io/contrib/entoas"
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 )
@@ -34,5 +35,7 @@ func (Event) Fields() []ent.Field {
 }
 
 func (Event) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("notifications", Notification.Type),
+	}
 }

@@ -39,7 +39,7 @@ export function EditRoleDialog({
   projectId,
   onSuccess,
 }: EditRoleDialogProps) {
-  const [role, setRole] = useState(member.role || "");
+  const [role, setRole] = useState(member.role_id || "");
   const [isSaving, setIsSaving] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -51,10 +51,10 @@ export function EditRoleDialog({
     setIsSaving(true);
     try {
       // 1. Unassign current role if exists
-      if (member.role) {
+      if (member.role_id) {
         await createProjectRoleUnassignedEvent(projectId, {
           person_id: member.id,
-          project_role_id: member.role,
+          project_role_id: member.role_id,
         });
       }
 

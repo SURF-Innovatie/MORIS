@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	personsvc "github.com/SURF-Innovatie/MORIS/internal/app/person"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
-	personsvc "github.com/SURF-Innovatie/MORIS/internal/person"
 )
 
 type Handler struct {
@@ -41,11 +41,13 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p, err := h.svc.Create(r.Context(), entities.Person{
-		Name:       req.Name,
-		GivenName:  req.GivenName,
-		FamilyName: req.FamilyName,
-		Email:      req.Email,
-		ORCiD:      req.ORCiD,
+		Name:        req.Name,
+		GivenName:   req.GivenName,
+		FamilyName:  req.FamilyName,
+		Email:       req.Email,
+		ORCiD:       req.ORCiD,
+		AvatarUrl:   req.AvatarURL,
+		Description: req.Description,
 	})
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
@@ -111,6 +113,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		GivenName:   req.GivenName,
 		FamilyName:  req.FamilyName,
 		Email:       req.Email,
+		ORCiD:       req.ORCiD,
 		AvatarUrl:   req.AvatarURL,
 		Description: req.Description,
 	})

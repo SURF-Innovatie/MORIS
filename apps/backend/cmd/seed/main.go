@@ -11,13 +11,15 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	"github.com/SURF-Innovatie/MORIS/ent/organisationnode"
-	entprojectrole "github.com/SURF-Innovatie/MORIS/ent/projectrole"
 	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
+	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
-	"github.com/SURF-Innovatie/MORIS/internal/organisation"
+	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
+	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
+	projectrole "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/projectrole"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -137,7 +139,9 @@ func main() {
 
 	// --- Seed Roles / Scopes / Memberships for org tree ---
 
-	orgSvc := organisation.NewService(client)
+	orgRepo := organisationrepo.NewEntRepo(client)
+	personRepo := personrepo.NewEntRepo(client)
+	orgSvc := organisation.NewService(orgRepo, personRepo)
 
 	orgRoot, err := orgSvc.CreateRoot(ctx, "Nederland", nil)
 	if err != nil {
@@ -145,22 +149,12 @@ func main() {
 	}
 	orgNodeIDs["Nederland"] = orgRoot.ID
 
-	// Create Default Project Roles linked to Root Node
-	if _, err := client.ProjectRole.
-		Create().
-		SetKey("contributor").
-		SetName("Contributor").
-		SetOrganisationNodeID(orgRoot.ID).
-		Save(ctx); err != nil {
+	roleRepo := projectrole.NewRepository(client)
+
+	if _, err := roleRepo.Create(ctx, "contributor", "Contributor", orgRoot.ID); err != nil {
 		logrus.Fatalf("create project role contributor: %v", err)
 	}
-
-	if _, err := client.ProjectRole.
-		Create().
-		SetKey("admin"). // or "lead"
-		SetName("Project Lead").
-		SetOrganisationNodeID(orgRoot.ID).
-		Save(ctx); err != nil {
+	if _, err := roleRepo.Create(ctx, "admin", "Project Lead", orgRoot.ID); err != nil {
 		logrus.Fatalf("create project role admin: %v", err)
 	}
 
@@ -500,21 +494,17 @@ func main() {
 		version := 1
 
 		// fetch project role IDs
-		contributorRoleID, err := client.ProjectRole.
-			Query().
-			Where(entprojectrole.KeyEQ("contributor")).
-			OnlyID(ctx)
+		contributorRole, err := roleRepo.GetByKeyAndOrg(ctx, "contributor", orgRoot.ID)
 		if err != nil {
-			logrus.Fatalf("fetch contributor role id: %v", err)
+			logrus.Fatalf("fetch contributor role: %v", err)
+		}
+		leadRole, err := roleRepo.GetByKeyAndOrg(ctx, "admin", orgRoot.ID)
+		if err != nil {
+			logrus.Fatalf("fetch admin role: %v", err)
 		}
 
-		leadRoleID, err := client.ProjectRole.
-			Query().
-			Where(entprojectrole.KeyEQ("admin")).
-			OnlyID(ctx)
-		if err != nil {
-			logrus.Fatalf("fetch lead/admin role id: %v", err)
-		}
+		contributorRoleID := contributorRole.ID
+		leadRoleID := leadRole.ID
 
 		for _, name := range sp.People {
 			personID := mustPersonID(name)

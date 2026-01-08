@@ -3,6 +3,7 @@ package event
 import (
 	"net/http"
 
+	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
@@ -11,10 +12,11 @@ import (
 
 type Handler struct {
 	svc event.Service
+	cli *ent.Client
 }
 
-func NewHandler(svc event.Service) *Handler {
-	return &Handler{svc: svc}
+func NewHandler(svc event.Service, cli *ent.Client) *Handler {
+	return &Handler{svc: svc, cli: cli}
 }
 
 // ApproveEvent godoc
@@ -136,5 +138,21 @@ func (h *Handler) ListEventTypes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, types)
+	eventTypes := make([]dto.EventTypeResponse, 0, len(types))
+	for _, t := range types {
+		ev, err := events.Create(t.Type)
+		if err != nil {
+			continue
+		}
+
+		allowed := t.IsAllowed(r.Context(), ev, h.cli)
+
+		eventTypes = append(eventTypes, dto.EventTypeResponse{
+			Type:         t.Type,
+			FriendlyName: t.FriendlyName,
+			Allowed:      allowed,
+		})
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, eventTypes)
 }

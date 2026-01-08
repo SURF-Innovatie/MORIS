@@ -19,6 +19,17 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	crossref2 "github.com/SURF-Innovatie/MORIS/external/crossref"
 	"github.com/SURF-Innovatie/MORIS/external/orcid"
+	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
+	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
+	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
+	personsvc "github.com/SURF-Innovatie/MORIS/internal/app/person"
+	appproduct "github.com/SURF-Innovatie/MORIS/internal/app/product"
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/cachewarmup"
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/command"
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/load"
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
+	projectrolesvc "github.com/SURF-Innovatie/MORIS/internal/app/projectrole"
+	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/customfield"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/env"
@@ -39,14 +50,17 @@ import (
 	userhandler "github.com/SURF-Innovatie/MORIS/internal/handler/user"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/entclient"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
-	"github.com/SURF-Innovatie/MORIS/internal/notification"
-	"github.com/SURF-Innovatie/MORIS/internal/organisation"
-	"github.com/SURF-Innovatie/MORIS/internal/person"
-	"github.com/SURF-Innovatie/MORIS/internal/product"
-	"github.com/SURF-Innovatie/MORIS/internal/project"
-	"github.com/SURF-Innovatie/MORIS/internal/project/command"
-	"github.com/SURF-Innovatie/MORIS/internal/user"
+	notificationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/notification"
+	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
+	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation_rbac"
+	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
+	productrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/product"
+	projectmembershiprepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_membership"
+	projectquery "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_query"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/projectrole"
+	userrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/user"
 )
 
 // @title MORIS
@@ -102,24 +116,34 @@ func main() {
 		logrus.Fatalf("event registration invalid: %v", err)
 	}
 
+	personRepo := personrepo.NewEntRepo(client)
+
+	userRepo := userrepo.NewEntRepo(client)
+	membershipRepo := projectmembershiprepo.NewEntRepo(client)
+
 	// Create services
 	esStore := eventstore.NewEntStore(client)
-	personSvc := person.NewService(client)
-	userSvc := user.NewService(client, personSvc, esStore)
+	personSvc := personsvc.NewService(personRepo)
+	userSvc := user.NewService(userRepo, personSvc, esStore, membershipRepo)
 	authSvc := auth.NewJWTService(client, userSvc, personSvc, env.Global.JWTSecret)
-	orcidSvc := orcid.NewService(client, userSvc, nil)
+	orcidSvc := orcid.NewService(client, userSvc, http.DefaultClient)
+	curUser := auth.NewCurrentUserProvider(client)
 
 	personHandler := personhandler.NewHandler(personSvc)
-	productSvc := product.NewService(client)
-	productHandler := producthandler.NewHandler(productSvc)
+	productRepo := productrepo.NewEntRepo(client)
+	productSvc := appproduct.NewService(productRepo)
+	productHandler := producthandler.NewHandler(productSvc, curUser)
 
-	rbacSvc := organisation.NewRBACService(client)
+	orgRepo := organisationrepo.NewEntRepo(client)
+	rbacRepo := organisationrbacrepo.NewEntRepo(client)
+
+	rbacSvc := organisationrbac.NewService(rbacRepo)
 	rbacHandler := organisationhandler.NewRBACHandler(rbacSvc)
 
-	roleSvc := project.NewRoleService(client)
+	roleSvc := projectrolesvc.NewService(client)
 	customFieldSvc := customfield.NewService(client)
-	
-	organisationSvc := organisation.NewService(client)
+
+	organisationSvc := organisation.NewService(orgRepo, personRepo)
 	organisationHandler := organisationhandler.NewHandler(organisationSvc, rbacSvc, roleSvc, customFieldSvc)
 
 	crossrefConfig := &crossref2.Config{
@@ -130,7 +154,8 @@ func main() {
 	crossrefSvc := crossref2.NewService(crossrefConfig)
 	crossrefHandler := crossrefhandler.NewHandler(crossrefSvc)
 
-	notifierSvc := notification.NewService(client)
+	notifRepo := notificationrepo.NewEntRepo(client)
+	notifierSvc := notification.NewService(notifRepo)
 	errorLogSvc := errorlog.NewService(client)
 
 	eventSvc := event.NewService(esStore, client, notifierSvc)
@@ -138,7 +163,7 @@ func main() {
 	eventSvc.RegisterNotificationHandler(&event.ProjectEventNotificationHandler{Cli: client, ES: esStore})
 	eventSvc.RegisterNotificationHandler(&event.ApprovalRequestNotificationHandler{Cli: client, ES: esStore, RBAC: rbacSvc})
 	eventSvc.RegisterNotificationHandler(&event.StatusUpdateNotificationHandler{Cli: client})
-	evtHandler := eventHandler.NewHandler(eventSvc)
+	evtHandler := eventHandler.NewHandler(eventSvc, client)
 
 	notificationHandler := notificationhandler.NewHandler(notifierSvc)
 
@@ -151,10 +176,21 @@ func main() {
 	cacheSvc := cache.NewRedisProjectCache(rdb, 24*time.Hour)
 	refreshSvc := cache.NewEventstoreProjectCacheRefresher(esStore, cacheSvc)
 
-	projSvc := project.NewService(esStore, client, eventSvc, cacheSvc, refreshSvc)
+	eventSvc.RegisterStatusChangeHandler(func(ctx context.Context, e events.Event) error {
+		_, err := refreshSvc.Refresh(ctx, e.AggregateID())
+		return err
+	})
+
+	repo := projectquery.NewEntRepo(client)
+	ldr := load.New(esStore, cacheSvc)
+	warmup := cachewarmup.NewService(repo, ldr, cacheSvc)
+	entProv := entclient.New(client)
+	roleRepo := projectrole.NewRepository(client)
+
+	projSvc := queries.NewService(esStore, ldr, repo, roleRepo, curUser)
 	projHandler := projecthandler.NewHandler(projSvc, customFieldSvc)
 
-	projCmdSvc := command.NewService(esStore, client, eventSvc, cacheSvc, refreshSvc)
+	projCmdSvc := command.NewService(esStore, eventSvc, cacheSvc, refreshSvc, curUser, entProv)
 	projCmdHandler := commandHandler.NewHandler(projCmdSvc)
 
 	userHandler := userhandler.NewHandler(userSvc, projSvc)
@@ -190,8 +226,11 @@ func main() {
 
 	// Warmup cache in background
 	go func() {
-		if err := projSvc.WarmupCache(context.Background()); err != nil {
+		cached, err := warmup.WarmupProjects(context.Background())
+		if err != nil {
 			logrus.Errorf("Failed to warmup cache: %v", err)
+		} else {
+			logrus.Infof("Warmed up cache for %d projects", cached)
 		}
 	}()
 

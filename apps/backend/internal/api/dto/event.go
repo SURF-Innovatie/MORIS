@@ -49,15 +49,7 @@ func (e Event) FromEntity(ev events.Event) Event {
 }
 
 func (e Event) FromEntityWithTitle(ev events.Event, projectTitle string) Event {
-	var coreEv events.Event = ev
-
-	// Check if ev is actually a DetailedEvent wrapper from our domain logic
-	// Note: We can't cast directly if 'ev' is the interface. 
-    // But FromEntity accepts `events.Event`. `DetailedEvent` does not implement `events.Event` directly?
-    // Wait, DetailedEvent is a struct in `entities`. It holds `Event`.
-    // The service will likely pass `DetailedEvent` to the handler, and the handler will call `FromDetailedEntity`.
-    // Let's add specific method for DetailedEvent.
-    
+	var coreEv events.Event = ev    
     return e.fromCore(coreEv, projectTitle)
 }
 
