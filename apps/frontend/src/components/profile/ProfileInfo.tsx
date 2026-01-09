@@ -63,7 +63,6 @@ export function ProfileInfo({ user, refetchProfile }: ProfileInfoProps) {
                     email: user.email,
                     avatarUrl: editForm.avatarUrl || undefined,
                     description: editForm.description || undefined,
-                    user_id: user.id,
                 },
             });
 

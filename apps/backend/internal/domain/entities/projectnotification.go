@@ -19,6 +19,7 @@ type Notification struct {
 	ID      uuid.UUID
 	UserID  uuid.UUID
 	EventID *uuid.UUID // optional
+	ProjectID *uuid.UUID // optional, derived from event
 	Message string
 	Type    NotificationType
 	Read    bool
@@ -36,6 +37,9 @@ func (n *Notification) FromEnt(row *ent.Notification) *Notification {
 	}
 	if row.EventID != nil {
 		out.EventID = row.EventID
+	}
+	if row.Edges.Event != nil {
+		out.ProjectID = &row.Edges.Event.ProjectID
 	}
 	return out
 }

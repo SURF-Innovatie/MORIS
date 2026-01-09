@@ -98,7 +98,7 @@ const CreateRootDialog = () => {
             value={rorId}
             onSelect={(id, item) => {
                setRorId(id);
-               if (!name) setName(item.name);
+               if (!name) setName(item.name || "");
             }}
           />
           <Button

@@ -24,18 +24,18 @@ const (
 
 // InputInfo describes a source adapter's input requirements
 type InputInfo struct {
-	Type        TransferType
-	Label       string
-	Description string
-	MimeType    string // For file inputs
+	Type        TransferType `json:"type"`
+	Label       string       `json:"label"`
+	Description string       `json:"description"`
+	MimeType    string       `json:"mime_type,omitempty"` // For file inputs
 }
 
 // OutputInfo describes a sink adapter's output behavior
 type OutputInfo struct {
-	Type        TransferType
-	Label       string
-	Description string
-	MimeType    string // For file outputs
+	Type        TransferType `json:"type"`
+	Label       string       `json:"label"`
+	Description string       `json:"description"`
+	MimeType    string       `json:"mime_type,omitempty"` // For file outputs
 }
 
 // ProjectContext bundles a project's event stream with enriched entity data.

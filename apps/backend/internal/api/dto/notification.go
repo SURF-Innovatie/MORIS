@@ -11,6 +11,7 @@ type NotificationResponse struct {
 	ID      uuid.UUID  `json:"id"`
 	UserID  uuid.UUID  `json:"user_id"`
 	EventID *uuid.UUID `json:"event_id,omitempty"`
+	ProjectID *uuid.UUID `json:"project_id,omitempty"`
 
 	Message string    `json:"message"`
 	Type    string    `json:"type"`
@@ -23,6 +24,7 @@ func (r NotificationResponse) FromEntity(n entities.Notification) NotificationRe
 		ID:      n.ID,
 		UserID:  n.UserID,
 		EventID: n.EventID,
+		ProjectID: n.ProjectID,
 		Message: n.Message,
 		Type:    string(n.Type),
 		Read:    n.Read,

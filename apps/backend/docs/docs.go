@@ -24,6 +24,31 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/adapters": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a list of all available source and sink adapters with their metadata",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "adapters"
+                ],
+                "summary": "List all registered adapters",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AdapterListResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/users/list": {
             "get": {
                 "security": [
@@ -31,7 +56,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Returns a list of all users - requires admin role",
+                "description": "Returns a paginated list of all users - requires admin role",
                 "consumes": [
                     "application/json"
                 ],
@@ -41,24 +66,485 @@ const docTemplate = `{
                 "tags": [
                     "admin"
                 ],
-                "summary": "GetOrganisationNode all users (Admin only)",
+                "summary": "Get all users (Admin only)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size (default 10)",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Admin user list",
+                        "description": "OK",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/dto.UserPaginatedResponse"
                         }
                     },
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/httputil.BackendError"
                         }
                     },
                     "403": {
                         "description": "Insufficient permissions",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/httputil.BackendError"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/users/{id}/toggle-active": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Toggle user active status - requires admin role",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Toggle user active status (Admin only)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Toggle active status payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UserToggleActiveRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/httputil.StatusResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/httputil.BackendError"
+                        }
+                    },
+                    "403": {
+                        "description": "Insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/httputil.BackendError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/orcid/link": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Links an ORCID ID to the authenticated user's account",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Link ORCID ID",
+                "parameters": [
+                    {
+                        "description": "ORCID link request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.LinkORCIDRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/httputil.StatusResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/httputil.BackendError"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/httputil.BackendError"
+                        }
+                    },
+                    "409": {
+                        "description": "ORCID ID already linked",
+                        "schema": {
+                            "$ref": "#/definitions/httputil.BackendError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/httputil.BackendError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/orcid/unlink": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Unlinks the ORCID ID from the authenticated user's account",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Unlink ORCID ID",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/httputil.StatusResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/httputil.BackendError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/httputil.BackendError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/orcid/url": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the URL to redirect the user to for ORCID authentication",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Get ORCID authorization URL",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ORCIDAuthURLResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/httputil.BackendError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/httputil.BackendError"
+                        }
+                    }
+                }
+            }
+        },
+        "/crossref/works": {
+            "get": {
+                "description": "Retrieves a single work from Crossref by its DOI",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "crossref"
+                ],
+                "summary": "Get a work by DOI",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "DOI",
+                        "name": "doi",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/crossref.Work"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid doi",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "work not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/types": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lists all event types and whether the current user is allowed to trigger them",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "List all event types",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.EventTypeResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves details for a specific event by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Get event details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Event"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid event id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "event not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{id}/approve": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Approves a pending event",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Approve an event",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "invalid event id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{id}/reject": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Rejects a pending event",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Reject an event",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "invalid event id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 }
@@ -81,7 +567,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.StatusResponse"
+                            "$ref": "#/definitions/httputil.StatusResponse"
                         }
                     }
                 }
@@ -107,7 +593,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.LoginRequest"
+                            "$ref": "#/definitions/dto.LoginRequest"
                         }
                     }
                 ],
@@ -115,29 +601,30 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.LoginResponse"
+                            "$ref": "#/definitions/dto.LoginResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/httputil.BackendError"
                         }
                     },
                     "401": {
                         "description": "Invalid credentials",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/httputil.BackendError"
                         }
                     }
                 }
             }
         },
-        "/notifications": {
+        "/notifications/me": {
             "get": {
-                "description": "Retrieves a list of notifications for the authenticated user",
-                "consumes": [
-                    "application/json"
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
                 ],
                 "produces": [
                     "application/json"
@@ -145,19 +632,1815 @@ const docTemplate = `{
                 "tags": [
                     "notifications"
                 ],
-                "summary": "GetOrganisationNode notifications for the logged-in user",
+                "summary": "List notifications for current user",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProjectNotification"
+                                "$ref": "#/definitions/dto.NotificationResponse"
                             }
                         }
                     },
                     "401": {
                         "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications/{id}/read": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Mark notification as read",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Notification ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/orcid/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Searches for people in the ORCID public registry",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "orcid"
+                ],
+                "summary": "Search for people in ORCID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/orcid.OrcidPerson"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/httputil.BackendError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/httputil.BackendError"
+                        }
+                    }
+                }
+            }
+        },
+        "/organisation-memberships": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Adds a person to a role scope",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "Add a membership",
+                "parameters": [
+                    {
+                        "description": "Add membership request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.OrganisationAddMembershipRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.OrganisationMembershipResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/organisation-memberships/mine": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lists all memberships for the current user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "List my memberships",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.OrganisationEffectiveMembershipResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/organisation-memberships/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Removes a membership by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "Remove a membership",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Membership ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/httputil.StatusResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/organisation-nodes": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new root node in the organisation tree (no parent)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "Create a root organisation node",
+                "parameters": [
+                    {
+                        "description": "Create root node request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.OrganisationCreateRootRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.OrganisationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "name is required / invalid request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/organisation-nodes/roots": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns all organisation nodes that have no parent",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "List root organisation nodes",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.OrganisationResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/organisation-nodes/ror/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Search for organizations in ROR",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "Search ROR",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/organisation.RORItem"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/organisation-nodes/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a single organisation node by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "Get an organisation node",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "OwningOrgNode node ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.OrganisationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an organisation node's name and/or parent (re-parenting). If parentID is null, the node becomes a root node.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "Update an organisation node",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "OwningOrgNode node ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "UpdateOrganisationNode organisation node request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.OrganisationUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.OrganisationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id / name is required / invalid request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/organisation-nodes/{id}/approval-node": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the node responsible for approvals by bubbling up to the nearest ancestor with an Admin scope rooted there that has members",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "Get approval node for a node",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "OwningOrgNode node ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.OrganisationApprovalNodeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/organisation-nodes/{id}/children": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the direct children of a given organisation node",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "List children of an organisation node",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Parent node ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.OrganisationResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new child node under the given parent node",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "Create a child organisation node",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Parent node ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Create child node request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.OrganisationCreateChildRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.OrganisationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id / name is required / invalid request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/organisation-nodes/{id}/custom-fields": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns definitions that are available to projects in this organisation (including inherited ones)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "List custom field definitions at an organisation node",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Organisation ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by category (PROJECT, PERSON)",
+                        "name": "category",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.CustomFieldDefinitionResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new custom field definition at this organisation node",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "Create a custom field definition for an organisation",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Organisation ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Create custom field definition request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CustomFieldDefinitionCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CustomFieldDefinitionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id / invalid body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/organisation-nodes/{id}/custom-fields/{fieldId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a custom field definition at this organisation node",
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "Delete a custom field definition",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Organisation ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Field Definition ID",
+                        "name": "fieldId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "no content"
+                    },
+                    "400": {
+                        "description": "invalid id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/organisation-nodes/{id}/members/{personId}/custom-fields": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates the custom field values for a specific person within the context of an organisation",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "Update custom fields for a member in an organisation context",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Organisation ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Person ID",
+                        "name": "personId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Custom field values",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.MemberCustomFieldUpdateValues"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "no content"
+                    },
+                    "400": {
+                        "description": "invalid id / invalid body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/organisation-nodes/{id}/memberships/effective": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lists all memberships whose scope root covers this node (scope root is an ancestor of the node)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "List effective memberships at a node",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "OwningOrgNode node ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.OrganisationEffectiveMembershipResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/organisation-nodes/{id}/roles": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns roles that are available to projects in this organisation (including inherited ones)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "List project roles defined at an organisation node",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Organisation ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.ProjectRoleResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new custom project role defined at this organisation node",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "Create a project role for an organisation",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Organisation ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Create role request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ProjectRoleCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ProjectRoleResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id / invalid body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/organisation-nodes/{id}/roles/{roleId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a custom project role defined at this organisation node",
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "Delete a project role",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Organisation ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Role ID",
+                        "name": "roleId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "no content"
+                    },
+                    "400": {
+                        "description": "invalid id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/organisation-roles": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lists all organisation roles",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "List organisation roles",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.OrganisationRoleResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/organisation-roles/ensure-defaults": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates/updates default roles: admin, researcher, students",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "Ensure default organisation roles",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.OrganisationEnsureDefaultsResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/organisation-scopes": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a role scope for a role key and a root node (scope applies to root node and its subtree)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organisation"
+                ],
+                "summary": "Create a role scope",
+                "parameters": [
+                    {
+                        "description": "Create scope request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.OrganisationCreateScopeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.OrganisationRoleScopeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid request body / roleKey is required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/people": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new person with the provided details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "people"
+                ],
+                "summary": "Create a new person",
+                "parameters": [
+                    {
+                        "description": "Person details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.PersonRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PersonResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid body or missing required fields",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/people/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a person by their ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "people"
+                ],
+                "summary": "Get a person",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Person ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PersonResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Person not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update a person's details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "people"
+                ],
+                "summary": "Update a person",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Person ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Person details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.PersonRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PersonResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid body or ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Person not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/products": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns all products",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "List products",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.ProductResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new product",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Create a product",
+                "parameters": [
+                    {
+                        "description": "Product data",
+                        "name": "product",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ProductRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ProductResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns products associated with the current user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "List products for current user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.ProductResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a single product by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Get a product",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ProductResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update an existing product",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Update a product",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Product data",
+                        "name": "product",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ProductRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ProductResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id or body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a product by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Delete a product",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id",
                         "schema": {
                             "type": "string"
                         }
@@ -188,18 +2471,18 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "GetOrganisationNode user profile",
+                "summary": "Get user profile",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser"
+                            "$ref": "#/definitions/dto.UserResponse"
                         }
                     },
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "$ref": "#/definitions/httputil.BackendError"
                         }
                     }
                 }
@@ -207,6 +2490,11 @@ const docTemplate = `{
         },
         "/projects": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieves a list of all projects",
                 "consumes": [
                     "application/json"
@@ -217,59 +2505,15 @@ const docTemplate = `{
                 "tags": [
                     "projects"
                 ],
-                "summary": "GetOrganisationNode all projects",
+                "summary": "Get all projects",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                                "$ref": "#/definitions/dto.ProjectResponse"
                             }
-                        }
-                    },
-                    "500": {
-                        "description": "internal server error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Creates and starts a new project with the provided details",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "projects"
-                ],
-                "summary": "Start a new project",
-                "parameters": [
-                    {
-                        "description": "Project details",
-                        "name": "project",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.StartRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
-                        }
-                    },
-                    "400": {
-                        "description": "invalid body or date format",
-                        "schema": {
-                            "type": "string"
                         }
                     },
                     "500": {
@@ -283,6 +2527,11 @@ const docTemplate = `{
         },
         "/projects/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieves a single project by its unique identifier",
                 "consumes": [
                     "application/json"
@@ -293,7 +2542,7 @@ const docTemplate = `{
                 "tags": [
                     "projects"
                 ],
-                "summary": "GetOrganisationNode a project by ID",
+                "summary": "Get a project by ID",
                 "parameters": [
                     {
                         "type": "string",
@@ -307,7 +2556,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                            "$ref": "#/definitions/dto.ProjectResponse"
                         }
                     },
                     "400": {
@@ -323,9 +2572,16 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "put": {
-                "description": "Updates an existing project with the provided details",
+            }
+        },
+        "/projects/{id}/allowed-events": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of events the user is allowed to perform on the project",
                 "consumes": [
                     "application/json"
                 ],
@@ -335,7 +2591,210 @@ const docTemplate = `{
                 "tags": [
                     "projects"
                 ],
-                "summary": "UpdateOrganisationNode a project",
+                "summary": "Get allowed events for a project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "invalid project id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/projects/{id}/changelog": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves the change log for a specific project",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "projects"
+                ],
+                "summary": "Get change log for a project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Changelog"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid project id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/projects/{id}/custom-fields": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves all custom fields available to be populated in a project (inherited from organisation hierarchy)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "projects"
+                ],
+                "summary": "List available custom fields for a project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.CustomFieldDefinitionResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "invalid project id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/projects/{id}/events": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lists all event types that can be executed for a project",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "projects"
+                ],
+                "summary": "List available events for a project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.AvailableEvent"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "invalid project id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Executes a single event against a project",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "projects"
+                ],
+                "summary": "Execute a project event",
                 "parameters": [
                     {
                         "type": "string",
@@ -345,30 +2804,30 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Project details",
-                        "name": "project",
+                        "description": "Event execution request",
+                        "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_api_projectdto.UpdateRequest"
+                            "$ref": "#/definitions/dto.ExecuteEventRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Updated project",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                            "$ref": "#/definitions/dto.ExecuteEventRequest"
                         }
                     },
                     "400": {
-                        "description": "invalid body, id or date format",
+                        "description": "invalid request",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "404": {
-                        "description": "project not found",
+                        "description": "unknown event type",
                         "schema": {
                             "type": "string"
                         }
@@ -382,58 +2841,73 @@ const docTemplate = `{
                 }
             }
         },
-        "/projects/{id}/people/{personId}": {
+        "/projects/{id}/export/{sink}": {
             "post": {
-                "description": "Adds a new person to the specified project",
-                "consumes": [
-                    "application/json"
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
                 ],
+                "description": "Triggers a project export to the specified sink",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "projects"
                 ],
-                "summary": "Add a person to a project",
+                "summary": "Export a project using a sink adapter",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Project ID (UUID)",
+                        "description": "Project ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Person ID (UUID)",
-                        "name": "personId",
+                        "description": "Sink Name",
+                        "name": "sink",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Export successful",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                            "type": "string"
                         }
                     },
                     "400": {
-                        "description": "invalid project id or body",
+                        "description": "Invalid project id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Project or sink not found",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "internal server error",
+                        "description": "Export failed",
                         "schema": {
                             "type": "string"
                         }
                     }
                 }
-            },
-            "delete": {
-                "description": "Removes a person from the specified project",
+            }
+        },
+        "/projects/{id}/pending-events": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of pending events for a specific project",
                 "consumes": [
                     "application/json"
                 ],
@@ -443,19 +2917,12 @@ const docTemplate = `{
                 "tags": [
                     "projects"
                 ],
-                "summary": "Remove a person from a project",
+                "summary": "Get pending events for a project",
                 "parameters": [
                     {
                         "type": "string",
                         "description": "Project ID (UUID)",
                         "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Person ID (UUID)",
-                        "name": "personId",
                         "in": "path",
                         "required": true
                     }
@@ -464,11 +2931,11 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project"
+                            "$ref": "#/definitions/dto.EventResponse"
                         }
                     },
                     "400": {
-                        "description": "invalid project id or person id",
+                        "description": "invalid project id",
                         "schema": {
                             "type": "string"
                         }
@@ -482,9 +2949,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/register": {
-            "post": {
-                "description": "Creates a new user account with the provided credentials",
+        "/projects/{id}/roles": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves all roles available to be assigned in a project (inherited from organisation hierarchy)",
                 "consumes": [
                     "application/json"
                 ],
@@ -492,37 +2964,38 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "projects"
                 ],
-                "summary": "Register a new user",
+                "summary": "List available roles for a project",
                 "parameters": [
                     {
-                        "description": "User registration details",
-                        "name": "user",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.RegisterRequest"
-                        }
+                        "type": "string",
+                        "description": "Project ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "200": {
+                        "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.RegisterResponse"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.ProjectRoleResponse"
+                            }
                         }
                     },
                     "400": {
-                        "description": "Invalid request body or missing fields",
+                        "description": "invalid project id",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "type": "string"
                         }
                     }
                 }
@@ -545,20 +3018,20 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.StatusResponse"
+                            "$ref": "#/definitions/httputil.StatusResponse"
                         }
                     }
                 }
             }
         },
-        "/users/count": {
-            "get": {
+        "/users": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Returns the total number of registered users",
+                "description": "Creates a new user account for an existing person using the provided person ID and password.",
                 "consumes": [
                     "application/json"
                 ],
@@ -568,24 +3041,288 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
-                "summary": "GetOrganisationNode total user count",
+                "summary": "Create a new user",
+                "parameters": [
+                    {
+                        "description": "User creation payload",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UserRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_custom.TotalUsersResponse"
+                            "$ref": "#/definitions/dto.UserResponse"
                         }
                     },
-                    "401": {
-                        "description": "User not authenticated",
+                    "400": {
+                        "description": "invalid request body or missing person ID",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SURF-Innovatie_MORIS_internal_auth.BackendError"
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Search for persons by name or email. Non-admins are restricted to people they share a project with.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Search users/persons",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.UserPersonResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a single user by its ID, provided as the ` + "`" + `id` + "`" + ` query parameter.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get a user by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an existing user's person reference and/or password based on the given ID and request body.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Update a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User update payload",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id or request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a user by its ID, provided as the ` + "`" + `id` + "`" + ` query parameter.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Delete a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "no content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}/events/approved": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves all approved events created by the user with the given ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get approved events for a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.EventResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 }
@@ -593,95 +3330,1471 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "ent.User": {
+        "adapter.DataType": {
+            "type": "string",
+            "enum": [
+                "user",
+                "project"
+            ],
+            "x-enum-varnames": [
+                "DataTypeUser",
+                "DataTypeProject"
+            ]
+        },
+        "adapter.InputInfo": {
             "type": "object",
             "properties": {
-                "email": {
-                    "description": "Email holds the value of the \"email\" field.",
+                "description": {
                     "type": "string"
                 },
-                "id": {
-                    "description": "ID of the ent.",
+                "label": {
+                    "type": "string"
+                },
+                "mimeType": {
+                    "description": "For file inputs",
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/adapter.TransferType"
+                }
+            }
+        },
+        "adapter.OutputInfo": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "mimeType": {
+                    "description": "For file outputs",
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/adapter.TransferType"
+                }
+            }
+        },
+        "adapter.TransferType": {
+            "type": "string",
+            "enum": [
+                "api",
+                "file"
+            ],
+            "x-enum-comments": {
+                "TransferTypeAPI": "External service call",
+                "TransferTypeFile": "File upload/download"
+            },
+            "x-enum-descriptions": [
+                "External service call",
+                "File upload/download"
+            ],
+            "x-enum-varnames": [
+                "TransferTypeAPI",
+                "TransferTypeFile"
+            ]
+        },
+        "crossref.Assertion": {
+            "type": "object",
+            "properties": {
+                "URL": {
+                    "type": "string"
+                },
+                "group": {
+                    "$ref": "#/definitions/crossref.Group"
+                },
+                "label": {
                     "type": "string"
                 },
                 "name": {
-                    "description": "Name holds the value of the \"name\" field.",
+                    "type": "string"
+                },
+                "order": {
+                    "type": "integer"
+                },
+                "value": {
                     "type": "string"
                 }
             }
         },
-        "github_com_SURF-Innovatie_MORIS_internal_api_projectdto.StartRequest": {
+        "crossref.Author": {
             "type": "object",
             "properties": {
+                "affiliation": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/crossref.AuthorAffiliation"
+                    }
+                },
+                "family": {
+                    "type": "string"
+                },
+                "given": {
+                    "type": "string"
+                },
+                "sequence": {
+                    "type": "string"
+                }
+            }
+        },
+        "crossref.AuthorAffiliation": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "crossref.ContentDomain": {
+            "type": "object",
+            "properties": {
+                "crossmark-restriction": {
+                    "type": "boolean"
+                },
+                "domain": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "crossref.Created": {
+            "type": "object",
+            "properties": {
+                "date-parts": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "date-time": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "crossref.DateParts": {
+            "type": "object",
+            "properties": {
+                "date-parts": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "date-time": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "crossref.Deposited": {
+            "type": "object",
+            "properties": {
+                "date-parts": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "date-time": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "crossref.Group": {
+            "type": "object",
+            "properties": {
+                "label": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "crossref.ISSNType": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "crossref.Indexed": {
+            "type": "object",
+            "properties": {
+                "date-parts": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "date-time": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "crossref.Issued": {
+            "type": "object",
+            "properties": {
+                "date-parts": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "crossref.JournalIssue": {
+            "type": "object",
+            "properties": {
+                "issue": {
+                    "type": "string"
+                },
+                "published-online": {
+                    "$ref": "#/definitions/crossref.PublishedOnline"
+                },
+                "published-print": {
+                    "$ref": "#/definitions/crossref.PublishedPrint"
+                }
+            }
+        },
+        "crossref.License": {
+            "type": "object",
+            "properties": {
+                "URL": {
+                    "type": "string"
+                },
+                "content-version": {
+                    "type": "string"
+                },
+                "delay-in-days": {
+                    "type": "integer"
+                },
+                "start": {
+                    "$ref": "#/definitions/crossref.DateParts"
+                }
+            }
+        },
+        "crossref.Link": {
+            "type": "object",
+            "properties": {
+                "URL": {
+                    "type": "string"
+                },
+                "content-type": {
+                    "type": "string"
+                },
+                "content-version": {
+                    "type": "string"
+                },
+                "intended-application": {
+                    "type": "string"
+                }
+            }
+        },
+        "crossref.Primary": {
+            "type": "object",
+            "properties": {
+                "URL": {
+                    "type": "string"
+                }
+            }
+        },
+        "crossref.Published": {
+            "type": "object",
+            "properties": {
+                "date-parts": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "crossref.PublishedOnline": {
+            "type": "object",
+            "properties": {
+                "date-parts": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "crossref.PublishedPrint": {
+            "type": "object",
+            "properties": {
+                "date-parts": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "crossref.Reference": {
+            "type": "object",
+            "properties": {
+                "DOI": {
+                    "type": "string"
+                },
+                "ISBN": {
+                    "type": "string"
+                },
+                "ISSN": {
+                    "type": "string"
+                },
+                "article-title": {
+                    "type": "string"
+                },
+                "author": {
+                    "type": "string"
+                },
+                "component": {
+                    "type": "string"
+                },
+                "doi-asserted-by": {
+                    "type": "string"
+                },
+                "edition": {
+                    "type": "string"
+                },
+                "first-page": {
+                    "type": "string"
+                },
+                "issn-type": {
+                    "type": "string"
+                },
+                "issue": {
+                    "type": "string"
+                },
+                "journal-title": {
+                    "type": "string"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "series-title": {
+                    "type": "string"
+                },
+                "standard-designator": {
+                    "type": "string"
+                },
+                "standards-body": {
+                    "type": "string"
+                },
+                "unstructured": {
+                    "type": "string"
+                },
+                "volume": {
+                    "type": "string"
+                },
+                "volume-title": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "string"
+                }
+            }
+        },
+        "crossref.Work": {
+            "type": "object",
+            "properties": {
+                "DOI": {
+                    "type": "string"
+                },
+                "ISSN": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "URL": {
+                    "type": "string"
+                },
+                "abstract": {
+                    "type": "string"
+                },
+                "alternative-id": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "archive": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "assertion": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/crossref.Assertion"
+                    }
+                },
+                "author": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/crossref.Author"
+                    }
+                },
+                "container-title": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "content-domain": {
+                    "$ref": "#/definitions/crossref.ContentDomain"
+                },
+                "created": {
+                    "$ref": "#/definitions/crossref.Created"
+                },
+                "deposited": {
+                    "$ref": "#/definitions/crossref.Deposited"
+                },
+                "indexed": {
+                    "$ref": "#/definitions/crossref.Indexed"
+                },
+                "is-referenced-by-count": {
+                    "type": "integer"
+                },
+                "issn-type": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/crossref.ISSNType"
+                    }
+                },
+                "issue": {
+                    "type": "string"
+                },
+                "issued": {
+                    "$ref": "#/definitions/crossref.Issued"
+                },
+                "journal-issue": {
+                    "$ref": "#/definitions/crossref.JournalIssue"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "license": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/crossref.License"
+                    }
+                },
+                "link": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/crossref.Link"
+                    }
+                },
+                "member": {
+                    "type": "string"
+                },
+                "page": {
+                    "type": "string"
+                },
+                "prefix": {
+                    "type": "string"
+                },
+                "published": {
+                    "$ref": "#/definitions/crossref.Published"
+                },
+                "published-online": {
+                    "$ref": "#/definitions/crossref.PublishedOnline"
+                },
+                "published-print": {
+                    "$ref": "#/definitions/crossref.PublishedPrint"
+                },
+                "publisher": {
+                    "type": "string"
+                },
+                "reference": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/crossref.Reference"
+                    }
+                },
+                "reference-count": {
+                    "type": "integer"
+                },
+                "references-count": {
+                    "type": "integer"
+                },
+                "resource": {
+                    "$ref": "#/definitions/crossref.WorkResource"
+                },
+                "score": {
+                    "type": "number"
+                },
+                "short-container-title": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "source": {
+                    "type": "string"
+                },
+                "subtitle": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "title": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "type": {
+                    "type": "string"
+                },
+                "update-policy": {
+                    "type": "string"
+                },
+                "volume": {
+                    "type": "string"
+                }
+            }
+        },
+        "crossref.WorkResource": {
+            "type": "object",
+            "properties": {
+                "primary": {
+                    "$ref": "#/definitions/crossref.Primary"
+                }
+            }
+        },
+        "dto.AdapterListResponse": {
+            "type": "object",
+            "properties": {
+                "sinks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.SinkInfoResponse"
+                    }
+                },
+                "sources": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.SourceInfoResponse"
+                    }
+                }
+            }
+        },
+        "dto.AvailableEvent": {
+            "type": "object",
+            "properties": {
+                "allowed": {
+                    "type": "boolean"
+                },
+                "friendly_name": {
+                    "type": "string"
+                },
+                "input_schema": {
+                    "description": "optional if you add schemas",
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "needs_approval": {
+                    "type": "boolean"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.Changelog": {
+            "type": "object",
+            "properties": {
+                "entries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ChangelogEntry"
+                    }
+                }
+            }
+        },
+        "dto.ChangelogEntry": {
+            "type": "object",
+            "properties": {
+                "at": {
+                    "type": "string"
+                },
+                "event": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CustomFieldDefinitionCreateRequest": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "description": "PROJECT, PERSON",
+                    "type": "string",
+                    "example": "PROJECT"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "example_value": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "type": {
+                    "description": "TEXT, NUMBER, BOOLEAN, DATE",
+                    "type": "string",
+                    "example": "TEXT"
+                },
+                "validation_regex": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CustomFieldDefinitionResponse": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "example_value": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "organisation_node_id": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "validation_regex": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.Event": {
+            "type": "object",
+            "properties": {
+                "at": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "string"
+                },
+                "data": {
+                    "description": "The raw event data (input payload)"
+                },
+                "details": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "orgNodeId": {
+                    "type": "string"
+                },
+                "person": {
+                    "description": "Optional full related objects",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.PersonResponse"
+                        }
+                    ]
+                },
+                "personId": {
+                    "description": "Optional \"related object\" pointers (IDs only)",
+                    "type": "string"
+                },
+                "product": {
+                    "$ref": "#/definitions/dto.ProductResponse"
+                },
+                "productId": {
+                    "type": "string"
+                },
+                "projectId": {
+                    "type": "string"
+                },
+                "projectRole": {
+                    "$ref": "#/definitions/dto.ProjectRoleResponse"
+                },
+                "projectRoleId": {
+                    "type": "string"
+                },
+                "projectTitle": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/events.Status"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.EventResponse": {
+            "type": "object",
+            "properties": {
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.Event"
+                    }
+                }
+            }
+        },
+        "dto.EventTypeResponse": {
+            "type": "object",
+            "properties": {
+                "allowed": {
+                    "type": "boolean"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "friendlyName": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ExecuteEventRequest": {
+            "type": "object"
+        },
+        "dto.LinkORCIDRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "authentication_code_from_orcid"
+                }
+            }
+        },
+        "dto.LoginRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "secretpassword"
+                }
+            }
+        },
+        "dto.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                },
+                "user": {
+                    "$ref": "#/definitions/dto.UserResponse"
+                }
+            }
+        },
+        "dto.MemberCustomFieldUpdateValues": {
+            "type": "object",
+            "properties": {
+                "values": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "dto.NotificationResponse": {
+            "type": "object",
+            "properties": {
+                "event_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "project_id": {
+                    "type": "string"
+                },
+                "read": {
+                    "type": "boolean"
+                },
+                "sent_at": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ORCIDAuthURLResponse": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "example": "https://orcid.org/oauth/authorize?..."
+                }
+            }
+        },
+        "dto.OrganisationAddMembershipRequest": {
+            "type": "object",
+            "properties": {
+                "personId": {
+                    "type": "string"
+                },
+                "roleScopeId": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.OrganisationApprovalNodeResponse": {
+            "type": "object",
+            "properties": {
+                "approvalNodeId": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.OrganisationCreateChildRequest": {
+            "type": "object",
+            "properties": {
+                "avatarUrl": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "rorId": {
+                    "description": "RorID is the Research Organization Registry ID",
+                    "type": "string"
+                }
+            }
+        },
+        "dto.OrganisationCreateRootRequest": {
+            "type": "object",
+            "properties": {
+                "avatarUrl": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "rorId": {
+                    "description": "RorID is the Research Organization Registry ID",
+                    "type": "string"
+                }
+            }
+        },
+        "dto.OrganisationCreateScopeRequest": {
+            "type": "object",
+            "properties": {
+                "roleKey": {
+                    "type": "string"
+                },
+                "rootNodeId": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.OrganisationEffectiveMembershipResponse": {
+            "type": "object",
+            "properties": {
+                "customFields": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "hasAdminRights": {
+                    "type": "boolean"
+                },
+                "membershipId": {
+                    "type": "string"
+                },
+                "person": {
+                    "$ref": "#/definitions/dto.PersonResponse"
+                },
+                "roleId": {
+                    "type": "string"
+                },
+                "roleKey": {
+                    "type": "string"
+                },
+                "roleScopeId": {
+                    "type": "string"
+                },
+                "scopeRootOrganisation": {
+                    "$ref": "#/definitions/dto.OrganisationResponse"
+                }
+            }
+        },
+        "dto.OrganisationEnsureDefaultsResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.OrganisationMembershipResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "personId": {
+                    "type": "string"
+                },
+                "roleScopeId": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.OrganisationResponse": {
+            "type": "object",
+            "properties": {
+                "avatarUrl": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parentId": {
+                    "type": "string"
+                },
+                "rorId": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.OrganisationRoleResponse": {
+            "type": "object",
+            "properties": {
+                "hasAdminRights": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "key": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.OrganisationRoleScopeResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "roleId": {
+                    "type": "string"
+                },
+                "rootNodeId": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.OrganisationUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "avatarUrl": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parentId": {
+                    "description": "ParentID is the optional parent for moving the node",
+                    "type": "string"
+                },
+                "rorId": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.PersonRequest": {
+            "type": "object",
+            "properties": {
+                "avatarUrl": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "familyName": {
+                    "type": "string"
+                },
+                "givenName": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "orcid": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.PersonResponse": {
+            "type": "object",
+            "properties": {
+                "avatarUrl": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "familyName": {
+                    "type": "string"
+                },
+                "givenName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "orcid": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ProductRequest": {
+            "type": "object",
+            "properties": {
+                "doi": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.ProductResponse": {
+            "type": "object",
+            "properties": {
+                "doi": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/entities.ProductType"
+                }
+            }
+        },
+        "dto.ProjectMemberResponse": {
+            "type": "object",
+            "properties": {
+                "avatarUrl": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "familyName": {
+                    "type": "string"
+                },
+                "givenName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "orcid": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "role_id": {
+                    "type": "string"
+                },
+                "role_name": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ProjectResponse": {
+            "type": "object",
+            "properties": {
+                "custom_fields": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
                 "description": {
                     "type": "string",
                     "example": "This is a new project"
                 },
-                "endDate": {
+                "end_date": {
                     "type": "string",
                     "example": "2025-12-31T23:59:59Z"
-                },
-                "organisationID": {
-                    "type": "string"
-                },
-                "startDate": {
-                    "type": "string",
-                    "example": "2025-01-01T00:00:00Z"
-                },
-                "title": {
-                    "type": "string",
-                    "example": "New Project"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_api_projectdto.UpdateRequest": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "example": "This is an updated project"
-                },
-                "endDate": {
-                    "type": "string",
-                    "example": "2025-12-31T23:59:59Z"
-                },
-                "organisationID": {
-                    "type": "string"
-                },
-                "startDate": {
-                    "type": "string",
-                    "example": "2025-01-01T00:00:00Z"
-                },
-                "title": {
-                    "type": "string",
-                    "example": "Updated Project"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_auth.AuthenticatedUser": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "admin@example.com"
                 },
                 "id": {
-                    "type": "string",
-                    "example": "1"
+                    "type": "string"
                 },
-                "roles": {
+                "members": {
                     "type": "array",
                     "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "admin",
-                        "user"
-                    ]
+                        "$ref": "#/definitions/dto.ProjectMemberResponse"
+                    }
+                },
+                "owning_org_node": {
+                    "$ref": "#/definitions/dto.OrganisationResponse"
+                },
+                "products": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ProductResponse"
+                    }
+                },
+                "start_date": {
+                    "type": "string",
+                    "example": "2025-01-01T00:00:00Z"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "NewService Project"
+                },
+                "version": {
+                    "type": "integer"
                 }
             }
         },
-        "github_com_SURF-Innovatie_MORIS_internal_auth.BackendError": {
+        "dto.ProjectRoleCreateRequest": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string",
+                    "example": "specialist"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Specialist"
+                }
+            }
+        },
+        "dto.ProjectRoleResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "b990c264-b3c1-425f-88a1-69f22ba4a7a5"
+                },
+                "key": {
+                    "type": "string",
+                    "example": "contributor"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Contributor"
+                }
+            }
+        },
+        "dto.SinkInfoResponse": {
+            "type": "object",
+            "properties": {
+                "display_name": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "output": {
+                    "$ref": "#/definitions/adapter.OutputInfo"
+                },
+                "supported_types": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/adapter.DataType"
+                    }
+                }
+            }
+        },
+        "dto.SourceInfoResponse": {
+            "type": "object",
+            "properties": {
+                "display_name": {
+                    "type": "string"
+                },
+                "input": {
+                    "$ref": "#/definitions/adapter.InputInfo"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "supported_types": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/adapter.DataType"
+                    }
+                }
+            }
+        },
+        "dto.UserPaginatedResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.UserResponse"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "page_size": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "total_pages": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.UserPersonResponse": {
+            "type": "object",
+            "properties": {
+                "avatarUrl": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "familyName": {
+                    "type": "string"
+                },
+                "givenName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "orcid": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UserRequest": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "person_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UserResponse": {
+            "type": "object",
+            "properties": {
+                "avatarUrl": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "familyName": {
+                    "type": "string"
+                },
+                "givenName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "is_sys_admin": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "orcid": {
+                    "type": "string"
+                },
+                "person_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UserToggleActiveRequest": {
+            "type": "object",
+            "properties": {
+                "is_active": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "entities.ProductType": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9
+            ],
+            "x-enum-varnames": [
+                "CartographicMaterial",
+                "Dataset",
+                "Image",
+                "InteractiveResource",
+                "LearningObject",
+                "Other",
+                "Software",
+                "Sound",
+                "Trademark",
+                "Workflow"
+            ]
+        },
+        "events.Status": {
+            "type": "string",
+            "enum": [
+                "approved",
+                "pending",
+                "rejected"
+            ],
+            "x-enum-varnames": [
+                "StatusApproved",
+                "StatusPending",
+                "StatusRejected"
+            ]
+        },
+        "httputil.BackendError": {
             "type": "object",
             "properties": {
                 "code": {
@@ -702,137 +4815,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_SURF-Innovatie_MORIS_internal_domain_entities.Project": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "endDate": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "organisation": {
-                    "type": "string"
-                },
-                "people": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "startDate": {
-                    "type": "string"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "integer"
-                }
-            }
-        },
-        "github_com_SURF-Innovatie_MORIS_internal_domain_entities.ProjectNotification": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "projectId": {
-                    "type": "string"
-                },
-                "sentAt": {
-                    "type": "string"
-                },
-                "user": {
-                    "$ref": "#/definitions/ent.User"
-                }
-            }
-        },
-        "internal_handler_custom.LoginRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
-                },
-                "password": {
-                    "type": "string",
-                    "example": "secretpassword"
-                }
-            }
-        },
-        "internal_handler_custom.LoginResponse": {
-            "type": "object",
-            "properties": {
-                "token": {
-                    "type": "string",
-                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                },
-                "user": {
-                    "type": "object",
-                    "properties": {
-                        "email": {
-                            "type": "string",
-                            "example": "user@example.com"
-                        },
-                        "id": {
-                            "type": "string",
-                            "example": "1"
-                        },
-                        "roles": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            },
-                            "example": [
-                                "user"
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "internal_handler_custom.RegisterRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "John Doe"
-                },
-                "password": {
-                    "type": "string",
-                    "example": "secretpassword"
-                }
-            }
-        },
-        "internal_handler_custom.RegisterResponse": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "1"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "John Doe"
-                }
-            }
-        },
-        "internal_handler_custom.StatusResponse": {
+        "httputil.StatusResponse": {
             "type": "object",
             "properties": {
                 "status": {
@@ -845,12 +4828,54 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handler_custom.TotalUsersResponse": {
+        "orcid.OrcidPerson": {
             "type": "object",
             "properties": {
-                "total_users": {
-                    "type": "integer",
-                    "example": 123
+                "biography": {
+                    "type": "string"
+                },
+                "credit_name": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "orcid": {
+                    "type": "string"
+                }
+            }
+        },
+        "organisation.RORItem": {
+            "type": "object",
+            "properties": {
+                "addresses": {
+                    "description": "ROR returns country/addresses in nested structures, simplifying for now",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "city": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "country": {
+                    "type": "object",
+                    "properties": {
+                        "country_name": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         }

@@ -39,6 +39,7 @@ func (r *EntRepo) Create(ctx context.Context, n entities.Notification) (*entitie
 func (r *EntRepo) Get(ctx context.Context, id uuid.UUID) (*entities.Notification, error) {
 	row, err := r.cli.Notification.Query().
 		Where(entnotification.IDEQ(id)).
+		WithEvent().
 		Only(ctx)
 	if err != nil {
 		return nil, err
@@ -66,7 +67,9 @@ func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, n entities.Notificat
 }
 
 func (r *EntRepo) List(ctx context.Context) ([]entities.Notification, error) {
-	rows, err := r.cli.Notification.Query().All(ctx)
+	rows, err := r.cli.Notification.Query().
+		WithEvent().
+		All(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -78,6 +81,7 @@ func (r *EntRepo) ListForUser(ctx context.Context, userID uuid.UUID) ([]entities
 	rows, err := r.cli.Notification.Query().
 		Where(entnotification.HasUserWith(entuser.IDEQ(userID))).
 		Order(ent.Desc(entnotification.FieldSentAt)).
+		WithEvent().
 		All(ctx)
 	if err != nil {
 		return nil, err

@@ -1,6 +1,7 @@
 package adapter
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/adapter"
@@ -65,13 +66,14 @@ func (h *Handler) ListAdapters(w http.ResponseWriter, r *http.Request) {
 
 // ExportProject godoc
 // @Summary Export a project using a sink adapter
-// @Description Triggers a project export to the specified sink
+// @Description Triggers a project export to the specified sink. For file-based sinks, returns a file download.
 // @Tags projects
 // @Param id path string true "Project ID"
 // @Param sink path string true "Sink Name"
 // @Produce json
+// @Produce octet-stream
 // @Security BearerAuth
-// @Success 200 {string} string "Export successful"
+// @Success 200 {object} map[string]string "Export successful or file download"
 // @Failure 400 {string} string "Invalid project id"
 // @Failure 404 {string} string "Project or sink not found"
 // @Failure 500 {string} string "Export failed"
@@ -90,30 +92,26 @@ func (h *Handler) ExportProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 1. Get project data
-	// Note: We need the full context (events, entities, org node)
-	// This might require adding a specialized method to projectSvc or gathering it here
+	// Get project details
 	projDetails, err := h.projectSvc.GetProject(r.Context(), projectID)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusNotFound, "project not found", nil)
 		return
 	}
 
-	// 2. Load event stream
-	// This should be available via the project service or a dedicated event store service
-	// For this example, let's assume we can get it from the service
+	// Load event stream
 	evts, err := h.projectSvc.GetEvents(r.Context(), projectID)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, "failed to load project events", nil)
 		return
 	}
 
-	// 3. Resolve members
+	// Resolve members
 	members := lo.Map(projDetails.Members, func(m entities.ProjectMemberDetail, _ int) entities.Person {
 		return m.Person
 	})
 
-	// 4. Create context
+	// Create context
 	pc := adapter.ProjectContext{
 		ProjectID: projectID,
 		Events:    evts,
@@ -122,16 +120,35 @@ func (h *Handler) ExportProject(w http.ResponseWriter, r *http.Request) {
 		OrgNode:   &projDetails.OwningOrgNode,
 	}
 
-	// 5. Connect and push
+	// Connect
 	if err := sink.Connect(r.Context()); err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, "failed to connect to sink", nil)
 		return
 	}
 
+	// Check if file-based or API-based
+	outputInfo := sink.OutputInfo()
+	if outputInfo.Type == adapter.TransferTypeFile {
+		// File-based export - stream file to client
+		result, err := sink.ExportProjectData(r.Context(), pc)
+		if err != nil {
+			httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+			return
+		}
+
+		w.Header().Set("Content-Type", result.MimeType)
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", result.Filename))
+		w.Header().Set("Content-Length", fmt.Sprintf("%d", len(result.Data)))
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(result.Data)
+		return
+	}
+
+	// API-based export
 	if err := sink.PushProject(r.Context(), pc); err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, "Export successful")
+	_ = httputil.WriteJSON(w, http.StatusOK, map[string]string{"message": "Export successful"})
 }

@@ -72,7 +72,7 @@ export const CreateChildDialog = ({
             value={rorId}
             onSelect={(id, item) => {
               setRorId(id);
-              if (!name) setName(item.name); // Auto-fill name if empty
+              if (!name) setName(item.name || ""); // Auto-fill name if empty
             }}
           />
           <Button

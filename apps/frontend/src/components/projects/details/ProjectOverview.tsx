@@ -2,7 +2,7 @@ import { format } from "date-fns";
 import { Calendar, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ProjectResponse, CustomFieldDefinitionResponse } from "@api/model";
+import { ProjectResponse } from "@api/model";
 import { useGetOrganisationNodesIdCustomFields } from "@api/moris";
 
 interface ProjectOverviewProps {

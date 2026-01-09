@@ -61,6 +61,12 @@ import (
 	projectquery "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_query"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/projectrole"
 	userrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/user"
+
+	"github.com/SURF-Innovatie/MORIS/external/raid"
+	"github.com/SURF-Innovatie/MORIS/internal/adapter"
+	raidsink "github.com/SURF-Innovatie/MORIS/internal/adapter/sinks/raid"
+	csvsource "github.com/SURF-Innovatie/MORIS/internal/adapter/sources/csv"
+	adapterhandler "github.com/SURF-Innovatie/MORIS/internal/handler/adapter"
 )
 
 // @title MORIS
@@ -196,6 +202,19 @@ func main() {
 
 	userHandler := userhandler.NewHandler(userSvc, projSvc)
 
+	// Adapters (Sources/Sinks)
+	registry := adapter.NewRegistry()
+	registry.RegisterSource(csvsource.NewCSVSource("/tmp/import.csv"))
+
+	// RAiD configuration
+	raidOpts := raid.DefaultOptions()
+	// raidOpts.Username = env.Global.RAiDUsername // TODO: Add to env
+	// raidOpts.Password = env.Global.RAiDPassword // TODO: Add to env
+	raidClient := raid.NewClient(http.DefaultClient, raidOpts)
+	
+	registry.RegisterSink(raidsink.NewRAiDSink(raidClient))
+	adapterHandler := adapterhandler.NewHandler(registry, projSvc)
+
 	// Router
 	r := chi.NewRouter()
 	log := logrus.New()
@@ -221,6 +240,7 @@ func main() {
 			notificationhandler.MountNotificationRoutes(r, notificationHandler)
 			userhandler.MountUserRoutes(r, userHandler)
 			crossrefhandler.MountCrossrefRoutes(r, crossrefHandler)
+			adapterhandler.MountRoutes(r, adapterHandler)
 		})
 	})
 

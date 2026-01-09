@@ -36,7 +36,7 @@ import {
   createProductAddedEvent,
   createProductRemovedEvent,
 } from "@/api/events";
-import { Product, ProductType } from "@api/model";
+import { ProductResponse, ProductType } from "@api/model";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Allowed } from "@/components/auth/Allowed";
 import { ProjectEventType } from "@/api/events";
@@ -48,7 +48,7 @@ const doiFormSchema = z.object({
 
 interface ProductsTabProps {
   projectId: string;
-  products: Product[];
+  products: ProductResponse[];
   onRefresh: () => void;
 }
 

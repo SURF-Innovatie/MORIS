@@ -18,6 +18,7 @@ func (m *mockSinkAdapter) SupportedTypes() []adapter.DataType                   
 func (m *mockSinkAdapter) OutputInfo() adapter.OutputInfo                                     { return adapter.OutputInfo{Type: adapter.TransferTypeAPI} }
 func (m *mockSinkAdapter) Connect(ctx context.Context) error                                  { return nil }
 func (m *mockSinkAdapter) PushProject(ctx context.Context, pc adapter.ProjectContext) error   { return nil }
+func (m *mockSinkAdapter) ExportProjectData(ctx context.Context, pc adapter.ProjectContext) (*adapter.ExportResult, error) { return nil, nil }
 func (m *mockSinkAdapter) PushUser(ctx context.Context, uc adapter.UserContext) error         { return nil }
 func (m *mockSinkAdapter) Close() error                                                       { return nil }
 
