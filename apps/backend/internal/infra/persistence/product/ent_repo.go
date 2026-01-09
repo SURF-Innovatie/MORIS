@@ -6,6 +6,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	entperson "github.com/SURF-Innovatie/MORIS/ent/person"
 	entproduct "github.com/SURF-Innovatie/MORIS/ent/product"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
@@ -25,7 +26,7 @@ func (r *EntRepo) Get(ctx context.Context, id uuid.UUID) (*entities.Product, err
 	if err != nil {
 		return nil, err
 	}
-	return (&entities.Product{}).FromEnt(row), nil
+	return transform.ToEntityPtr[entities.Product](row), nil
 }
 
 func (r *EntRepo) List(ctx context.Context) ([]*entities.Product, error) {
@@ -33,11 +34,7 @@ func (r *EntRepo) List(ctx context.Context) ([]*entities.Product, error) {
 	if err != nil {
 		return nil, err
 	}
-	out := make([]*entities.Product, 0, len(rows))
-	for _, row := range rows {
-		out = append(out, (&entities.Product{}).FromEnt(row))
-	}
-	return out, nil
+	return transform.ToEntitiesPtr[entities.Product](rows), nil
 }
 
 func (r *EntRepo) ListByAuthorPersonID(ctx context.Context, personID uuid.UUID) ([]*entities.Product, error) {
@@ -48,12 +45,7 @@ func (r *EntRepo) ListByAuthorPersonID(ctx context.Context, personID uuid.UUID) 
 	if err != nil {
 		return nil, err
 	}
-
-	out := make([]*entities.Product, 0, len(rows))
-	for _, row := range rows {
-		out = append(out, (&entities.Product{}).FromEnt(row))
-	}
-	return out, nil
+	return transform.ToEntitiesPtr[entities.Product](rows), nil
 }
 
 func (r *EntRepo) Create(ctx context.Context, p entities.Product) (*entities.Product, error) {
@@ -66,7 +58,7 @@ func (r *EntRepo) Create(ctx context.Context, p entities.Product) (*entities.Pro
 	if err != nil {
 		return nil, err
 	}
-	return (&entities.Product{}).FromEnt(row), nil
+	return transform.ToEntityPtr[entities.Product](row), nil
 }
 
 func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, p entities.Product) (*entities.Product, error) {
@@ -79,7 +71,7 @@ func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, p entities.Product) 
 	if err != nil {
 		return nil, err
 	}
-	return (&entities.Product{}).FromEnt(row), nil
+	return transform.ToEntityPtr[entities.Product](row), nil
 }
 
 func (r *EntRepo) Delete(ctx context.Context, id uuid.UUID) error {

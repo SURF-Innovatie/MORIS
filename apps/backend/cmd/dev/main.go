@@ -140,7 +140,8 @@ func main() {
 	rbacSvc := organisationrbac.NewService(rbacRepo)
 	rbacHandler := organisationhandler.NewRBACHandler(rbacSvc)
 
-	roleSvc := projectrolesvc.NewService(client)
+	roleRepo := projectrole.NewRepository(client)
+	roleSvc := projectrolesvc.NewService(roleRepo, orgRepo)
 	customFieldSvc := customfield.NewService(client)
 
 	organisationSvc := organisation.NewService(orgRepo, personRepo)
@@ -185,7 +186,7 @@ func main() {
 	ldr := load.New(esStore, cacheSvc)
 	warmup := cachewarmup.NewService(repo, ldr, cacheSvc)
 	entProv := entclient.New(client)
-	roleRepo := projectrole.NewRepository(client)
+
 
 	projSvc := queries.NewService(esStore, ldr, repo, roleRepo, curUser)
 	projHandler := projecthandler.NewHandler(projSvc, customFieldSvc)

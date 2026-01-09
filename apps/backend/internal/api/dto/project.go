@@ -34,6 +34,14 @@ type ProjectRoleResponse struct {
 	Name string    `json:"name" example:"Contributor"`
 }
 
+func (r ProjectRoleResponse) FromEntity(e entities.ProjectRole) ProjectRoleResponse {
+	return ProjectRoleResponse{
+		ID:   e.ID,
+		Key:  e.Key,
+		Name: e.Name,
+	}
+}
+
 type ProjectMemberResponse struct {
 	PersonResponse
 	RoleID   uuid.UUID `json:"role_id"`

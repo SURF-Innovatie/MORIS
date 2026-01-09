@@ -3,6 +3,7 @@ package dto
 import (
 	"time"
 
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
 )
@@ -57,19 +58,15 @@ func (e Event) FromDetailedEntity(dev events.DetailedEvent) Event {
 	dto := e.fromCore(dev.Event, "")
 	
 	if dev.Person != nil {
-		p := PersonResponse{}.FromEntity(*dev.Person)
+		p := transform.ToDTOItem[PersonResponse](*dev.Person)
 		dto.Person = &p
 	}
 	if dev.Product != nil {
-		p := ProductResponse{}.FromEntity(*dev.Product)
+		p := transform.ToDTOItem[ProductResponse](*dev.Product)
 		dto.Product = &p
 	}
 	if dev.ProjectRole != nil {
-		r := ProjectRoleResponse{
-			ID: dev.ProjectRole.ID,
-			Key: dev.ProjectRole.Key,
-			Name: dev.ProjectRole.Name,
-		}
+		r := transform.ToDTOItem[ProjectRoleResponse](*dev.ProjectRole)
 		dto.ProjectRole = &r
 	}
 	

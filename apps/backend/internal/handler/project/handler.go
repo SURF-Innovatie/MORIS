@@ -125,7 +125,7 @@ func (h *Handler) GetPendingEvents(w http.ResponseWriter, r *http.Request) {
 		Events: make([]dto.Event, 0, len(pendingEvents)),
 	}
 	for _, e := range pendingEvents {
-		resp.Events = append(resp.Events, dto.Event{}.FromEntity(e))
+		resp.Events = append(resp.Events, transform.ToDTOItem[dto.Event](e))
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, resp)

@@ -19,13 +19,6 @@ func ToEntity[E any, P interface {
 	FromEnt(*EntRow) *E
 }, EntRow any](row *EntRow) E {
 	var e E
-	// P(&e) converts *E to P, so we can call FromEnt on it.
-	// However, FromEnt usually returns *E (newly allocated or same).
-	// If FromEnt is defined on *E, we can use P.FromEnt.
-	// We need to create an instance of P to call FromEnt if it is a method on the type.
-	// But FromEnt is usually a factory-like method or a converter on a zero value.
-	// Looking at existing usage (u.FromEnt(row)), it seems to be used on an instance.
-	// Let's create a zero value of E, take its address (which satisfies P), and call FromEnt.
 	return *P(&e).FromEnt(row)
 }
 

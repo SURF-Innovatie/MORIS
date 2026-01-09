@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
@@ -35,10 +36,9 @@ type LoginResponse struct {
 }
 
 func FromEntity(token string, user *entities.UserAccount) LoginResponse {
-	var u UserResponse
 	return LoginResponse{
 		Token: token,
-		User:  u.FromEntity(user),
+		User:  transform.ToDTOItem[UserResponse](user),
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
@@ -22,7 +23,7 @@ func (r *EntRepo) Get(ctx context.Context, id uuid.UUID) (*entities.User, error)
 	if err != nil {
 		return nil, err
 	}
-	return (&entities.User{}).FromEnt(row), nil
+	return transform.ToEntityPtr[entities.User](row), nil
 }
 
 func (r *EntRepo) GetByPersonID(ctx context.Context, personID uuid.UUID) (*entities.User, error) {
@@ -30,7 +31,7 @@ func (r *EntRepo) GetByPersonID(ctx context.Context, personID uuid.UUID) (*entit
 	if err != nil {
 		return nil, err
 	}
-	return (&entities.User{}).FromEnt(row), nil
+	return transform.ToEntityPtr[entities.User](row), nil
 }
 
 func (r *EntRepo) Create(ctx context.Context, u entities.User) (*entities.User, error) {
@@ -41,7 +42,7 @@ func (r *EntRepo) Create(ctx context.Context, u entities.User) (*entities.User, 
 	if err != nil {
 		return nil, err
 	}
-	return (&entities.User{}).FromEnt(row), nil
+	return transform.ToEntityPtr[entities.User](row), nil
 }
 
 func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, u entities.User) (*entities.User, error) {
@@ -52,7 +53,7 @@ func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, u entities.User) (*e
 	if err != nil {
 		return nil, err
 	}
-	return (&entities.User{}).FromEnt(row), nil
+	return transform.ToEntityPtr[entities.User](row), nil
 }
 
 func (r *EntRepo) Delete(ctx context.Context, id uuid.UUID) error {
@@ -72,9 +73,6 @@ func (r *EntRepo) ListUsers(ctx context.Context, limit, offset int) ([]entities.
 	if err != nil {
 		return nil, 0, err
 	}
-	out := make([]entities.User, 0, len(rows))
-	for _, row := range rows {
-		out = append(out, *(&entities.User{}).FromEnt(row))
-	}
-	return out, total, nil
+	
+	return transform.ToEntities[entities.User](rows), total, nil
 }

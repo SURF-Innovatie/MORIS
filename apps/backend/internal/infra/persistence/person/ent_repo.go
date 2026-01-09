@@ -32,7 +32,7 @@ func (r *EntRepo) Create(ctx context.Context, p entities.Person) (*entities.Pers
 	if err != nil {
 		return nil, err
 	}
-	return (&entities.Person{}).FromEnt(row), nil
+	return transform.ToEntityPtr[entities.Person](row), nil
 }
 
 func (r *EntRepo) Get(ctx context.Context, id uuid.UUID) (*entities.Person, error) {
@@ -43,7 +43,7 @@ func (r *EntRepo) Get(ctx context.Context, id uuid.UUID) (*entities.Person, erro
 	if err != nil {
 		return nil, err
 	}
-	return (&entities.Person{}).FromEnt(row), nil
+	return transform.ToEntityPtr[entities.Person](row), nil
 }
 
 func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, p entities.Person) (*entities.Person, error) {
@@ -63,7 +63,7 @@ func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, p entities.Person) (
 	if err != nil {
 		return nil, err
 	}
-	return (&entities.Person{}).FromEnt(row), nil
+	return transform.ToEntityPtr[entities.Person](row), nil
 }
 
 func (r *EntRepo) List(ctx context.Context) ([]*entities.Person, error) {
@@ -82,7 +82,7 @@ func (r *EntRepo) GetByEmail(ctx context.Context, email string) (*entities.Perso
 	if err != nil {
 		return nil, err
 	}
-	return (&entities.Person{}).FromEnt(row), nil
+	return transform.ToEntityPtr[entities.Person](row), nil
 }
 
 func (r *EntRepo) Search(ctx context.Context, query string, limit int) ([]entities.Person, error) {

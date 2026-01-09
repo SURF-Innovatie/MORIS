@@ -6,6 +6,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	entnotification "github.com/SURF-Innovatie/MORIS/ent/notification"
 	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
@@ -32,7 +33,7 @@ func (r *EntRepo) Create(ctx context.Context, n entities.Notification) (*entitie
 		return nil, err
 	}
 
-	return (&entities.Notification{}).FromEnt(row), nil
+	return transform.ToEntityPtr[entities.Notification](row), nil
 }
 
 func (r *EntRepo) Get(ctx context.Context, id uuid.UUID) (*entities.Notification, error) {
@@ -43,7 +44,7 @@ func (r *EntRepo) Get(ctx context.Context, id uuid.UUID) (*entities.Notification
 		return nil, err
 	}
 
-	return (&entities.Notification{}).FromEnt(row), nil
+	return transform.ToEntityPtr[entities.Notification](row), nil
 }
 
 func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, n entities.Notification) (*entities.Notification, error) {
@@ -61,7 +62,7 @@ func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, n entities.Notificat
 	if err != nil {
 		return nil, err
 	}
-	return (&entities.Notification{}).FromEnt(row), nil
+	return transform.ToEntityPtr[entities.Notification](row), nil
 }
 
 func (r *EntRepo) List(ctx context.Context) ([]entities.Notification, error) {
@@ -70,11 +71,7 @@ func (r *EntRepo) List(ctx context.Context) ([]entities.Notification, error) {
 		return nil, err
 	}
 
-	out := make([]entities.Notification, 0, len(rows))
-	for _, row := range rows {
-		out = append(out, *(&entities.Notification{}).FromEnt(row))
-	}
-	return out, nil
+	return transform.ToEntities[entities.Notification](rows), nil
 }
 
 func (r *EntRepo) ListForUser(ctx context.Context, userID uuid.UUID) ([]entities.Notification, error) {
@@ -86,11 +83,7 @@ func (r *EntRepo) ListForUser(ctx context.Context, userID uuid.UUID) ([]entities
 		return nil, err
 	}
 
-	out := make([]entities.Notification, 0, len(rows))
-	for _, row := range rows {
-		out = append(out, *(&entities.Notification{}).FromEnt(row))
-	}
-	return out, nil
+	return transform.ToEntities[entities.Notification](rows), nil
 }
 
 func (r *EntRepo) MarkAsRead(ctx context.Context, id uuid.UUID) error {

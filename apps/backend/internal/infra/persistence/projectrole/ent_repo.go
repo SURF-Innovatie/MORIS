@@ -3,6 +3,7 @@ package projectrole
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
@@ -95,6 +96,74 @@ func (e *entRepo) ListByOrgIDs(ctx context.Context, orgIDs []uuid.UUID) ([]entit
 		})
 	}
 	return out, nil
+}
+
+func (e *entRepo) Exists(ctx context.Context, key string, orgNodeID uuid.UUID) (bool, error) {
+	return e.cli.ProjectRole.Query().
+		Where(
+			entprojectrole.KeyEQ(key),
+			entprojectrole.OrganisationNodeIDEQ(orgNodeID),
+		).
+		Exist(ctx)
+}
+
+func (e *entRepo) Unarchive(ctx context.Context, key string, orgNodeID uuid.UUID) error {
+	return e.cli.ProjectRole.Update().
+		Where(
+			entprojectrole.KeyEQ(key),
+			entprojectrole.OrganisationNodeIDEQ(orgNodeID),
+			entprojectrole.ArchivedAtNotNil(),
+		).
+		ClearArchivedAt().
+		Exec(ctx)
+}
+
+func (e *entRepo) CreateOrRestore(ctx context.Context, key, name string, orgNodeID uuid.UUID) (*entities.ProjectRole, error) {
+	// First check if it exists (including archived)
+	existing, err := e.cli.ProjectRole.Query().
+		Where(
+			entprojectrole.KeyEQ(key),
+			entprojectrole.OrganisationNodeIDEQ(orgNodeID),
+		).
+		Only(ctx)
+
+	if err != nil && !ent.IsNotFound(err) {
+		return nil, err
+	}
+
+	if existing != nil {
+		if existing.ArchivedAt != nil {
+			updated, err := e.cli.ProjectRole.UpdateOne(existing).
+				ClearArchivedAt().
+				SetName(name).
+				Save(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return &entities.ProjectRole{
+				ID:                 updated.ID,
+				Key:                updated.Key,
+				Name:               updated.Name,
+				OrganisationNodeID: updated.OrganisationNodeID,
+			}, nil
+		}
+		return nil, fmt.Errorf("role with key '%s' already exists", key)
+	}
+
+	r, err := e.cli.ProjectRole.Create().
+		SetKey(key).
+		SetName(name).
+		SetOrganisationNodeID(orgNodeID).
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &entities.ProjectRole{
+		ID:                 r.ID,
+		Key:                r.Key,
+		Name:               r.Name,
+		OrganisationNodeID: r.OrganisationNodeID,
+	}, nil
 }
 
 func (e *entRepo) List(ctx context.Context) ([]entities.ProjectRole, error) {

@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Pencil, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ExportButton } from "@/components/projects/ExportButton";
 
 interface ProjectStickyHeaderProps {
     projectId: string;
@@ -28,6 +29,7 @@ export function ProjectStickyHeader({ projectId, title }: ProjectStickyHeaderPro
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    <ExportButton projectId={projectId} />
                     <Button variant="outline" onClick={() => navigate(`/projects/${projectId}`)}>
                         <Eye className="mr-2 h-4 w-4" />
                         View Page
