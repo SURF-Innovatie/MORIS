@@ -169,7 +169,6 @@ func (h *Handler) ListAvailableRoles(w http.ResponseWriter, r *http.Request) {
 	_ = httputil.WriteJSON(w, http.StatusOK, resps)
 }
 
-
 // GetAllowedEvents godoc
 // @Summary Get allowed events for a project
 // @Description Retrieves a list of events the user is allowed to perform on the project

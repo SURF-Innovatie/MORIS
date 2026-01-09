@@ -33,4 +33,3 @@ func (o *OrganisationNode) FromEnt(row *ent.OrganisationNode) *OrganisationNode 
 		AvatarURL:   row.AvatarURL,
 	}
 }
-

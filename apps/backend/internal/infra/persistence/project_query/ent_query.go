@@ -166,4 +166,3 @@ func (r *EntRepo) ListAncestors(ctx context.Context, orgID uuid.UUID) ([]uuid.UU
 		return uuid.Nil, false
 	}), nil
 }
-

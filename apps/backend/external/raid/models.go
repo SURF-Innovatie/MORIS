@@ -19,8 +19,8 @@ type RAiDRegistrationAgency struct {
 
 // RAiDOwner represents the owner of the RAiD.
 type RAiDOwner struct {
-	Id        string `json:"id"`
-	SchemaUri string `json:"schemaUri"`
+	Id           string  `json:"id"`
+	SchemaUri    string  `json:"schemaUri"`
 	ServicePoint *string `json:"servicePoint,omitempty"`
 }
 
@@ -28,7 +28,7 @@ type RAiDOwner struct {
 type RAiDTitle struct {
 	Text      string        `json:"text"`
 	Type      RAiDTitleType `json:"type"`
-	StartDate string        `json:"startDate"` // YYYY-MM-DD
+	StartDate string        `json:"startDate"`         // YYYY-MM-DD
 	EndDate   *string       `json:"endDate,omitempty"` // YYYY-MM-DD
 	Language  *RAiDLanguage `json:"language,omitempty"`
 }
@@ -47,7 +47,7 @@ type RAiDLanguage struct {
 
 // RAiDDate represents the date coverage of the RAiD.
 type RAiDDate struct {
-	StartDate string  `json:"startDate"` // YYYY-MM-DD
+	StartDate string  `json:"startDate"`         // YYYY-MM-DD
 	EndDate   *string `json:"endDate,omitempty"` // YYYY-MM-DD
 }
 
@@ -90,24 +90,24 @@ type RAiDAlternateUrl struct {
 
 // RAiDContributor represents a contributor to the RAiD.
 type RAiDContributor struct {
-	Id            *string                 `json:"id,omitempty"` // Note: Some bad data in RAiD db might make this missing
-	SchemaUri     string                  `json:"schemaUri"`
-	Status        *string                 `json:"status,omitempty"`
-	StatusMessage *string                 `json:"statusMessage,omitempty"`
-	Email         *string                 `json:"email,omitempty"`
-	Uuid          *string                 `json:"uuid,omitempty"`
+	Id            *string                   `json:"id,omitempty"` // Note: Some bad data in RAiD db might make this missing
+	SchemaUri     string                    `json:"schemaUri"`
+	Status        *string                   `json:"status,omitempty"`
+	StatusMessage *string                   `json:"statusMessage,omitempty"`
+	Email         *string                   `json:"email,omitempty"`
+	Uuid          *string                   `json:"uuid,omitempty"`
 	Position      []RAiDContributorPosition `json:"position"`
-	Role          []RAiDContributorRole   `json:"role"`
-	Leader        *bool                   `json:"leader,omitempty"`
-	Contact       *bool                   `json:"contact,omitempty"`
+	Role          []RAiDContributorRole     `json:"role"`
+	Leader        *bool                     `json:"leader,omitempty"`
+	Contact       *bool                     `json:"contact,omitempty"`
 }
 
 // RAiDContributorPosition represents the position of a contributor.
 type RAiDContributorPosition struct {
-	Id        string      `json:"id"`
-	SchemaUri string      `json:"schemaUri"`
-	StartDate string      `json:"startDate"` // YYYY-MM-DD
-	EndDate   *string     `json:"endDate,omitempty"` // YYYY-MM-DD
+	Id        string  `json:"id"`
+	SchemaUri string  `json:"schemaUri"`
+	StartDate string  `json:"startDate"`         // YYYY-MM-DD
+	EndDate   *string `json:"endDate,omitempty"` // YYYY-MM-DD
 }
 
 // RAiDContributorRole represents the role of a contributor.
@@ -125,16 +125,16 @@ type RAiDOrganisation struct {
 
 // RAiDOrganisationRole represents the role of an organisation.
 type RAiDOrganisationRole struct {
-	Id        string      `json:"id"`
-	SchemaUri string      `json:"schemaUri"`
-	StartDate string      `json:"startDate"` // YYYY-MM-DD
-	EndDate   *string     `json:"endDate,omitempty"` // YYYY-MM-DD
+	Id        string  `json:"id"`
+	SchemaUri string  `json:"schemaUri"`
+	StartDate string  `json:"startDate"`         // YYYY-MM-DD
+	EndDate   *string `json:"endDate,omitempty"` // YYYY-MM-DD
 }
 
 // RAiDSubject represents a subject of the RAiD.
 type RAiDSubject struct {
-	Id        string             `json:"id"`
-	SchemaUri string             `json:"schemaUri"`
+	Id        string               `json:"id"`
+	SchemaUri string               `json:"schemaUri"`
 	Keyword   []RAiDSubjectKeyword `json:"keyword,omitempty"`
 }
 
@@ -146,9 +146,9 @@ type RAiDSubjectKeyword struct {
 
 // RAiDRelatedRaid represents a related RAiD.
 type RAiDRelatedRaid struct {
-	Id        string               `json:"id"`
-	Type      RAiDRelatedRaidType  `json:"type"`
-	Title     *string              `json:"title,omitempty"`
+	Id    string              `json:"id"`
+	Type  RAiDRelatedRaidType `json:"type"`
+	Title *string             `json:"title,omitempty"`
 }
 
 // RAiDRelatedRaidType represents the type of related RAiD relationship.
@@ -159,11 +159,11 @@ type RAiDRelatedRaidType struct {
 
 // RAiDRelatedObject represents a related object.
 type RAiDRelatedObject struct {
-	Id        string                    `json:"id"`
-	SchemaUri *string                   `json:"schemaUri,omitempty"`
-	Type      RAiDRelatedObjectType     `json:"type"`
+	Id        string                      `json:"id"`
+	SchemaUri *string                     `json:"schemaUri,omitempty"`
+	Type      RAiDRelatedObjectType       `json:"type"`
 	Category  []RAiDRelatedObjectCategory `json:"category,omitempty"`
-	Title     *string                   `json:"title,omitempty"`
+	Title     *string                     `json:"title,omitempty"`
 }
 
 // RAiDRelatedObjectType represents the type of related object.
@@ -180,16 +180,16 @@ type RAiDRelatedObjectCategory struct {
 
 // RAiDAlternateIdentifier represents an alternate identifier.
 type RAiDAlternateIdentifier struct {
-	Id     string `json:"id"`
-	Type   string `json:"type"`
+	Id   string `json:"id"`
+	Type string `json:"type"`
 }
 
 // RAiDSpatialCoverage represents spatial coverage data.
 type RAiDSpatialCoverage struct {
-	Id        string                  `json:"id"`
-	SchemaUri string                  `json:"schemaUri"`
+	Id        string                     `json:"id"`
+	SchemaUri string                     `json:"schemaUri"`
 	Place     []RAiDSpatialCoveragePlace `json:"place,omitempty"`
-	Language  *RAiDLanguage           `json:"language,omitempty"`
+	Language  *RAiDLanguage              `json:"language,omitempty"`
 }
 
 // RAiDSpatialCoveragePlace represents a place in spatial coverage.
@@ -206,9 +206,9 @@ type RAiDTraditionalKnowledgeLabel struct {
 
 // RAiDMetadata represents metadata about the RAiD record itself.
 type RAiDMetadata struct {
-	Access             string `json:"access"`
-	IdProvider         string `json:"idProvider"`
-	IdProviderClient   string `json:"idProviderClient"`
+	Access           string `json:"access"`
+	IdProvider       string `json:"idProvider"`
+	IdProviderClient string `json:"idProviderClient"`
 }
 
 // RAiDDto represents the full RAiD object.
@@ -232,37 +232,37 @@ type RAiDDto struct {
 
 // RAiDCreateRequest represents the payload for creating a new RAiD.
 type RAiDCreateRequest struct {
-	Metadata            *RAiDMetadata                   `json:"metadata,omitempty"`
-	Identifier          *RAiDId                         `json:"identifier,omitempty"` // For minting, usually we don't send ID, or we send partial? C# says nullable.
-	Title               []RAiDTitle                     `json:"title,omitempty"`
-	Date                *RAiDDate                       `json:"date,omitempty"`
-	Description         []RAiDDescription               `json:"description,omitempty"`
-	Access              RAiDAccess                      `json:"access"`
-	AlternateUrl        []RAiDAlternateUrl              `json:"alternateUrl,omitempty"`
-	Contributor         []RAiDContributor               `json:"contributor,omitempty"`
-	Organisation        []RAiDOrganisation              `json:"organisation,omitempty"`
-	Subject             []RAiDSubject                   `json:"subject,omitempty"`
-	RelatedRaid         []RAiDRelatedRaid               `json:"relatedRaid,omitempty"`
-	RelatedObject       []RAiDRelatedObject             `json:"relatedObject,omitempty"`
-	AlternateIdentifier []RAiDAlternateIdentifier       `json:"alternateIdentifier,omitempty"`
-	SpatialCoverage     []RAiDSpatialCoverage           `json:"spatialCoverage,omitempty"`
+	Metadata            *RAiDMetadata             `json:"metadata,omitempty"`
+	Identifier          *RAiDId                   `json:"identifier,omitempty"` // For minting, usually we don't send ID, or we send partial? C# says nullable.
+	Title               []RAiDTitle               `json:"title,omitempty"`
+	Date                *RAiDDate                 `json:"date,omitempty"`
+	Description         []RAiDDescription         `json:"description,omitempty"`
+	Access              RAiDAccess                `json:"access"`
+	AlternateUrl        []RAiDAlternateUrl        `json:"alternateUrl,omitempty"`
+	Contributor         []RAiDContributor         `json:"contributor,omitempty"`
+	Organisation        []RAiDOrganisation        `json:"organisation,omitempty"`
+	Subject             []RAiDSubject             `json:"subject,omitempty"`
+	RelatedRaid         []RAiDRelatedRaid         `json:"relatedRaid,omitempty"`
+	RelatedObject       []RAiDRelatedObject       `json:"relatedObject,omitempty"`
+	AlternateIdentifier []RAiDAlternateIdentifier `json:"alternateIdentifier,omitempty"`
+	SpatialCoverage     []RAiDSpatialCoverage     `json:"spatialCoverage,omitempty"`
 }
 
 // RAiDUpdateRequest represents the payload for updating a RAiD.
 type RAiDUpdateRequest struct {
-	Title               []RAiDTitle                     `json:"title,omitempty"`
-	Date                *RAiDDate                       `json:"date,omitempty"`
-	Description         []RAiDDescription               `json:"description,omitempty"`
-	Access              RAiDAccess                      `json:"access"`
-	AlternateUrl        []RAiDAlternateUrl              `json:"alternateUrl,omitempty"`
-	Contributor         []RAiDContributor               `json:"contributor,omitempty"`
-	Organisation        []RAiDOrganisation              `json:"organisation,omitempty"`
-	Subject             []RAiDSubject                   `json:"subject,omitempty"`
-	RelatedRaid         []RAiDRelatedRaid               `json:"relatedRaid,omitempty"`
-	RelatedObject       []RAiDRelatedObject             `json:"relatedObject,omitempty"`
-	AlternateIdentifier []RAiDAlternateIdentifier       `json:"alternateIdentifier,omitempty"`
-	SpatialCoverage     []RAiDSpatialCoverage           `json:"spatialCoverage,omitempty"`
-	Identifier          RAiDId                          `json:"identifier"`
+	Title               []RAiDTitle               `json:"title,omitempty"`
+	Date                *RAiDDate                 `json:"date,omitempty"`
+	Description         []RAiDDescription         `json:"description,omitempty"`
+	Access              RAiDAccess                `json:"access"`
+	AlternateUrl        []RAiDAlternateUrl        `json:"alternateUrl,omitempty"`
+	Contributor         []RAiDContributor         `json:"contributor,omitempty"`
+	Organisation        []RAiDOrganisation        `json:"organisation,omitempty"`
+	Subject             []RAiDSubject             `json:"subject,omitempty"`
+	RelatedRaid         []RAiDRelatedRaid         `json:"relatedRaid,omitempty"`
+	RelatedObject       []RAiDRelatedObject       `json:"relatedObject,omitempty"`
+	AlternateIdentifier []RAiDAlternateIdentifier `json:"alternateIdentifier,omitempty"`
+	SpatialCoverage     []RAiDSpatialCoverage     `json:"spatialCoverage,omitempty"`
+	Identifier          RAiDId                    `json:"identifier"`
 }
 
 // RAiDAuthResponse represents the response from the authentication endpoint.

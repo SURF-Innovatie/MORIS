@@ -44,4 +44,3 @@ func (p *Person) FromEnt(row *ent.Person) *Person {
 
 	return out
 }
-

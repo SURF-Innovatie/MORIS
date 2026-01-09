@@ -95,7 +95,6 @@ func (s *service) ListAvailableForProject(ctx context.Context, projectID uuid.UU
 	return nil, fmt.Errorf("not implemented, use ListAvailableForNode with project's orgID")
 }
 
-
 // Helper to get user from context if needed in future
 func currentUser(ctx context.Context, cli *ent.Client) (*ent.User, error) {
 	authUser, ok := httputil.GetUserFromContext(ctx)

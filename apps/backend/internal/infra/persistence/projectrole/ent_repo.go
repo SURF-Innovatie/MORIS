@@ -185,4 +185,3 @@ func (e *entRepo) List(ctx context.Context) ([]entities.ProjectRole, error) {
 	}
 	return out, nil
 }
-

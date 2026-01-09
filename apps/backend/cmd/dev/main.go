@@ -174,7 +174,6 @@ func main() {
 
 	notificationHandler := notificationhandler.NewHandler(notifierSvc)
 
-
 	// Create HTTP handler/controller
 	authHandler := authhandler.NewHandler(userSvc, authSvc, orcidSvc)
 	orcidHandler := orcidhandler.NewHandler(orcidSvc)
@@ -193,7 +192,6 @@ func main() {
 	warmup := cachewarmup.NewService(repo, ldr, cacheSvc)
 	entProv := entclient.New(client)
 
-
 	projSvc := queries.NewService(esStore, ldr, repo, roleRepo, curUser)
 	projHandler := projecthandler.NewHandler(projSvc, customFieldSvc)
 
@@ -211,7 +209,7 @@ func main() {
 	// raidOpts.Username = env.Global.RAiDUsername // TODO: Add to env
 	// raidOpts.Password = env.Global.RAiDPassword // TODO: Add to env
 	raidClient := raid.NewClient(http.DefaultClient, raidOpts)
-	
+
 	registry.RegisterSink(raidsink.NewRAiDSink(raidClient))
 	adapterHandler := adapterhandler.NewHandler(registry, projSvc)
 
@@ -243,7 +241,6 @@ func main() {
 			adapterhandler.MountRoutes(r, adapterHandler)
 		})
 	})
-
 
 	// Warmup cache in background
 	go func() {

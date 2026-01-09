@@ -22,7 +22,6 @@ func MountRoutes(r chi.Router, h *Handler) {
 	r.Get("/orcid/search", h.Search)
 }
 
-
 // Search godoc
 // @Summary Search for people in ORCID
 // @Description Searches for people in the ORCID public registry

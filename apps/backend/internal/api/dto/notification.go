@@ -8,9 +8,9 @@ import (
 )
 
 type NotificationResponse struct {
-	ID      uuid.UUID  `json:"id"`
-	UserID  uuid.UUID  `json:"user_id"`
-	EventID *uuid.UUID `json:"event_id,omitempty"`
+	ID        uuid.UUID  `json:"id"`
+	UserID    uuid.UUID  `json:"user_id"`
+	EventID   *uuid.UUID `json:"event_id,omitempty"`
 	ProjectID *uuid.UUID `json:"project_id,omitempty"`
 
 	Message string    `json:"message"`
@@ -21,13 +21,13 @@ type NotificationResponse struct {
 
 func (r NotificationResponse) FromEntity(n entities.Notification) NotificationResponse {
 	return NotificationResponse{
-		ID:      n.ID,
-		UserID:  n.UserID,
-		EventID: n.EventID,
+		ID:        n.ID,
+		UserID:    n.UserID,
+		EventID:   n.EventID,
 		ProjectID: n.ProjectID,
-		Message: n.Message,
-		Type:    string(n.Type),
-		Read:    n.Read,
-		SentAt:  n.SentAt,
+		Message:   n.Message,
+		Type:      string(n.Type),
+		Read:      n.Read,
+		SentAt:    n.SentAt,
 	}
 }

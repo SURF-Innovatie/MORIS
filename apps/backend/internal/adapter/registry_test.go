@@ -12,15 +12,23 @@ type mockSinkAdapter struct {
 	name string
 }
 
-func (m *mockSinkAdapter) Name() string                                                       { return m.name }
-func (m *mockSinkAdapter) DisplayName() string                                                { return m.name }
-func (m *mockSinkAdapter) SupportedTypes() []adapter.DataType                                 { return []adapter.DataType{adapter.DataTypeProject} }
-func (m *mockSinkAdapter) OutputInfo() adapter.OutputInfo                                     { return adapter.OutputInfo{Type: adapter.TransferTypeAPI} }
-func (m *mockSinkAdapter) Connect(ctx context.Context) error                                  { return nil }
-func (m *mockSinkAdapter) PushProject(ctx context.Context, pc adapter.ProjectContext) error   { return nil }
-func (m *mockSinkAdapter) ExportProjectData(ctx context.Context, pc adapter.ProjectContext) (*adapter.ExportResult, error) { return nil, nil }
-func (m *mockSinkAdapter) PushUser(ctx context.Context, uc adapter.UserContext) error         { return nil }
-func (m *mockSinkAdapter) Close() error                                                       { return nil }
+func (m *mockSinkAdapter) Name() string        { return m.name }
+func (m *mockSinkAdapter) DisplayName() string { return m.name }
+func (m *mockSinkAdapter) SupportedTypes() []adapter.DataType {
+	return []adapter.DataType{adapter.DataTypeProject}
+}
+func (m *mockSinkAdapter) OutputInfo() adapter.OutputInfo {
+	return adapter.OutputInfo{Type: adapter.TransferTypeAPI}
+}
+func (m *mockSinkAdapter) Connect(ctx context.Context) error { return nil }
+func (m *mockSinkAdapter) PushProject(ctx context.Context, pc adapter.ProjectContext) error {
+	return nil
+}
+func (m *mockSinkAdapter) ExportProjectData(ctx context.Context, pc adapter.ProjectContext) (*adapter.ExportResult, error) {
+	return nil, nil
+}
+func (m *mockSinkAdapter) PushUser(ctx context.Context, uc adapter.UserContext) error { return nil }
+func (m *mockSinkAdapter) Close() error                                               { return nil }
 
 func TestRegistry_RegisterSink(t *testing.T) {
 	r := adapter.NewRegistry()

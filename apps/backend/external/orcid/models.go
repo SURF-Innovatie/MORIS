@@ -11,10 +11,10 @@ type OrcidPerson struct {
 
 // PersonExpandedSearchResult represents an item in the expanded search results
 type PersonExpandedSearchResult struct {
-	OrcidID    string `json:"orcid-id"`
-	GivenNames string `json:"given-names"`
+	OrcidID     string `json:"orcid-id"`
+	GivenNames  string `json:"given-names"`
 	FamilyNames string `json:"family-names"`
-	CreditName string `json:"credit-name"`
+	CreditName  string `json:"credit-name"`
 }
 
 // ToPerson converts the search result to a domain person object

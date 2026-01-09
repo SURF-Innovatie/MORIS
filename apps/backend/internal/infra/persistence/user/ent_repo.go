@@ -73,6 +73,6 @@ func (r *EntRepo) ListUsers(ctx context.Context, limit, offset int) ([]entities.
 	if err != nil {
 		return nil, 0, err
 	}
-	
+
 	return transform.ToEntities[entities.User](rows), total, nil
 }

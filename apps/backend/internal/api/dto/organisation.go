@@ -52,7 +52,7 @@ func (r OrganisationResponse) FromEntity(n entities.OrganisationNode) Organisati
 
 type CustomFieldDefinitionCreateRequest struct {
 	Name            string  `json:"name"`
-	Type            string  `json:"type" example:"TEXT"` // TEXT, NUMBER, BOOLEAN, DATE
+	Type            string  `json:"type" example:"TEXT"`        // TEXT, NUMBER, BOOLEAN, DATE
 	Category        string  `json:"category" example:"PROJECT"` // PROJECT, PERSON
 	Description     *string `json:"description"`
 	Required        bool    `json:"required"`

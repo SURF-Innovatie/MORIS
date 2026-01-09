@@ -103,7 +103,7 @@ func (c *ORCIDConfig) GetPublicAPIURL() string {
 	// ORCID Search API requires the /v3.0/ endpoint
 	// sandbox: https://pub.sandbox.orcid.org/v3.0/
 	// production: https://pub.orcid.org/v3.0/
-	
+
 	if strings.Contains(c.AuthURL, "sandbox") {
 		return "https://pub.sandbox.orcid.org/v3.0"
 	}

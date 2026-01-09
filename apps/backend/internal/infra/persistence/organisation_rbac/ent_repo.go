@@ -440,5 +440,3 @@ func getCustomFieldsForNode(fields map[string]interface{}, nodeID uuid.UUID) map
 	}
 	return nil
 }
-
-

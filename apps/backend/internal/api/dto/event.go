@@ -50,13 +50,13 @@ func (e Event) FromEntity(ev events.Event) Event {
 }
 
 func (e Event) FromEntityWithTitle(ev events.Event, projectTitle string) Event {
-	var coreEv events.Event = ev    
-    return e.fromCore(coreEv, projectTitle)
+	var coreEv = ev
+	return e.fromCore(coreEv, projectTitle)
 }
 
 func (e Event) FromDetailedEntity(dev events.DetailedEvent) Event {
 	dto := e.fromCore(dev.Event, "")
-	
+
 	if dev.Person != nil {
 		p := transform.ToDTOItem[PersonResponse](*dev.Person)
 		dto.Person = &p
@@ -69,7 +69,7 @@ func (e Event) FromDetailedEntity(dev events.DetailedEvent) Event {
 		r := transform.ToDTOItem[ProjectRoleResponse](*dev.ProjectRole)
 		dto.ProjectRole = &r
 	}
-	
+
 	return dto
 }
 

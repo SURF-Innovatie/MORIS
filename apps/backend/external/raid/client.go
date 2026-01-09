@@ -16,7 +16,7 @@ import (
 type Client struct {
 	httpClient *http.Client
 	options    Options
-	
+
 	// Auth state
 	token      string
 	tokenMutex sync.RWMutex
@@ -112,7 +112,7 @@ func (c *Client) doRequest(ctx context.Context, method, path string, payload int
 
 	if resp.StatusCode == http.StatusUnauthorized && !retry {
 		resp.Body.Close() // Close the failed response body
-		
+
 		// Re-authenticate
 		if err := c.authenticate(ctx); err != nil {
 			return nil, fmt.Errorf("re-authentication failed: %w", err)
@@ -191,4 +191,3 @@ func (c *Client) FindAllRaids(ctx context.Context) ([]RAiDDto, error) {
 
 	return result, nil
 }
-

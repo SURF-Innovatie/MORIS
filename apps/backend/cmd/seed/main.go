@@ -19,7 +19,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
 	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
-	projectrole "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/projectrole"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/projectrole"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
