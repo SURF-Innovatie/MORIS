@@ -8,6 +8,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
+	"github.com/go-chi/chi/v5"
 	"github.com/samber/lo"
 )
 
@@ -71,6 +72,7 @@ func (h *Handler) ListAdapters(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {string} string "Export successful"
+// @Failure 400 {string} string "Invalid project id"
 // @Failure 404 {string} string "Project or sink not found"
 // @Failure 500 {string} string "Export failed"
 // @Router /projects/{id}/export/{sink} [post]
@@ -81,7 +83,7 @@ func (h *Handler) ExportProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sinkName := httputil.GetParam(r, "sink")
+	sinkName := chi.URLParam(r, "sink")
 	sink, ok := h.registry.GetSink(sinkName)
 	if !ok {
 		httputil.WriteError(w, r, http.StatusNotFound, "sink not found", nil)
@@ -117,7 +119,7 @@ func (h *Handler) ExportProject(w http.ResponseWriter, r *http.Request) {
 		Events:    evts,
 		Project:   &projDetails.Project,
 		Members:   members,
-		OrgNode:   projDetails.OwningOrgNode,
+		OrgNode:   &projDetails.OwningOrgNode,
 	}
 
 	// 5. Connect and push

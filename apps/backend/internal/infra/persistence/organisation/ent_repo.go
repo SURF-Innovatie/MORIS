@@ -9,6 +9,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 type EntRepo struct {
@@ -245,15 +246,13 @@ func (r *EntRepo) CreateClosuresBulk(ctx context.Context, rows []entities.Organi
 		return nil
 	}
 
-	bulk := make([]*ent.OrganisationNodeClosureCreate, 0, len(rows))
-	for _, c := range rows {
-		bulk = append(bulk, r.closure().
+	bulk := lo.Map(rows, func(c entities.OrganisationNodeClosure, _ int) *ent.OrganisationNodeClosureCreate {
+		return r.closure().
 			Create().
 			SetAncestorID(c.AncestorID).
 			SetDescendantID(c.DescendantID).
-			SetDepth(c.Depth),
-		)
-	}
+			SetDepth(c.Depth)
+	})
 	_, err := r.closure().CreateBulk(bulk...).Save(ctx)
 	return err
 }

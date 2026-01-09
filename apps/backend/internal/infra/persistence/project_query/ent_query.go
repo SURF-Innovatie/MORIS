@@ -13,6 +13,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 type EntRepo struct {
@@ -37,8 +38,8 @@ func (r *EntRepo) PeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UU
 		return nil, err
 	}
 
-	for _, p := range rows {
-		out[p.ID] = entities.Person{
+	return lo.Associate(rows, func(p *ent.Person) (uuid.UUID, entities.Person) {
+		return p.ID, entities.Person{
 			ID:          p.ID,
 			UserID:      p.UserID,
 			Name:        p.Name,
@@ -49,8 +50,7 @@ func (r *EntRepo) PeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UU
 			AvatarUrl:   p.AvatarURL,
 			Description: p.Description,
 		}
-	}
-	return out, nil
+	}), nil
 }
 
 func (r *EntRepo) ProjectRolesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.ProjectRole, error) {
@@ -67,14 +67,13 @@ func (r *EntRepo) ProjectRolesByIDs(ctx context.Context, ids []uuid.UUID) (map[u
 		return nil, err
 	}
 
-	for _, pr := range rows {
-		out[pr.ID] = entities.ProjectRole{
+	return lo.Associate(rows, func(pr *ent.ProjectRole) (uuid.UUID, entities.ProjectRole) {
+		return pr.ID, entities.ProjectRole{
 			ID:   pr.ID,
 			Key:  pr.Key,
 			Name: pr.Name,
 		}
-	}
-	return out, nil
+	}), nil
 }
 
 func (r *EntRepo) ProductsByIDs(ctx context.Context, ids []uuid.UUID) ([]entities.Product, error) {
@@ -90,17 +89,15 @@ func (r *EntRepo) ProductsByIDs(ctx context.Context, ids []uuid.UUID) ([]entitie
 		return nil, err
 	}
 
-	out := make([]entities.Product, 0, len(rows))
-	for _, p := range rows {
-		out = append(out, entities.Product{
+	return lo.Map(rows, func(p *ent.Product, _ int) entities.Product {
+		return entities.Product{
 			Id:       p.ID,
 			Name:     p.Name,
 			Language: *p.Language,
 			Type:     entities.ProductType(p.Type),
 			DOI:      *p.Doi,
-		})
-	}
-	return out, nil
+		}
+	}), nil
 }
 
 func (r *EntRepo) OrganisationNodeByID(ctx context.Context, id uuid.UUID) (entities.OrganisationNode, error) {
@@ -128,23 +125,18 @@ func (r *EntRepo) ProjectIDsForPerson(ctx context.Context, personID uuid.UUID) (
 		return nil, err
 	}
 
-	unique := make(map[uuid.UUID]struct{})
-	for _, e := range evts {
+	projectIDs := lo.FilterMap(evts, func(e *ent.Event, _ int) (uuid.UUID, bool) {
 		b, _ := json.Marshal(e.Data)
-
 		var payload events.ProjectRoleAssigned
 		if err := json.Unmarshal(b, &payload); err == nil {
 			if payload.PersonID == personID {
-				unique[e.ProjectID] = struct{}{}
+				return e.ProjectID, true
 			}
 		}
-	}
+		return uuid.Nil, false
+	})
 
-	out := make([]uuid.UUID, 0, len(unique))
-	for id := range unique {
-		out = append(out, id)
-	}
-	return out, nil
+	return lo.Uniq(projectIDs), nil
 }
 
 func (r *EntRepo) ProjectIDsStarted(ctx context.Context) ([]uuid.UUID, error) {
@@ -167,12 +159,11 @@ func (r *EntRepo) ListAncestors(ctx context.Context, orgID uuid.UUID) ([]uuid.UU
 	}
 
 	// Find all ancestors of the given org node
-	ids := make([]uuid.UUID, 0)
-	for _, row := range rows {
+	return lo.FilterMap(rows, func(row *ent.OrganisationNodeClosure, _ int) (uuid.UUID, bool) {
 		if row.DescendantID == orgID {
-			ids = append(ids, row.AncestorID)
+			return row.AncestorID, true
 		}
-	}
-	return ids, nil
+		return uuid.Nil, false
+	}), nil
 }
 

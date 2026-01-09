@@ -3,13 +3,16 @@ package project
 import (
 	"net/http"
 
+	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/customfielddefinition"
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/customfield"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
+	"github.com/samber/lo"
 )
 
 type Handler struct {
@@ -122,10 +125,9 @@ func (h *Handler) GetPendingEvents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := dto.EventResponse{
-		Events: make([]dto.Event, 0, len(pendingEvents)),
-	}
-	for _, e := range pendingEvents {
-		resp.Events = append(resp.Events, transform.ToDTOItem[dto.Event](e))
+		Events: lo.Map(pendingEvents, func(e events.Event, _ int) dto.Event {
+			return transform.ToDTOItem[dto.Event](e)
+		}),
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, resp)
@@ -156,14 +158,13 @@ func (h *Handler) ListAvailableRoles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resps := make([]dto.ProjectRoleResponse, 0, len(roles))
-	for _, role := range roles {
-		resps = append(resps, dto.ProjectRoleResponse{
+	resps := lo.Map(roles, func(role entities.ProjectRole, _ int) dto.ProjectRoleResponse {
+		return dto.ProjectRoleResponse{
 			ID:   role.ID,
 			Key:  role.Key,
 			Name: role.Name,
-		})
-	}
+		}
+	})
 
 	_ = httputil.WriteJSON(w, http.StatusOK, resps)
 }
@@ -227,9 +228,8 @@ func (h *Handler) ListAvailableCustomFields(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	resps := make([]dto.CustomFieldDefinitionResponse, 0, len(defs))
-	for _, d := range defs {
-		resps = append(resps, dto.CustomFieldDefinitionResponse{
+	resps := lo.Map(defs, func(d *ent.CustomFieldDefinition, _ int) dto.CustomFieldDefinitionResponse {
+		return dto.CustomFieldDefinitionResponse{
 			ID:                 d.ID,
 			OrganisationNodeID: d.OrganisationNodeID,
 			Name:               d.Name,
@@ -238,8 +238,8 @@ func (h *Handler) ListAvailableCustomFields(w http.ResponseWriter, r *http.Reque
 			Required:           d.Required,
 			ValidationRegex:    d.ValidationRegex,
 			ExampleValue:       d.ExampleValue,
-		})
-	}
+		}
+	})
 
 	_ = httputil.WriteJSON(w, http.StatusOK, resps)
 }

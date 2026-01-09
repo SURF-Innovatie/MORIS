@@ -6,6 +6,7 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 type Service interface {
@@ -68,14 +69,13 @@ func (s *service) CreateChild(ctx context.Context, parentID uuid.UUID, name stri
 		if err != nil {
 			return err
 		}
-		bulk := make([]entities.OrganisationNodeClosure, 0, len(ancRows))
-		for _, a := range ancRows {
-			bulk = append(bulk, entities.OrganisationNodeClosure{
+		bulk := lo.Map(ancRows, func(a entities.OrganisationNodeClosure, _ int) entities.OrganisationNodeClosure {
+			return entities.OrganisationNodeClosure{
 				AncestorID:   a.AncestorID,
 				DescendantID: row.ID,
 				Depth:        a.Depth + 1,
-			})
-		}
+			}
+		})
 		if len(bulk) > 0 {
 			if err := tx.CreateClosuresBulk(ctx, bulk); err != nil {
 				return err
@@ -149,12 +149,10 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentI
 		if err != nil {
 			return err
 		}
-		subDepth := make(map[uuid.UUID]int, len(subRows))
-		subIDs := make([]uuid.UUID, 0, len(subRows))
-		for _, r := range subRows {
-			subDepth[r.DescendantID] = r.Depth
-			subIDs = append(subIDs, r.DescendantID)
-		}
+		subDepth := lo.Associate(subRows, func(r entities.OrganisationNodeClosure) (uuid.UUID, int) {
+			return r.DescendantID, r.Depth
+		})
+		subIDs := lo.Keys(subDepth)
 
 		// cycle check: cannot move under own subtree
 		if newParentID != nil {
@@ -168,16 +166,15 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentI
 		if err != nil {
 			return err
 		}
-		oldAncIDs := make([]uuid.UUID, 0, len(oldAncRows))
-		subSet := map[uuid.UUID]struct{}{}
-		for _, sid := range subIDs {
-			subSet[sid] = struct{}{}
-		}
-		for _, a := range oldAncRows {
+		subSet := lo.SliceToMap(subIDs, func(sid uuid.UUID) (uuid.UUID, struct{}) {
+			return sid, struct{}{}
+		})
+		oldAncIDs := lo.FilterMap(oldAncRows, func(a entities.OrganisationNodeClosure, _ int) (uuid.UUID, bool) {
 			if _, inSub := subSet[a.AncestorID]; !inSub {
-				oldAncIDs = append(oldAncIDs, a.AncestorID)
+				return a.AncestorID, true
 			}
-		}
+			return uuid.Nil, false
+		})
 
 		// delete: (old external ancestors) -> (subtree descendants)
 		if len(oldAncIDs) > 0 && len(subIDs) > 0 {
@@ -198,16 +195,15 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentI
 			return err
 		}
 
-		bulk := make([]entities.OrganisationNodeClosure, 0, len(newAncRows)*len(subIDs))
-		for _, na := range newAncRows {
-			for _, descID := range subIDs {
-				bulk = append(bulk, entities.OrganisationNodeClosure{
+		bulk := lo.FlatMap(newAncRows, func(na entities.OrganisationNodeClosure, _ int) []entities.OrganisationNodeClosure {
+			return lo.Map(subIDs, func(descID uuid.UUID, _ int) entities.OrganisationNodeClosure {
+				return entities.OrganisationNodeClosure{
 					AncestorID:   na.AncestorID,
 					DescendantID: descID,
 					Depth:        na.Depth + 1 + subDepth[descID],
-				})
-			}
-		}
+				}
+			})
+		})
 		if len(bulk) > 0 {
 			if err := tx.CreateClosuresBulk(ctx, bulk); err != nil {
 				return err

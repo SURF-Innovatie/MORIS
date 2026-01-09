@@ -11,6 +11,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 // ErrNotFound is returned when a project does not exist (no events).
@@ -23,6 +24,7 @@ type Service interface {
 	GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.Event, error)
 	GetProjectRoles(ctx context.Context) ([]entities.ProjectRole, error)
 	ListAvailableRoles(ctx context.Context, projectID uuid.UUID) ([]entities.ProjectRole, error)
+	GetEvents(ctx context.Context, id uuid.UUID) ([]events.Event, error)
 }
 
 type service struct {
@@ -69,20 +71,19 @@ func (s *service) GetAllProjects(ctx context.Context) ([]*ProjectDetails, error)
 		return nil, err
 	}
 
-	projects := make([]*ProjectDetails, 0, len(ids))
-	for _, id := range ids {
+	projects := lo.FilterMap(ids, func(id uuid.UUID, _ int) (*ProjectDetails, bool) {
 		proj, err := s.loader.Load(ctx, id)
 		if err != nil {
-			continue
+			return nil, false
 		}
 
 		details, err := s.buildProjectDetails(ctx, proj)
 		if err != nil {
-			return nil, err
+			return nil, false
 		}
 
-		projects = append(projects, details)
-	}
+		return details, true
+	})
 
 	// Sort by title for consistency
 	sort.Slice(projects, func(i, j int) bool {
@@ -98,14 +99,9 @@ func (s *service) GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]
 		return nil, err
 	}
 
-	var pending []events.Event
-	for _, e := range evts {
-		if e.GetStatus() == "pending" {
-			pending = append(pending, e)
-		}
-	}
-
-	return pending, nil
+	return lo.Filter(evts, func(e events.Event, _ int) bool {
+		return e.GetStatus() == "pending"
+	}), nil
 }
 
 func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Project) (*ProjectDetails, error) {
@@ -113,22 +109,12 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Projec
 		return nil, errors.New("project is nil")
 	}
 
-	// Fetch People
-	personIDSet := map[uuid.UUID]struct{}{}
-	roleIDSet := map[uuid.UUID]struct{}{}
-
-	for _, m := range proj.Members {
-		personIDSet[m.PersonID] = struct{}{}
-		roleIDSet[m.ProjectRoleID] = struct{}{}
-	}
-	personIDs := make([]uuid.UUID, 0, len(personIDSet))
-	for id := range personIDSet {
-		personIDs = append(personIDs, id)
-	}
-	roleIDs := make([]uuid.UUID, 0, len(roleIDSet))
-	for id := range roleIDSet {
-		roleIDs = append(roleIDs, id)
-	}
+	personIDs := lo.Uniq(lo.Map(proj.Members, func(m entities.ProjectMember, _ int) uuid.UUID {
+		return m.PersonID
+	}))
+	roleIDs := lo.Uniq(lo.Map(proj.Members, func(m entities.ProjectMember, _ int) uuid.UUID {
+		return m.ProjectRoleID
+	}))
 
 	peopleMap, err := s.repo.PeopleByIDs(ctx, personIDs)
 	if err != nil {
@@ -140,17 +126,17 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Projec
 		return nil, err
 	}
 
-	members := make([]entities.ProjectMemberDetail, 0, len(proj.Members))
-	for _, m := range proj.Members {
+	members := lo.FilterMap(proj.Members, func(m entities.ProjectMember, _ int) (entities.ProjectMemberDetail, bool) {
 		p, okP := peopleMap[m.PersonID]
 		r, okR := rolesMap[m.ProjectRoleID]
 		if okP && okR {
-			members = append(members, entities.ProjectMemberDetail{
+			return entities.ProjectMemberDetail{
 				Person: p,
 				Role:   r,
-			})
+			}, true
 		}
-	}
+		return entities.ProjectMemberDetail{}, false
+	})
 
 	products, err := s.repo.ProductsByIDs(ctx, proj.ProductIDs)
 	if err != nil {
@@ -180,12 +166,12 @@ func (s *service) GetChangeLog(ctx context.Context, id uuid.UUID) (*entities.Cha
 	}
 
 	var log entities.ChangeLog
-	for _, evt := range evts {
-		log.Entries = append(log.Entries, entities.ChangeLogEntry{
+	log.Entries = lo.Map(evts, func(evt events.Event, _ int) entities.ChangeLogEntry {
+		return entities.ChangeLogEntry{
 			Event: evt.String(),
 			At:    evt.OccurredAt(),
-		})
-	}
+		}
+	})
 
 	sort.Slice(log.Entries, func(i, j int) bool {
 		return log.Entries[i].At.After(log.Entries[j].At)
@@ -210,4 +196,9 @@ func (s *service) ListAvailableRoles(ctx context.Context, projectID uuid.UUID) (
 	}
 
 	return s.roleRepo.ListByOrgIDs(ctx, ancestors)
+}
+
+func (s *service) GetEvents(ctx context.Context, id uuid.UUID) ([]events.Event, error) {
+	evts, _, err := s.es.Load(ctx, id)
+	return evts, err
 }

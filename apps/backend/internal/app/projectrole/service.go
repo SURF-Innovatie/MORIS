@@ -7,6 +7,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 type Service interface {
@@ -77,10 +78,9 @@ func (s *service) ListAvailableForNode(ctx context.Context, orgNodeID uuid.UUID)
 		return nil, err
 	}
 
-	ids := make([]uuid.UUID, 0, len(closures))
-	for _, c := range closures {
-		ids = append(ids, c.AncestorID)
-	}
+	ids := lo.Map(closures, func(c entities.OrganisationNodeClosure, _ int) uuid.UUID {
+		return c.AncestorID
+	})
 
 	return s.repo.ListByOrgIDs(ctx, ids)
 }
