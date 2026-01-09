@@ -8,4 +8,4 @@ dist
 .orval
 .agent
 apps/backend/api/swag-docs/*
-frontend/src/api/events.ts
+apps/frontend/src/api/events.ts
