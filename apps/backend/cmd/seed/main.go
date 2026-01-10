@@ -5,11 +5,11 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
-	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	"github.com/SURF-Innovatie/MORIS/ent/organisationnode"
 	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
@@ -76,7 +76,7 @@ func main() {
 	if err != nil {
 		logrus.Fatalf("failed opening raw db connection: %v", err)
 	}
-	if _, err := rawDB.ExecContext(ctx, `DROP SCHEMA public CASCADE; CREATE SCHEMA public;`); err != nil {
+	if _, err := rawDB.ExecContext(ctx, `DROP SCHEMA public CASCADE; CREATE SCHEMA public; DROP SCHEMA IF EXISTS atlas_schema_revisions CASCADE;`); err != nil {
 		logrus.Fatalf("failed resetting schema: %v", err)
 	}
 	if err := rawDB.Close(); err != nil {
@@ -84,12 +84,14 @@ func main() {
 	}
 	logrus.Info("Database schema reset (dropped and recreated).")
 
-	if err := client.Schema.Create(
-		ctx,
-		migrate.WithGlobalUniqueID(true),
-	); err != nil {
-		logrus.Fatalf("failed running Ent database migrations: %v", err)
+	logrus.Info("Applying database migrations...")
+	cmd := exec.Command("pnpm", "run", "db:migrate:apply")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		logrus.Fatalf("failed running database migrations: %v", err)
 	}
+	logrus.Info("Database migrations applied.")
 
 	// Default password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)

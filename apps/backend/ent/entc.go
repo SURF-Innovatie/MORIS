@@ -193,7 +193,9 @@ func main() {
 		log.Fatalf("creating entoas extension: %v", err)
 	}
 
-	err = entc.Generate("./schema", &gen.Config{}, entc.Extensions(ex))
+	err = entc.Generate("./schema", &gen.Config{
+		Features: []gen.Feature{gen.FeatureVersionedMigration},
+	}, entc.Extensions(ex))
 
 	if err != nil {
 		log.Fatalf("running ent code generation: %v", err)

@@ -9,6 +9,7 @@ MORIS (Modular Research Information System) is a comprehensive backend and front
   - [Configuration](#configuration)
   - [Building the Project](#building-the-project)
   - [Running the Project](#running-the-project)
+- [Database Migrations](#database-migrations)
 - [Usage](#usage)
 - [Contributing](#contributing)
 
@@ -85,6 +86,44 @@ turbo run build --filter=frontend
     pnpm dev
     ```
     This will start both the backend (using `wgo` for hot reload) and the frontend (using Vite).
+
+## Database Migrations
+
+MORIS uses [Atlas](https://atlasgo.io/) for versioned database migrations with [Ent](https://entgo.io/).
+
+### Prerequisites
+
+- [Atlas CLI](https://atlasgo.io/getting-started#installation) installed (`brew install ariga/tap/atlas` or `curl -sSf https://atlasgo.sh | sh`)
+- Docker running (for the dev database used in schema diffing)
+
+### Generating Migrations
+
+After modifying ent schemas in `apps/backend/ent/schema/`, generate a new migration:
+
+```sh
+cd apps/backend
+pnpm run db:migrate:diff <migration_name>
+```
+
+This will create timestamped SQL files in `apps/backend/ent/migrate/migrations/`.
+
+### Applying Migrations
+
+Apply pending migrations to your database:
+
+```sh
+cd apps/backend
+pnpm run db:migrate:apply
+```
+
+### Checking Migration Status
+
+View which migrations have been applied:
+
+```sh
+cd apps/backend
+pnpm run db:migrate:status
+```
 
 ## Usage
 
