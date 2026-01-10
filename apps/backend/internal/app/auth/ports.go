@@ -9,6 +9,7 @@ import (
 type CurrentUser interface {
 	UserID() uuid.UUID
 	PersonID() uuid.UUID
+	IsSysAdmin() bool
 }
 
 type CurrentUserProvider interface {

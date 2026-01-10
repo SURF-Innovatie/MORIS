@@ -386,83 +386,115 @@ func main() {
 		}
 	}
 
-	// --- Seed Roles / Scopes / Memberships for org tree (Option A) ---
+	// --- Seed Roles / Scopes / Memberships for org tree ---
 
-	adminRole, err := client.OrganisationRole.Create().SetKey("admin").SetHasAdminRights(true).Save(ctx)
-	if err != nil {
-		logrus.Fatalf("create admin role: %v", err)
-	}
-	researcherRole, err := client.OrganisationRole.Create().SetKey("researcher").SetHasAdminRights(false).Save(ctx)
-	if err != nil {
-		logrus.Fatalf("create researcher role: %v", err)
-	}
-	studentsRole, err := client.OrganisationRole.Create().SetKey("students").SetHasAdminRights(false).Save(ctx)
-	if err != nil {
-		logrus.Fatalf("create students role: %v", err)
-	}
-
-	// Scopes:
-	// - Admin scope applies from the true root (orgRoot).
-	// - Researcher scope applies from the true root (orgRoot).
-	// - Students scope applies from a subtree root. For demo: pick one org node if present, else orgRoot.
-	studentsRootID := orgRoot.ID
-	if id, ok := orgNodeIDs["Cybersecurity Lab – Utrecht University"]; ok {
-		// Put "students" scope under this subtree, as an example.
-		studentsRootID = id
+	// Helper to create roles for an org
+	createRolesForOrg := func(orgID uuid.UUID) (adminRoleID, researcherRoleID, studentsRoleID uuid.UUID) {
+		orgEnt, err := client.OrganisationNode.Get(ctx, orgID)
 		if err != nil {
-			logrus.Fatalf("get students root node: %v", err)
+			logrus.Fatalf("failed getting org %s for roles: %v", orgID, err)
 		}
+
+		// Admin
+		adminRole, err := client.OrganisationRole.Create().
+			SetKey("admin").
+			SetDisplayName("Administrator").
+			SetOrganisation(orgEnt).
+			SetPermissions([]string{
+				"manage_members",
+				"manage_project_roles",
+				"manage_organisation_roles",
+				"manage_custom_fields",
+				"manage_details",
+			}).
+			Save(ctx)
+		if err != nil {
+			logrus.Fatalf("create admin role for %s: %v", orgID, err)
+		}
+
+		// Create legacy Scope for Admin
+		adminScope, err := client.RoleScope.Create().
+			SetRole(adminRole).
+			SetRootNode(orgEnt).
+			Save(ctx)
+		if err != nil {
+			logrus.Fatalf("create admin scope for %s: %v", orgID, err)
+		}
+
+		// Researcher
+		researcherRole, err := client.OrganisationRole.Create().
+			SetKey("researcher").
+			SetDisplayName("Researcher").
+			SetOrganisation(orgEnt).
+			SetPermissions([]string{}). // Basic access
+			Save(ctx)
+		if err != nil {
+			logrus.Fatalf("create researcher role for %s: %v", orgID, err)
+		}
+
+		researcherScope, err := client.RoleScope.Create().
+			SetRole(researcherRole).
+			SetRootNode(orgEnt).
+			Save(ctx)
+		if err != nil {
+			logrus.Fatalf("create researcher scope: %v", err)
+		}
+
+		// Students
+		studentsRole, err := client.OrganisationRole.Create().
+			SetKey("students").
+			SetDisplayName("Student").
+			SetOrganisation(orgEnt).
+			SetPermissions([]string{}).
+			Save(ctx)
+		if err != nil {
+			logrus.Fatalf("create students role for %s: %v", orgID, err)
+		}
+
+		studentsScope, err := client.RoleScope.Create().
+			SetRole(studentsRole).
+			SetRootNode(orgEnt).
+			Save(ctx)
+		if err != nil {
+			logrus.Fatalf("create students scope: %v", err)
+		}
+
+		return adminScope.ID, researcherScope.ID, studentsScope.ID
 	}
 
-	orgRootEnt, err := client.OrganisationNode.Get(ctx, orgRoot.ID)
-	if err != nil {
-		logrus.Fatalf("get org root ent node: %v", err)
+	// Create roles for Root Org
+	rootAdminScopeID, rootResearcherScopeID, rootStudentsScopeID := createRolesForOrg(orgRoot.ID)
+
+	// For demo: create specific roles for sub-orgs if needed, or re-use root roles?
+	// The previous seed had "Students" scoped to a subtree. Now roles are strictly per-org.
+	// If "Students" was scoped to "Cybersecurity Lab", we must create a role there.
+
+	// studentsRootID := orgRoot.ID (removed unused)
+
+	studentsScopeID := rootStudentsScopeID
+
+	if id, ok := orgNodeIDs["Cybersecurity Lab – Utrecht University"]; ok {
+		// studentsRootID = id // removed unused
+		// Create roles for this sub-org
+		_, _, subStudentsScopeID := createRolesForOrg(id)
+		studentsScopeID = subStudentsScopeID
 	}
 
-	studentsRootEnt, err := client.OrganisationNode.Get(ctx, studentsRootID)
-	if err != nil {
-		logrus.Fatalf("get students root ent node: %v", err)
-	}
-
-	adminScope, err := client.RoleScope.Create().
-		SetRole(adminRole).
-		SetRootNode(orgRootEnt).
-		Save(ctx)
-	if err != nil {
-		logrus.Fatalf("create admin scope: %v", err)
-	}
-
-	researcherScope, err := client.RoleScope.Create().
-		SetRole(researcherRole).
-		SetRootNode(orgRootEnt).
-		Save(ctx)
-	if err != nil {
-		logrus.Fatalf("create researcher scope: %v", err)
-	}
-
-	studentsScope, err := client.RoleScope.Create().
-		SetRole(studentsRole).
-		SetRootNode(studentsRootEnt).
-		Save(ctx)
-	if err != nil {
-		logrus.Fatalf("create students scope: %v", err)
-	}
-
-	// Memberships: example assignments (adjust to your needs)
-	_, err = client.Membership.Create().SetPersonID(mustPersonID(testUserName)).SetRoleScopeID(adminScope.ID).Save(ctx)
+	// Memberships: example assignments
+	_, err = client.Membership.Create().SetPersonID(mustPersonID(testUserName)).SetRoleScopeID(rootAdminScopeID).Save(ctx)
 	if err != nil {
 		logrus.Fatalf("create admin membership: %v", err)
 	}
 
-	// If these people exist in seed list, assign them too
 	if _, ok := personIDs["Dr. Elaine Carter"]; ok {
-		_, err = client.Membership.Create().SetPersonID(mustPersonID("Dr. Elaine Carter")).SetRoleScopeID(researcherScope.ID).Save(ctx)
+		_, err = client.Membership.Create().SetPersonID(mustPersonID("Dr. Elaine Carter")).SetRoleScopeID(rootResearcherScopeID).Save(ctx)
 		if err != nil {
 			logrus.Fatalf("create researcher membership: %v", err)
 		}
 	}
 	if _, ok := personIDs["Tomas Ternovski"]; ok {
-		_, err = client.Membership.Create().SetPersonID(mustPersonID("Tomas Ternovski")).SetRoleScopeID(studentsScope.ID).Save(ctx)
+		// Use the students scope we determined earlier (Root or Subtree)
+		_, err = client.Membership.Create().SetPersonID(mustPersonID("Tomas Ternovski")).SetRoleScopeID(studentsScopeID).Save(ctx)
 		if err != nil {
 			logrus.Fatalf("create students membership: %v", err)
 		}

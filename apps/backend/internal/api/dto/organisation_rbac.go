@@ -8,21 +8,48 @@ import (
 )
 
 type OrganisationRoleResponse struct {
-	ID             uuid.UUID `json:"id"`
-	Key            string    `json:"key"`
-	HasAdminRights bool      `json:"hasAdminRights"`
+	ID          uuid.UUID `json:"id"`
+	Key         string    `json:"key"`
+	DisplayName string    `json:"displayName"`
+	Permissions []string  `json:"permissions"`
 }
 
-func (r OrganisationRoleResponse) FromEntity(e entities.OrganisationRole) OrganisationRoleResponse {
-	return OrganisationRoleResponse{
-		ID:             e.ID,
-		Key:            e.Key,
-		HasAdminRights: e.HasAdminRights,
+func (r OrganisationRoleResponse) FromEntity(e *entities.OrganisationRole) OrganisationRoleResponse {
+	perms := make([]string, len(e.Permissions))
+	for i, p := range e.Permissions {
+		perms[i] = string(p)
 	}
+	return OrganisationRoleResponse{
+		ID:          e.ID,
+		Key:         e.Key,
+		DisplayName: e.DisplayName,
+		Permissions: perms,
+	}
+}
+
+type PermissionDefinition struct {
+	Key         string `json:"key"`
+	Label       string `json:"label"`
+	Description string `json:"description"`
+}
+
+type GetPermissionsResponse struct {
+	Permissions []PermissionDefinition `json:"permissions"`
 }
 
 type OrganisationEnsureDefaultsResponse struct {
 	Status string `json:"status"`
+}
+
+type CreateRoleRequest struct {
+	Key         string   `json:"key"`
+	DisplayName string   `json:"displayName"`
+	Permissions []string `json:"permissions"`
+}
+
+type UpdateRoleRequest struct {
+	DisplayName string   `json:"displayName"`
+	Permissions []string `json:"permissions"`
 }
 
 type OrganisationCreateScopeRequest struct {
@@ -70,13 +97,18 @@ type OrganisationEffectiveMembershipResponse struct {
 	RoleScopeID           uuid.UUID            `json:"roleScopeId"`
 	ScopeRootOrganisation OrganisationResponse `json:"scopeRootOrganisation"`
 
-	RoleID         uuid.UUID              `json:"roleId"`
-	RoleKey        string                 `json:"roleKey"`
-	HasAdminRights bool                   `json:"hasAdminRights"`
-	CustomFields   map[string]interface{} `json:"customFields"`
+	RoleID         uuid.UUID      `json:"roleId"`
+	RoleKey        string         `json:"roleKey"`
+	Permissions    []string       `json:"permissions"`
+	HasAdminRights bool           `json:"hasAdminRights"`
+	CustomFields   map[string]any `json:"customFields"`
 }
 
 func (r OrganisationEffectiveMembershipResponse) FromEntity(e organisationrbac.EffectiveMembership) OrganisationEffectiveMembershipResponse {
+	perms := make([]string, len(e.Permissions))
+	for i, p := range e.Permissions {
+		perms[i] = string(p)
+	}
 	return OrganisationEffectiveMembershipResponse{
 		MembershipID:          e.MembershipID,
 		Person:                transform.ToDTOItem[PersonResponse](e.Person),
@@ -84,6 +116,7 @@ func (r OrganisationEffectiveMembershipResponse) FromEntity(e organisationrbac.E
 		ScopeRootOrganisation: transform.ToDTOItem[OrganisationResponse](*e.ScopeRootOrganisation),
 		RoleID:                e.RoleID,
 		RoleKey:               e.RoleKey,
+		Permissions:           perms,
 		HasAdminRights:        e.HasAdminRights,
 		CustomFields:          e.CustomFields,
 	}

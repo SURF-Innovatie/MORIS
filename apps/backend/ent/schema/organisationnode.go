@@ -38,6 +38,7 @@ func (OrganisationNode) Edges() []ent.Edge {
 		edge.To("children", OrganisationNode.Type),
 
 		edge.To("project_roles", ProjectRole.Type),
+		edge.To("organisation_roles", OrganisationRole.Type),
 		edge.To("custom_field_definitions", CustomFieldDefinition.Type),
 	}
 }

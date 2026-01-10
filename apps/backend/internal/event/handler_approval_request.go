@@ -65,7 +65,14 @@ func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e event
 	}
 
 	for _, em := range effs {
-		if !em.HasAdminRights {
+		hasAdminRights := false
+		for _, p := range em.Permissions {
+			if p == "manage_details" {
+				hasAdminRights = true
+				break
+			}
+		}
+		if !hasAdminRights {
 			continue
 		}
 

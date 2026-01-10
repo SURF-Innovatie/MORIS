@@ -9,7 +9,9 @@ import (
 	entclosure "github.com/SURF-Innovatie/MORIS/ent/organisationnodeclosure"
 	entorgrole "github.com/SURF-Innovatie/MORIS/ent/organisationrole"
 	entrolescope "github.com/SURF-Innovatie/MORIS/ent/rolescope"
-	"github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
+	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
+	organisation_rbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
+	"github.com/SURF-Innovatie/MORIS/internal/app/organisation/role"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
@@ -24,70 +26,166 @@ func NewEntRepo(cli *ent.Client) *EntRepo {
 }
 
 // EnsureDefaultRoles upserts/ensures keys exist + admin flags are correct.
+// EnsureDefaultRoles is deprecated as roles are now per-organisation.
 func (r *EntRepo) EnsureDefaultRoles(ctx context.Context) error {
-	type def struct {
-		key   string
-		admin bool
-	}
-
-	defs := []def{
-		{key: "admin", admin: true},
-		{key: "researcher", admin: false},
-		{key: "student", admin: false},
-	}
-
-	for _, d := range defs {
-		existing, err := r.cli.OrganisationRole.
-			Query().
-			Where(entorgrole.KeyEQ(d.key)).
-			Only(ctx)
-
-		if err == nil {
-			if existing.HasAdminRights != d.admin {
-				if _, err := r.cli.OrganisationRole.
-					UpdateOneID(existing.ID).
-					SetHasAdminRights(d.admin).
-					Save(ctx); err != nil {
-					return err
-				}
-			}
-			continue
-		}
-		if !ent.IsNotFound(err) {
-			return err
-		}
-
-		if _, err := r.cli.OrganisationRole.
-			Create().
-			SetKey(d.key).
-			SetHasAdminRights(d.admin).
-			Save(ctx); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
-func (r *EntRepo) ListRoles(ctx context.Context) ([]entities.OrganisationRole, error) {
-	rows, err := r.cli.OrganisationRole.
+func (r *EntRepo) ListRoles(ctx context.Context, orgID *uuid.UUID) ([]*entities.OrganisationRole, error) {
+	q := r.cli.OrganisationRole.Query()
+	if orgID != nil {
+		q = q.Where(entorgrole.OrganisationNodeIDEQ(*orgID))
+	}
+	rows, err := q.
+		Order(ent.Asc(entorgrole.FieldDisplayName)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return transform.ToEntitiesPtr[entities.OrganisationRole](rows), nil
+}
+
+func (r *EntRepo) GetMyPermissions(ctx context.Context, personID, nodeID uuid.UUID) ([]role.Permission, error) {
+	// Check if user is sysadmin
+	user, err := r.cli.User.Query().Where(entuser.PersonIDEQ(personID)).First(ctx)
+	if err == nil && user.IsSysAdmin {
+		return role.AllPermissions, nil
+	}
+
+	// all ancestors of nodeID (including itself)
+	ancestors, err := r.cli.OrganisationNodeClosure.
 		Query().
-		Order(ent.Asc(entorgrole.FieldKey)).
+		Where(entclosure.DescendantIDEQ(nodeID)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ancestorIDs := make([]uuid.UUID, 0, len(ancestors))
+	for _, a := range ancestors {
+		ancestorIDs = append(ancestorIDs, a.AncestorID)
+	}
+
+	// scopes defined on ancestors
+	scopes, err := r.cli.RoleScope.
+		Query().
+		Where(entrolescope.RootNodeIDIn(ancestorIDs...)).
+		WithRole().
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(scopes) == 0 {
+		return []role.Permission{}, nil
+	}
+
+	scopeIDs := make([]uuid.UUID, 0, len(scopes))
+	scopeByID := map[uuid.UUID]*ent.RoleScope{}
+	for _, sc := range scopes {
+		scopeIDs = append(scopeIDs, sc.ID)
+		scopeByID[sc.ID] = sc
+	}
+
+	memberships, err := r.cli.Membership.
+		Query().
+		Where(
+			entmembership.PersonIDEQ(personID),
+			entmembership.RoleScopeIDIn(scopeIDs...),
+		).
 		All(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return transform.ToEntities[entities.OrganisationRole](rows), nil
+	permissions := make(map[role.Permission]struct{})
+	for _, m := range memberships {
+		scope, ok := scopeByID[m.RoleScopeID]
+		if !ok {
+			continue // Should not happen
+		}
+		if scope.Edges.Role == nil {
+			continue // Should not happen
+		}
+		for _, p := range scope.Edges.Role.Permissions {
+			permissions[role.Permission(p)] = struct{}{}
+		}
+	}
+
+	result := make([]role.Permission, 0, len(permissions))
+	for p := range permissions {
+		result = append(result, p)
+	}
+	return result, nil
+}
+
+func (r *EntRepo) CreateRole(ctx context.Context, orgID uuid.UUID, key, displayName string, permissions []role.Permission) (*entities.OrganisationRole, error) {
+	perms := make([]string, len(permissions))
+	for i, p := range permissions {
+		perms[i] = string(p)
+	}
+
+	row, err := r.cli.OrganisationRole.
+		Create().
+		SetOrganisationNodeID(orgID).
+		SetKey(key).
+		SetDisplayName(displayName).
+		SetPermissions(perms).
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return transform.ToEntityPtr[entities.OrganisationRole](row), nil
+}
+
+func (r *EntRepo) GetRole(ctx context.Context, roleID uuid.UUID) (*entities.OrganisationRole, error) {
+	row, err := r.cli.OrganisationRole.Get(ctx, roleID)
+	if err != nil {
+		return nil, err
+	}
+	return transform.ToEntityPtr[entities.OrganisationRole](row), nil
+}
+
+func (r *EntRepo) UpdateRole(ctx context.Context, roleID uuid.UUID, displayName string, permissions []role.Permission) (*entities.OrganisationRole, error) {
+	perms := make([]string, len(permissions))
+	for i, p := range permissions {
+		perms[i] = string(p)
+	}
+
+	row, err := r.cli.OrganisationRole.
+		UpdateOneID(roleID).
+		SetDisplayName(displayName).
+		SetPermissions(perms).
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return transform.ToEntityPtr[entities.OrganisationRole](row), nil
+}
+
+func (r *EntRepo) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
+	// Check if used in scopes
+	inUse, err := r.cli.RoleScope.Query().Where(entrolescope.RoleIDEQ(roleID)).Exist(ctx)
+	if err != nil {
+		return err
+	}
+	if inUse {
+		return fmt.Errorf("role is in use by memberships and cannot be deleted")
+	}
+
+	return r.cli.OrganisationRole.DeleteOneID(roleID).Exec(ctx)
 }
 
 func (r *EntRepo) CreateScope(ctx context.Context, roleKey string, rootNodeID uuid.UUID) (*entities.RoleScope, error) {
+	// Role Key is not unique globally anymore.
+	// We assume CreateScope is called with a key that is valid for the given rootNodeID (org).
 	role, err := r.cli.OrganisationRole.
 		Query().
-		Where(entorgrole.KeyEQ(roleKey)).
+		Where(
+			entorgrole.KeyEQ(roleKey),
+			entorgrole.OrganisationNodeIDEQ(rootNodeID),
+		).
 		Only(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("role not found: %w", err)
+		return nil, fmt.Errorf("role %q not found for org %s: %w", roleKey, rootNodeID, err)
 	}
 
 	if _, err := r.cli.OrganisationNode.Get(ctx, rootNodeID); err != nil {
@@ -161,6 +259,14 @@ func (r *EntRepo) AddMembership(ctx context.Context, personID uuid.UUID, roleSco
 		return nil, err
 	}
 
+	return transform.ToEntityPtr[entities.Membership](row), nil
+}
+
+func (r *EntRepo) GetMembership(ctx context.Context, membershipID uuid.UUID) (*entities.Membership, error) {
+	row, err := r.cli.Membership.Get(ctx, membershipID)
+	if err != nil {
+		return nil, err
+	}
 	return transform.ToEntityPtr[entities.Membership](row), nil
 }
 
@@ -240,7 +346,7 @@ func (r *EntRepo) ListEffectiveMemberships(ctx context.Context, nodeID uuid.UUID
 			ScopeRootOrganisation: scopeRoot,
 			RoleID:                sc.RoleID,
 			RoleKey:               sc.Edges.Role.Key,
-			HasAdminRights:        sc.Edges.Role.HasAdminRights,
+			Permissions:           toPermissions(sc.Edges.Role.Permissions),
 			CustomFields:          getCustomFieldsForNode(p.OrgCustomFields, nodeID),
 			Person:                transform.ToEntity[entities.Person](p),
 		})
@@ -258,6 +364,13 @@ func (r *EntRepo) ListMyMemberships(ctx context.Context, personID uuid.UUID) ([]
 		All(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	// Check if user is sysadmin to override rights
+	user, err := r.cli.User.Query().Where(entuser.PersonIDEQ(personID)).First(ctx)
+	isSysAdmin := false
+	if err == nil && user != nil {
+		isSysAdmin = user.IsSysAdmin
 	}
 
 	out := make([]organisation_rbac.EffectiveMembership, 0, len(memberships))
@@ -283,7 +396,8 @@ func (r *EntRepo) ListMyMemberships(ctx context.Context, personID uuid.UUID) ([]
 			ScopeRootOrganisation: scopeRoot,
 			RoleID:                sc.RoleID,
 			RoleKey:               sc.Edges.Role.Key,
-			HasAdminRights:        sc.Edges.Role.HasAdminRights,
+			Permissions:           toPermissions(sc.Edges.Role.Permissions),
+			HasAdminRights:        isSysAdmin || hasAdminPermission(sc.Edges.Role.Permissions),
 			CustomFields:          getCustomFieldsForNode(p.OrgCustomFields, sc.RootNodeID),
 		})
 	}
@@ -303,28 +417,36 @@ func (r *EntRepo) GetApprovalNode(ctx context.Context, nodeID uuid.UUID) (*entit
 	for _, row := range rows {
 		ancestorID := row.AncestorID
 
-		adminScopes, err := r.cli.RoleScope.
+		scopes, err := r.cli.RoleScope.
 			Query().
-			Where(
-				entrolescope.RootNodeIDEQ(ancestorID),
-				entrolescope.HasRoleWith(entorgrole.HasAdminRightsEQ(true)),
-			).
+			Where(entrolescope.RootNodeIDEQ(ancestorID)).
+			WithRole().
 			All(ctx)
 		if err != nil {
 			return nil, err
 		}
-		if len(adminScopes) == 0 {
-			continue
+
+		// Filter scopes for Admin role (manage_details permission)
+		var adminScopeIDs []uuid.UUID
+		for _, sc := range scopes { // Note: iterate scopes
+			if sc.Edges.Role == nil {
+				continue
+			}
+			for _, p := range sc.Edges.Role.Permissions {
+				if role.Permission(p) == role.PermissionManageDetails {
+					adminScopeIDs = append(adminScopeIDs, sc.ID)
+					break
+				}
+			}
 		}
 
-		scopeIDs := make([]uuid.UUID, 0, len(adminScopes))
-		for _, sc := range adminScopes {
-			scopeIDs = append(scopeIDs, sc.ID)
+		if len(adminScopeIDs) == 0 {
+			continue
 		}
 
 		count, err := r.cli.Membership.
 			Query().
-			Where(entmembership.RoleScopeIDIn(scopeIDs...)).
+			Where(entmembership.RoleScopeIDIn(adminScopeIDs...)).
 			Count(ctx)
 		if err != nil {
 			return nil, err
@@ -344,6 +466,18 @@ func (r *EntRepo) GetApprovalNode(ctx context.Context, nodeID uuid.UUID) (*entit
 }
 
 func (r *EntRepo) HasAdminAccess(ctx context.Context, personID uuid.UUID, nodeID uuid.UUID) (bool, error) {
+	return r.HasPermission(ctx, personID, nodeID, role.PermissionManageDetails)
+}
+
+func (r *EntRepo) HasPermission(ctx context.Context, personID uuid.UUID, nodeID uuid.UUID, permission role.Permission) (bool, error) {
+	user, err := r.cli.User.Query().Where(entuser.PersonIDEQ(personID)).First(ctx)
+	if err != nil {
+		return false, err
+	}
+	if user.IsSysAdmin {
+		return true, nil
+	}
+
 	ancestors, err := r.cli.OrganisationNodeClosure.
 		Query().
 		Where(entclosure.DescendantIDEQ(nodeID)).
@@ -357,29 +491,36 @@ func (r *EntRepo) HasAdminAccess(ctx context.Context, personID uuid.UUID, nodeID
 		ancestorIDs = append(ancestorIDs, a.AncestorID)
 	}
 
-	adminScopes, err := r.cli.RoleScope.
+	scopes, err := r.cli.RoleScope.
 		Query().
-		Where(
-			entrolescope.RootNodeIDIn(ancestorIDs...),
-			entrolescope.HasRoleWith(entorgrole.HasAdminRightsEQ(true)),
-		).
+		Where(entrolescope.RootNodeIDIn(ancestorIDs...)).
+		WithRole().
 		All(ctx)
 	if err != nil {
 		return false, err
 	}
-	if len(adminScopes) == 0 {
-		return false, nil
+
+	var validScopeIDs []uuid.UUID
+	for _, sc := range scopes {
+		if sc.Edges.Role == nil {
+			continue
+		}
+		for _, p := range sc.Edges.Role.Permissions {
+			if role.Permission(p) == permission {
+				validScopeIDs = append(validScopeIDs, sc.ID)
+				break
+			}
+		}
 	}
 
-	scopeIDs := make([]uuid.UUID, 0, len(adminScopes))
-	for _, sc := range adminScopes {
-		scopeIDs = append(scopeIDs, sc.ID)
+	if len(validScopeIDs) == 0 {
+		return false, nil
 	}
 
 	count, err := r.cli.Membership.
 		Query().
 		Where(
-			entmembership.RoleScopeIDIn(scopeIDs...),
+			entmembership.RoleScopeIDIn(validScopeIDs...),
 			entmembership.PersonIDEQ(personID),
 		).
 		Count(ctx)
@@ -387,6 +528,14 @@ func (r *EntRepo) HasAdminAccess(ctx context.Context, personID uuid.UUID, nodeID
 		return false, err
 	}
 	return count > 0, nil
+}
+
+func toPermissions(s []string) []role.Permission {
+	out := make([]role.Permission, len(s))
+	for i, v := range s {
+		out[i] = role.Permission(v)
+	}
+	return out
 }
 
 // Helper to safely get custom fields for a node
@@ -400,4 +549,12 @@ func getCustomFieldsForNode(fields map[string]interface{}, nodeID uuid.UUID) map
 		}
 	}
 	return nil
+}
+func hasAdminPermission(perms []string) bool {
+	for _, p := range perms {
+		if p == string(role.PermissionManageDetails) || p == string(role.PermissionManageMembers) {
+			return true
+		}
+	}
+	return false
 }

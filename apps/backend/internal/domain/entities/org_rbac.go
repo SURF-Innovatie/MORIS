@@ -2,20 +2,29 @@ package entities
 
 import (
 	"github.com/SURF-Innovatie/MORIS/ent"
+	"github.com/SURF-Innovatie/MORIS/internal/app/organisation/role"
 	"github.com/google/uuid"
 )
 
 type OrganisationRole struct {
-	ID             uuid.UUID
-	Key            string
-	HasAdminRights bool
+	ID                 uuid.UUID
+	OrganisationNodeID uuid.UUID
+	Key                string
+	DisplayName        string
+	Permissions        []role.Permission
 }
 
 func (p *OrganisationRole) FromEnt(row *ent.OrganisationRole) *OrganisationRole {
+	perms := make([]role.Permission, len(row.Permissions))
+	for i, v := range row.Permissions {
+		perms[i] = role.Permission(v)
+	}
 	return &OrganisationRole{
-		ID:             row.ID,
-		Key:            row.Key,
-		HasAdminRights: row.HasAdminRights,
+		ID:                 row.ID,
+		OrganisationNodeID: row.OrganisationNodeID,
+		Key:                row.Key,
+		DisplayName:        row.DisplayName,
+		Permissions:        perms,
 	}
 }
 

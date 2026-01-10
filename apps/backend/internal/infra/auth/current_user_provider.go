@@ -11,12 +11,14 @@ import (
 )
 
 type currentUser struct {
-	userID   uuid.UUID
-	personID uuid.UUID
+	userID     uuid.UUID
+	personID   uuid.UUID
+	isSysAdmin bool
 }
 
 func (u currentUser) UserID() uuid.UUID   { return u.userID }
 func (u currentUser) PersonID() uuid.UUID { return u.personID }
+func (u currentUser) IsSysAdmin() bool    { return u.isSysAdmin }
 
 type CurrentUserProvider struct {
 	cli *ent.Client
@@ -37,5 +39,5 @@ func (p *CurrentUserProvider) Current(ctx context.Context) (appauth.CurrentUser,
 		return nil, err
 	}
 
-	return currentUser{userID: u.ID, personID: u.PersonID}, nil
+	return currentUser{userID: u.ID, personID: u.PersonID, isSysAdmin: u.IsSysAdmin}, nil
 }

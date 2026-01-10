@@ -210,6 +210,10 @@ func (s *service) GetAllowedEventTypes(ctx context.Context, projectID uuid.UUID)
 		return nil, err
 	}
 
+	if u.IsSysAdmin() {
+		return events.GetRegisteredEventTypes(), nil
+	}
+
 	// Load the project to find user's role
 	proj, err := s.loader.Load(ctx, projectID)
 	if err != nil {

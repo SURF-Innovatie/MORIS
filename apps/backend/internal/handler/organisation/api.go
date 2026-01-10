@@ -17,6 +17,7 @@ func MountOrganisationRoutes(r chi.Router, h *Handler, rbac *RBACHandler) {
 		// RBAC on nodes
 		r.Get("/{id}/memberships/effective", rbac.ListEffectiveMemberships)
 		r.Get("/{id}/approval-node", rbac.GetApprovalNode)
+		r.Get("/{id}/permissions/mine", rbac.GetMyPermissions)
 
 		// Project Roles
 		r.Post("/{id}/roles", h.CreateProjectRole)
@@ -30,12 +31,19 @@ func MountOrganisationRoutes(r chi.Router, h *Handler, rbac *RBACHandler) {
 		r.Delete("/{id}/custom-fields/{fieldId}", h.DeleteCustomField)
 
 		r.Put("/{id}/members/{personId}/custom-fields", h.UpdateMemberCustomFields)
+
+		// Organisation Roles (RBAC)
+		r.Get("/{id}/organisation-roles", rbac.ListRoles)
+		r.Post("/{id}/organisation-roles", rbac.CreateRole)
 	})
 
 	r.Route("/organisation-roles", func(r chi.Router) {
-		r.Get("/", rbac.ListRoles)
 		r.Post("/ensure-defaults", rbac.EnsureDefaultRoles)
+		r.Put("/{id}", rbac.UpdateRole)
+		r.Delete("/{id}", rbac.DeleteRole)
 	})
+
+	r.Get("/organisation-permissions", rbac.ListPermissions)
 
 	r.Route("/organisation-scopes", func(r chi.Router) {
 		r.Post("/", rbac.CreateScope)

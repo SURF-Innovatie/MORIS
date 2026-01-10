@@ -1,6 +1,8 @@
 package entities
 
 import (
+	"slices"
+
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/google/uuid"
 )
@@ -28,10 +30,6 @@ func (p *ProjectRole) CanUseEventType(eventType string) bool {
 	if len(p.AllowedEventTypes) == 0 {
 		return false // Empty means no events allowed
 	}
-	for _, t := range p.AllowedEventTypes {
-		if t == eventType {
-			return true
-		}
-	}
-	return false
+
+	return slices.Contains(p.AllowedEventTypes, eventType)
 }
