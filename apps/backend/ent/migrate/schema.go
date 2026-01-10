@@ -237,6 +237,8 @@ var (
 		{Name: "avatar_url", Type: field.TypeString, Nullable: true},
 		{Name: "description", Type: field.TypeString, Nullable: true},
 		{Name: "org_custom_fields", Type: field.TypeJSON, Nullable: true},
+		{Name: "zenodo_access_token", Type: field.TypeString, Nullable: true},
+		{Name: "zenodo_refresh_token", Type: field.TypeString, Nullable: true},
 	}
 	// PersonsTable holds the schema information for the "persons" table.
 	PersonsTable = &schema.Table{
@@ -251,6 +253,7 @@ var (
 		{Name: "language", Type: field.TypeString, Nullable: true},
 		{Name: "type", Type: field.TypeInt, Nullable: true},
 		{Name: "doi", Type: field.TypeString, Nullable: true},
+		{Name: "zenodo_deposition_id", Type: field.TypeInt, Nullable: true},
 	}
 	// ProductsTable holds the schema information for the "products" table.
 	ProductsTable = &schema.Table{

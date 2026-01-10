@@ -43,11 +43,17 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var zenodoID int
+	if req.ZenodoDepositionID != nil {
+		zenodoID = *req.ZenodoDepositionID
+	}
+
 	p, err := h.svc.Create(r.Context(), entities.Product{
-		Name:     req.Name,
-		Language: req.Language,
-		Type:     entities.ProductType(req.Type),
-		DOI:      req.DOI,
+		Name:               req.Name,
+		Language:           req.Language,
+		Type:               entities.ProductType(req.Type),
+		DOI:                req.DOI,
+		ZenodoDepositionID: zenodoID,
 	})
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
@@ -165,11 +171,16 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteError(w, r, http.StatusBadRequest, "name is required", nil)
 		return
 	}
+	var zenodoID int
+	if req.ZenodoDepositionID != nil {
+		zenodoID = *req.ZenodoDepositionID
+	}
 	p, err := h.svc.Update(r.Context(), id, entities.Product{
-		Name:     req.Name,
-		Language: req.Language,
-		Type:     entities.ProductType(req.Type),
-		DOI:      req.DOI,
+		Name:               req.Name,
+		Language:           req.Language,
+		Type:               entities.ProductType(req.Type),
+		DOI:                req.DOI,
+		ZenodoDepositionID: zenodoID,
 	})
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)

@@ -54,6 +54,7 @@ func (r *EntRepo) Create(ctx context.Context, p entities.Product) (*entities.Pro
 		SetType(int(p.Type)).
 		SetNillableLanguage(&p.Language).
 		SetNillableDoi(&p.DOI).
+		SetNillableZenodoDepositionID(&p.ZenodoDepositionID).
 		Save(ctx)
 	if err != nil {
 		return nil, err
@@ -67,6 +68,7 @@ func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, p entities.Product) 
 		SetType(int(p.Type)).
 		SetNillableLanguage(&p.Language).
 		SetNillableDoi(&p.DOI).
+		SetNillableZenodoDepositionID(&p.ZenodoDepositionID).
 		Save(ctx)
 	if err != nil {
 		return nil, err

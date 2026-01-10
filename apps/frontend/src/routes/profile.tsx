@@ -1,6 +1,7 @@
 import { useGetProfile } from "@api/moris";
 import { ProfileInfo } from "@/components/profile/ProfileInfo";
 import { OrcidConnection } from "@/components/profile/OrcidConnection";
+import { ZenodoConnection } from "@/components/profile/ZenodoConnection";
 import { ProfileActivity } from "@/components/profile/ProfileActivity";
 
 const ProfileRoute = () => {
@@ -20,6 +21,7 @@ const ProfileRoute = () => {
       <div className="lg:col-span-1 space-y-8">
         <ProfileInfo user={user} refetchProfile={refetchProfile} />
         <OrcidConnection user={user} refetchProfile={refetchProfile} />
+        <ZenodoConnection user={user} refetchProfile={refetchProfile} />
       </div>
 
       {/* Right Column: Recent Activity */}

@@ -2,16 +2,9 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { z } from "zod";
-import { Loader2, Plus, Search, Trash2, ExternalLink } from "lucide-react";
+import { Loader2, Plus, Search, Upload, ChevronDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +12,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -29,6 +21,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useGetCrossrefWorks, usePostProducts } from "@api/moris";
@@ -40,6 +38,10 @@ import { ProductResponse, ProductType } from "@api/model";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Allowed } from "@/components/auth/Allowed";
 import { ProjectEventType } from "@/api/events";
+import { ZenodoUploadDialog } from "@/components/products/ZenodoUploadDialog";
+import { useGetZenodoStatus } from "@api/moris";
+import { ProductCard, getProductTypeLabel } from "../products/ProductCard";
+import { useAccess } from "@/context/AccessContext";
 
 // Schema for the DOI search form
 const doiFormSchema = z.object({
@@ -58,10 +60,15 @@ export function ProductsTab({
   onRefresh,
 }: ProductsTabProps) {
   const { toast } = useToast();
+  const { hasAccess } = useAccess();
+  const { mutateAsync: addProduct } = usePostProducts();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isZenodoDialogOpen, setIsZenodoDialogOpen] = useState(false);
   const [searchedProduct, setSearchedProduct] = useState<any>(null); // TODO: Type properly based on Crossref response
   const [isSearching, setIsSearching] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
+
+  const { data: zenodoStatus } = useGetZenodoStatus();
 
   const form = useForm<z.infer<typeof doiFormSchema>>({
     resolver: standardSchemaResolver(doiFormSchema),
@@ -186,6 +193,47 @@ export function ProductsTab({
     }
   }
 
+  async function handleZenodoUploadSuccess(
+    doi: string,
+    _zenodoUrl: string,
+    depositionId: number,
+    title: string
+  ) {
+    try {
+      // Create the product in our DB with the DOI from Zenodo
+      const newProduct = await addProduct({
+        data: {
+          name: title, // Use user-provided title from upload dialog
+          doi: doi,
+          type: 0, // Dataset type
+          language: "en",
+          zenodo_deposition_id: depositionId,
+        },
+      });
+
+      if (newProduct && newProduct.id) {
+        await createProductAddedEvent(projectId, {
+          product_id: newProduct.id,
+        });
+
+        toast({
+          title: "Product uploaded to Zenodo",
+          description:
+            "The product has been published and added to the project.",
+        });
+        setIsZenodoDialogOpen(false);
+        onRefresh();
+      }
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to add product. Please try again.",
+      });
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -196,13 +244,34 @@ export function ProductsTab({
           </p>
         </div>
         <Allowed event={ProjectEventType.ProductAdded}>
+          {zenodoStatus?.linked ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Product
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsDialogOpen(true)}>
+                  <Search className="mr-2 h-4 w-4" />
+                  Import from DOI
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsZenodoDialogOpen(true)}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload to Zenodo
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Product
+            </Button>
+          )}
+
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Product
-              </Button>
-            </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>Add Product</DialogTitle>
@@ -271,47 +340,21 @@ export function ProductsTab({
             </DialogContent>
           </Dialog>
         </Allowed>
+        <ZenodoUploadDialog
+          open={isZenodoDialogOpen}
+          onOpenChange={setIsZenodoDialogOpen}
+          onSuccess={handleZenodoUploadSuccess}
+        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {products.map((product) => (
-          <Card key={product.id}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-medium line-clamp-2">
-                {product.name}
-              </CardTitle>
-              <CardDescription className="flex items-center gap-2">
-                <span className="capitalize">
-                  {getProductTypeLabel(product.type)}
-                </span>
-                {product.doi && (
-                  <a
-                    href={`https://doi.org/${product.doi}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline inline-flex items-center"
-                  >
-                    <ExternalLink className="h-3 w-3 ml-1" />
-                  </a>
-                )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-end">
-                <Allowed event={ProjectEventType.ProductRemoved}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:text-destructive/90"
-                    onClick={() => setProductToDelete(product.id!)}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Remove
-                  </Button>
-                </Allowed>
-              </div>
-            </CardContent>
-          </Card>
+          <ProductCard
+            key={product.id}
+            product={product}
+            onRemove={(id) => setProductToDelete(id)}
+            canRemove={hasAccess(ProjectEventType.ProductRemoved)}
+          />
         ))}
         {products.length === 0 && (
           <div className="col-span-full flex flex-col items-center justify-center p-8 text-center border rounded-lg border-dashed text-muted-foreground">
@@ -345,9 +388,4 @@ function mapCrossrefType(type: string | undefined): ProductType {
   // Let's check the generated model for ProductType.
   // For now, returning 0 (which usually is a safe default or "Other").
   return 0;
-}
-
-function getProductTypeLabel(_type: ProductType | undefined): string {
-  // TODO: Implement proper label mapping based on enum
-  return "Product";
 }

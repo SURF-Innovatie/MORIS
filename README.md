@@ -27,6 +27,7 @@ Before you begin, ensure you have the following installed:
 - [swag](https://github.com/swaggo/swag) (Swagger documentation generator)
 - [turbo](https://turbo.build/) (Repo management)
 - [podman](https://podman.io/) (Container management)
+- [atlas](https://atlasgo.io/) (Database migration tool)
 
 ## Setup
 

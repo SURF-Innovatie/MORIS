@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"flag"
 	"fmt"
 	"os"
 	"os/exec"
@@ -56,6 +57,9 @@ func main() {
 	dbName := os.Getenv("DB_NAME")
 	dbPort := os.Getenv("DB_PORT")
 
+	skipSeed := flag.Bool("skip-seed", false, "Skip seeding data, only reset schema and apply migrations")
+	flag.Parse()
+
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		dbHost, dbPort, dbUser, dbPassword, dbName)
 
@@ -92,6 +96,11 @@ func main() {
 		logrus.Fatalf("failed running database migrations: %v", err)
 	}
 	logrus.Info("Database migrations applied.")
+
+	if *skipSeed {
+		logrus.Info("Skipping data seeding as requested.")
+		return
+	}
 
 	// Default password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)

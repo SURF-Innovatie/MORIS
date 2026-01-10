@@ -16,9 +16,9 @@ import (
 
 	_ "github.com/SURF-Innovatie/MORIS/api/swag-docs"
 	"github.com/SURF-Innovatie/MORIS/ent"
-	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	crossref2 "github.com/SURF-Innovatie/MORIS/external/crossref"
 	"github.com/SURF-Innovatie/MORIS/external/orcid"
+	"github.com/SURF-Innovatie/MORIS/external/zenodo"
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
@@ -48,6 +48,7 @@ import (
 	commandHandler "github.com/SURF-Innovatie/MORIS/internal/handler/project/command"
 	systemhandler "github.com/SURF-Innovatie/MORIS/internal/handler/system"
 	userhandler "github.com/SURF-Innovatie/MORIS/internal/handler/user"
+	zenodohandler "github.com/SURF-Innovatie/MORIS/internal/handler/zenodo"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/entclient"
@@ -99,12 +100,13 @@ func main() {
 	}
 	defer client.Close()
 
-	if err := client.Schema.Create(
-		context.Background(),
-		migrate.WithGlobalUniqueID(true),
-	); err != nil {
-		logrus.Fatalf("failed running Ent database migrations: %v", err)
-	}
+	// Auto-migration is disabled in favor of versioned migrations (Atlas)
+	// if err := client.Schema.Create(
+	// 	context.Background(),
+	// 	migrate.WithGlobalUniqueID(true),
+	// ); err != nil {
+	// 	logrus.Fatalf("failed running Ent database migrations: %v", err)
+	// }
 
 	// Redis Client
 	rdb := redis.NewClient(&redis.Options{
@@ -177,6 +179,8 @@ func main() {
 	// Create HTTP handler/controller
 	authHandler := authhandler.NewHandler(userSvc, authSvc, orcidSvc)
 	orcidHandler := orcidhandler.NewHandler(orcidSvc)
+	zenodoSvc := zenodo.NewService(client, userSvc, http.DefaultClient)
+	zenodoHandler := zenodohandler.NewHandler(zenodoSvc, curUser)
 	systemHandler := systemhandler.NewHandler()
 
 	cacheSvc := cache.NewRedisProjectCache(rdb, 24*time.Hour)
@@ -234,6 +238,7 @@ func main() {
 			eventHandler.MountEventRoutes(r, evtHandler)
 			personhandler.MountPersonRoutes(r, personHandler)
 			orcidhandler.MountRoutes(r, orcidHandler)
+			zenodohandler.MountRoutes(r, zenodoHandler)
 			producthandler.MountProductRoutes(r, productHandler)
 			notificationhandler.MountNotificationRoutes(r, notificationHandler)
 			userhandler.MountUserRoutes(r, userHandler)

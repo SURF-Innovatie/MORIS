@@ -184,6 +184,12 @@ func (h *Handler) GetAllowedEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(allowedEvents) == 0 {
+		// force write of empty array otherwise httputil.WriteJSON will write null
+		httputil.WriteJSON(w, http.StatusOK, []string{})
+		return
+	}
+
 	_ = httputil.WriteJSON(w, http.StatusOK, allowedEvents)
 }
 

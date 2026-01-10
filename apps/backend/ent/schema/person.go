@@ -35,6 +35,13 @@ func (Person) Fields() []ent.Field {
 		field.JSON("org_custom_fields", map[string]interface{}{}).
 			Optional().
 			Annotations(entoas.Skip(true)),
+		// Zenodo OAuth tokens
+		field.String("zenodo_access_token").
+			Optional().
+			Sensitive(),
+		field.String("zenodo_refresh_token").
+			Optional().
+			Sensitive(),
 	}
 }
 

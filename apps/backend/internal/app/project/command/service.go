@@ -130,7 +130,7 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*e
 		// Check role-based permissions (EBAC)
 		if cur != nil {
 			userRole := s.getUserProjectRole(ctx, req.ProjectID, u.PersonID())
-			if userRole != nil && !userRole.CanUseEventType(req.Type) {
+			if userRole != nil && !userRole.CanUseEventType(req.Type) && !u.IsSysAdmin() {
 				return nil, fmt.Errorf("your role does not allow executing %s events", req.Type)
 			}
 		}
