@@ -152,3 +152,42 @@ func (e *entRepo) List(ctx context.Context) ([]entities.ProjectRole, error) {
 
 	return transform.ToEntities[entities.ProjectRole](rows), nil
 }
+
+func (e *entRepo) CreateWithEventTypes(ctx context.Context, key, name string, orgNodeID uuid.UUID, allowedEventTypes []string) (*entities.ProjectRole, error) {
+	r, err := e.cli.ProjectRole.Create().
+		SetKey(key).
+		SetName(name).
+		SetOrganisationNodeID(orgNodeID).
+		SetAllowedEventTypes(allowedEventTypes).
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return transform.ToEntityPtr[entities.ProjectRole](r), nil
+}
+
+func (e *entRepo) GetByID(ctx context.Context, id uuid.UUID) (*entities.ProjectRole, error) {
+	r, err := e.cli.ProjectRole.Query().
+		Where(
+			entprojectrole.ID(id),
+			entprojectrole.ArchivedAtIsNil(),
+		).
+		Only(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return transform.ToEntityPtr[entities.ProjectRole](r), nil
+}
+
+func (e *entRepo) UpdateAllowedEventTypes(ctx context.Context, id uuid.UUID, eventTypes []string) (*entities.ProjectRole, error) {
+	r, err := e.cli.ProjectRole.UpdateOneID(id).
+		SetAllowedEventTypes(eventTypes).
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return transform.ToEntityPtr[entities.ProjectRole](r), nil
+}

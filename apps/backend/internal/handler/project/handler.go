@@ -172,13 +172,17 @@ func (h *Handler) ListAvailableRoles(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /projects/{id}/allowed-events [get]
 func (h *Handler) GetAllowedEvents(w http.ResponseWriter, r *http.Request) {
-	_, err := httputil.ParseUUIDParam(r, "id")
+	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
 		return
 	}
 
-	allowedEvents := events.GetRegisteredEventTypes()
+	allowedEvents, err := h.svc.GetAllowedEventTypes(r.Context(), id)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, allowedEvents)
 }

@@ -27,6 +27,10 @@ func (ProjectRole) Fields() []ent.Field {
 
 		// archived_at marks the role as soft-deleted
 		field.Time("archived_at").Optional().Nillable(),
+
+		// allowed_event_types stores event type strings this role can use
+		// empty/nil means NO events are allowed - explicit permission required
+		field.Strings("allowed_event_types").Optional(),
 	}
 }
 

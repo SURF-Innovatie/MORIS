@@ -459,6 +459,65 @@ func (h *Handler) ListProjectRoles(w http.ResponseWriter, r *http.Request) {
 	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOs[dto.ProjectRoleResponse](roles))
 }
 
+// UpdateProjectRole godoc
+// @Summary Update a project role's allowed event types
+// @Description Updates which event types a project role can use (EBAC)
+// @Tags organisation
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Organisation ID"
+// @Param roleId path string true "Role ID"
+// @Param body body dto.ProjectRoleUpdateRequest true "Update request"
+// @Success 200 {object} dto.ProjectRoleResponse
+// @Failure 401 {string} string "unauthorized"
+// @Failure 403 {string} string "forbidden"
+// @Failure 400 {string} string "invalid id"
+// @Failure 500 {string} string "internal server error"
+// @Router /organisation-nodes/{id}/roles/{roleId} [patch]
+func (h *Handler) UpdateProjectRole(w http.ResponseWriter, r *http.Request) {
+	user, ok := httputil.GetUserFromContext(r.Context())
+	if !ok {
+		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
+		return
+	}
+
+	orgID, err := httputil.ParseUUIDParam(r, "id")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid org id", nil)
+		return
+	}
+
+	roleID, err := httputil.ParseUUIDParam(r, "roleId")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid role id", nil)
+		return
+	}
+
+	hasAccess, err := h.rbac.HasAdminAccess(r.Context(), user.Person.ID, orgID)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	if !hasAccess {
+		httputil.WriteError(w, r, http.StatusForbidden, "forbidden", nil)
+		return
+	}
+
+	var req dto.ProjectRoleUpdateRequest
+	if !httputil.ReadJSON(w, r, &req) {
+		return
+	}
+
+	role, err := h.roleSvc.UpdateAllowedEventTypes(r.Context(), roleID, req.AllowedEventTypes)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProjectRoleResponse](*role))
+}
+
 // CreateCustomField godoc
 // @Summary Create a custom field definition for an organisation
 // @Description Creates a new custom field definition at this organisation node

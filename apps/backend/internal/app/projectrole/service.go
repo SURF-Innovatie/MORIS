@@ -6,6 +6,7 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 )
@@ -15,6 +16,8 @@ type Service interface {
 	Create(ctx context.Context, key, name string, orgNodeID uuid.UUID) (*entities.ProjectRole, error)
 	ListAvailableForNode(ctx context.Context, orgNodeID uuid.UUID) ([]entities.ProjectRole, error)
 	Delete(ctx context.Context, id uuid.UUID, orgNodeID uuid.UUID) error
+	GetByID(ctx context.Context, id uuid.UUID) (*entities.ProjectRole, error)
+	UpdateAllowedEventTypes(ctx context.Context, roleID uuid.UUID, eventTypes []string) (*entities.ProjectRole, error)
 }
 
 type service struct {
@@ -32,6 +35,9 @@ func (s *service) EnsureDefaults(ctx context.Context) error {
 		return fmt.Errorf("listing root nodes: %w", err)
 	}
 
+	// Get all registered event types for default roles
+	allEventTypes := events.GetRegisteredEventTypes()
+
 	defs := []struct {
 		key  string
 		name string
@@ -48,7 +54,8 @@ func (s *service) EnsureDefaults(ctx context.Context) error {
 			}
 
 			if !exists {
-				_, err := s.repo.Create(ctx, d.key, d.name, root.ID)
+				// Create with all event types allowed
+				_, err := s.repo.CreateWithEventTypes(ctx, d.key, d.name, root.ID, allEventTypes)
 				if err != nil {
 					return fmt.Errorf("creating default role %s for root %s: %w", d.key, root.ID, err)
 				}
@@ -83,4 +90,12 @@ func (s *service) ListAvailableForNode(ctx context.Context, orgNodeID uuid.UUID)
 	})
 
 	return s.repo.ListByOrgIDs(ctx, ids)
+}
+
+func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*entities.ProjectRole, error) {
+	return s.repo.GetByID(ctx, id)
+}
+
+func (s *service) UpdateAllowedEventTypes(ctx context.Context, roleID uuid.UUID, eventTypes []string) (*entities.ProjectRole, error) {
+	return s.repo.UpdateAllowedEventTypes(ctx, roleID, eventTypes)
 }

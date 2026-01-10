@@ -28,17 +28,23 @@ type ProjectRoleCreateRequest struct {
 	Name string `json:"name" example:"Specialist"`
 }
 
+type ProjectRoleUpdateRequest struct {
+	AllowedEventTypes []string `json:"allowedEventTypes"`
+}
+
 type ProjectRoleResponse struct {
-	ID   uuid.UUID `json:"id" example:"b990c264-b3c1-425f-88a1-69f22ba4a7a5"`
-	Key  string    `json:"key" example:"contributor"`
-	Name string    `json:"name" example:"Contributor"`
+	ID                uuid.UUID `json:"id" example:"b990c264-b3c1-425f-88a1-69f22ba4a7a5"`
+	Key               string    `json:"key" example:"contributor"`
+	Name              string    `json:"name" example:"Contributor"`
+	AllowedEventTypes []string  `json:"allowedEventTypes,omitempty"`
 }
 
 func (r ProjectRoleResponse) FromEntity(e entities.ProjectRole) ProjectRoleResponse {
 	return ProjectRoleResponse{
-		ID:   e.ID,
-		Key:  e.Key,
-		Name: e.Name,
+		ID:                e.ID,
+		Key:               e.Key,
+		Name:              e.Name,
+		AllowedEventTypes: e.AllowedEventTypes,
 	}
 }
 

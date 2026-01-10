@@ -21,6 +21,7 @@ func MountOrganisationRoutes(r chi.Router, h *Handler, rbac *RBACHandler) {
 		// Project Roles
 		r.Post("/{id}/roles", h.CreateProjectRole)
 		r.Get("/{id}/roles", h.ListProjectRoles)
+		r.Patch("/{id}/roles/{roleId}", h.UpdateProjectRole)
 		r.Delete("/{id}/roles/{roleId}", h.DeleteProjectRole)
 
 		// Custom Custom Fields

@@ -25,6 +25,7 @@ type Service interface {
 	GetProjectRoles(ctx context.Context) ([]entities.ProjectRole, error)
 	ListAvailableRoles(ctx context.Context, projectID uuid.UUID) ([]entities.ProjectRole, error)
 	GetEvents(ctx context.Context, id uuid.UUID) ([]events.Event, error)
+	GetAllowedEventTypes(ctx context.Context, projectID uuid.UUID) ([]string, error)
 }
 
 type service struct {
@@ -201,4 +202,45 @@ func (s *service) ListAvailableRoles(ctx context.Context, projectID uuid.UUID) (
 func (s *service) GetEvents(ctx context.Context, id uuid.UUID) ([]events.Event, error) {
 	evts, _, err := s.es.Load(ctx, id)
 	return evts, err
+}
+
+func (s *service) GetAllowedEventTypes(ctx context.Context, projectID uuid.UUID) ([]string, error) {
+	u, err := s.currentUser.Current(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Load the project to find user's role
+	proj, err := s.loader.Load(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Find user's role in this project
+	var userRoleID *uuid.UUID
+	for _, m := range proj.Members {
+		if m.PersonID == u.PersonID() {
+			userRoleID = &m.ProjectRoleID
+			break
+		}
+	}
+
+	// If user is not a member, return empty list
+	if userRoleID == nil {
+		return []string{}, nil
+	}
+
+	// Get the role details
+	rolesMap, err := s.repo.ProjectRolesByIDs(ctx, []uuid.UUID{*userRoleID})
+	if err != nil {
+		return nil, err
+	}
+
+	role, ok := rolesMap[*userRoleID]
+	if !ok {
+		return []string{}, nil
+	}
+
+	// Return allowed event types (or empty if none configured)
+	return role.AllowedEventTypes, nil
 }

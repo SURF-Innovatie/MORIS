@@ -195,7 +195,7 @@ func main() {
 	projSvc := queries.NewService(esStore, ldr, repo, roleRepo, curUser)
 	projHandler := projecthandler.NewHandler(projSvc, customFieldSvc)
 
-	projCmdSvc := command.NewService(esStore, eventSvc, cacheSvc, refreshSvc, curUser, entProv)
+	projCmdSvc := command.NewService(esStore, eventSvc, cacheSvc, refreshSvc, curUser, entProv, roleSvc)
 	projCmdHandler := commandHandler.NewHandler(projCmdSvc)
 
 	userHandler := userhandler.NewHandler(userSvc, projSvc)

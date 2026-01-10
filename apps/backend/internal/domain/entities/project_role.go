@@ -10,6 +10,7 @@ type ProjectRole struct {
 	Key                string
 	Name               string
 	OrganisationNodeID uuid.UUID
+	AllowedEventTypes  []string
 }
 
 func (p *ProjectRole) FromEnt(row *ent.ProjectRole) *ProjectRole {
@@ -18,5 +19,19 @@ func (p *ProjectRole) FromEnt(row *ent.ProjectRole) *ProjectRole {
 		Key:                row.Key,
 		Name:               row.Name,
 		OrganisationNodeID: row.OrganisationNodeID,
+		AllowedEventTypes:  row.AllowedEventTypes,
 	}
+}
+
+// CanUseEventType checks if this role is allowed to use the given event type
+func (p *ProjectRole) CanUseEventType(eventType string) bool {
+	if len(p.AllowedEventTypes) == 0 {
+		return false // Empty means no events allowed
+	}
+	for _, t := range p.AllowedEventTypes {
+		if t == eventType {
+			return true
+		}
+	}
+	return false
 }
