@@ -13,6 +13,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 type Service interface {
@@ -67,7 +68,6 @@ func (s *service) ListAvailableEvents(ctx context.Context, projectID *uuid.UUID)
 	}
 
 	metas := events.GetAllMetas()
-	out := make([]AvailableEvent, 0, len(metas))
 
 	// If projectID provided, get user's role and filter based on allowed events
 	var userRole *entities.ProjectRole
@@ -75,19 +75,19 @@ func (s *service) ListAvailableEvents(ctx context.Context, projectID *uuid.UUID)
 		userRole = s.getUserProjectRole(ctx, *projectID, u.PersonID())
 	}
 
-	for _, m := range metas {
+	out := lo.Map(metas, func(m events.EventMeta, _ int) AvailableEvent {
 		allowed := true
 		if userRole != nil {
 			allowed = userRole.CanUseEventType(m.Type)
 		}
-		out = append(out, AvailableEvent{
+		return AvailableEvent{
 			Type:          m.Type,
 			FriendlyName:  m.FriendlyName,
 			NeedsApproval: false,
 			Allowed:       allowed,
 			InputSchema:   events.GetInputSchema(m.Type),
-		})
-	}
+		}
+	})
 
 	return out, nil
 }
@@ -161,13 +161,13 @@ func (s *service) getUserProjectRole(ctx context.Context, projectID, personID uu
 	}
 
 	// Find user's membership and role
-	for _, m := range proj.Members {
-		if m.PersonID == personID {
-			// Get the role details
-			role, err := s.roleSvc.GetByID(ctx, m.ProjectRoleID)
-			if err != nil {
-				return nil
-			}
+	m, ok := lo.Find(proj.Members, func(m entities.ProjectMember) bool {
+		return m.PersonID == personID
+	})
+	if ok {
+		// Get the role details
+		role, err := s.roleSvc.GetByID(ctx, m.ProjectRoleID)
+		if err == nil {
 			return role
 		}
 	}

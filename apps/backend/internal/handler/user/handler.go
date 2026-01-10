@@ -8,8 +8,10 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 type Handler struct {
@@ -209,24 +211,21 @@ func (h *Handler) GetApprovedEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	events, err := h.svc.GetApprovedEvents(r.Context(), id)
+	apprEvents, err := h.svc.GetApprovedEvents(r.Context(), id)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
 	// Map to DTO
-	dtos := make([]dto.Event, 0, len(events))
-	for _, e := range events {
-
+	dtos := lo.Map(apprEvents, func(e events.Event, _ int) dto.Event {
 		proj, _ := h.projSvc.GetProject(r.Context(), e.AggregateID())
 		projectTitle := ""
 		if proj != nil {
 			projectTitle = proj.Project.Title
 		}
-
-		dtos = append(dtos, dto.Event{}.FromEntityWithTitle(e, projectTitle))
-	}
+		return dto.Event{}.FromEntityWithTitle(e, projectTitle)
+	})
 
 	_ = httputil.WriteJSON(w, http.StatusOK, dto.EventResponse{Events: dtos})
 }

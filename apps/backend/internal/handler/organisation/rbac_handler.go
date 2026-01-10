@@ -9,6 +9,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
+	"github.com/samber/lo"
 )
 
 type RBACHandler struct {
@@ -89,7 +90,7 @@ func (h *RBACHandler) ListRoles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	out := transform.ToDTOs[dto.OrganisationRoleResponse, *entities.OrganisationRole](roles)
+	out := transform.ToDTOs[dto.OrganisationRoleResponse](roles)
 
 	_ = httputil.WriteJSON(w, http.StatusOK, out)
 }
@@ -130,10 +131,9 @@ func (h *RBACHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	perms := make([]role.Permission, len(req.Permissions))
-	for i, p := range req.Permissions {
-		perms[i] = role.Permission(p)
-	}
+	perms := lo.Map(req.Permissions, func(p string, _ int) role.Permission {
+		return role.Permission(p)
+	})
 
 	newRole, err := h.rbac.CreateRole(r.Context(), orgID, req.Key, req.DisplayName, perms)
 	if err != nil {
@@ -166,11 +166,6 @@ func (h *RBACHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// TODO: We need the orgID to check permission.
-	// To check permission we need the organisation ID that this role belongs to.
-	// But UpdateRole implementation in service doesn't fetch it first or return it until after.
-	// We might need GetRole first? For now, let's skip checking or fetch it.
-	// Actually, GetRole is available on repo. Let's assume h.rbac.GetRole is available or we add it.
-	// I added GetRole to Repository and Service in previous steps.
 	existingRole, err := h.rbac.GetRole(r.Context(), roleID)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusNotFound, "role not found", nil)
@@ -192,10 +187,9 @@ func (h *RBACHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	perms := make([]role.Permission, len(req.Permissions))
-	for i, p := range req.Permissions {
-		perms[i] = role.Permission(p)
-	}
+	perms := lo.Map(req.Permissions, func(p string, _ int) role.Permission {
+		return role.Permission(p)
+	})
 
 	updatedRole, err := h.rbac.UpdateRole(r.Context(), roleID, req.DisplayName, perms)
 	if err != nil {
@@ -276,10 +270,7 @@ func (h *RBACHandler) CreateScope(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
 		return
 	}
-	// Creating a scope assigns a role to a node tree. Checked against PermissionManageMembers usually?
-	// Or PermissionManageOrganisationRoles? Since scopes are often about assigning roles to users (via memberships later),
-	// but creating a scope essentially enables that role for that subtree.
-	// Let's use PermissionManageOrganisationRoles as it configures RBAC structure.
+
 	if ok, err := h.rbac.HasPermission(r.Context(), user.Person.ID, req.RootNodeID, role.PermissionManageOrganisationRoles); err != nil || !ok {
 		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
 		return
@@ -509,10 +500,9 @@ func (h *RBACHandler) GetMyPermissions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Convert to []string
-	out := make([]string, len(perms))
-	for i, p := range perms {
-		out[i] = string(p)
-	}
+	out := lo.Map(perms, func(p role.Permission, _ int) string {
+		return string(p)
+	})
 
 	_ = httputil.WriteJSON(w, http.StatusOK, out)
 }

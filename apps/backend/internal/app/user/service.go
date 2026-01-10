@@ -6,6 +6,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 type Service interface {
@@ -138,11 +139,9 @@ func (s *service) SearchPersons(ctx context.Context, query string, observerPerso
 	}
 
 	// filter candidates in-memory (cheap, limit=20)
-	out := make([]entities.Person, 0, len(candidates))
-	for _, p := range candidates {
-		if _, ok := allowed[p.ID]; ok {
-			out = append(out, p)
-		}
-	}
+	out := lo.Filter(candidates, func(p entities.Person, _ int) bool {
+		_, ok := allowed[p.ID]
+		return ok
+	})
 	return out, nil
 }

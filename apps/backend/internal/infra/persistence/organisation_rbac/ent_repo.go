@@ -15,6 +15,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 type EntRepo struct {
@@ -60,10 +61,9 @@ func (r *EntRepo) GetMyPermissions(ctx context.Context, personID, nodeID uuid.UU
 	if err != nil {
 		return nil, err
 	}
-	ancestorIDs := make([]uuid.UUID, 0, len(ancestors))
-	for _, a := range ancestors {
-		ancestorIDs = append(ancestorIDs, a.AncestorID)
-	}
+	ancestorIDs := lo.Map(ancestors, func(a *ent.OrganisationNodeClosure, _ int) uuid.UUID {
+		return a.AncestorID
+	})
 
 	// scopes defined on ancestors
 	scopes, err := r.cli.RoleScope.
@@ -78,12 +78,8 @@ func (r *EntRepo) GetMyPermissions(ctx context.Context, personID, nodeID uuid.UU
 		return []role.Permission{}, nil
 	}
 
-	scopeIDs := make([]uuid.UUID, 0, len(scopes))
-	scopeByID := map[uuid.UUID]*ent.RoleScope{}
-	for _, sc := range scopes {
-		scopeIDs = append(scopeIDs, sc.ID)
-		scopeByID[sc.ID] = sc
-	}
+	scopeIDs := lo.Map(scopes, func(sc *ent.RoleScope, _ int) uuid.UUID { return sc.ID })
+	scopeByID := lo.KeyBy(scopes, func(sc *ent.RoleScope) uuid.UUID { return sc.ID })
 
 	memberships, err := r.cli.Membership.
 		Query().
@@ -110,10 +106,7 @@ func (r *EntRepo) GetMyPermissions(ctx context.Context, personID, nodeID uuid.UU
 		}
 	}
 
-	result := make([]role.Permission, 0, len(permissions))
-	for p := range permissions {
-		result = append(result, p)
-	}
+	result := lo.Keys(permissions)
 	return result, nil
 }
 
@@ -531,11 +524,9 @@ func (r *EntRepo) HasPermission(ctx context.Context, personID uuid.UUID, nodeID 
 }
 
 func toPermissions(s []string) []role.Permission {
-	out := make([]role.Permission, len(s))
-	for i, v := range s {
-		out[i] = role.Permission(v)
-	}
-	return out
+	return lo.Map(s, func(v string, _ int) role.Permission {
+		return role.Permission(v)
+	})
 }
 
 // Helper to safely get custom fields for a node
@@ -551,10 +542,7 @@ func getCustomFieldsForNode(fields map[string]interface{}, nodeID uuid.UUID) map
 	return nil
 }
 func hasAdminPermission(perms []string) bool {
-	for _, p := range perms {
-		if p == string(role.PermissionManageDetails) || p == string(role.PermissionManageMembers) {
-			return true
-		}
-	}
-	return false
+	return lo.SomeBy(perms, func(p string) bool {
+		return p == string(role.PermissionManageDetails) || p == string(role.PermissionManageMembers)
+	})
 }

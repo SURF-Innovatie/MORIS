@@ -8,6 +8,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
+	"github.com/samber/lo"
 )
 
 type Handler struct {
@@ -138,21 +139,20 @@ func (h *Handler) ListEventTypes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	eventTypes := make([]dto.EventTypeResponse, 0, len(types))
-	for _, t := range types {
+	eventTypes := lo.FilterMap(types, func(t events.EventMeta, _ int) (dto.EventTypeResponse, bool) {
 		ev, err := events.Create(t.Type)
 		if err != nil {
-			continue
+			return dto.EventTypeResponse{}, false
 		}
 
 		allowed := t.IsAllowed(r.Context(), ev, h.cli)
 
-		eventTypes = append(eventTypes, dto.EventTypeResponse{
+		return dto.EventTypeResponse{
 			Type:         t.Type,
 			FriendlyName: t.FriendlyName,
 			Allowed:      allowed,
-		})
-	}
+		}, true
+	})
 
 	_ = httputil.WriteJSON(w, http.StatusOK, eventTypes)
 }

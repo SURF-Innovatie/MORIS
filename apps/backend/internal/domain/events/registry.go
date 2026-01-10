@@ -2,6 +2,7 @@ package events
 
 import (
 	"github.com/SURF-Innovatie/MORIS/internal/common"
+	"github.com/samber/lo"
 )
 
 var inputTypes = map[string]any{}
@@ -11,11 +12,7 @@ func RegisterInputType(eventType string, input any) {
 }
 
 func GetRegisteredEventTypes() []string {
-	keys := make([]string, 0, len(inputTypes))
-	for k := range inputTypes {
-		keys = append(keys, k)
-	}
-	return keys
+	return lo.Keys(inputTypes)
 }
 
 func GetInputSchema(eventType string) map[string]any {

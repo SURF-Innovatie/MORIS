@@ -6,6 +6,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
+	"github.com/samber/lo"
 )
 
 type Handler struct{}
@@ -55,13 +56,12 @@ type EventTypeInfo struct {
 // @Router /event-types [get]
 func (h *Handler) ListEventTypes(w http.ResponseWriter, r *http.Request) {
 	metas := events.GetAllMetas()
-	out := make([]EventTypeInfo, 0, len(metas))
-	for _, m := range metas {
-		out = append(out, EventTypeInfo{
+	out := lo.Map(metas, func(m events.EventMeta, _ int) EventTypeInfo {
+		return EventTypeInfo{
 			Type:         m.Type,
 			FriendlyName: m.FriendlyName,
-		})
-	}
+		}
+	})
 	_ = httputil.WriteJSON(w, http.StatusOK, out)
 }
 
