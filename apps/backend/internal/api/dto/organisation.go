@@ -72,6 +72,20 @@ type CustomFieldDefinitionResponse struct {
 	ExampleValue       string    `json:"example_value"`
 }
 
+func (r CustomFieldDefinitionResponse) FromEntity(e entities.CustomFieldDefinition) CustomFieldDefinitionResponse {
+	return CustomFieldDefinitionResponse{
+		ID:                 e.ID,
+		OrganisationNodeID: e.OrganisationNodeID,
+		Name:               e.Name,
+		Type:               string(e.Type),
+		Category:           string(e.Category),
+		Description:        e.Description,
+		Required:           e.Required,
+		ValidationRegex:    e.ValidationRegex,
+		ExampleValue:       e.ExampleValue,
+	}
+}
+
 type MemberCustomFieldUpdateValues struct {
 	Values map[string]interface{} `json:"values"`
 }

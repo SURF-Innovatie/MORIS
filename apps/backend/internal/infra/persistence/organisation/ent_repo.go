@@ -7,6 +7,7 @@ import (
 	entorgnode "github.com/SURF-Innovatie/MORIS/ent/organisationnode"
 	entclosure "github.com/SURF-Innovatie/MORIS/ent/organisationnodeclosure"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -73,14 +74,7 @@ func (r *EntRepo) CreateNode(ctx context.Context, name string, parentID *uuid.UU
 		return nil, err
 	}
 
-	return &entities.OrganisationNode{
-		ID:          row.ID,
-		ParentID:    row.ParentID,
-		Name:        row.Name,
-		RorID:       row.RorID,
-		Description: row.Description,
-		AvatarURL:   row.AvatarURL,
-	}, nil
+	return transform.ToEntityPtr[entities.OrganisationNode](row), nil
 }
 
 func (r *EntRepo) GetNode(ctx context.Context, id uuid.UUID) (*entities.OrganisationNode, error) {
@@ -92,14 +86,7 @@ func (r *EntRepo) GetNode(ctx context.Context, id uuid.UUID) (*entities.Organisa
 		return nil, err
 	}
 
-	return &entities.OrganisationNode{
-		ID:          row.ID,
-		ParentID:    row.ParentID,
-		Name:        row.Name,
-		RorID:       row.RorID,
-		Description: row.Description,
-		AvatarURL:   row.AvatarURL,
-	}, nil
+	return transform.ToEntityPtr[entities.OrganisationNode](row), nil
 }
 
 func (r *EntRepo) UpdateNode(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error) {
@@ -120,14 +107,7 @@ func (r *EntRepo) UpdateNode(ctx context.Context, id uuid.UUID, name string, par
 		return nil, err
 	}
 
-	return &entities.OrganisationNode{
-		ID:          row.ID,
-		ParentID:    row.ParentID,
-		Name:        row.Name,
-		RorID:       row.RorID,
-		Description: row.Description,
-		AvatarURL:   row.AvatarURL,
-	}, nil
+	return transform.ToEntityPtr[entities.OrganisationNode](row), nil
 }
 
 func (r *EntRepo) ListRoots(ctx context.Context) ([]entities.OrganisationNode, error) {
@@ -139,18 +119,7 @@ func (r *EntRepo) ListRoots(ctx context.Context) ([]entities.OrganisationNode, e
 		return nil, err
 	}
 
-	out := make([]entities.OrganisationNode, 0, len(rows))
-	for _, row := range rows {
-		out = append(out, entities.OrganisationNode{
-			ID:          row.ID,
-			ParentID:    row.ParentID,
-			Name:        row.Name,
-			RorID:       row.RorID,
-			Description: row.Description,
-			AvatarURL:   row.AvatarURL,
-		})
-	}
-	return out, nil
+	return transform.ToEntities[entities.OrganisationNode](rows), nil
 }
 
 func (r *EntRepo) ListChildren(ctx context.Context, parentID uuid.UUID) ([]entities.OrganisationNode, error) {
@@ -162,18 +131,7 @@ func (r *EntRepo) ListChildren(ctx context.Context, parentID uuid.UUID) ([]entit
 		return nil, err
 	}
 
-	out := make([]entities.OrganisationNode, 0, len(rows))
-	for _, row := range rows {
-		out = append(out, entities.OrganisationNode{
-			ID:          row.ID,
-			ParentID:    row.ParentID,
-			Name:        row.Name,
-			RorID:       row.RorID,
-			Description: row.Description,
-			AvatarURL:   row.AvatarURL,
-		})
-	}
-	return out, nil
+	return transform.ToEntities[entities.OrganisationNode](rows), nil
 }
 
 func (r *EntRepo) InsertClosure(ctx context.Context, ancestorID, descendantID uuid.UUID, depth int) error {
@@ -195,15 +153,7 @@ func (r *EntRepo) ListClosuresByDescendant(ctx context.Context, descendantID uui
 		return nil, err
 	}
 
-	out := make([]entities.OrganisationNodeClosure, 0, len(rows))
-	for _, row := range rows {
-		out = append(out, entities.OrganisationNodeClosure{
-			AncestorID:   row.AncestorID,
-			DescendantID: row.DescendantID,
-			Depth:        row.Depth,
-		})
-	}
-	return out, nil
+	return transform.ToEntities[entities.OrganisationNodeClosure](rows), nil
 }
 
 func (r *EntRepo) ListClosuresByAncestor(ctx context.Context, ancestorID uuid.UUID) ([]entities.OrganisationNodeClosure, error) {
@@ -215,15 +165,7 @@ func (r *EntRepo) ListClosuresByAncestor(ctx context.Context, ancestorID uuid.UU
 		return nil, err
 	}
 
-	out := make([]entities.OrganisationNodeClosure, 0, len(rows))
-	for _, row := range rows {
-		out = append(out, entities.OrganisationNodeClosure{
-			AncestorID:   row.AncestorID,
-			DescendantID: row.DescendantID,
-			Depth:        row.Depth,
-		})
-	}
-	return out, nil
+	return transform.ToEntities[entities.OrganisationNodeClosure](rows), nil
 }
 
 func (r *EntRepo) DeleteClosures(ctx context.Context, ancestorIDs, descendantIDs []uuid.UUID) error {

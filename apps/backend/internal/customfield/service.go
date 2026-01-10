@@ -7,15 +7,16 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/customfielddefinition"
 	"github.com/SURF-Innovatie/MORIS/ent/organisationnodeclosure"
-	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
 
 type Service interface {
-	Create(ctx context.Context, orgID uuid.UUID, name string, fieldType customfielddefinition.Type, category customfielddefinition.Category, description, validationRegex, exampleValue *string, required bool) (*ent.CustomFieldDefinition, error)
+	Create(ctx context.Context, orgID uuid.UUID, name string, fieldType customfielddefinition.Type, category customfielddefinition.Category, description, validationRegex, exampleValue *string, required bool) (*entities.CustomFieldDefinition, error)
 	Delete(ctx context.Context, id uuid.UUID, orgID uuid.UUID) error
-	ListAvailableForNode(ctx context.Context, orgID uuid.UUID, category *customfielddefinition.Category) ([]*ent.CustomFieldDefinition, error)
-	ListAvailableForProject(ctx context.Context, projectID uuid.UUID) ([]*ent.CustomFieldDefinition, error)
+	ListAvailableForNode(ctx context.Context, orgID uuid.UUID, category *customfielddefinition.Category) ([]entities.CustomFieldDefinition, error)
+	ListAvailableForProject(ctx context.Context, projectID uuid.UUID) ([]*entities.CustomFieldDefinition, error)
 }
 
 type service struct {
@@ -26,7 +27,8 @@ func NewService(cli *ent.Client) Service {
 	return &service{cli: cli}
 }
 
-func (s *service) Create(ctx context.Context, orgID uuid.UUID, name string, fieldType customfielddefinition.Type, category customfielddefinition.Category, description, validationRegex, exampleValue *string, required bool) (*ent.CustomFieldDefinition, error) {
+// TODO: fix long params
+func (s *service) Create(ctx context.Context, orgID uuid.UUID, name string, fieldType customfielddefinition.Type, category customfielddefinition.Category, description, validationRegex, exampleValue *string, required bool) (*entities.CustomFieldDefinition, error) {
 	creator := s.cli.CustomFieldDefinition.Create().
 		SetOrganisationNodeID(orgID).
 		SetName(name).
@@ -44,7 +46,12 @@ func (s *service) Create(ctx context.Context, orgID uuid.UUID, name string, fiel
 		creator.SetExampleValue(*exampleValue)
 	}
 
-	return creator.Save(ctx)
+	row, err := creator.Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return transform.ToEntityPtr[entities.CustomFieldDefinition](row), nil
 }
 
 func (s *service) Delete(ctx context.Context, id uuid.UUID, orgID uuid.UUID) error {
@@ -65,7 +72,7 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID, orgID uuid.UUID) err
 	return s.cli.CustomFieldDefinition.DeleteOneID(id).Exec(ctx)
 }
 
-func (s *service) ListAvailableForNode(ctx context.Context, orgID uuid.UUID, category *customfielddefinition.Category) ([]*ent.CustomFieldDefinition, error) {
+func (s *service) ListAvailableForNode(ctx context.Context, orgID uuid.UUID, category *customfielddefinition.Category) ([]entities.CustomFieldDefinition, error) {
 	// Use Closure table to find ancestors
 	ancestorIDs, err := s.cli.OrganisationNodeClosure.Query().
 		Where(organisationnodeclosure.DescendantIDEQ(orgID)).
@@ -87,19 +94,15 @@ func (s *service) ListAvailableForNode(ctx context.Context, orgID uuid.UUID, cat
 		q.Where(customfielddefinition.CategoryEQ(*category))
 	}
 
-	return q.Order(ent.Asc(customfielddefinition.FieldName)).
+	rows, err := q.Order(ent.Asc(customfielddefinition.FieldName)).
 		All(ctx)
-}
-
-func (s *service) ListAvailableForProject(ctx context.Context, projectID uuid.UUID) ([]*ent.CustomFieldDefinition, error) {
-	return nil, fmt.Errorf("not implemented, use ListAvailableForNode with project's orgID")
-}
-
-// Helper to get user from context if needed in future
-func currentUser(ctx context.Context, cli *ent.Client) (*ent.User, error) {
-	authUser, ok := httputil.GetUserFromContext(ctx)
-	if !ok {
-		return nil, fmt.Errorf("no authenticated user in context")
+	if err != nil {
+		return nil, err
 	}
-	return cli.User.Get(ctx, authUser.User.ID)
+
+	return transform.ToEntities[entities.CustomFieldDefinition](rows), nil
+}
+
+func (s *service) ListAvailableForProject(ctx context.Context, projectID uuid.UUID) ([]*entities.CustomFieldDefinition, error) {
+	return nil, fmt.Errorf("not implemented, use ListAvailableForNode with project's orgID")
 }

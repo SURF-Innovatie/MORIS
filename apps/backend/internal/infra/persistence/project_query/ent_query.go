@@ -10,6 +10,7 @@ import (
 	personent "github.com/SURF-Innovatie/MORIS/ent/person"
 	productent "github.com/SURF-Innovatie/MORIS/ent/product"
 	entprojectrole "github.com/SURF-Innovatie/MORIS/ent/projectrole"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
@@ -39,17 +40,7 @@ func (r *EntRepo) PeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UU
 	}
 
 	return lo.Associate(rows, func(p *ent.Person) (uuid.UUID, entities.Person) {
-		return p.ID, entities.Person{
-			ID:          p.ID,
-			UserID:      p.UserID,
-			Name:        p.Name,
-			GivenName:   p.GivenName,
-			FamilyName:  p.FamilyName,
-			Email:       p.Email,
-			ORCiD:       &p.OrcidID,
-			AvatarUrl:   p.AvatarURL,
-			Description: p.Description,
-		}
+		return p.ID, transform.ToEntity[entities.Person](p)
 	}), nil
 }
 
@@ -68,11 +59,7 @@ func (r *EntRepo) ProjectRolesByIDs(ctx context.Context, ids []uuid.UUID) (map[u
 	}
 
 	return lo.Associate(rows, func(pr *ent.ProjectRole) (uuid.UUID, entities.ProjectRole) {
-		return pr.ID, entities.ProjectRole{
-			ID:   pr.ID,
-			Key:  pr.Key,
-			Name: pr.Name,
-		}
+		return pr.ID, transform.ToEntity[entities.ProjectRole](pr)
 	}), nil
 }
 
@@ -89,15 +76,7 @@ func (r *EntRepo) ProductsByIDs(ctx context.Context, ids []uuid.UUID) ([]entitie
 		return nil, err
 	}
 
-	return lo.Map(rows, func(p *ent.Product, _ int) entities.Product {
-		return entities.Product{
-			Id:       p.ID,
-			Name:     p.Name,
-			Language: *p.Language,
-			Type:     entities.ProductType(p.Type),
-			DOI:      *p.Doi,
-		}
-	}), nil
+	return transform.ToEntities[entities.Product](rows), nil
 }
 
 func (r *EntRepo) OrganisationNodeByID(ctx context.Context, id uuid.UUID) (entities.OrganisationNode, error) {
@@ -109,11 +88,7 @@ func (r *EntRepo) OrganisationNodeByID(ctx context.Context, id uuid.UUID) (entit
 		return entities.OrganisationNode{}, err
 	}
 
-	return entities.OrganisationNode{
-		ID:       row.ID,
-		ParentID: row.ParentID,
-		Name:     row.Name,
-	}, nil
+	return transform.ToEntity[entities.OrganisationNode](row), nil
 }
 
 func (r *EntRepo) ProjectIDsForPerson(ctx context.Context, personID uuid.UUID) ([]uuid.UUID, error) {

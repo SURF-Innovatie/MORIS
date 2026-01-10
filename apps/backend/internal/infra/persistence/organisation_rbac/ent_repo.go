@@ -10,6 +10,7 @@ import (
 	entorgrole "github.com/SURF-Innovatie/MORIS/ent/organisationrole"
 	entrolescope "github.com/SURF-Innovatie/MORIS/ent/rolescope"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
@@ -77,15 +78,7 @@ func (r *EntRepo) ListRoles(ctx context.Context) ([]entities.OrganisationRole, e
 		return nil, err
 	}
 
-	out := make([]entities.OrganisationRole, 0, len(rows))
-	for _, row := range rows {
-		out = append(out, entities.OrganisationRole{
-			ID:             row.ID,
-			Key:            row.Key,
-			HasAdminRights: row.HasAdminRights,
-		})
-	}
-	return out, nil
+	return transform.ToEntities[entities.OrganisationRole](rows), nil
 }
 
 func (r *EntRepo) CreateScope(ctx context.Context, roleKey string, rootNodeID uuid.UUID) (*entities.RoleScope, error) {
@@ -110,11 +103,7 @@ func (r *EntRepo) CreateScope(ctx context.Context, roleKey string, rootNodeID uu
 		Only(ctx)
 
 	if err == nil {
-		return &entities.RoleScope{
-			ID:         existing.ID,
-			RoleID:     existing.RoleID,
-			RootNodeID: existing.RootNodeID,
-		}, nil
+		return transform.ToEntityPtr[entities.RoleScope](existing), nil
 	}
 	if !ent.IsNotFound(err) {
 		return nil, err
@@ -129,11 +118,7 @@ func (r *EntRepo) CreateScope(ctx context.Context, roleKey string, rootNodeID uu
 		return nil, err
 	}
 
-	return &entities.RoleScope{
-		ID:         row.ID,
-		RoleID:     row.RoleID,
-		RootNodeID: row.RootNodeID,
-	}, nil
+	return transform.ToEntityPtr[entities.RoleScope](row), nil
 }
 
 func (r *EntRepo) GetScope(ctx context.Context, id uuid.UUID) (*entities.RoleScope, error) {
@@ -141,11 +126,8 @@ func (r *EntRepo) GetScope(ctx context.Context, id uuid.UUID) (*entities.RoleSco
 	if err != nil {
 		return nil, err
 	}
-	return &entities.RoleScope{
-		ID:         row.ID,
-		RoleID:     row.RoleID,
-		RootNodeID: row.RootNodeID,
-	}, nil
+
+	return transform.ToEntityPtr[entities.RoleScope](row), nil
 }
 
 func (r *EntRepo) AddMembership(ctx context.Context, personID uuid.UUID, roleScopeID uuid.UUID) (*entities.Membership, error) {
@@ -179,11 +161,7 @@ func (r *EntRepo) AddMembership(ctx context.Context, personID uuid.UUID, roleSco
 		return nil, err
 	}
 
-	return &entities.Membership{
-		ID:          row.ID,
-		PersonID:    row.PersonID,
-		RoleScopeID: row.RoleScopeID,
-	}, nil
+	return transform.ToEntityPtr[entities.Membership](row), nil
 }
 
 func (r *EntRepo) RemoveMembership(ctx context.Context, membershipID uuid.UUID) error {
@@ -264,16 +242,7 @@ func (r *EntRepo) ListEffectiveMemberships(ctx context.Context, nodeID uuid.UUID
 			RoleKey:               sc.Edges.Role.Key,
 			HasAdminRights:        sc.Edges.Role.HasAdminRights,
 			CustomFields:          getCustomFieldsForNode(p.OrgCustomFields, nodeID),
-			Person: entities.Person{
-				ID:          p.ID,
-				Name:        p.Name,
-				ORCiD:       &p.OrcidID,
-				GivenName:   p.GivenName,
-				FamilyName:  p.FamilyName,
-				Email:       p.Email,
-				AvatarUrl:   p.AvatarURL,
-				Description: p.Description,
-			},
+			Person:                transform.ToEntity[entities.Person](p),
 		})
 	}
 
@@ -305,11 +274,7 @@ func (r *EntRepo) ListMyMemberships(ctx context.Context, personID uuid.UUID) ([]
 		if err != nil {
 			return nil, err
 		}
-		scopeRoot := &entities.OrganisationNode{
-			ID:       n.ID,
-			ParentID: n.ParentID,
-			Name:     n.Name,
-		}
+		scopeRoot := transform.ToEntityPtr[entities.OrganisationNode](n)
 
 		out = append(out, organisation_rbac.EffectiveMembership{
 			MembershipID:          m.ID,
@@ -372,11 +337,7 @@ func (r *EntRepo) GetApprovalNode(ctx context.Context, nodeID uuid.UUID) (*entit
 		if err != nil {
 			return nil, err
 		}
-		return &entities.OrganisationNode{
-			ID:       n.ID,
-			ParentID: n.ParentID,
-			Name:     n.Name,
-		}, nil
+		return transform.ToEntityPtr[entities.OrganisationNode](n), nil
 	}
 
 	return nil, fmt.Errorf("no approval node found: ensure an admin membership exists in some ancestor scope")

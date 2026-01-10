@@ -9,6 +9,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	entprojectrole "github.com/SURF-Innovatie/MORIS/ent/projectrole"
 	"github.com/SURF-Innovatie/MORIS/internal/app/projectrole"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
@@ -30,12 +31,8 @@ func (e *entRepo) Create(ctx context.Context, key, name string, orgNodeID uuid.U
 	if err != nil {
 		return nil, err
 	}
-	return &entities.ProjectRole{
-		ID:                 r.ID,
-		Key:                r.Key,
-		Name:               r.Name,
-		OrganisationNodeID: r.OrganisationNodeID,
-	}, nil
+
+	return transform.ToEntityPtr[entities.ProjectRole](r), nil
 }
 
 func (e *entRepo) GetByKeyAndOrg(ctx context.Context, key string, orgNodeID uuid.UUID) (*entities.ProjectRole, error) {
@@ -49,12 +46,8 @@ func (e *entRepo) GetByKeyAndOrg(ctx context.Context, key string, orgNodeID uuid
 	if err != nil {
 		return nil, err
 	}
-	return &entities.ProjectRole{
-		ID:                 r.ID,
-		Key:                r.Key,
-		Name:               r.Name,
-		OrganisationNodeID: r.OrganisationNodeID,
-	}, nil
+
+	return transform.ToEntityPtr[entities.ProjectRole](r), nil
 }
 
 func (e *entRepo) Delete(ctx context.Context, id uuid.UUID, orgNodeID uuid.UUID) error {
@@ -86,16 +79,8 @@ func (e *entRepo) ListByOrgIDs(ctx context.Context, orgIDs []uuid.UUID) ([]entit
 	if err != nil {
 		return nil, err
 	}
-	out := make([]entities.ProjectRole, 0, len(rows))
-	for _, r := range rows {
-		out = append(out, entities.ProjectRole{
-			ID:                 r.ID,
-			Key:                r.Key,
-			Name:               r.Name,
-			OrganisationNodeID: r.OrganisationNodeID,
-		})
-	}
-	return out, nil
+
+	return transform.ToEntities[entities.ProjectRole](rows), nil
 }
 
 func (e *entRepo) Exists(ctx context.Context, key string, orgNodeID uuid.UUID) (bool, error) {
@@ -140,12 +125,7 @@ func (e *entRepo) CreateOrRestore(ctx context.Context, key, name string, orgNode
 			if err != nil {
 				return nil, err
 			}
-			return &entities.ProjectRole{
-				ID:                 updated.ID,
-				Key:                updated.Key,
-				Name:               updated.Name,
-				OrganisationNodeID: updated.OrganisationNodeID,
-			}, nil
+			return transform.ToEntityPtr[entities.ProjectRole](updated), nil
 		}
 		return nil, fmt.Errorf("role with key '%s' already exists", key)
 	}
@@ -158,12 +138,7 @@ func (e *entRepo) CreateOrRestore(ctx context.Context, key, name string, orgNode
 	if err != nil {
 		return nil, err
 	}
-	return &entities.ProjectRole{
-		ID:                 r.ID,
-		Key:                r.Key,
-		Name:               r.Name,
-		OrganisationNodeID: r.OrganisationNodeID,
-	}, nil
+	return transform.ToEntityPtr[entities.ProjectRole](r), nil
 }
 
 func (e *entRepo) List(ctx context.Context) ([]entities.ProjectRole, error) {
@@ -174,14 +149,6 @@ func (e *entRepo) List(ctx context.Context) ([]entities.ProjectRole, error) {
 	if err != nil {
 		return nil, err
 	}
-	out := make([]entities.ProjectRole, 0, len(rows))
-	for _, r := range rows {
-		out = append(out, entities.ProjectRole{
-			ID:                 r.ID,
-			Key:                r.Key,
-			Name:               r.Name,
-			OrganisationNodeID: r.OrganisationNodeID,
-		})
-	}
-	return out, nil
+
+	return transform.ToEntities[entities.ProjectRole](rows), nil
 }

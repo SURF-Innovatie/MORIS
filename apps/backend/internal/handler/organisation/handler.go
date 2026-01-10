@@ -456,16 +456,7 @@ func (h *Handler) ListProjectRoles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resps := make([]dto.ProjectRoleResponse, 0, len(roles))
-	for _, role := range roles {
-		resps = append(resps, dto.ProjectRoleResponse{
-			ID:   role.ID,
-			Key:  role.Key,
-			Name: role.Name,
-		})
-	}
-
-	_ = httputil.WriteJSON(w, http.StatusOK, resps)
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOs[dto.ProjectRoleResponse](roles))
 }
 
 // CreateCustomField godoc
@@ -521,17 +512,7 @@ func (h *Handler) CreateCustomField(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, dto.CustomFieldDefinitionResponse{
-		ID:                 fd.ID,
-		OrganisationNodeID: fd.OrganisationNodeID,
-		Name:               fd.Name,
-		Type:               string(fd.Type),
-		Category:           string(fd.Category),
-		Description:        fd.Description,
-		Required:           fd.Required,
-		ValidationRegex:    fd.ValidationRegex,
-		ExampleValue:       fd.ExampleValue,
-	})
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.CustomFieldDefinitionResponse](*fd))
 }
 
 // DeleteCustomField godoc
@@ -618,22 +599,7 @@ func (h *Handler) ListCustomFields(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resps := make([]dto.CustomFieldDefinitionResponse, 0, len(defs))
-	for _, d := range defs {
-		resps = append(resps, dto.CustomFieldDefinitionResponse{
-			ID:                 d.ID,
-			OrganisationNodeID: d.OrganisationNodeID,
-			Name:               d.Name,
-			Type:               string(d.Type),
-			Category:           string(d.Category),
-			Description:        d.Description,
-			Required:           d.Required,
-			ValidationRegex:    d.ValidationRegex,
-			ExampleValue:       d.ExampleValue,
-		})
-	}
-
-	_ = httputil.WriteJSON(w, http.StatusOK, resps)
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOs[dto.CustomFieldDefinitionResponse](defs))
 }
 
 // UpdateMemberCustomFields godoc

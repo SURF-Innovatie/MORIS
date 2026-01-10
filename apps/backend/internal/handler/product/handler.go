@@ -103,6 +103,7 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: make getall return non pointer slice
 	dtos := make([]dto.ProductResponse, len(products))
 	for i, p := range products {
 		dtos[i] = transform.ToDTOItem[dto.ProductResponse](*p)

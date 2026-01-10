@@ -3,13 +3,11 @@ package project
 import (
 	"net/http"
 
-	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/customfielddefinition"
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/customfield"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/samber/lo"
@@ -158,15 +156,7 @@ func (h *Handler) ListAvailableRoles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resps := lo.Map(roles, func(role entities.ProjectRole, _ int) dto.ProjectRoleResponse {
-		return dto.ProjectRoleResponse{
-			ID:   role.ID,
-			Key:  role.Key,
-			Name: role.Name,
-		}
-	})
-
-	_ = httputil.WriteJSON(w, http.StatusOK, resps)
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOs[dto.ProjectRoleResponse](roles))
 }
 
 // GetAllowedEvents godoc
@@ -227,18 +217,5 @@ func (h *Handler) ListAvailableCustomFields(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	resps := lo.Map(defs, func(d *ent.CustomFieldDefinition, _ int) dto.CustomFieldDefinitionResponse {
-		return dto.CustomFieldDefinitionResponse{
-			ID:                 d.ID,
-			OrganisationNodeID: d.OrganisationNodeID,
-			Name:               d.Name,
-			Type:               string(d.Type),
-			Description:        d.Description,
-			Required:           d.Required,
-			ValidationRegex:    d.ValidationRegex,
-			ExampleValue:       d.ExampleValue,
-		}
-	})
-
-	_ = httputil.WriteJSON(w, http.StatusOK, resps)
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOs[dto.CustomFieldDefinitionResponse](defs))
 }
