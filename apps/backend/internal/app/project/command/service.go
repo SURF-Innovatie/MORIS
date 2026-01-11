@@ -3,9 +3,11 @@ package command
 import (
 	"context"
 	"fmt"
+	"log"
 
 	appauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/app/commandbus"
+	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/projectrole"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
@@ -30,6 +32,7 @@ type service struct {
 	currentUser appauth.CurrentUserProvider
 	entClient   EntClientProvider
 	roleSvc     projectrole.Service
+	evaluator   eventpolicy.Evaluator
 }
 
 func NewService(
@@ -40,6 +43,7 @@ func NewService(
 	currentUser appauth.CurrentUserProvider,
 	entClient EntClientProvider,
 	roleSvc projectrole.Service,
+	evaluator eventpolicy.Evaluator,
 ) Service {
 	s := &service{
 		es:          es,
@@ -49,6 +53,7 @@ func NewService(
 		currentUser: currentUser,
 		entClient:   entClient,
 		roleSvc:     roleSvc,
+		evaluator:   evaluator,
 		exec: commandbus.NewExecutor[entities.Project](
 			es,
 			evtSvc,
@@ -139,10 +144,41 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*e
 			return nil, fmt.Errorf("not allowed to execute %s", req.Type)
 		}
 
-		_ = meta.NeedsApproval(ctx, e, cli)
+		// Check if any policy requires approval
+		needsApproval, err := s.evaluator.CheckApprovalRequired(ctx, e, cur)
+		if err != nil {
+			log.Printf("error checking approval policy: %v", err)
+			// Decide if error should block or assume needed/not needed.
+			// Safe default: log and proceed (unless policy evaluation is strict requirement).
+		}
+
+		if needsApproval {
+			// Update the event status to Pending
+			base := events.Base{
+				ID:        e.GetID(),
+				ProjectID: e.AggregateID(),
+				At:        e.OccurredAt(),
+				CreatedBy: e.CreatedByID(),
+				Status:    events.StatusPending,
+			}
+			e.SetBase(base)
+		} else {
+			// Check legacy approval mechanism if no policy triggered it
+			if meta.NeedsApproval(ctx, e, cli) {
+				base := events.Base{
+					ID:        e.GetID(),
+					ProjectID: e.AggregateID(),
+					At:        e.OccurredAt(),
+					CreatedBy: e.CreatedByID(),
+					Status:    events.StatusPending,
+				}
+				e.SetBase(base)
+			}
+		}
 
 		return []events.Event{e}, nil
 	})
+
 	if err != nil {
 		return nil, err
 	}

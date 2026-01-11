@@ -94,3 +94,11 @@ func (r *EntRepo) MarkAsRead(ctx context.Context, id uuid.UUID) error {
 	_, err := r.cli.Notification.UpdateOneID(id).SetRead(true).Save(ctx)
 	return err
 }
+
+func (r *EntRepo) MarkAsReadByEventID(ctx context.Context, eventID uuid.UUID) error {
+	_, err := r.cli.Notification.Update().
+		Where(entnotification.EventIDEQ(eventID)).
+		SetRead(true).
+		Save(ctx)
+	return err
+}

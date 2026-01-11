@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   FormControl,
   FormField,
@@ -31,12 +32,25 @@ interface ProjectFieldsProps {
     startDate?: boolean;
     endDate?: boolean;
   };
+  pendingFields?: {
+    title?: boolean;
+    description?: boolean;
+    startDate?: boolean;
+    endDate?: boolean;
+  };
 }
 
-export function ProjectFields({ form, disabledFields }: ProjectFieldsProps) {
+export function ProjectFields({
+  form,
+  disabledFields,
+  pendingFields,
+}: ProjectFieldsProps) {
   const [isStartDateOpen, setIsStartDateOpen] = useState(false);
   const [isEndDateOpen, setIsEndDateOpen] = useState(false);
   const startDate = form.watch("startDate");
+
+  const isPending = (key: keyof NonNullable<typeof pendingFields>) =>
+    pendingFields?.[key];
 
   return (
     <div className="space-y-6">
@@ -45,12 +59,19 @@ export function ProjectFields({ form, disabledFields }: ProjectFieldsProps) {
         name="title"
         render={({ field }) => (
           <FormItem className="max-w-2xl">
-            <FormLabel>Title</FormLabel>
+            <FormLabel className="flex items-center gap-2">
+              Title
+              {isPending("title") && (
+                <Badge variant="secondary" className="h-5 text-[10px]">
+                  Pending Approval
+                </Badge>
+              )}
+            </FormLabel>
             <FormControl>
               <Input
                 placeholder="Project title"
                 {...field}
-                disabled={disabledFields?.title}
+                disabled={disabledFields?.title || isPending("title")}
               />
             </FormControl>
             <FormMessage />
@@ -63,13 +84,22 @@ export function ProjectFields({ form, disabledFields }: ProjectFieldsProps) {
         name="description"
         render={({ field }) => (
           <FormItem className="max-w-2xl">
-            <FormLabel>Description</FormLabel>
+            <FormLabel className="flex items-center gap-2">
+              Description
+              {isPending("description") && (
+                <Badge variant="secondary" className="h-5 text-[10px]">
+                  Pending Approval
+                </Badge>
+              )}
+            </FormLabel>
             <FormControl>
               <Textarea
                 placeholder="Describe the project..."
                 className="min-h-[120px] resize-none"
                 {...field}
-                disabled={disabledFields?.description}
+                disabled={
+                  disabledFields?.description || isPending("description")
+                }
               />
             </FormControl>
             <FormDescription>
@@ -86,7 +116,14 @@ export function ProjectFields({ form, disabledFields }: ProjectFieldsProps) {
           name="startDate"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Start Date</FormLabel>
+              <FormLabel className="flex items-center gap-2">
+                Start Date
+                {isPending("startDate") && (
+                  <Badge variant="secondary" className="h-5 text-[10px]">
+                    Pending
+                  </Badge>
+                )}
+              </FormLabel>
               <Popover open={isStartDateOpen} onOpenChange={setIsStartDateOpen}>
                 <PopoverTrigger asChild>
                   <FormControl>
@@ -96,7 +133,9 @@ export function ProjectFields({ form, disabledFields }: ProjectFieldsProps) {
                         "w-full pl-3 text-left font-normal",
                         !field.value && "text-muted-foreground"
                       )}
-                      disabled={disabledFields?.startDate}
+                      disabled={
+                        disabledFields?.startDate || isPending("startDate")
+                      }
                     >
                       {field.value ? (
                         format(field.value, "PPP")
@@ -133,7 +172,14 @@ export function ProjectFields({ form, disabledFields }: ProjectFieldsProps) {
           name="endDate"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>End Date</FormLabel>
+              <FormLabel className="flex items-center gap-2">
+                End Date
+                {isPending("endDate") && (
+                  <Badge variant="secondary" className="h-5 text-[10px]">
+                    Pending
+                  </Badge>
+                )}
+              </FormLabel>
               <Popover open={isEndDateOpen} onOpenChange={setIsEndDateOpen}>
                 <PopoverTrigger asChild>
                   <FormControl>
@@ -143,7 +189,7 @@ export function ProjectFields({ form, disabledFields }: ProjectFieldsProps) {
                         "w-full pl-3 text-left font-normal",
                         !field.value && "text-muted-foreground"
                       )}
-                      disabled={disabledFields?.endDate}
+                      disabled={disabledFields?.endDate || isPending("endDate")}
                     >
                       {field.value ? (
                         format(field.value, "PPP")

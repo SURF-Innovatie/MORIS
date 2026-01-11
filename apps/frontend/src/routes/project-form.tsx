@@ -17,7 +17,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { createProjectStartedEvent, createCustomFieldValueSetEvent } from "@/api/events";
+import {
+  createProjectStartedEvent,
+  createCustomFieldValueSetEvent,
+} from "@/api/events";
 
 import { projectFormSchema } from "@/lib/schemas/project";
 import { ProjectFields } from "@/components/project-form/ProjectFields";
@@ -54,17 +57,18 @@ export default function CreateProjectRoute() {
 
       // Handle Custom Fields separately
       if (values.customFields) {
-          const promises = Object.entries(values.customFields).map(([defId, value]) => {
-              let valStr = String(value);
-              if (value instanceof Date) valStr = value.toISOString();
-              
-              return createCustomFieldValueSetEvent(newProjectId, {
-                  project_id: newProjectId,
-                  definition_id: defId,
-                  value: valStr, // Sending string for now.
-              });
-          });
-          await Promise.all(promises);
+        const promises = Object.entries(values.customFields).map(
+          ([defId, value]) => {
+            let valStr = String(value);
+            if (value instanceof Date) valStr = value.toISOString();
+
+            return createCustomFieldValueSetEvent(newProjectId, {
+              definition_id: defId,
+              value: valStr, // Sending string for now.
+            });
+          }
+        );
+        await Promise.all(promises);
       }
 
       toast({
@@ -111,7 +115,10 @@ export default function CreateProjectRoute() {
             )}
           />
 
-          <CustomFieldsRenderer form={form} organisationId={form.watch("organisationID")} />
+          <CustomFieldsRenderer
+            form={form}
+            organisationId={form.watch("organisationID")}
+          />
 
           <div className="flex justify-end gap-4">
             <Button

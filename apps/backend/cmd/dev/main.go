@@ -19,6 +19,7 @@ import (
 	crossref2 "github.com/SURF-Innovatie/MORIS/external/crossref"
 	"github.com/SURF-Innovatie/MORIS/external/orcid"
 	"github.com/SURF-Innovatie/MORIS/external/zenodo"
+	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
@@ -68,6 +69,10 @@ import (
 	raidsink "github.com/SURF-Innovatie/MORIS/internal/adapter/sinks/raid"
 	csvsource "github.com/SURF-Innovatie/MORIS/internal/adapter/sources/csv"
 	adapterhandler "github.com/SURF-Innovatie/MORIS/internal/handler/adapter"
+
+	eventpolicysvc "github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
+	eventpolicyhandler "github.com/SURF-Innovatie/MORIS/internal/handler/eventpolicy"
+	eventpolicyrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventpolicy"
 )
 
 // @title MORIS
@@ -199,8 +204,24 @@ func main() {
 	projSvc := queries.NewService(esStore, ldr, repo, roleRepo, curUser)
 	projHandler := projecthandler.NewHandler(projSvc, customFieldSvc)
 
-	projCmdSvc := command.NewService(esStore, eventSvc, cacheSvc, refreshSvc, curUser, entProv, roleSvc)
+	// Event Policies
+	eventPolicyRepo := eventpolicyrepo.NewEntRepository(client)
+	orgClosureProvider := eventpolicyrepo.NewOrgClosureAdapter(orgRepo)
+	eventPolicySvc := eventpolicysvc.NewService(eventPolicyRepo, orgClosureProvider)
+	eventPolicyHandler := eventpolicyhandler.NewHandler(eventPolicySvc)
+
+	// Policy Evaluator Components
+	recipientResolver := eventpolicyrepo.NewRecipientAdapter(client)
+	notificationAdapter := eventpolicyrepo.NewNotificationAdapter(client)
+	policyEvaluator := eventpolicy.NewEvaluator(eventPolicyRepo, orgClosureProvider, recipientResolver, notificationAdapter)
+
+	projCmdSvc := command.NewService(esStore, eventSvc, cacheSvc, refreshSvc, curUser, entProv, roleSvc, policyEvaluator)
 	projCmdHandler := commandHandler.NewHandler(projCmdSvc)
+
+	// Register handler for EventPolicyAdded/Removed events
+	eventSvc.RegisterNotificationHandler(&event.EventPolicyHandler{PolicyRepo: eventPolicyRepo, Cli: client})
+	// Register handler to execute policies for all events
+	eventSvc.RegisterNotificationHandler(&event.PolicyExecutionHandler{Evaluator: policyEvaluator, ProjectSvc: projSvc})
 
 	userHandler := userhandler.NewHandler(userSvc, projSvc)
 
@@ -233,6 +254,8 @@ func main() {
 				projecthandler.MountProjectRoutes(r, projHandler)
 				r.Get("/{id}/roles", projHandler.ListAvailableRoles)
 				commandHandler.MountProjectCommandRouter(r, projCmdHandler)
+				// Event policy routes for projects
+				eventPolicyHandler.RegisterProjectRoutes(r)
 			})
 			organisationhandler.MountOrganisationRoutes(r, organisationHandler, rbacHandler)
 			eventHandler.MountEventRoutes(r, evtHandler)
@@ -244,6 +267,13 @@ func main() {
 			userhandler.MountUserRoutes(r, userHandler)
 			crossrefhandler.MountCrossrefRoutes(r, crossrefHandler)
 			adapterhandler.MountRoutes(r, adapterHandler)
+
+			// Event Policies routes (standalone and org-scoped)
+			eventPolicyHandler.RegisterRoutes(r)
+			r.Route("/organisations/{id}/policies", func(r chi.Router) {
+				r.Get("/", eventPolicyHandler.ListForOrgNode)
+				r.Post("/", eventPolicyHandler.CreateForOrgNode)
+			})
 		})
 	})
 

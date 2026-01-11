@@ -68,6 +68,51 @@ var (
 		Columns:    EventsColumns,
 		PrimaryKey: []*schema.Column{EventsColumns[0]},
 	}
+	// EventPoliciesColumns holds the columns for the "event_policies" table.
+	EventPoliciesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "name", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "event_types", Type: field.TypeJSON},
+		{Name: "conditions", Type: field.TypeJSON, Nullable: true},
+		{Name: "action_type", Type: field.TypeEnum, Enums: []string{"notify", "request_approval"}},
+		{Name: "message_template", Type: field.TypeString, Nullable: true},
+		{Name: "recipient_user_ids", Type: field.TypeJSON, Nullable: true},
+		{Name: "recipient_project_role_ids", Type: field.TypeJSON, Nullable: true},
+		{Name: "recipient_org_role_ids", Type: field.TypeJSON, Nullable: true},
+		{Name: "recipient_dynamic", Type: field.TypeJSON, Nullable: true},
+		{Name: "project_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "enabled", Type: field.TypeBool, Default: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "org_node_id", Type: field.TypeUUID, Nullable: true},
+	}
+	// EventPoliciesTable holds the schema information for the "event_policies" table.
+	EventPoliciesTable = &schema.Table{
+		Name:       "event_policies",
+		Columns:    EventPoliciesColumns,
+		PrimaryKey: []*schema.Column{EventPoliciesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "event_policies_organisation_nodes_org_node",
+				Columns:    []*schema.Column{EventPoliciesColumns[15]},
+				RefColumns: []*schema.Column{OrganisationNodesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "eventpolicy_org_node_id",
+				Unique:  false,
+				Columns: []*schema.Column{EventPoliciesColumns[15]},
+			},
+			{
+				Name:    "eventpolicy_project_id",
+				Unique:  false,
+				Columns: []*schema.Column{EventPoliciesColumns[11]},
+			},
+		},
+	}
 	// MembershipsColumns holds the columns for the "memberships" table.
 	MembershipsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -368,6 +413,7 @@ var (
 		CustomFieldDefinitionsTable,
 		ErrorLogsTable,
 		EventsTable,
+		EventPoliciesTable,
 		MembershipsTable,
 		NotificationsTable,
 		OrganisationNodesTable,
@@ -384,6 +430,7 @@ var (
 
 func init() {
 	CustomFieldDefinitionsTable.ForeignKeys[0].RefTable = OrganisationNodesTable
+	EventPoliciesTable.ForeignKeys[0].RefTable = OrganisationNodesTable
 	MembershipsTable.ForeignKeys[0].RefTable = PersonsTable
 	MembershipsTable.ForeignKeys[1].RefTable = RoleScopesTable
 	NotificationsTable.ForeignKeys[0].RefTable = EventsTable

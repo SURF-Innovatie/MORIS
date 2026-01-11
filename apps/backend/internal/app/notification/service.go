@@ -14,6 +14,7 @@ type Service interface {
 	List(ctx context.Context) ([]entities.Notification, error)
 	ListForUser(ctx context.Context, userID uuid.UUID) ([]entities.Notification, error)
 	MarkAsRead(ctx context.Context, id uuid.UUID) error
+	MarkAsReadByEventID(ctx context.Context, eventID uuid.UUID) error
 }
 
 type service struct {
@@ -46,4 +47,8 @@ func (s *service) ListForUser(ctx context.Context, userID uuid.UUID) ([]entities
 
 func (s *service) MarkAsRead(ctx context.Context, id uuid.UUID) error {
 	return s.repo.MarkAsRead(ctx, id)
+}
+
+func (s *service) MarkAsReadByEventID(ctx context.Context, eventID uuid.UUID) error {
+	return s.repo.MarkAsReadByEventID(ctx, eventID)
 }

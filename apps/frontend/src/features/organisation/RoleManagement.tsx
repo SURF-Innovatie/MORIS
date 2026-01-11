@@ -44,6 +44,7 @@ import { CustomFieldDefinitionsList } from "./components/CustomFieldDefinitionsL
 import { RoleList } from "./components/RoleList"; // New component
 
 import { OrganisationEditTab } from "./components/OrganisationEditTab";
+import { EventPoliciesTab } from "./components/EventPoliciesTab";
 
 export const RoleManagement = () => {
   const { nodeId } = useParams<{ nodeId: string }>();
@@ -78,6 +79,7 @@ export const RoleManagement = () => {
           <TabsTrigger value="roles">Roles</TabsTrigger>
           <TabsTrigger value="project-roles">Project Roles</TabsTrigger>
           <TabsTrigger value="custom-fields">Custom Fields</TabsTrigger>
+          <TabsTrigger value="event-policies">Event Policies</TabsTrigger>
           <TabsTrigger value="edit">Edit</TabsTrigger>
         </TabsList>
 
@@ -169,6 +171,14 @@ export const RoleManagement = () => {
             <div>Invalid Node ID</div>
           )}
         </TabsContent>
+
+        <TabsContent value="event-policies">
+          {nodeId ? (
+            <EventPoliciesTab nodeId={nodeId} />
+          ) : (
+            <div>Invalid Node ID</div>
+          )}
+        </TabsContent>
       </Tabs>
     </div>
   );
@@ -201,11 +211,7 @@ function EditMemberCustomFieldsButton({
     });
   }
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
+  const { register, handleSubmit } = useForm({
     defaultValues,
     values: defaultValues, // Reactive update when fields load
   });

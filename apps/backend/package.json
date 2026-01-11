@@ -15,7 +15,8 @@
     "db:migrate:diff": "go run -mod=mod ./ent/migrate/main.go",
     "db:migrate:apply": "atlas migrate apply --env local",
     "db:migrate:status": "atlas migrate status --env local",
-    "db:migrate:dev": "go run ./cmd/seed/main.go -skip-seed && pnpm run db:migrate:diff $1 && pnpm run db:migrate:apply",
+    "db:migrate:dev": "go run ./cmd/seed/main.go -skip-seed && go run -mod=mod ./ent/migrate/main.go $1 && pnpm run db:migrate:apply",
+    "db:migrate:squash": "go run -mod=mod ./ent/migrate/squash/main.go",
     "lint": "golangci-lint run ./...",
     "test": "go test ./..."
   }

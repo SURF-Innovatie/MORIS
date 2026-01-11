@@ -59,6 +59,7 @@ func (s *EntStore) Append(
 	now := time.Now().UTC()
 
 	builders := make([]*ent.EventCreate, len(list))
+	eventIDs := make([]uuid.UUID, len(list))
 	for i, e := range list {
 		version++
 
@@ -66,6 +67,7 @@ func (s *EntStore) Append(
 		if id == uuid.Nil {
 			id = uuid.New()
 		}
+		eventIDs[i] = id
 
 		var createdBy uuid.UUID
 		if cb, ok := any(e).(interface{ CreatedByID() uuid.UUID }); ok {
@@ -98,7 +100,23 @@ func (s *EntStore) Append(
 		return err
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	// Update event IDs in the original event objects so handlers can use them
+	for i, e := range list {
+		base := events.Base{
+			ID:        eventIDs[i],
+			ProjectID: projectID,
+			At:        now,
+			CreatedBy: e.CreatedByID(),
+			Status:    e.GetStatus(),
+		}
+		e.SetBase(base)
+	}
+
+	return nil
 }
 
 func (s *EntStore) UpdateEventStatus(ctx context.Context, eventID uuid.UUID, status string) error {

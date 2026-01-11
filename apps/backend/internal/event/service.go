@@ -65,6 +65,11 @@ func (s *service) ApproveEvent(ctx context.Context, eventID uuid.UUID) error {
 		return err
 	}
 
+	// 2. Mark related notifications as read
+	if err := s.notifier.MarkAsReadByEventID(ctx, eventID); err != nil {
+		logrus.Warnf("Failed to mark notifications as read for event %s: %v", eventID, err)
+	}
+
 	event, err := s.es.LoadEvent(ctx, eventID)
 	if err != nil {
 		return err
@@ -83,6 +88,11 @@ func (s *service) ApproveEvent(ctx context.Context, eventID uuid.UUID) error {
 func (s *service) RejectEvent(ctx context.Context, eventID uuid.UUID) error {
 	if err := s.es.UpdateEventStatus(ctx, eventID, "rejected"); err != nil {
 		return err
+	}
+
+	// Mark related notifications as read
+	if err := s.notifier.MarkAsReadByEventID(ctx, eventID); err != nil {
+		logrus.Warnf("Failed to mark notifications as read for event %s: %v", eventID, err)
 	}
 
 	event, err := s.es.LoadEvent(ctx, eventID)

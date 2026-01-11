@@ -18,6 +18,9 @@ type ProjectEventNotificationHandler struct {
 }
 
 func (h *ProjectEventNotificationHandler) Handle(ctx context.Context, e events.Event) error {
+	if e.GetStatus() == events.StatusPending {
+		return nil
+	}
 	// First check metadata policy
 	meta := events.GetMeta(e.Type())
 	if !meta.ShouldNotify(ctx, e, h.Cli) {

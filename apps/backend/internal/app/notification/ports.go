@@ -14,4 +14,5 @@ type NotificationRepository interface {
 	List(ctx context.Context) ([]entities.Notification, error)
 	ListForUser(ctx context.Context, userID uuid.UUID) ([]entities.Notification, error)
 	MarkAsRead(ctx context.Context, id uuid.UUID) error
+	MarkAsReadByEventID(ctx context.Context, eventID uuid.UUID) error
 }

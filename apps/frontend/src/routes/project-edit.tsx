@@ -8,7 +8,7 @@ import { Loader2, ArrowLeft, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { useGetProjectsId } from "@api/moris";
+import { useGetProjectsId, useGetProjectsIdPendingEvents } from "@api/moris";
 import {
   createTitleChangedEvent,
   createDescriptionChangedEvent,
@@ -22,6 +22,7 @@ import { GeneralTab } from "@/components/project-edit/GeneralTab";
 import { PeopleTab } from "@/components/project-edit/PeopleTab";
 import { ChangelogTab } from "@/components/project-edit/ChangelogTab";
 import { ProductsTab } from "@/components/project-edit/ProductsTab";
+import { ProjectEventPoliciesTab } from "@/components/project-edit/ProjectEventPoliciesTab";
 import { projectFormSchema } from "@/lib/schemas/project";
 import { EMPTY_UUID } from "@/lib/constants";
 import { ProjectAccessProvider } from "@/context/ProjectAccessContext";
@@ -60,6 +61,13 @@ function ProjectEditForm() {
       enabled: !!id,
     },
   });
+
+  const { data: pendingEventsData, refetch: refetchPending } =
+    useGetProjectsIdPendingEvents(id!, {
+      query: {
+        enabled: !!id,
+      },
+    });
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -144,20 +152,19 @@ function ProjectEditForm() {
         Object.entries(values.customFields).map(([defId, value]) => {
           let valStr = String(value);
           if (value instanceof Date) valStr = value.toISOString();
-          
+
           let currentValStr = String(currentFields[defId]);
           // Handle Date comparison if needed, or if current is undefined
           if (currentFields[defId] === undefined) currentValStr = "";
 
           if (valStr !== currentValStr) {
-             // For Boolean: form true -> "true", current true (bool) -> "true"
-             promises.push(
-               createCustomFieldValueSetEvent(id!, {
-                 project_id: id!,
-                 definition_id: defId,
-                 value: valStr,
-               })
-             );
+            // For Boolean: form true -> "true", current true (bool) -> "true"
+            promises.push(
+              createCustomFieldValueSetEvent(id!, {
+                definition_id: defId,
+                value: valStr,
+              })
+            );
           }
         });
       }
@@ -173,6 +180,7 @@ function ProjectEditForm() {
 
       await Promise.all(promises);
       await refetchProject();
+      await refetchPending();
 
       toast({
         title: "Project updated",
@@ -238,10 +246,11 @@ function ProjectEditForm() {
           className="space-y-8"
         >
           <div className="flex items-center justify-between">
-            <TabsList className="grid w-full max-w-md grid-cols-4">
+            <TabsList className="grid w-full max-w-xl grid-cols-5">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="people">People</TabsTrigger>
               <TabsTrigger value="products">Products</TabsTrigger>
+              <TabsTrigger value="policies">Policies</TabsTrigger>
               <TabsTrigger value="changelog">Changelog</TabsTrigger>
             </TabsList>
           </div>
@@ -251,10 +260,8 @@ function ProjectEditForm() {
               form={form}
               onSubmit={onSubmit}
               isUpdating={isSaving}
-              // project pass-through might need check if GeneralTab uses project props
-              // But looking at previous code, it just passed `project`.
-              // GeneralTab probably needs updating if it uses snake_case props?
               project={project}
+              pendingEvents={pendingEventsData?.events}
             />
           </TabsContent>
 
@@ -276,6 +283,13 @@ function ProjectEditForm() {
 
           <TabsContent value="changelog">
             <ChangelogTab projectId={id!} />
+          </TabsContent>
+
+          <TabsContent value="policies">
+            <ProjectEventPoliciesTab
+              projectId={id!}
+              orgNodeId={project?.owning_org_node?.id || ""}
+            />
           </TabsContent>
         </Tabs>
       </main>
