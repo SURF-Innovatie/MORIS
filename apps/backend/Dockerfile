@@ -28,6 +28,7 @@ RUN swag init -g cmd/dev/main.go --output api/swag-docs --parseDependency --pars
 # 2. Generate ent code
 RUN go generate ./ent
 RUN CGO_ENABLED=0 GOOS=linux go build -o /server ./cmd/dev/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o /seed ./cmd/seed/main.go
 
 # Final stage
 FROM alpine:latest
@@ -42,6 +43,7 @@ RUN curl -sSf https://atlasgo.sh | sh
 
 # Copy binary from builder
 COPY --from=builder /server /server
+COPY --from=builder /seed /seed
 
 # Expose port (default for Go servers is often 8080 or depends on env, checking docker-compose usually helps but 8080 is safe default)
 EXPOSE 8080

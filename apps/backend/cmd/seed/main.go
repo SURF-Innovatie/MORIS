@@ -58,6 +58,7 @@ func main() {
 	dbPort := os.Getenv("DB_PORT")
 
 	skipSeed := flag.Bool("skip-seed", false, "Skip seeding data, only reset schema and apply migrations")
+	noReset := flag.Bool("no-reset", false, "Skip database schema reset (do not drop public schema)")
 	flag.Parse()
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
@@ -76,17 +77,25 @@ func main() {
 	ctx := context.Background()
 
 	// Hard reset: drop and recreate the public schema
-	rawDB, err := sql.Open("postgres", dsn)
-	if err != nil {
-		logrus.Fatalf("failed opening raw db connection: %v", err)
+	if !*noReset {
+		if os.Getenv("ALLOW_DESTRUCTIVE_SEED") != "true" && os.Getenv("NODE_ENV") == "production" {
+			logrus.Fatal("Destructive seed requested in production but ALLOW_DESTRUCTIVE_SEED is not set to true")
+		}
+
+		rawDB, err := sql.Open("postgres", dsn)
+		if err != nil {
+			logrus.Fatalf("failed opening raw db connection: %v", err)
+		}
+		if _, err := rawDB.ExecContext(ctx, `DROP SCHEMA public CASCADE; CREATE SCHEMA public; DROP SCHEMA IF EXISTS atlas_schema_revisions CASCADE;`); err != nil {
+			logrus.Fatalf("failed resetting schema: %v", err)
+		}
+		if err := rawDB.Close(); err != nil {
+			logrus.Fatalf("failed closing raw db: %v", err)
+		}
+		logrus.Info("Database schema reset (dropped and recreated).")
+	} else {
+		logrus.Info("Skipping database schema reset as requested by -no-reset flag.")
 	}
-	if _, err := rawDB.ExecContext(ctx, `DROP SCHEMA public CASCADE; CREATE SCHEMA public; DROP SCHEMA IF EXISTS atlas_schema_revisions CASCADE;`); err != nil {
-		logrus.Fatalf("failed resetting schema: %v", err)
-	}
-	if err := rawDB.Close(); err != nil {
-		logrus.Fatalf("failed closing raw db: %v", err)
-	}
-	logrus.Info("Database schema reset (dropped and recreated).")
 
 	logrus.Info("Applying database migrations...")
 	cmd := exec.Command("pnpm", "run", "db:migrate:apply")
