@@ -18,8 +18,14 @@ RUN go mod download
 # Copy source code
 COPY . .
 
+# Install swag tool
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+
 # Build the application
 # Targeting the main entry point defined in package.json dev script: cmd/dev/main.go
+# 1. Generate swagger docs first (ent depends on it)
+RUN swag init -g cmd/dev/main.go --output api/swag-docs --parseDependency --parseInternal
+# 2. Generate ent code
 RUN go generate ./ent
 RUN CGO_ENABLED=0 GOOS=linux go build -o /server ./cmd/dev/main.go
 

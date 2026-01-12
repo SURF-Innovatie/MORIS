@@ -16,10 +16,10 @@ RUN go mod download
 COPY apps/backend .
 
 # Run code generation
-# 1. Generate ent code
-RUN go generate ./ent/...
-# 2. Generate swagger docs
+# 1. Generate swagger docs (ent needs this)
 RUN swag init -g cmd/dev/main.go --output api/swag-docs --parseDependency --parseInternal
+# 2. Generate ent code
+RUN go generate ./ent/...
 # 3. Generate events (if needed, though frontend mostly needs swagger)
 RUN go generate ./internal/domain/events/...
 
