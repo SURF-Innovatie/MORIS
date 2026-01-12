@@ -3,7 +3,6 @@ package eventpolicy
 import (
 	"context"
 	"encoding/json"
-	"log"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	en "github.com/SURF-Innovatie/MORIS/ent/event"
@@ -16,6 +15,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
+	"github.com/sirupsen/logrus"
 )
 
 // OrgClosureAdapter implements eventpolicy.OrgClosureProvider using the org repository
@@ -193,7 +193,7 @@ func (r *RecipientAdapter) ResolveDynamic(ctx context.Context, dynType string, p
 			).
 			All(ctx)
 		if err != nil {
-			log.Printf("ResolveDynamic project_members error: %v", err)
+			logrus.Infof("ResolveDynamic project_members error: %v", err)
 			return nil, err
 		}
 
@@ -230,7 +230,7 @@ func (r *RecipientAdapter) ResolveDynamic(ctx context.Context, dynType string, p
 			).
 			First(ctx)
 		if err != nil {
-			log.Printf("ResolveDynamic project_owner error: %v", err)
+			logrus.Infof("ResolveDynamic project_owner error: %v", err)
 			return nil, nil
 		}
 		// CreatedBy is the actor UUID (a User ID)

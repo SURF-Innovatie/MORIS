@@ -1,11 +1,11 @@
 package env
 
 import (
-	"log"
 	"os"
 	"strings"
 
 	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 )
 
 type Config struct {
@@ -57,7 +57,7 @@ func getEnv(key string, required bool, fallback string) string {
 	val := os.Getenv(key)
 	if val == "" {
 		if required {
-			log.Panicf("Missing required environment variable: %s", key)
+			logrus.Fatalf("Missing required environment variable: %s", key)
 		}
 		return fallback
 	}

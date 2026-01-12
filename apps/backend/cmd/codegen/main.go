@@ -7,12 +7,13 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"log"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"text/template"
+
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -45,7 +46,7 @@ func main() {
 		return !strings.HasPrefix(fi.Name(), "_")
 	}, parser.ParseComments)
 	if err != nil {
-		log.Fatalf("Failed to parse directory: %v", err)
+		logrus.Fatalf("Failed to parse directory: %v", err)
 	}
 
 	// 1. Collect all constants
@@ -205,7 +206,7 @@ func main() {
 	if dtoSourceDir != "" {
 		dtoPkgs, err := parser.ParseDir(fset, dtoSourceDir, nil, parser.ParseComments)
 		if err != nil {
-			log.Printf("Warning: Failed to parse DTO directory: %v", err)
+			logrus.Infof("Warning: Failed to parse DTO directory: %v", err)
 		} else {
 			for _, pkg := range dtoPkgs {
 				for _, file := range pkg.Files {
@@ -328,7 +329,7 @@ export const create{{.FunctionName}} = (projectId: string, input: {{.Name}}) => 
 `
 	tmpl, err := template.New("ts").Parse(tmplStr)
 	if err != nil {
-		log.Fatalf("Failed to parse template: %v", err)
+		logrus.Fatalf("Failed to parse template: %v", err)
 	}
 
 	data := struct {
@@ -341,17 +342,17 @@ export const create{{.FunctionName}} = (projectId: string, input: {{.Name}}) => 
 
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, data); err != nil {
-		log.Fatalf("Failed to execute template: %v", err)
+		logrus.Fatalf("Failed to execute template: %v", err)
 	}
 
 	// Ensure directory exists
 	dir := filepath.Dir(outputFile)
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		log.Fatalf("Failed to create directory: %v", err)
+		logrus.Fatalf("Failed to create directory: %v", err)
 	}
 
 	if err := os.WriteFile(outputFile, buf.Bytes(), 0644); err != nil {
-		log.Fatalf("Failed to write to file: %v", err)
+		logrus.Fatalf("Failed to write to file: %v", err)
 	}
 
 	fmt.Printf("Generated %s with %d events\n", outputFile, len(structs))

@@ -3,7 +3,6 @@ package command
 import (
 	"context"
 	"fmt"
-	"log"
 
 	appauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/app/commandbus"
@@ -16,6 +15,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
+	"github.com/sirupsen/logrus"
 )
 
 type Service interface {
@@ -147,7 +147,7 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*e
 		// Check if any policy requires approval
 		needsApproval, err := s.evaluator.CheckApprovalRequired(ctx, e, cur)
 		if err != nil {
-			log.Printf("error checking approval policy: %v", err)
+			logrus.Infof("error checking approval policy: %v", err)
 			// Decide if error should block or assume needed/not needed.
 			// Safe default: log and proceed (unless policy evaluation is strict requirement).
 		}

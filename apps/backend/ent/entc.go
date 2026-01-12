@@ -16,6 +16,7 @@ import (
 	openapi2 "github.com/getkin/kin-openapi/openapi2"
 	openapi2conv "github.com/getkin/kin-openapi/openapi2conv"
 	"github.com/ogen-go/ogen"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -29,7 +30,7 @@ func main() {
 	if err != nil {
 		// Log a warning if swag's output isn't found, but don't fail generation here.
 		// It's crucial for Turborepo's dependency graph to ensure `swag-init` runs first.
-		log.Fatalf(" Could not read swag-generated spec from %s. Custom endpoints might be missing from final OpenAPI. Error: %v", swagSpecPath, err)
+		logrus.Fatalf(" Could not read swag-generated spec from %s. Custom endpoints might be missing from final OpenAPI. Error: %v", swagSpecPath, err)
 	}
 
 	var meta struct {
@@ -37,37 +38,37 @@ func main() {
 		OpenAPI string `json:"openapi"`
 	}
 	if err := json.Unmarshal(swagBytes, &meta); err != nil {
-		log.Fatalf("failed to inspect swag-generated spec version: %v", err)
+		logrus.Fatalf("failed to inspect swag-generated spec version: %v", err)
 	}
 
 	switch {
 	case strings.HasPrefix(meta.Swagger, "2."):
 		var swaggerDoc openapi2.T
 		if err := json.Unmarshal(swagBytes, &swaggerDoc); err != nil {
-			log.Fatalf("failed to unmarshal swagger v2 spec: %v", err)
+			logrus.Fatalf("failed to unmarshal swagger v2 spec: %v", err)
 		}
 		openapi3Doc, err := openapi2conv.ToV3(&swaggerDoc)
 		if err != nil {
-			log.Fatalf("failed to convert swagger v2 spec to openapi v3: %v", err)
+			logrus.Fatalf("failed to convert swagger v2 spec to openapi v3: %v", err)
 		}
 		convertedBytes, err := openapi3Doc.MarshalJSON()
 		if err != nil {
-			log.Fatalf("failed to marshal converted openapi spec: %v", err)
+			logrus.Fatalf("failed to marshal converted openapi spec: %v", err)
 		}
 		if err := json.Unmarshal(convertedBytes, swagSpec); err != nil {
-			log.Fatalf("failed to load converted openapi spec: %v", err)
+			logrus.Fatalf("failed to load converted openapi spec: %v", err)
 		}
-		log.Printf("INFO: Converted swagger v2 spec from %s to OpenAPI v3", swagSpecPath)
+		logrus.Infof("INFO: Converted swagger v2 spec from %s to OpenAPI v3", swagSpecPath)
 	case strings.HasPrefix(meta.OpenAPI, "3."):
 		if err := json.Unmarshal(swagBytes, swagSpec); err != nil {
-			log.Fatalf("failed to unmarshal openapi v3 spec: %v", err)
+			logrus.Fatalf("failed to unmarshal openapi v3 spec: %v", err)
 		}
-		log.Printf("INFO: Loaded OpenAPI v%s spec from %s", meta.OpenAPI, swagSpecPath)
+		logrus.Infof("INFO: Loaded OpenAPI v%s spec from %s", meta.OpenAPI, swagSpecPath)
 	default:
 		if err := json.Unmarshal(swagBytes, swagSpec); err != nil {
-			log.Fatalf("failed to unmarshal swagger spec with unknown version: %v", err)
+			logrus.Fatalf("failed to unmarshal swagger spec with unknown version: %v", err)
 		}
-		log.Printf("WARN: Swagger spec version not detected; attempting to use raw document from %s", swagSpecPath)
+		logrus.Infof("WARN: Swagger spec version not detected; attempting to use raw document from %s", swagSpecPath)
 	}
 
 	// openapi2conv does not convert security definitions to components when the spec lacks them, so ensure components exist.
@@ -78,15 +79,15 @@ func main() {
 	// Prepare output destination for entoas generated spec.
 	specOutputPath := filepath.Join("api", "openapi.json")
 	if err := os.MkdirAll(filepath.Dir(specOutputPath), 0o755); err != nil {
-		log.Fatalf("failed to ensure OpenAPI output directory: %v", err)
+		logrus.Fatalf("failed to ensure OpenAPI output directory: %v", err)
 	}
 	specFile, err := os.Create(specOutputPath)
 	if err != nil {
-		log.Fatalf("failed to create OpenAPI output file: %v", err)
+		logrus.Fatalf("failed to create OpenAPI output file: %v", err)
 	}
 	defer func() {
 		if cerr := specFile.Close(); cerr != nil {
-			log.Printf("WARN: failed to close OpenAPI output file: %v", cerr)
+			logrus.Infof("WARN: failed to close OpenAPI output file: %v", cerr)
 		}
 	}()
 
@@ -141,7 +142,7 @@ func main() {
 				for path, item := range swagSpec.Paths {
 					entoasSpec.Paths[path] = item
 				}
-				log.Printf("INFO: Merged %d custom paths from swag-generated spec.", len(swagSpec.Paths))
+				logrus.Infof("INFO: Merged %d custom paths from swag-generated spec.", len(swagSpec.Paths))
 			}
 
 			if swagSpec.Components != nil {
@@ -161,7 +162,7 @@ func main() {
 					entoasSpec.Components.SecuritySchemes[name] = sec
 				}
 				if len(swagSpec.Components.Schemas) > 0 {
-					log.Printf("INFO: Merged %d custom schemas/components from swag-generated spec.", len(swagSpec.Components.Schemas))
+					logrus.Infof("INFO: Merged %d custom schemas/components from swag-generated spec.", len(swagSpec.Components.Schemas))
 				}
 			}
 
@@ -190,7 +191,7 @@ func main() {
 		}),
 	)
 	if err != nil {
-		log.Fatalf("creating entoas extension: %v", err)
+		logrus.Fatalf("creating entoas extension: %v", err)
 	}
 
 	err = entc.Generate("./schema", &gen.Config{
@@ -198,7 +199,7 @@ func main() {
 	}, entc.Extensions(ex))
 
 	if err != nil {
-		log.Fatalf("running ent code generation: %v", err)
+		logrus.Fatalf("running ent code generation: %v", err)
 	}
 
 	log.Println("Ent code and OpenAPI spec generated successfully, including custom endpoints from swag.")

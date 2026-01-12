@@ -10,6 +10,7 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 
 	atlas "ariga.io/atlas/sql/migrate"
 	"entgo.io/ent/dialect"
@@ -27,7 +28,7 @@ func main() {
 	// Create a local migration directory able to understand Atlas migration file format for replay.
 	dir, err := atlas.NewLocalDir("ent/migrate/migrations")
 	if err != nil {
-		log.Fatalf("failed creating atlas migration directory: %v", err)
+		logrus.Fatalf("failed creating atlas migration directory: %v", err)
 	}
 
 	// Migrate diff options.
@@ -59,8 +60,8 @@ func main() {
 	// Generate migrations using Atlas support for PostgreSQL
 	err = migrate.NamedDiff(ctx, dbURL, migrationName, opts...)
 	if err != nil {
-		log.Fatalf("failed generating migration file: %v", err)
+		logrus.Fatalf("failed generating migration file: %v", err)
 	}
 
-	log.Printf("Migration '%s' generated successfully in ent/migrate/migrations/", migrationName)
+	logrus.Infof("Migration '%s' generated successfully in ent/migrate/migrations/", migrationName)
 }

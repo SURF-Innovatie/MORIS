@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Service defines the interface for Crossref API operations
@@ -89,7 +90,7 @@ func (s *service) GetWork(ctx context.Context, doi string) (*Work, error) {
 
 	var result WorkResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		log.Printf("Failed to deserialize WorkResponse for DOI %s: %v", doi, err)
+		logrus.Infof("Failed to deserialize WorkResponse for DOI %s: %v", doi, err)
 		return nil, fmt.Errorf("failed to deserialize WorkResponse: %w", err)
 	}
 
@@ -136,7 +137,7 @@ func (s *service) GetWorks(ctx context.Context, query string, limit int) ([]Work
 
 	var result MultipleWorksResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		log.Printf("Failed to deserialize MultipleWorksResponse for query %s: %v", query, err)
+		logrus.Infof("Failed to deserialize MultipleWorksResponse for query %s: %v", query, err)
 		return nil, fmt.Errorf("failed to deserialize MultipleWorksResponse: %w", err)
 	}
 
@@ -175,7 +176,7 @@ func (s *service) GetJournal(ctx context.Context, issn string) (*Journal, error)
 
 	var result JournalResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		log.Printf("Failed to deserialize JournalResponse for ISSN %s: %v", issn, err)
+		logrus.Infof("Failed to deserialize JournalResponse for ISSN %s: %v", issn, err)
 		return nil, fmt.Errorf("failed to deserialize JournalResponse: %w", err)
 	}
 
@@ -222,7 +223,7 @@ func (s *service) GetJournals(ctx context.Context, query string, limit int) ([]J
 
 	var result MultipleJournalsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		log.Printf("Failed to deserialize MultipleJournalsResponse for query %s: %v", query, err)
+		logrus.Infof("Failed to deserialize MultipleJournalsResponse for query %s: %v", query, err)
 		return nil, fmt.Errorf("failed to deserialize MultipleJournalsResponse: %w", err)
 	}
 

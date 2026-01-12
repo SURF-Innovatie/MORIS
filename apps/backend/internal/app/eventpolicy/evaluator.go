@@ -3,7 +3,6 @@ package eventpolicy
 import (
 	"context"
 	"fmt"
-	"log"
 	"reflect"
 	"slices"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
+	"github.com/sirupsen/logrus"
 )
 
 // Evaluator evaluates policies against events and executes actions
@@ -56,24 +56,24 @@ func (e *evaluator) CheckApprovalRequired(ctx context.Context, event events.Even
 		return false, fmt.Errorf("getting applicable policies: %w", err)
 	}
 
-	log.Printf("CheckApprovalRequired: Found %d policies for event %s (Project: %s)", len(policies), event.Type(), project.Id)
+	logrus.Infof("CheckApprovalRequired: Found %d policies for event %s (Project: %s)", len(policies), event.Type(), project.Id)
 
 	// 2. Filter policies that match this event type and pass conditions
 	for _, p := range policies {
 		if !p.Enabled {
-			log.Printf("Policy %s disabled", p.Name)
+			logrus.Infof("Policy %s disabled", p.Name)
 			continue
 		}
 		if !p.MatchesEventType(event.Type()) {
-			// log.Printf("Policy %s type mismatch (%v vs %s)", p.Name, p.EventTypes, event.Type())
+			// logrus.Infof("Policy %s type mismatch (%v vs %s)", p.Name, p.EventTypes, event.Type())
 			continue
 		}
 
 		matches := e.evaluateConditions(p.Conditions, event, project)
-		log.Printf("Policy %s (Action: %s) match result: %v", p.Name, p.ActionType, matches)
+		logrus.Infof("Policy %s (Action: %s) match result: %v", p.Name, p.ActionType, matches)
 
 		if p.ActionType == entities.ActionTypeRequestApproval && matches {
-			log.Printf("Approval required by policy: %s", p.Name)
+			logrus.Infof("Approval required by policy: %s", p.Name)
 			return true, nil
 		}
 	}
@@ -104,7 +104,7 @@ func (e *evaluator) EvaluateAndExecute(ctx context.Context, event events.Event, 
 		return e.evaluateConditions(p.Conditions, event, project)
 	})
 
-	log.Printf("EvaluateAndExecute: Event %s matches %d policies", event.Type(), len(matchingPolicies))
+	logrus.Infof("EvaluateAndExecute: Event %s matches %d policies", event.Type(), len(matchingPolicies))
 
 	// 3. Separate approval and notification policies
 	approvalPolicies := lo.Filter(matchingPolicies, func(p entities.EventPolicy, _ int) bool {
@@ -114,13 +114,13 @@ func (e *evaluator) EvaluateAndExecute(ctx context.Context, event events.Event, 
 		return p.ActionType == entities.ActionTypeNotify
 	})
 
-	log.Printf("EvaluateAndExecute: Found %d approval polices and %d notification policies", len(approvalPolicies), len(notificationPolicies))
+	logrus.Infof("EvaluateAndExecute: Found %d approval polices and %d notification policies", len(approvalPolicies), len(notificationPolicies))
 
 	// 4. Execute approval policies first
 	approvalSent := false
 	for _, policy := range approvalPolicies {
 		if err := e.executeAction(ctx, policy, event, project); err != nil {
-			log.Printf("policy action error for %s: %v", policy.ID, err)
+			logrus.Infof("policy action error for %s: %v", policy.ID, err)
 		} else {
 			approvalSent = true
 		}
@@ -128,14 +128,14 @@ func (e *evaluator) EvaluateAndExecute(ctx context.Context, event events.Event, 
 
 	// 5. Skip notification policies if an approval was already sent
 	if approvalSent {
-		log.Printf("skipping notification policies - approval already sent for event %s", event.GetID())
+		logrus.Infof("skipping notification policies - approval already sent for event %s", event.GetID())
 		return nil
 	}
 
 	// 6. Execute notification policies
 	for _, policy := range notificationPolicies {
 		if err := e.executeAction(ctx, policy, event, project); err != nil {
-			log.Printf("policy action error for %s: %v", policy.ID, err)
+			logrus.Infof("policy action error for %s: %v", policy.ID, err)
 		}
 	}
 
@@ -201,7 +201,7 @@ func (e *evaluator) checkCondition(cond entities.PolicyCondition, event events.E
 	case entities.OperatorNotExists:
 		return value == nil || value == ""
 	default:
-		log.Printf("unknown operator: %s", cond.Operator)
+		logrus.Infof("unknown operator: %s", cond.Operator)
 		return false
 	}
 }
@@ -301,7 +301,7 @@ func (e *evaluator) isIn(value any, collection any) bool {
 
 // executeAction executes the policy's action (notify or request_approval)
 func (e *evaluator) executeAction(ctx context.Context, policy entities.EventPolicy, event events.Event, project *entities.Project) error {
-	log.Printf("executeAction: Resolving recipients for policy %s", policy.Name)
+	logrus.Infof("executeAction: Resolving recipients for policy %s", policy.Name)
 
 	// Resolve all recipients
 	userIDs, err := e.resolveAllRecipients(ctx, policy, event.AggregateID(), project.OwningOrgNodeID)
@@ -310,11 +310,11 @@ func (e *evaluator) executeAction(ctx context.Context, policy entities.EventPoli
 	}
 
 	if len(userIDs) == 0 {
-		log.Printf("executeAction: No recipients found for policy %s", policy.Name)
+		logrus.Infof("executeAction: No recipients found for policy %s", policy.Name)
 		return nil // No recipients to notify
 	}
 
-	log.Printf("executeAction: Resolved %d recipients for policy %s. Sending %s...", len(userIDs), policy.Name, policy.ActionType)
+	logrus.Infof("executeAction: Resolved %d recipients for policy %s. Sending %s...", len(userIDs), policy.Name, policy.ActionType)
 
 	// Build message
 	message := e.buildMessage(policy, event, project)
@@ -337,7 +337,7 @@ func (e *evaluator) resolveAllRecipients(ctx context.Context, policy entities.Ev
 	if len(policy.RecipientUserIDs) > 0 {
 		userIDs, err := e.recipientResolver.ResolveUsers(ctx, policy.RecipientUserIDs)
 		if err != nil {
-			log.Printf("error resolving user IDs: %v", err)
+			logrus.Infof("error resolving user IDs: %v", err)
 		} else {
 			for _, uid := range userIDs {
 				userIDSet[uid] = true
@@ -349,7 +349,7 @@ func (e *evaluator) resolveAllRecipients(ctx context.Context, policy entities.Ev
 	for _, roleID := range policy.RecipientProjectRoleIDs {
 		users, err := e.recipientResolver.ResolveRole(ctx, roleID, projectID)
 		if err != nil {
-			log.Printf("error resolving project role %s: %v", roleID, err)
+			logrus.Infof("error resolving project role %s: %v", roleID, err)
 			continue
 		}
 		for _, uid := range users {
@@ -361,7 +361,7 @@ func (e *evaluator) resolveAllRecipients(ctx context.Context, policy entities.Ev
 	for _, roleID := range policy.RecipientOrgRoleIDs {
 		users, err := e.recipientResolver.ResolveOrgRole(ctx, roleID, orgNodeID)
 		if err != nil {
-			log.Printf("error resolving org role %s: %v", roleID, err)
+			logrus.Infof("error resolving org role %s: %v", roleID, err)
 			continue
 		}
 		for _, uid := range users {
@@ -373,7 +373,7 @@ func (e *evaluator) resolveAllRecipients(ctx context.Context, policy entities.Ev
 	for _, dynType := range policy.RecipientDynamic {
 		users, err := e.recipientResolver.ResolveDynamic(ctx, dynType, projectID, orgNodeID)
 		if err != nil {
-			log.Printf("error resolving dynamic %s: %v", dynType, err)
+			logrus.Infof("error resolving dynamic %s: %v", dynType, err)
 			continue
 		}
 		for _, uid := range users {
