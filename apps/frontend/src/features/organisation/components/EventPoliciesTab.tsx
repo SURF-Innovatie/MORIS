@@ -7,11 +7,15 @@ import {
   usePutPoliciesId,
   useGetEventTypes,
   getGetOrganisationsIdPoliciesQueryKey,
+  useGetOrganisationNodesIdOrganisationRoles,
+  useGetOrganisationNodesIdRoles,
 } from "@api/moris";
 import {
   EventPolicyRequest,
   EventPolicyResponse,
   EventTypeInfo,
+  OrganisationRoleResponse,
+  ProjectRoleResponse,
 } from "@api/model";
 import { MultiUserSelect } from "@/components/user/MultiUserSelect";
 import { Button } from "@/components/ui/button";
@@ -33,7 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
   Loader2,
@@ -74,6 +78,13 @@ export function EventPoliciesTab({ nodeId }: EventPoliciesTabProps) {
 
   // Fetch event types from backend
   const { data: eventTypes = [] } = useGetEventTypes();
+
+  // Fetch org roles for this node
+  const { data: orgRoles = [] } =
+    useGetOrganisationNodesIdOrganisationRoles(nodeId);
+
+  // Fetch project roles available at this node (includes inherited)
+  const { data: projectRoles = [] } = useGetOrganisationNodesIdRoles(nodeId);
 
   const { data: policies, isLoading } = useGetOrganisationsIdPolicies(nodeId, {
     inherited: true,
@@ -125,6 +136,8 @@ export function EventPoliciesTab({ nodeId }: EventPoliciesTabProps) {
           <PolicyFormDialog
             nodeId={nodeId}
             eventTypes={eventTypes}
+            orgRoles={orgRoles}
+            projectRoles={projectRoles}
             onClose={() => setCreateDialogOpen(false)}
           />
         </Dialog>
@@ -146,6 +159,8 @@ export function EventPoliciesTab({ nodeId }: EventPoliciesTabProps) {
                 key={policy.id}
                 policy={policy}
                 eventTypes={eventTypes}
+                projectRoles={projectRoles}
+                orgRoles={orgRoles}
                 onEdit={() => setEditPolicy(policy)}
                 onDelete={() => deleteMutation.mutate({ id: policy.id! })}
                 isDeleting={deleteMutation.isPending}
@@ -170,6 +185,8 @@ export function EventPoliciesTab({ nodeId }: EventPoliciesTabProps) {
                 key={policy.id}
                 policy={policy}
                 eventTypes={eventTypes}
+                projectRoles={projectRoles}
+                orgRoles={orgRoles}
                 inherited
               />
             ))}
@@ -186,6 +203,8 @@ export function EventPoliciesTab({ nodeId }: EventPoliciesTabProps) {
           <PolicyFormDialog
             nodeId={nodeId}
             eventTypes={eventTypes}
+            orgRoles={orgRoles}
+            projectRoles={projectRoles}
             policy={editPolicy}
             onClose={() => setEditPolicy(null)}
           />
@@ -198,6 +217,8 @@ export function EventPoliciesTab({ nodeId }: EventPoliciesTabProps) {
 interface PolicyCardProps {
   policy: EventPolicyResponse;
   eventTypes: EventTypeInfo[];
+  projectRoles: ProjectRoleResponse[];
+  orgRoles?: OrganisationRoleResponse[];
   onEdit?: () => void;
   onDelete?: () => void;
   isDeleting?: boolean;
@@ -207,6 +228,8 @@ interface PolicyCardProps {
 function PolicyCard({
   policy,
   eventTypes,
+  projectRoles,
+  orgRoles = [],
   onEdit,
   onDelete,
   isDeleting,
@@ -291,6 +314,40 @@ function PolicyCard({
               <span>{policy.recipient_user_ids?.length} specific user(s)</span>
             </div>
           )}
+
+          {(policy.recipient_project_role_ids?.length ?? 0) > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {policy.recipient_project_role_ids?.map((roleId) => {
+                const role = projectRoles.find((r) => r.id === roleId);
+                return role ? (
+                  <Badge
+                    key={roleId}
+                    variant="secondary"
+                    className="text-xs bg-blue-100 text-blue-800 hover:bg-blue-100/80 dark:bg-blue-900/50 dark:text-blue-300"
+                  >
+                    Project Role: {role.name}
+                  </Badge>
+                ) : null;
+              })}
+            </div>
+          )}
+
+          {(policy.recipient_org_role_ids?.length ?? 0) > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {policy.recipient_org_role_ids?.map((roleId) => {
+                const role = orgRoles?.find((r) => r.id === roleId);
+                return role ? (
+                  <Badge
+                    key={roleId}
+                    variant="secondary"
+                    className="text-xs bg-purple-100 text-purple-800 hover:bg-purple-100/80 dark:bg-purple-900/50 dark:text-purple-300"
+                  >
+                    Org Role: {role.displayName}
+                  </Badge>
+                ) : null;
+              })}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -300,6 +357,8 @@ function PolicyCard({
 interface PolicyFormDialogProps {
   nodeId: string;
   eventTypes: EventTypeInfo[];
+  orgRoles: OrganisationRoleResponse[];
+  projectRoles: ProjectRoleResponse[];
   policy?: EventPolicyResponse;
   onClose: () => void;
 }
@@ -307,6 +366,8 @@ interface PolicyFormDialogProps {
 function PolicyFormDialog({
   nodeId,
   eventTypes,
+  orgRoles,
+  projectRoles,
   policy,
   onClose,
 }: PolicyFormDialogProps) {
@@ -325,6 +386,12 @@ function PolicyFormDialog({
   );
   const [specificUsers, setSpecificUsers] = useState<string[]>(
     policy?.recipient_user_ids || []
+  );
+  const [selectedOrgRoles, setSelectedOrgRoles] = useState<string[]>(
+    policy?.recipient_org_role_ids || []
+  );
+  const [selectedProjectRoles, setSelectedProjectRoles] = useState<string[]>(
+    policy?.recipient_project_role_ids || []
   );
   const [enabled, setEnabled] = useState(policy?.enabled ?? true);
 
@@ -371,6 +438,10 @@ function PolicyFormDialog({
       recipient_dynamic:
         dynamicRecipients.length > 0 ? dynamicRecipients : undefined,
       recipient_user_ids: specificUsers.length > 0 ? specificUsers : undefined,
+      recipient_org_role_ids:
+        selectedOrgRoles.length > 0 ? selectedOrgRoles : undefined,
+      recipient_project_role_ids:
+        selectedProjectRoles.length > 0 ? selectedProjectRoles : undefined,
       enabled,
     };
 
@@ -393,123 +464,213 @@ function PolicyFormDialog({
     );
   };
 
+  const toggleOrgRole = (roleId: string) => {
+    setSelectedOrgRoles((prev) =>
+      prev.includes(roleId)
+        ? prev.filter((r) => r !== roleId)
+        : [...prev, roleId]
+    );
+  };
+
+  const toggleProjectRole = (roleId: string) => {
+    setSelectedProjectRoles((prev) =>
+      prev.includes(roleId)
+        ? prev.filter((r) => r !== roleId)
+        : [...prev, roleId]
+    );
+  };
+
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>
           {isEditing ? "Edit Event Policy" : "Create Event Policy"}
         </DialogTitle>
       </DialogHeader>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
-          <Input
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g., Notify on project creation"
-            required
-          />
-        </div>
+      <form
+        onSubmit={handleSubmit}
+        className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full"
+      >
+        <div className="space-y-6 flex flex-col h-full">
+          <div className="space-y-2">
+            <Label htmlFor="name">Name</Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g., Notify on project creation"
+              required
+            />
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="description">Description (optional)</Label>
-          <Textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="What does this policy do?"
-            rows={2}
-          />
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Description (optional)</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What does this policy do?"
+              rows={3}
+            />
+          </div>
 
-        <div className="space-y-2">
-          <Label>Trigger on Events</Label>
-          <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
-            {eventTypes.map((type) => (
-              <Badge
-                key={type.type}
-                variant={
-                  selectedEventTypes.includes(type.type!)
-                    ? "default"
-                    : "outline"
-                }
-                className="cursor-pointer"
-                onClick={() => toggleEventType(type.type!)}
-              >
-                {type.friendlyName || type.type}
-              </Badge>
-            ))}
+          <div className="space-y-2 flex-1 flex flex-col">
+            <Label>Trigger on Events</Label>
+            <div className="flex flex-wrap gap-2 flex-1 min-h-[400px] max-h-[60vh] overflow-y-auto p-2 border rounded-md content-start">
+              {eventTypes.map((type) => (
+                <Badge
+                  key={type.type}
+                  variant={
+                    selectedEventTypes.includes(type.type!)
+                      ? "default"
+                      : "outline"
+                  }
+                  className="cursor-pointer hover:bg-primary/90 h-fit"
+                  onClick={() => toggleEventType(type.type!)}
+                >
+                  {type.friendlyName || type.type}
+                </Badge>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label>Action Type</Label>
-          <Select
-            value={actionType}
-            onValueChange={(val) =>
-              setActionType(val as "notify" | "request_approval")
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="notify">
-                <div className="flex items-center gap-2">
-                  <Bell className="h-4 w-4" />
-                  Send Notification
-                </div>
-              </SelectItem>
-              <SelectItem value="request_approval">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4" />
-                  Request Approval
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <Label>Action Type</Label>
+            <Select
+              value={actionType}
+              onValueChange={(val) =>
+                setActionType(val as "notify" | "request_approval")
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="notify">
+                  <div className="flex items-center gap-2">
+                    <Bell className="h-4 w-4" />
+                    Send Notification
+                  </div>
+                </SelectItem>
+                <SelectItem value="request_approval">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4" />
+                    Request Approval
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="space-y-2">
-          <Label>Dynamic Recipients</Label>
-          <div className="flex flex-wrap gap-2">
-            {DYNAMIC_RECIPIENTS.map((type) => (
-              <Badge
-                key={type.value}
-                variant={
-                  dynamicRecipients.includes(type.value) ? "default" : "outline"
-                }
-                className="cursor-pointer"
-                onClick={() => toggleDynamicRecipient(type.value)}
-              >
-                {type.label}
-              </Badge>
-            ))}
+          <div className="border rounded-lg p-6 space-y-6 ">
+            <h3 className="font-semibold text-lg">Recipients</h3>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-muted-foreground">
+                  Dynamic Groups
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  {DYNAMIC_RECIPIENTS.map((type) => (
+                    <Badge
+                      key={type.value}
+                      variant={
+                        dynamicRecipients.includes(type.value)
+                          ? "default"
+                          : "outline"
+                      }
+                      className="cursor-pointer hover:bg-primary/90"
+                      onClick={() => toggleDynamicRecipient(type.value)}
+                    >
+                      {type.label}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-muted-foreground">
+                  Specific Users
+                </Label>
+                <MultiUserSelect
+                  value={specificUsers}
+                  onChange={setSpecificUsers}
+                  placeholder="Search users..."
+                />
+              </div>
+
+              {projectRoles.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Project Roles
+                  </Label>
+                  <div className="flex flex-wrap gap-2">
+                    {projectRoles.map((role) => (
+                      <Badge
+                        key={role.id}
+                        variant={
+                          selectedProjectRoles.includes(role.id!)
+                            ? "default"
+                            : "outline"
+                        }
+                        className="cursor-pointer hover:bg-primary/90"
+                        onClick={() => toggleProjectRole(role.id!)}
+                      >
+                        {role.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {orgRoles.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Organisation Roles
+                  </Label>
+                  <div className="flex flex-wrap gap-2">
+                    {orgRoles.map((role) => (
+                      <Badge
+                        key={role.id}
+                        variant={
+                          selectedOrgRoles.includes(role.id!)
+                            ? "default"
+                            : "outline"
+                        }
+                        className="cursor-pointer hover:bg-primary/90"
+                        onClick={() => toggleOrgRole(role.id!)}
+                      >
+                        {role.displayName}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between border-t pt-4">
+            <div className="space-y-0.5">
+              <Label htmlFor="enabled" className="text-base">
+                Policy Enabled
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Turn off to temporarily disable this policy
+              </p>
+            </div>
+            <Switch
+              id="enabled"
+              checked={enabled}
+              onCheckedChange={setEnabled}
+            />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label>Specific Users (optional)</Label>
-          <MultiUserSelect
-            value={specificUsers}
-            onChange={setSpecificUsers}
-            placeholder="Search and add specific users..."
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <Label htmlFor="enabled">Enabled</Label>
-          <Checkbox
-            id="enabled"
-            checked={enabled}
-            onCheckedChange={(checked) => setEnabled(checked === true)}
-          />
-        </div>
-
-        <DialogFooter>
+        <DialogFooter className="col-span-1 lg:col-span-2 mt-6">
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
