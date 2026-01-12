@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
+	"os"
+	"os/exec"
 	"time"
 
 	logger "github.com/chi-middleware/logrus-logger"
@@ -108,10 +111,29 @@ func main() {
 	// Auto-migration is disabled in favor of versioned migrations (Atlas)
 	// if err := client.Schema.Create(
 	// 	context.Background(),
-	// 	migrate.WithGlobalUniqueID(true),
-	// ); err != nil {
-	// 	logrus.Fatalf("failed running Ent database migrations: %v", err)
-	// }
+	// Run Atlas migrations
+	logrus.Info("Running database migrations...")
+
+	// Construct URL safely to handle special characters in password
+	u := url.URL{
+		Scheme:   "postgres",
+		User:     url.UserPassword(env.Global.DBUser, env.Global.DBPassword),
+		Host:     fmt.Sprintf("%s:%s", env.Global.DBHost, env.Global.DBPort),
+		Path:     env.Global.DBName,
+		RawQuery: "sslmode=disable",
+	}
+
+	cmd := exec.Command("atlas", "migrate", "apply",
+		"--url", u.String(),
+		"--dir", "file://ent/migrate/migrations",
+	)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		logrus.Fatalf("failed applying migrations: %v", err)
+	}
+	logrus.Info("Database migrations applied successfully")
 
 	// Redis Client
 	rdb := redis.NewClient(&redis.Options{
