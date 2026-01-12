@@ -244,7 +244,7 @@ func main() {
 	r.Use(logger.Logger("router", log))
 	r.Use(middleware.Recoverer)
 
-	r.Route("/api", func(r chi.Router) {
+	r.Route(env.Global.APIBasePath, func(r chi.Router) {
 		r.Use(authmiddleware.ErrorLoggingMiddleware(errorLogSvc))
 		authhandler.MountRoutes(r, authSvc, authHandler)
 		systemhandler.MountRoutes(r, systemHandler)
@@ -293,7 +293,7 @@ func main() {
 		http.ServeFile(w, r, "api/swag-docs/swagger.json")
 	})
 	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:"+env.Global.Port+"/swagger/swagger.json"), // the url pointing to API definition
+		httpSwagger.URL("swagger.json"), // the url pointing to API definition
 	))
 
 	logrus.Fatal(http.ListenAndServe(":"+env.Global.Port, r))

@@ -21,6 +21,7 @@ type Config struct {
 	JWTSecret     string
 	Port          string
 	RAiDAPIKey    string
+	APIBasePath   string
 }
 
 var Global Config
@@ -46,6 +47,7 @@ func init() {
 		JWTSecret:     getEnv("JWT_SECRET", true, ""),
 		Port:          getEnv("PORT", true, ""),
 		RAiDAPIKey:    getEnv("RAID_API_KEY", false, "test-key"),
+		APIBasePath:   getEnv("API_BASE_PATH", false, "/api"),
 	}
 }
 
