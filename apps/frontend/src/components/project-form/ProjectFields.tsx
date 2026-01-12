@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 
 import { Badge } from "@/components/ui/badge";
@@ -36,8 +35,6 @@ export function ProjectFields({
   disabledFields,
   pendingFields,
 }: ProjectFieldsProps) {
-  const [isStartDateOpen, setIsStartDateOpen] = useState(false);
-  const [isEndDateOpen, setIsEndDateOpen] = useState(false);
   const startDate = form.watch("startDate");
 
   const isPending = (key: keyof NonNullable<typeof pendingFields>) =>
