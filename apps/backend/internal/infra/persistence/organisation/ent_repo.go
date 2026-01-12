@@ -198,3 +198,15 @@ func (r *EntRepo) CreateClosuresBulk(ctx context.Context, rows []entities.Organi
 	_, err := r.closure().CreateBulk(bulk...).Save(ctx)
 	return err
 }
+
+func (r *EntRepo) Search(ctx context.Context, query string, limit int) ([]entities.OrganisationNode, error) {
+	rows, err := r.node().
+		Query().
+		Where(entorgnode.NameContainsFold(query)).
+		Limit(limit).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return transform.ToEntities[entities.OrganisationNode](rows), nil
+}

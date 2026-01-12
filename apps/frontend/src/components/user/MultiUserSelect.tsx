@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { useGetUsersSearch } from "@api/moris";
-import { PersonResponse } from "@api/model";
+import { useState, useEffect, useMemo } from "react";
+import { useGetUsersSearch, getGetPeopleIdQueryOptions } from "@api/moris";
+import { UserPersonResponse } from "@api/model";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,14 +11,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Search, X, User as UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useQueries } from "@tanstack/react-query";
 
 interface MultiUserSelectProps {
+  /** Array of person IDs (since UserPersonResponse.id is person_id) */
   value: string[];
-  onChange: (userIds: string[]) => void;
+  onChange: (personIds: string[]) => void;
   disabled?: boolean;
   placeholder?: string;
-  /** Optional initial person data for pre-selected users (used when editing) */
-  initialPersons?: PersonResponse[];
+  /** Initial user data for pre-selected users (used when editing) */
+  initialUsers?: UserPersonResponse[];
 }
 
 export const MultiUserSelect = ({
@@ -26,47 +28,89 @@ export const MultiUserSelect = ({
   onChange,
   disabled,
   placeholder = "Select users...",
-  initialPersons,
+  initialUsers,
 }: MultiUserSelectProps) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [selectedPersons, setSelectedPersons] = useState<PersonResponse[]>(
-    initialPersons || []
+  const [selectedUsers, setSelectedUsers] = useState<UserPersonResponse[]>(
+    initialUsers || []
   );
 
-  // Sync initialPersons when they change (e.g., when editing a policy)
+  // Sync initialUsers when they change (e.g., when editing a policy)
   useEffect(() => {
-    if (initialPersons && initialPersons.length > 0) {
-      setSelectedPersons(initialPersons);
+    if (initialUsers && initialUsers.length > 0) {
+      setSelectedUsers(initialUsers);
     }
-  }, [initialPersons]);
+  }, [initialUsers]);
+
+  // Find IDs that don't have user data yet
+  const missingIds = useMemo(() => {
+    const selectedIds = new Set(selectedUsers.map((u) => u.id));
+    return value.filter((id) => !selectedIds.has(id));
+  }, [value, selectedUsers]);
+
+  // Fetch missing person data using /people/:id endpoint
+  const missingUserQueries = useQueries({
+    queries: missingIds.map((id) => ({
+      ...getGetPeopleIdQueryOptions(id),
+      enabled: !!id,
+      staleTime: Infinity,
+    })),
+  });
+
+  // Sync fetched persons into selectedUsers
+  useEffect(() => {
+    const fetchedUsers = missingUserQueries
+      .filter((q) => q.isSuccess && q.data)
+      .map((q) => {
+        const person = q.data!;
+        // Map PersonResponse to UserPersonResponse format
+        return {
+          id: person.id,
+          name: person.name,
+          email: person.email,
+          avatarUrl: person.avatarUrl,
+          givenName: person.givenName,
+          familyName: person.familyName,
+          orcid: person.orcid,
+        } as UserPersonResponse;
+      });
+
+    if (fetchedUsers.length > 0) {
+      setSelectedUsers((prev) => {
+        const existingIds = new Set(prev.map((u) => u.id));
+        const newUsers = fetchedUsers.filter((u) => !existingIds.has(u.id));
+        return newUsers.length > 0 ? [...prev, ...newUsers] : prev;
+      });
+    }
+  }, [missingUserQueries.map((q) => q.data).join(",")]);
 
   const { data: results, isLoading } = useGetUsersSearch(
     { q: query },
     { query: { enabled: open && query.length > 0 } }
   );
 
-  const handleSelect = (person: PersonResponse) => {
-    if (!person.id) return;
+  const handleSelect = (user: UserPersonResponse) => {
+    if (!user.id) return;
 
-    if (value.includes(person.id)) {
+    if (value.includes(user.id)) {
       // Remove if already selected
-      onChange(value.filter((id) => id !== person.id));
-      setSelectedPersons((prev) => prev.filter((p) => p.id !== person.id));
+      onChange(value.filter((id) => id !== user.id));
+      setSelectedUsers((prev) => prev.filter((u) => u.id !== user.id));
     } else {
       // Add to selection
-      onChange([...value, person.id]);
-      setSelectedPersons((prev) => [...prev, person]);
+      onChange([...value, user.id]);
+      setSelectedUsers((prev) => [...prev, user]);
     }
   };
 
-  const handleRemove = (personId: string) => {
-    onChange(value.filter((id) => id !== personId));
-    setSelectedPersons((prev) => prev.filter((p) => p.id !== personId));
+  const handleRemove = (userId: string) => {
+    onChange(value.filter((id) => id !== userId));
+    setSelectedUsers((prev) => prev.filter((u) => u.id !== userId));
   };
 
-  // Show count for IDs without person data (fallback)
-  const unknownCount = value.length - selectedPersons.length;
+  // Check if we're still loading missing users
+  const isLoadingMissingUsers = missingUserQueries.some((q) => q.isLoading);
 
   return (
     <div className="space-y-2">
@@ -81,24 +125,24 @@ export const MultiUserSelect = ({
           >
             {value.length > 0 ? (
               <div className="flex flex-wrap gap-1">
-                {selectedPersons.map((person) => (
-                  <Badge key={person.id} variant="secondary" className="mr-1">
-                    {person.name || person.email}
+                {selectedUsers.map((user) => (
+                  <Badge key={user.id} variant="secondary" className="mr-1">
+                    {user.name || user.email}
                     <button
                       type="button"
                       className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleRemove(person.id!);
+                        handleRemove(user.id!);
                       }}
                     >
                       <X className="h-3 w-3" />
                     </button>
                   </Badge>
                 ))}
-                {unknownCount > 0 && (
+                {isLoadingMissingUsers && (
                   <Badge variant="outline" className="mr-1">
-                    +{unknownCount} user(s)
+                    Loading...
                   </Badge>
                 )}
               </div>
@@ -108,11 +152,16 @@ export const MultiUserSelect = ({
             <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0" align="start">
+        <PopoverContent
+          className="w-[300px] p-0"
+          align="start"
+          side="bottom"
+          avoidCollisions={false}
+        >
           <div className="flex items-center border-b px-3">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <Input
-              className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground border-none focus-visible:ring-0"
+              className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground border-none focus-visible:ring-0 shadow-none"
               placeholder="Search by name or email..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -132,25 +181,25 @@ export const MultiUserSelect = ({
             )}
 
             {!isLoading &&
-              results?.map((person) => (
+              results?.map((user) => (
                 <div
-                  key={person.id}
+                  key={user.id}
                   className={cn(
                     "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
-                    value.includes(person.id!) &&
+                    value.includes(user.id!) &&
                       "bg-accent text-accent-foreground"
                   )}
-                  onClick={() => handleSelect(person)}
+                  onClick={() => handleSelect(user)}
                 >
                   <div
                     className={cn(
                       "mr-2 h-4 w-4 flex items-center justify-center border rounded-sm",
-                      value.includes(person.id!)
+                      value.includes(user.id!)
                         ? "bg-primary border-primary text-primary-foreground"
                         : "border-input"
                     )}
                   >
-                    {value.includes(person.id!) && (
+                    {value.includes(user.id!) && (
                       <svg
                         className="h-3 w-3"
                         fill="none"
@@ -167,11 +216,11 @@ export const MultiUserSelect = ({
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <UserAvatar person={person} />
+                    <UserAvatar user={user} />
                     <div className="flex flex-col">
-                      <span>{person.name}</span>
+                      <span>{user.name}</span>
                       <span className="text-xs text-muted-foreground">
-                        {person.email}
+                        {user.email}
                       </span>
                     </div>
                   </div>
@@ -191,12 +240,12 @@ export const MultiUserSelect = ({
   );
 };
 
-const UserAvatar = ({ person }: { person: PersonResponse }) => {
-  if (person.avatarUrl) {
+const UserAvatar = ({ user }: { user: UserPersonResponse }) => {
+  if (user.avatarUrl) {
     return (
       <img
-        src={person.avatarUrl}
-        alt={person.name}
+        src={user.avatarUrl}
+        alt={user.name}
         className="h-6 w-6 rounded-full object-cover"
       />
     );

@@ -15,7 +15,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import {
   createProjectStartedEvent,
@@ -25,6 +24,7 @@ import {
 import { projectFormSchema } from "@/lib/schemas/project";
 import { ProjectFields } from "@/components/project-form/ProjectFields";
 import { CustomFieldsRenderer } from "@/components/project-form/CustomFieldsRenderer";
+import { OrganisationSearchSelect } from "@/components/organisation/OrganisationSearchSelect";
 import { EMPTY_UUID } from "@/lib/constants";
 
 export default function CreateProjectRoute() {
@@ -106,9 +106,15 @@ export default function CreateProjectRoute() {
             name="organisationID"
             render={({ field }) => (
               <FormItem className="max-w-2xl">
-                <FormLabel>Organisation ID</FormLabel>
+                <FormLabel>Organisation</FormLabel>
                 <FormControl>
-                  <Input placeholder="UUID" {...field} />
+                  <OrganisationSearchSelect
+                    value={field.value}
+                    onSelect={(organisationId) =>
+                      field.onChange(organisationId)
+                    }
+                    disabled={field.disabled}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

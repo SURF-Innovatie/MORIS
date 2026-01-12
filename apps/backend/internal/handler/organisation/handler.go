@@ -285,6 +285,34 @@ func (h *Handler) ListChildren(w http.ResponseWriter, r *http.Request) {
 	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOs[dto.OrganisationResponse](nodes))
 }
 
+// Search godoc
+// @Summary Search organisation nodes
+// @Description Search for organisation nodes by name
+// @Tags organisation
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param q query string true "Search query"
+// @Success 200 {array} dto.OrganisationResponse
+// @Failure 401 {string} string "unauthorized"
+// @Failure 500 {string} string "internal server error"
+// @Router /organisation-nodes/search [get]
+func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("q")
+	if query == "" {
+		_ = httputil.WriteJSON(w, http.StatusOK, []dto.OrganisationResponse{})
+		return
+	}
+
+	nodes, err := h.svc.Search(r.Context(), query)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOs[dto.OrganisationResponse](nodes))
+}
+
 // SearchROR godoc
 // @Summary Search ROR
 // @Description Search for organizations in ROR
