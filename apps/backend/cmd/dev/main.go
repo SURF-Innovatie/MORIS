@@ -117,6 +117,7 @@ func main() {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%s", env.Global.CacheHost, env.Global.CachePort),
 		Password: env.Global.CachePassword,
+		Username: env.Global.CacheUser,
 	})
 	if err := rdb.Ping(context.Background()).Err(); err != nil {
 		logrus.Warnf("failed to connect to redis/valkey: %v", err)

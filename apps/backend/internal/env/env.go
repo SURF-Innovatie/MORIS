@@ -18,6 +18,7 @@ type Config struct {
 	CacheHost     string
 	CachePort     string
 	CachePassword string
+	CacheUser     string
 	JWTSecret     string
 	Port          string
 	RAiDAPIKey    string
@@ -44,6 +45,7 @@ func init() {
 		CacheHost:     getEnv("CACHE_HOST", true, ""),
 		CachePort:     getEnv("CACHE_PORT", true, ""),
 		CachePassword: getEnv("CACHE_PASSWORD", false, ""),
+		CacheUser:     getEnv("CACHE_USER", false, ""),
 		JWTSecret:     getEnv("JWT_SECRET", true, ""),
 		Port:          getEnv("PORT", true, ""),
 		RAiDAPIKey:    getEnv("RAID_API_KEY", false, "test-key"),
