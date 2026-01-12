@@ -45,6 +45,9 @@ RUN curl -sSf https://atlasgo.sh | sh
 COPY --from=builder /server /server
 COPY --from=builder /seed /seed
 
+# Copy migrations for Atlas
+COPY --from=builder /app/ent/migrate/migrations ./ent/migrate/migrations
+
 # Expose port (default for Go servers is often 8080 or depends on env, checking docker-compose usually helps but 8080 is safe default)
 EXPOSE 8080
 
