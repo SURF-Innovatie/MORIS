@@ -194,7 +194,7 @@ export function RoleDialog({
             <div className="border rounded-md p-4 space-y-3 max-h-60 overflow-y-auto">
               {permissions.map((perm) => {
                 const isChecked = (selectedPermissions || []).includes(
-                  perm.key
+                  perm.key || ""
                 );
                 return (
                   <div key={perm.key} className="flex items-start space-x-2">
@@ -202,7 +202,7 @@ export function RoleDialog({
                       id={`perm-${perm.key}`}
                       checked={isChecked}
                       onCheckedChange={(c) =>
-                        handlePermissionChange(perm.key, c as boolean)
+                        handlePermissionChange(perm.key || "", c as boolean)
                       }
                       disabled={isPending}
                     />

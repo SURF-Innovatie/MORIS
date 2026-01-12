@@ -261,7 +261,7 @@ function ProjectEditForm() {
               onSubmit={onSubmit}
               isUpdating={isSaving}
               project={project}
-              pendingEvents={pendingEventsData?.events}
+              pendingEvents={pendingEventsData?.events as any}
             />
           </TabsContent>
 

@@ -20,6 +20,7 @@ COPY . .
 
 # Build the application
 # Targeting the main entry point defined in package.json dev script: cmd/dev/main.go
+RUN go generate ./ent
 RUN CGO_ENABLED=0 GOOS=linux go build -o /server ./cmd/dev/main.go
 
 # Final stage
@@ -28,7 +29,10 @@ FROM alpine:latest
 WORKDIR /app
 
 # Install runtime dependencies if needed (e.g. ca-certificates for external requests)
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates curl
+
+# Install Atlas
+RUN curl -sSf https://atlasgo.sh | sh
 
 # Copy binary from builder
 COPY --from=builder /server /server
