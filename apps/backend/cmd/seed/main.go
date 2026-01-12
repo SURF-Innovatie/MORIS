@@ -58,6 +58,7 @@ func main() {
 	dbPort := os.Getenv("DB_PORT")
 
 	skipSeed := flag.Bool("skip-seed", false, "Skip seeding data, only reset schema and apply migrations")
+	skipMigrations := flag.Bool("skip-migrations", false, "Skip applying database migrations")
 	noReset := flag.Bool("no-reset", false, "Skip database schema reset (do not drop public schema)")
 	flag.Parse()
 
@@ -97,14 +98,18 @@ func main() {
 		logrus.Info("Skipping database schema reset as requested by -no-reset flag.")
 	}
 
-	logrus.Info("Applying database migrations...")
-	cmd := exec.Command("pnpm", "run", "db:migrate:apply")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		logrus.Fatalf("failed running database migrations: %v", err)
+	if !*skipMigrations {
+		logrus.Info("Applying database migrations...")
+		cmd := exec.Command("pnpm", "run", "db:migrate:apply")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			logrus.Fatalf("failed running database migrations: %v", err)
+		}
+		logrus.Info("Database migrations applied.")
+	} else {
+		logrus.Info("Skipping database migrations as requested.")
 	}
-	logrus.Info("Database migrations applied.")
 
 	if *skipSeed {
 		logrus.Info("Skipping data seeding as requested.")
