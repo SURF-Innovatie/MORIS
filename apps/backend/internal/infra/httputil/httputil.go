@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/env"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"

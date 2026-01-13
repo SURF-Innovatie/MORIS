@@ -99,3 +99,19 @@ func (r *EntRepo) Search(ctx context.Context, query string, limit int) ([]entiti
 	}
 	return transform.ToEntities[entities.Person](rows), nil
 }
+
+func (r *EntRepo) SetORCID(ctx context.Context, personID uuid.UUID, orcidID string) error {
+	_, err := r.cli.Person.
+		UpdateOneID(personID).
+		SetOrcidID(orcidID).
+		Save(ctx)
+	return err
+}
+
+func (r *EntRepo) ClearORCID(ctx context.Context, personID uuid.UUID) error {
+	_, err := r.cli.Person.
+		UpdateOneID(personID).
+		ClearOrcidID().
+		Save(ctx)
+	return err
+}

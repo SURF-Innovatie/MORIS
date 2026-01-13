@@ -25,14 +25,14 @@ type Service interface {
 }
 
 type service struct {
-	users      UserRepository
+	users      Repository
 	people     PersonRepository
 	es         EventStore
 	membership ProjectMembershipRepository
 }
 
 func NewService(
-	users UserRepository,
+	users Repository,
 	people PersonRepository,
 	es EventStore,
 	membership ProjectMembershipRepository,

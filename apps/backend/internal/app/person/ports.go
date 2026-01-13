@@ -16,4 +16,6 @@ type Repository interface {
 
 	// needed by user.SearchPersons (and generally useful)
 	Search(ctx context.Context, query string, limit int) ([]entities.Person, error)
+	SetORCID(ctx context.Context, personID uuid.UUID, orcidID string) error
+	ClearORCID(ctx context.Context, personID uuid.UUID) error
 }

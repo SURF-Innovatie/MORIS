@@ -9,6 +9,9 @@ import (
 	"os/exec"
 	"time"
 
+	exorcid "github.com/SURF-Innovatie/MORIS/external/orcid"
+	"github.com/SURF-Innovatie/MORIS/internal/app/orcid"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	logger "github.com/chi-middleware/logrus-logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -20,7 +23,6 @@ import (
 	_ "github.com/SURF-Innovatie/MORIS/api/swag-docs"
 	"github.com/SURF-Innovatie/MORIS/ent"
 	crossref2 "github.com/SURF-Innovatie/MORIS/external/crossref"
-	"github.com/SURF-Innovatie/MORIS/external/orcid"
 	"github.com/SURF-Innovatie/MORIS/external/zenodo"
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
@@ -36,7 +38,6 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/customfield"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
-	"github.com/SURF-Innovatie/MORIS/internal/env"
 	"github.com/SURF-Innovatie/MORIS/internal/errorlog"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
 	authhandler "github.com/SURF-Innovatie/MORIS/internal/handler/auth"
@@ -162,7 +163,14 @@ func main() {
 	personSvc := personsvc.NewService(personRepo)
 	userSvc := user.NewService(userRepo, personSvc, esStore, membershipRepo)
 	authSvc := auth.NewJWTService(client, userSvc, personSvc, env.Global.JWTSecret)
-	orcidSvc := orcid.NewService(client, userSvc, http.DefaultClient)
+
+	orcidOpts, err := env.ORCIDOptionsFromEnv()
+	if err != nil {
+		logrus.Fatalf("failed to get ORCiD config from env: %v", err)
+	}
+
+	orcidCli := exorcid.NewClient(http.DefaultClient, orcidOpts)
+	orcidSvc := orcid.NewService(userRepo, personRepo, orcidCli)
 	curUser := auth.NewCurrentUserProvider(client)
 
 	personHandler := personhandler.NewHandler(personSvc)

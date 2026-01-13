@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type UserRepository interface {
+type Repository interface {
 	Get(ctx context.Context, id uuid.UUID) (*entities.User, error)
 	Create(ctx context.Context, u entities.User) (*entities.User, error)
 	Update(ctx context.Context, id uuid.UUID, u entities.User) (*entities.User, error)
