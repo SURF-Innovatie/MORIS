@@ -202,5 +202,5 @@ func main() {
 		logrus.Fatalf("running ent code generation: %v", err)
 	}
 
-	log.Println("Ent code and OpenAPI spec generated successfully, including custom endpoints from swag.")
+	logrus.Info("Ent code and OpenAPI spec generated successfully, including custom endpoints from swag.")
 }

@@ -42,7 +42,7 @@ func main() {
 	}
 
 	if len(os.Args) < 2 {
-		log.Fatalln("migration name is required. Use: 'pnpm run db:migrate:diff <name>'")
+		logrus.Fatal("migration name is required. Use: 'pnpm run db:migrate:diff <name>'")
 	}
 
 	migrationName := os.Args[1]
