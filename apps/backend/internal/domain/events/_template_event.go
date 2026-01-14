@@ -13,8 +13,10 @@ package events
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
@@ -123,9 +125,9 @@ func init() {
 		},
 
 		// Optional: Define when notifications should be sent (nil = never)
-		CheckNotification: func(ctx context.Context, event Event, client *ent.Client) bool {
-			return true // or add custom logic
-		},
+		// CheckNotification: func(ctx context.Context, event Event, client *ent.Client) bool {
+		// 	return true // or add custom logic
+		// },
 
 		// Optional: Define who can trigger this event (nil = everyone)
 		CheckAllowed: func(ctx context.Context, event Event, client *ent.Client) bool {

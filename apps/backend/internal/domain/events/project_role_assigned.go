@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
@@ -83,9 +82,6 @@ func init() {
 	RegisterMeta(EventMeta{
 		Type:         ProjectRoleAssignedType,
 		FriendlyName: "Project Role Assignment",
-		CheckApproval: func(ctx context.Context, event Event, client *ent.Client) bool {
-			return true // Always requires approval
-		},
 	}, func() Event { return &ProjectRoleAssigned{} })
 
 	RegisterDecider[ProjectRoleAssignedInput](ProjectRoleAssignedType,

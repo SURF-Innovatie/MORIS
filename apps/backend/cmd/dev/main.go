@@ -207,7 +207,10 @@ func main() {
 
 	eventSvc.RegisterNotificationHandler(&event.ProjectEventNotificationHandler{Cli: client, ES: esStore})
 	eventSvc.RegisterNotificationHandler(&event.ApprovalRequestNotificationHandler{Cli: client, ES: esStore, RBAC: rbacSvc})
-	eventSvc.RegisterNotificationHandler(&event.StatusUpdateNotificationHandler{Cli: client})
+
+	statusUpdateHandler := &event.StatusUpdateNotificationHandler{Cli: client}
+	eventSvc.RegisterStatusChangeHandler(statusUpdateHandler.Handle)
+
 	evtHandler := eventHandler.NewHandler(eventSvc, client)
 
 	notificationHandler := notificationhandler.NewHandler(notifierSvc)

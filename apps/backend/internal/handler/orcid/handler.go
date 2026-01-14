@@ -30,7 +30,7 @@ func MountRoutes(r chi.Router, h *Handler) {
 // @Produce json
 // @Security BearerAuth
 // @Param q query string true "Search query"
-// @Success 200 {array} orcid.OrcidPerson
+// @Success 200 {array} object
 // @Failure 401 {object} httputil.BackendError "User not authenticated"
 // @Failure 500 {object} httputil.BackendError "Internal server error"
 // @Router /orcid/search [get]

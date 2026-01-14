@@ -46,9 +46,27 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	authUser, ok := httputil.GetUserFromContext(r.Context())
+	if !ok {
+		httputil.WriteError(w, r, http.StatusUnauthorized, "user not authenticated", nil)
+		return
+	}
+
+	canMakeSysAdmin := authUser.User.IsSysAdmin
+	if req.IsSysAdmin != nil && *req.IsSysAdmin && !canMakeSysAdmin {
+		httputil.WriteError(w, r, http.StatusForbidden, "only admins can create admins", nil)
+		return
+	}
+
+	isSysAdmin := false
+	if req.IsSysAdmin != nil {
+		isSysAdmin = *req.IsSysAdmin
+	}
+
 	u, err := h.svc.Create(r.Context(), entities.User{
-		PersonID: req.PersonID,
-		Password: req.Password,
+		PersonID:   req.PersonID,
+		Password:   req.Password,
+		IsSysAdmin: isSysAdmin,
 	})
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
@@ -129,10 +147,33 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.svc.Update(r.Context(), id, entities.User{
-		PersonID: req.PersonID,
-		Password: req.Password,
-	})
+	if req.IsSysAdmin != nil {
+		// Only admins can change admin status
+		if !authUser.User.IsSysAdmin {
+			httputil.WriteError(w, r, http.StatusForbidden, "only admins can change admin status", nil)
+			return
+		}
+	}
+
+	// Fetch existing to merge state
+	existingUser, err := h.svc.Get(r.Context(), id)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	// Merge
+	if req.PersonID != uuid.Nil {
+		existingUser.PersonID = req.PersonID
+	}
+	if req.Password != "" {
+		existingUser.Password = req.Password
+	}
+	if req.IsSysAdmin != nil {
+		existingUser.IsSysAdmin = *req.IsSysAdmin
+	}
+
+	_, err = h.svc.Update(r.Context(), id, *existingUser)
 
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)

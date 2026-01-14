@@ -14,8 +14,9 @@ type UserPaginatedResponse struct {
 }
 
 type UserRequest struct {
-	PersonID uuid.UUID `json:"person_id"`
-	Password string    `json:"password"`
+	PersonID   uuid.UUID `json:"person_id"`
+	Password   string    `json:"password"`
+	IsSysAdmin *bool     `json:"is_sys_admin"`
 }
 
 type UserToggleActiveRequest struct {

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
@@ -62,9 +61,6 @@ func init() {
 	RegisterMeta(EventMeta{
 		Type:         EndDateChangedType,
 		FriendlyName: "End Date Change",
-		CheckNotification: func(ctx context.Context, event Event, client *ent.Client) bool {
-			return true
-		},
 	}, func() Event { return &EndDateChanged{} })
 
 	RegisterDecider[EndDateChangedInput](EndDateChangedType,
