@@ -116,26 +116,42 @@ func (e *evaluator) EvaluateAndExecute(ctx context.Context, event events.Event, 
 
 	logrus.Infof("EvaluateAndExecute: Found %d approval polices and %d notification policies", len(approvalPolicies), len(notificationPolicies))
 
-	// 4. Execute approval policies first
-	approvalSent := false
-	for _, policy := range approvalPolicies {
-		if err := e.executeAction(ctx, policy, event, project); err != nil {
-			logrus.Infof("policy action error for %s: %v", policy.ID, err)
-		} else {
-			approvalSent = true
+	// 4. Determine execution strategy based on event status
+	status := event.GetStatus()
+	logrus.Infof("EvaluateAndExecute: Processing event %s with status %s", event.GetID(), status)
+
+	if status == events.StatusPending {
+		// For pending events:
+		// 1. Execute approval policies first
+		approvalSent := false
+		for _, policy := range approvalPolicies {
+			if err := e.executeAction(ctx, policy, event, project); err != nil {
+				logrus.Infof("policy action error for %s: %v", policy.ID, err)
+			} else {
+				approvalSent = true
+			}
 		}
-	}
 
-	// 5. Skip notification policies if an approval was already sent
-	if approvalSent {
-		logrus.Infof("skipping notification policies - approval already sent for event %s", event.GetID())
-		return nil
-	}
+		// 2. Skip notification policies if an approval was already sent (it will be sent on approval)
+		if approvalSent {
+			logrus.Infof("skipping notification policies - approval already sent for event %s", event.GetID())
+			return nil
+		}
 
-	// 6. Execute notification policies
-	for _, policy := range notificationPolicies {
-		if err := e.executeAction(ctx, policy, event, project); err != nil {
-			logrus.Infof("policy action error for %s: %v", policy.ID, err)
+		// 3. Execute notification policies (no approval required by any policy)
+		for _, policy := range notificationPolicies {
+			if err := e.executeAction(ctx, policy, event, project); err != nil {
+				logrus.Infof("policy action error for %s: %v", policy.ID, err)
+			}
+		}
+	} else if status == events.StatusApproved {
+		// For approved events:
+		// Only execute notification policies. Approval policies were already handled.
+		// We send notifications now because they were likely skipped during the 'pending' phase.
+		for _, policy := range notificationPolicies {
+			if err := e.executeAction(ctx, policy, event, project); err != nil {
+				logrus.Infof("policy action error for %s: %v", policy.ID, err)
+			}
 		}
 	}
 

@@ -123,8 +123,9 @@ func (h *Handler) GetPendingEvents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := dto.EventResponse{
-		Events: lo.Map(pendingEvents, func(e events.Event, _ int) dto.Event {
-			return transform.ToDTOItem[dto.Event](e)
+		Events: lo.Map(pendingEvents, func(e events.DetailedEvent, _ int) dto.Event {
+			var d dto.Event
+			return d.FromDetailedEntity(e)
 		}),
 	}
 

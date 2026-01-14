@@ -23,6 +23,7 @@ type PersonRepository interface {
 	Get(ctx context.Context, id uuid.UUID) (*entities.Person, error)
 	GetByEmail(ctx context.Context, email string) (*entities.Person, error)
 	Search(ctx context.Context, query string, limit int) ([]entities.Person, error)
+	GetByIDs(ctx context.Context, ids []uuid.UUID) ([]entities.Person, error)
 }
 
 type EventStore interface {

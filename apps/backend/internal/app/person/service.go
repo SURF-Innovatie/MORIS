@@ -14,6 +14,7 @@ type Service interface {
 	List(ctx context.Context) ([]*entities.Person, error)
 	GetByEmail(ctx context.Context, email string) (*entities.Person, error)
 	Search(ctx context.Context, query string, limit int) ([]entities.Person, error)
+	GetByIDs(ctx context.Context, ids []uuid.UUID) ([]entities.Person, error)
 }
 
 type service struct {
@@ -46,4 +47,8 @@ func (s *service) GetByEmail(ctx context.Context, email string) (*entities.Perso
 
 func (s *service) Search(ctx context.Context, query string, limit int) ([]entities.Person, error) {
 	return s.repo.Search(ctx, query, limit)
+}
+
+func (s *service) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]entities.Person, error) {
+	return s.repo.GetByIDs(ctx, ids)
 }

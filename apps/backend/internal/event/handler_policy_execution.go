@@ -17,10 +17,10 @@ type PolicyExecutionHandler struct {
 }
 
 func (h *PolicyExecutionHandler) Handle(ctx context.Context, event events.Event) error {
-	// Skip policy evaluation for already processed events (approved/rejected)
-	// This prevents duplicate notifications when ApproveEvent/RejectEvent call HandleEvents
+	// Skip policy evaluation for rejected events
+	// Approved events are allowed through so notification policies can trigger
 	status := event.GetStatus()
-	if status == "approved" || status == "rejected" {
+	if status == "rejected" {
 		return nil
 	}
 

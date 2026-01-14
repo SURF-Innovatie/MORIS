@@ -17,7 +17,7 @@ import { Loader2, Plus, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProjectPolicyCard } from "./ProjectPolicyCard";
-import { CreateProjectPolicyDialog } from "./CreateProjectPolicyDialog";
+import { ProjectPolicyFormDialog } from "./ProjectPolicyFormDialog";
 
 interface ProjectEventPoliciesTabProps {
   projectId: string;
@@ -29,6 +29,9 @@ export function ProjectEventPoliciesTab({
   orgNodeId,
 }: ProjectEventPoliciesTabProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editPolicy, setEditPolicy] = useState<EventPolicyResponse | null>(
+    null
+  );
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -36,6 +39,7 @@ export function ProjectEventPoliciesTab({
 
   const canAddPolicy = hasAccess(ProjectEventType.EventPolicyAdded);
   const canRemovePolicy = hasAccess(ProjectEventType.EventPolicyRemoved);
+  const canUpdatePolicy = hasAccess(ProjectEventType.EventPolicyUpdated);
 
   // Fetch event types from backend
   const { data: eventTypes = [] } = useGetEventTypes();
@@ -104,7 +108,7 @@ export function ProjectEventPoliciesTab({
                 New Policy
               </Button>
             </DialogTrigger>
-            <CreateProjectPolicyDialog
+            <ProjectPolicyFormDialog
               projectId={projectId}
               eventTypes={eventTypes}
               projectRoles={projectRoles}
@@ -136,6 +140,9 @@ export function ProjectEventPoliciesTab({
                 key={policy.id}
                 policy={policy}
                 eventTypes={eventTypes}
+                onEdit={
+                  canUpdatePolicy ? () => setEditPolicy(policy) : undefined
+                }
                 onDelete={
                   canRemovePolicy ? () => handleDeletePolicy(policy) : undefined
                 }
@@ -167,6 +174,22 @@ export function ProjectEventPoliciesTab({
           </div>
         </div>
       )}
+      {/* Edit Dialog */}
+      <Dialog
+        open={!!editPolicy}
+        onOpenChange={(open) => !open && setEditPolicy(null)}
+      >
+        {editPolicy && (
+          <ProjectPolicyFormDialog
+            projectId={projectId}
+            eventTypes={eventTypes}
+            projectRoles={projectRoles}
+            orgRoles={orgRoles}
+            policy={editPolicy}
+            onClose={() => setEditPolicy(null)}
+          />
+        )}
+      </Dialog>
     </div>
   );
 }

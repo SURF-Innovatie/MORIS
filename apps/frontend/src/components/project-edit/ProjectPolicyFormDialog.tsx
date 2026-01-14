@@ -5,10 +5,13 @@ import {
   EventTypeInfo,
   ProjectRoleResponse,
   OrganisationRoleResponse,
+  EventPolicyResponse,
 } from "@api/model";
 import {
   createEventPolicyAddedEvent,
+  createEventPolicyUpdatedEvent,
   EventPolicyAddedInput,
+  EventPolicyUpdatedInput,
 } from "@/api/events";
 import { MultiUserSelect } from "@/components/user/MultiUserSelect";
 import { Button } from "@/components/ui/button";
@@ -39,34 +42,44 @@ const DYNAMIC_RECIPIENTS = [
   { value: "org_admins", label: "Organisation Admins" },
 ];
 
-interface CreateProjectPolicyDialogProps {
+interface ProjectPolicyFormDialogProps {
   projectId: string;
   eventTypes: EventTypeInfo[];
   projectRoles: ProjectRoleResponse[];
   orgRoles: OrganisationRoleResponse[];
+  policy?: EventPolicyResponse;
   onClose: () => void;
 }
 
-export function CreateProjectPolicyDialog({
+export function ProjectPolicyFormDialog({
   projectId,
   eventTypes,
   projectRoles,
   orgRoles,
+  policy,
   onClose,
-}: CreateProjectPolicyDialogProps) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>([]);
+}: ProjectPolicyFormDialogProps) {
+  const [name, setName] = useState(policy?.name || "");
+  const [description, setDescription] = useState(policy?.description || "");
+  const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>(
+    policy?.event_types || []
+  );
   const [actionType, setActionType] = useState<"notify" | "request_approval">(
-    "notify"
+    (policy?.action_type as "notify" | "request_approval") || "notify"
   );
-  const [dynamicRecipients, setDynamicRecipients] = useState<string[]>([]);
-  const [specificUsers, setSpecificUsers] = useState<string[]>([]);
+  const [dynamicRecipients, setDynamicRecipients] = useState<string[]>(
+    policy?.recipient_dynamic || []
+  );
+  const [specificUsers, setSpecificUsers] = useState<string[]>(
+    policy?.recipient_user_ids || []
+  );
   const [selectedProjectRoles, setSelectedProjectRoles] = useState<string[]>(
-    []
+    policy?.recipient_project_role_ids || []
   );
-  const [selectedOrgRoles, setSelectedOrgRoles] = useState<string[]>([]);
-  const [enabled, setEnabled] = useState(true);
+  const [selectedOrgRoles, setSelectedOrgRoles] = useState<string[]>(
+    policy?.recipient_org_role_ids || []
+  );
+  const [enabled, setEnabled] = useState(policy?.enabled ?? true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const queryClient = useQueryClient();
@@ -77,25 +90,48 @@ export function CreateProjectPolicyDialog({
     setIsSubmitting(true);
 
     try {
-      const input: EventPolicyAddedInput = {
-        name,
-        description: description || "",
-        event_types: selectedEventTypes,
-        action_type: actionType,
-        recipient_user_ids: specificUsers,
-        recipient_project_role_ids: selectedProjectRoles,
-        recipient_org_role_ids: selectedOrgRoles,
-        recipient_dynamic: dynamicRecipients,
-        enabled,
-      };
-      await createEventPolicyAddedEvent(projectId, input);
+      if (policy?.id) {
+        const input: EventPolicyUpdatedInput = {
+          policy_id: policy.id,
+          name,
+          description: description || "",
+          event_types: selectedEventTypes,
+          action_type: actionType,
+          recipient_user_ids: specificUsers,
+          recipient_project_role_ids: selectedProjectRoles,
+          recipient_org_role_ids: selectedOrgRoles,
+          recipient_dynamic: dynamicRecipients,
+          enabled,
+        };
+        await createEventPolicyUpdatedEvent(projectId, input);
+        toast({ title: "Policy update requested" });
+      } else {
+        const input: EventPolicyAddedInput = {
+          name,
+          description: description || "",
+          event_types: selectedEventTypes,
+          action_type: actionType,
+          recipient_user_ids: specificUsers,
+          recipient_project_role_ids: selectedProjectRoles,
+          recipient_org_role_ids: selectedOrgRoles,
+          recipient_dynamic: dynamicRecipients,
+          enabled,
+        };
+        await createEventPolicyAddedEvent(projectId, input);
+        toast({ title: "Policy creation requested" });
+      }
+
       queryClient.invalidateQueries({
         queryKey: getGetProjectsIdPoliciesQueryKey(projectId),
       });
-      toast({ title: "Policy creation requested" });
       onClose();
     } catch (error) {
-      toast({ title: "Failed to create policy", variant: "destructive" });
+      toast({
+        title: policy?.id
+          ? "Failed to update policy"
+          : "Failed to create policy",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -132,7 +168,9 @@ export function CreateProjectPolicyDialog({
   return (
     <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle>Create Project Event Policy</DialogTitle>
+        <DialogTitle>
+          {policy?.id ? "Update" : "Create"} Project Event Policy
+        </DialogTitle>
       </DialogHeader>
       <form
         onSubmit={handleSubmit}
@@ -324,7 +362,7 @@ export function CreateProjectPolicyDialog({
             disabled={!name || selectedEventTypes.length === 0 || isSubmitting}
           >
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create Policy
+            {policy?.id ? "Update" : "Create"} Policy
           </Button>
         </DialogFooter>
       </form>

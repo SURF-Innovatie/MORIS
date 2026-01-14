@@ -22,6 +22,8 @@ type Service interface {
 	ToggleActive(ctx context.Context, id uuid.UUID, isActive bool) error
 
 	SearchPersons(ctx context.Context, query string, observerPersonID *uuid.UUID) ([]entities.Person, error)
+	GetPeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.Person, error)
+	GetPeopleByUserIDs(ctx context.Context, userIDs []uuid.UUID) (map[uuid.UUID]entities.Person, error)
 }
 
 type service struct {
@@ -144,4 +146,30 @@ func (s *service) SearchPersons(ctx context.Context, query string, observerPerso
 		return ok
 	})
 	return out, nil
+}
+
+func (s *service) GetPeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.Person, error) {
+	persons, err := s.people.GetByIDs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	return lo.SliceToMap(persons, func(p entities.Person) (uuid.UUID, entities.Person) {
+		return p.ID, p
+	}), nil
+}
+
+func (s *service) GetPeopleByUserIDs(ctx context.Context, userIDs []uuid.UUID) (map[uuid.UUID]entities.Person, error) {
+	userMap := make(map[uuid.UUID]entities.Person)
+	for _, uid := range userIDs {
+		u, err := s.users.Get(ctx, uid)
+		if err != nil {
+			continue
+		}
+		p, err := s.people.Get(ctx, u.PersonID)
+		if err != nil {
+			continue
+		}
+		userMap[uid] = *p
+	}
+	return userMap, nil
 }

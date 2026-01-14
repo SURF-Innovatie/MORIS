@@ -56,6 +56,7 @@ export interface BaseEvent {
   person?: PersonResponse;
   product?: ProductResponse;
   projectRole?: ProjectRoleResponse;
+  creator?: PersonResponse;
   data?: any;
 }
 

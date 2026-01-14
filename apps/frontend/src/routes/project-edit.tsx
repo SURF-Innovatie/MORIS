@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
@@ -16,6 +16,7 @@ import {
   createEndDateChangedEvent,
   createOwningOrgNodeChangedEvent,
   createCustomFieldValueSetEvent,
+  ProjectEventType,
 } from "@/api/events";
 
 import { GeneralTab } from "@/components/project-edit/GeneralTab";
@@ -69,6 +70,12 @@ function ProjectEditForm() {
       },
     });
 
+  const projectedProject = useMemo(() => {
+    if (!project) return undefined;
+    if (!pendingEventsData?.events) return project;
+    return applyPendingEvents(project, pendingEventsData.events);
+  }, [project, pendingEventsData]);
+
   const [isSaving, setIsSaving] = useState(false);
 
   const form = useForm<z.infer<typeof projectFormSchema>>({
@@ -81,33 +88,47 @@ function ProjectEditForm() {
   });
 
   useEffect(() => {
-    if (project) {
+    if (projectedProject) {
       form.reset({
-        title: project.title || "",
-        description: project.description || "",
-        startDate: project.start_date
-          ? new Date(project.start_date)
+        title: projectedProject.title || "",
+        description: projectedProject.description || "",
+        startDate: projectedProject.start_date
+          ? new Date(projectedProject.start_date)
           : undefined,
-        endDate: project.end_date ? new Date(project.end_date) : undefined,
-        organisationID: project.owning_org_node?.id || EMPTY_UUID,
-        customFields: project.custom_fields || {},
+        endDate: projectedProject.end_date
+          ? new Date(projectedProject.end_date)
+          : undefined,
+        organisationID: projectedProject.owning_org_node?.id || EMPTY_UUID,
+        customFields: projectedProject.custom_fields || {},
       });
     }
-  }, [project, form]);
+  }, [projectedProject, form]);
+
+  useEffect(() => {
+    const handleRefresh = () => {
+      refetchPending();
+    };
+
+    window.addEventListener("notifications:should-refresh", handleRefresh);
+
+    return () => {
+      window.removeEventListener("notifications:should-refresh", handleRefresh);
+    };
+  }, [refetchPending]);
 
   async function onSubmit(values: z.infer<typeof projectFormSchema>) {
-    if (!project) return;
+    if (!projectedProject) return;
 
     setIsSaving(true);
     try {
       const promises: Promise<any>[] = [];
 
       // Compare and emit events for changed fields
-      if (values.title !== project.title) {
+      if (values.title !== projectedProject.title) {
         promises.push(createTitleChangedEvent(id!, { title: values.title }));
       }
 
-      if (values.description !== project.description) {
+      if (values.description !== projectedProject.description) {
         promises.push(
           createDescriptionChangedEvent(id!, {
             description: values.description,
@@ -115,8 +136,8 @@ function ProjectEditForm() {
         );
       }
 
-      const currentStartDate = project.start_date
-        ? new Date(project.start_date).toISOString()
+      const currentStartDate = projectedProject.start_date
+        ? new Date(projectedProject.start_date).toISOString()
         : null;
       if (values.startDate.toISOString() !== currentStartDate) {
         promises.push(
@@ -126,8 +147,8 @@ function ProjectEditForm() {
         );
       }
 
-      const currentEndDate = project.end_date
-        ? new Date(project.end_date).toISOString()
+      const currentEndDate = projectedProject.end_date
+        ? new Date(projectedProject.end_date).toISOString()
         : null;
       if (values.endDate.toISOString() !== currentEndDate) {
         promises.push(
@@ -137,7 +158,8 @@ function ProjectEditForm() {
         );
       }
 
-      const currentOrgNodeId = project.owning_org_node?.id || EMPTY_UUID;
+      const currentOrgNodeId =
+        projectedProject.owning_org_node?.id || EMPTY_UUID;
       if (values.organisationID !== currentOrgNodeId) {
         promises.push(
           createOwningOrgNodeChangedEvent(id!, {
@@ -148,7 +170,7 @@ function ProjectEditForm() {
 
       // Handle Custom Fields updates
       if (values.customFields) {
-        const currentFields = project.custom_fields || {};
+        const currentFields = projectedProject.custom_fields || {};
         Object.entries(values.customFields).map(([defId, value]) => {
           let valStr = String(value);
           if (value instanceof Date) valStr = value.toISOString();
@@ -208,7 +230,7 @@ function ProjectEditForm() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
         <div className="container flex h-16 items-center justify-between py-4">
           <div className="flex items-center gap-4">
             <Button
@@ -220,7 +242,7 @@ function ProjectEditForm() {
             </Button>
             <div className="flex flex-col">
               <h1 className="text-lg font-semibold leading-none tracking-tight">
-                {project?.title || "Project Settings"}
+                {projectedProject?.title || "Project Settings"}
               </h1>
               <p className="text-sm text-muted-foreground">
                 Manage your project settings and team
@@ -260,7 +282,7 @@ function ProjectEditForm() {
               form={form}
               onSubmit={onSubmit}
               isUpdating={isSaving}
-              project={project}
+              project={projectedProject}
               pendingEvents={pendingEventsData?.events as any}
             />
           </TabsContent>
@@ -268,7 +290,7 @@ function ProjectEditForm() {
           <TabsContent value="people">
             <PeopleTab
               projectId={id!}
-              members={project?.members || []}
+              members={projectedProject?.members || []}
               onRefresh={refetchProject}
             />
           </TabsContent>
@@ -276,7 +298,7 @@ function ProjectEditForm() {
           <TabsContent value="products">
             <ProductsTab
               projectId={id!}
-              products={project?.products || []}
+              products={projectedProject?.products || []}
               onRefresh={refetchProject}
             />
           </TabsContent>
@@ -288,11 +310,102 @@ function ProjectEditForm() {
           <TabsContent value="policies">
             <ProjectEventPoliciesTab
               projectId={id!}
-              orgNodeId={project?.owning_org_node?.id || ""}
+              orgNodeId={projectedProject?.owning_org_node?.id || ""}
             />
           </TabsContent>
         </Tabs>
       </main>
     </div>
   );
+}
+
+function applyPendingEvents(
+  project: any, // Using any here to allow augmentation with pending flags easily
+  events: any[]
+): any {
+  if (!events || events.length === 0) return project;
+
+  // Deep clone to avoid mutating original
+  const p = JSON.parse(JSON.stringify(project));
+
+  // Sort events by date? usually they come sorted? Assuming they are sorted chronologically or we trust the order.
+  // Actually the order matters.
+
+  for (const e of events) {
+    if (e.status !== "pending") continue; // should only be pending events here anyway based on hook
+
+    switch (e.type) {
+      case ProjectEventType.TitleChanged:
+        if (e.data?.title) p.title = e.data.title;
+        break;
+      case ProjectEventType.DescriptionChanged:
+        if (e.data?.description) p.description = e.data.description;
+        break;
+      case ProjectEventType.StartDateChanged:
+        if (e.data?.start_date) p.start_date = e.data.start_date;
+        break;
+      case ProjectEventType.EndDateChanged:
+        if (e.data?.end_date) p.end_date = e.data.end_date;
+        break;
+      case ProjectEventType.OwningOrgNodeChanged:
+        // We only have ID, so we patch it partial
+        if (e.data?.owning_org_node_id) {
+          p.owning_org_node = {
+            ...(p.owning_org_node || {}),
+            id: e.data.owning_org_node_id,
+          };
+        }
+        break;
+      case ProjectEventType.CustomFieldValueSet:
+        if (e.data?.definition_id) {
+          p.custom_fields = p.custom_fields || {};
+          p.custom_fields[e.data.definition_id] = e.data.value;
+        }
+        break;
+      case ProjectEventType.ProductAdded:
+        if (e.product && e.product.id) {
+          p.products = p.products || [];
+          p.products.push({ ...e.product, pending: true });
+        }
+        break;
+      case ProjectEventType.ProductRemoved:
+        if (e.data?.product_id) {
+          p.products = (p.products || []).filter(
+            (prod: any) => prod.id !== e.data.product_id
+          );
+        }
+        break;
+      case ProjectEventType.ProjectRoleAssigned:
+        if (e.person && e.projectRole) {
+          p.members = p.members || [];
+          // Construct member object
+          const newMember = {
+            id: `pending-${e.person.id}-${e.projectRole.id}`, // Temporary ID
+            user_id: e.person.id,
+            name: `${e.person.givenName} ${e.person.familyName}`.trim(),
+            email: e.person.email,
+            avatarUrl: e.person.avatarUrl, // Assuming it might be here
+            role: e.projectRole.slug, // Checking role slug
+            role_id: e.projectRole.id,
+            role_name: e.projectRole.name,
+            pending: true,
+          };
+          p.members.push(newMember);
+        }
+        break;
+      case ProjectEventType.ProjectRoleUnassigned:
+        if (e.data?.person_id && e.data?.project_role_id) {
+          p.members = (p.members || []).filter(
+            (m: any) =>
+              !(
+                m.user_id === e.data.person_id &&
+                m.role_id === e.data.project_role_id
+              )
+          );
+        }
+        break;
+    }
+  }
+
+  return p;
 }

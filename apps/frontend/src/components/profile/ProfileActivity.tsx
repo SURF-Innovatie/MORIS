@@ -23,14 +23,14 @@ export function ProfileActivity({ userId }: ProfileActivityProps) {
     });
 
   return (
-    <Card className="h-full border-dashed">
+    <Card className="flex flex-col h-[calc(100vh-10rem)] border-dashed">
       <CardHeader>
         <CardTitle>Recent Activity</CardTitle>
         <CardDescription>
           Your recent publications and project updates.
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col">
+      <CardContent className="flex-1 overflow-y-auto min-h-0">
         {isLoadingEvents ? (
           <div className="py-12 text-center text-muted-foreground">
             Loading activity...

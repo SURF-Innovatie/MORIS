@@ -20,42 +20,53 @@ import { OrganisationNode } from "./components/OrganisationNode";
 import { CreateChildDialog } from "./components/CreateChildDialog";
 import { RorSearchSelect } from "@/components/organisation/RorSearchSelect";
 import { EditOrganisationDialog } from "./components/EditOrganisationDialog";
+import { OrganisationListLayout } from "./components/OrganisationListLayout";
 
 export const AdminOrganisationPanel = () => {
   const { data: roots, isLoading } = useGetOrganisationNodesRoots();
 
-  if (isLoading) return <div>Loading...</div>;
-
   const renderActions = (node: OrganisationResponse) => {
     return (
       <>
+        <Button
+          variant="outline"
+          size="sm"
+          asChild
+          className="h-7 text-xs px-2"
+        >
+          <Link to={`/dashboard/admin/organisations/${node.id}/roles`}>
+            <Settings size={14} className="mr-1" /> Settings
+          </Link>
+        </Button>
+        <CreateChildDialog
+          parentId={node.id!}
+          trigger={
+            <Button variant="outline" size="sm" className="h-7 text-xs px-2">
+              <Plus size={14} className="mr-1" /> New Unit
+            </Button>
+          }
+        />
         <EditOrganisationDialog node={node} />
-        <CreateChildDialog parentId={node.id!} />
-        <Link to={`/dashboard/admin/organisations/${node.id}/roles`}>
-          <Button variant="ghost" size="sm">
-            <Settings size={14} />
-          </Button>
-        </Link>
       </>
     );
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Organisation Management</h1>
-        <CreateRootDialog />
-      </div>
-      <div className="space-y-2">
-        {roots?.map((node: OrganisationResponse) => (
-          <OrganisationNode
-            key={node.id}
-            node={node}
-            renderActions={renderActions}
-          />
-        ))}
-      </div>
-    </div>
+    <OrganisationListLayout
+      title="Organisation Management"
+      headerActions={<CreateRootDialog />}
+      isLoading={isLoading}
+      isEmpty={roots?.length === 0}
+    >
+      {roots?.map((node: OrganisationResponse) => (
+        <OrganisationNode
+          key={node.id}
+          node={node}
+          renderActions={renderActions}
+          defaultExpanded={true}
+        />
+      ))}
+    </OrganisationListLayout>
   );
 };
 
@@ -97,8 +108,8 @@ const CreateRootDialog = () => {
           <RorSearchSelect
             value={rorId}
             onSelect={(id, item) => {
-               setRorId(id);
-               if (!name) setName(item.name || "");
+              setRorId(id);
+              if (!name) setName(item.name || "");
             }}
           />
           <Button

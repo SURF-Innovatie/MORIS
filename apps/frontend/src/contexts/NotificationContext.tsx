@@ -1,6 +1,7 @@
 import React, { createContext, useContext } from "react";
 import { useGetNotificationsMe, usePostNotificationsIdRead } from "@api/moris";
 import { NotificationResponse } from "@api/model";
+import { EVENT_NOTIFICATIONS_SHOULD_REFRESH } from "@/lib/constants";
 
 interface NotificationContextType {
   notifications: NotificationResponse[];
@@ -49,10 +50,13 @@ export function NotificationProvider({
       refetch();
     };
 
-    window.addEventListener("notifications:should-refresh", handleRefresh);
+    window.addEventListener(EVENT_NOTIFICATIONS_SHOULD_REFRESH, handleRefresh);
 
     return () => {
-      window.removeEventListener("notifications:should-refresh", handleRefresh);
+      window.removeEventListener(
+        EVENT_NOTIFICATIONS_SHOULD_REFRESH,
+        handleRefresh
+      );
     };
   }, [refetch]);
 

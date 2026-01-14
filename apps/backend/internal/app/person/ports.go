@@ -18,4 +18,5 @@ type Repository interface {
 	Search(ctx context.Context, query string, limit int) ([]entities.Person, error)
 	SetORCID(ctx context.Context, personID uuid.UUID, orcidID string) error
 	ClearORCID(ctx context.Context, personID uuid.UUID) error
+	GetByIDs(ctx context.Context, ids []uuid.UUID) ([]entities.Person, error)
 }

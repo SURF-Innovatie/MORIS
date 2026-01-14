@@ -7,6 +7,7 @@ import (
 
 	appauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/load"
+	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
@@ -21,11 +22,14 @@ type Service interface {
 	GetProject(ctx context.Context, id uuid.UUID) (*ProjectDetails, error)
 	GetAllProjects(ctx context.Context) ([]*ProjectDetails, error)
 	GetChangeLog(ctx context.Context, id uuid.UUID) (*entities.ChangeLog, error)
-	GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.Event, error)
+	GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.DetailedEvent, error)
 	GetProjectRoles(ctx context.Context) ([]entities.ProjectRole, error)
 	ListAvailableRoles(ctx context.Context, projectID uuid.UUID) ([]entities.ProjectRole, error)
 	GetEvents(ctx context.Context, id uuid.UUID) ([]events.Event, error)
 	GetAllowedEventTypes(ctx context.Context, projectID uuid.UUID) ([]string, error)
+	GetProjectRolesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.ProjectRole, error)
+	GetProductsByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.Product, error)
+	GetPeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.Person, error)
 }
 
 type service struct {
@@ -34,6 +38,7 @@ type service struct {
 	loader      *load.Loader
 	currentUser appauth.CurrentUserProvider
 	roleRepo    ProjectRoleRepository
+	userSvc     user.Service
 }
 
 func NewService(
@@ -42,6 +47,7 @@ func NewService(
 	repo ProjectReadRepository,
 	roleRepo ProjectRoleRepository,
 	currentUser appauth.CurrentUserProvider,
+	userSvc user.Service,
 ) Service {
 	return &service{
 		es:          es,
@@ -49,6 +55,7 @@ func NewService(
 		repo:        repo,
 		roleRepo:    roleRepo,
 		currentUser: currentUser,
+		userSvc:     userSvc,
 	}
 }
 
@@ -94,14 +101,100 @@ func (s *service) GetAllProjects(ctx context.Context) ([]*ProjectDetails, error)
 	return projects, nil
 }
 
-func (s *service) GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.Event, error) {
+func (s *service) GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.DetailedEvent, error) {
 	evts, _, err := s.es.Load(ctx, projectID)
 	if err != nil {
 		return nil, err
 	}
 
-	return lo.Filter(evts, func(e events.Event, _ int) bool {
+	pendingEvts := lo.Filter(evts, func(e events.Event, _ int) bool {
 		return e.GetStatus() == "pending"
+	})
+
+	// Hydration
+	var personIDs []uuid.UUID
+	var roleIDs []uuid.UUID
+	var productIDs []uuid.UUID
+	var creatorUserIDs []uuid.UUID
+
+	for _, e := range pendingEvts {
+		if r, ok := e.(events.HasRelatedIDs); ok {
+			ids := r.RelatedIDs()
+			if ids.PersonID != nil {
+				personIDs = append(personIDs, *ids.PersonID)
+			}
+			if ids.ProjectRoleID != nil {
+				roleIDs = append(roleIDs, *ids.ProjectRoleID)
+			}
+			if ids.ProductID != nil {
+				productIDs = append(productIDs, *ids.ProductID)
+			}
+		}
+		creatorUserIDs = append(creatorUserIDs, e.CreatedByID())
+	}
+
+	personMap := make(map[uuid.UUID]entities.Person)
+	if len(personIDs) > 0 {
+		pm, err := s.repo.PeopleByIDs(ctx, personIDs)
+		if err == nil {
+			personMap = pm
+		}
+	}
+
+	roleMap := make(map[uuid.UUID]entities.ProjectRole)
+	if len(roleIDs) > 0 {
+		rm, err := s.repo.ProjectRolesByIDs(ctx, roleIDs)
+		if err == nil {
+			roleMap = rm
+		}
+	}
+
+	productMap := make(map[uuid.UUID]entities.Product)
+	if len(productIDs) > 0 {
+		pm, err := s.repo.ProductsByIDs(ctx, productIDs)
+		if err == nil {
+			productMap = make(map[uuid.UUID]entities.Product)
+			for _, p := range pm {
+				productMap[p.Id] = p
+			}
+		}
+	}
+
+	creatorMap := make(map[uuid.UUID]entities.Person)
+	if len(creatorUserIDs) > 0 {
+		cm, err := s.userSvc.GetPeopleByUserIDs(ctx, lo.Uniq(creatorUserIDs))
+		if err == nil {
+			creatorMap = cm
+		}
+	}
+
+	return lo.Map(pendingEvts, func(e events.Event, _ int) events.DetailedEvent {
+		de := events.DetailedEvent{Event: e}
+
+		if r, ok := e.(events.HasRelatedIDs); ok {
+			ids := r.RelatedIDs()
+			if ids.PersonID != nil {
+				if p, ok := personMap[*ids.PersonID]; ok {
+					de.Person = &p
+				}
+			}
+			if ids.ProjectRoleID != nil {
+				if r, ok := roleMap[*ids.ProjectRoleID]; ok {
+					de.ProjectRole = &r
+				}
+			}
+			if ids.ProductID != nil {
+				if p, ok := productMap[*ids.ProductID]; ok {
+					de.Product = &p
+				}
+			}
+		}
+
+		if p, ok := creatorMap[e.CreatedByID()]; ok {
+			de.Creator = &p
+		}
+
+		return de
 	}), nil
 }
 
@@ -247,4 +340,22 @@ func (s *service) GetAllowedEventTypes(ctx context.Context, projectID uuid.UUID)
 
 	// Return allowed event types (or empty if none configured)
 	return role.AllowedEventTypes, nil
+}
+
+func (s *service) GetProjectRolesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.ProjectRole, error) {
+	return s.repo.ProjectRolesByIDs(ctx, ids)
+}
+
+func (s *service) GetProductsByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.Product, error) {
+	products, err := s.repo.ProductsByIDs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	return lo.SliceToMap(products, func(p entities.Product) (uuid.UUID, entities.Product) {
+		return p.Id, p
+	}), nil
+}
+
+func (s *service) GetPeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.Person, error) {
+	return s.repo.PeopleByIDs(ctx, ids)
 }

@@ -1,7 +1,7 @@
 import { FC } from "react";
 
-import { PersonAddedEvent } from "./renderers/PersonAddedEvent";
-import { PersonRemovedEvent } from "./renderers/PersonRemovedEvent";
+import { RoleAssignedEvent } from "./renderers/RoleAssignedEvent";
+import { RoleUnassignedEvent } from "./renderers/RoleUnassignedEvent";
 import { ProductAddedEvent } from "./renderers/ProductAddedEvent";
 import { ProductRemovedEvent } from "./renderers/ProductRemovedEvent";
 import { DefaultEventRenderer } from "./renderers/DefaultEventRenderer";
@@ -13,15 +13,18 @@ interface EventRendererProps {
   className?: string;
 }
 
-const RENDERER_REGISTRY: Partial<Record<ProjectEventType, FC<{ event: ProjectEvent }>>> = {
-  [ProjectEventType.ProjectRoleAssigned]: PersonAddedEvent,
-  [ProjectEventType.ProjectRoleUnassigned]: PersonRemovedEvent,
+const RENDERER_REGISTRY: Partial<
+  Record<ProjectEventType, FC<{ event: ProjectEvent }>>
+> = {
+  [ProjectEventType.ProjectRoleAssigned]: RoleAssignedEvent,
+  [ProjectEventType.ProjectRoleUnassigned]: RoleUnassignedEvent,
   [ProjectEventType.ProductAdded]: ProductAddedEvent,
   [ProjectEventType.ProductRemoved]: ProductRemovedEvent,
 };
 
 export const EventRenderer: FC<EventRendererProps> = ({ event, className }) => {
-  const Renderer = RENDERER_REGISTRY[event.type as ProjectEventType] || DefaultEventRenderer;
+  const Renderer =
+    RENDERER_REGISTRY[event.type as ProjectEventType] || DefaultEventRenderer;
 
   return (
     <div className={className}>

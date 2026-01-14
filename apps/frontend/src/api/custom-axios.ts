@@ -12,7 +12,10 @@ export interface BackendError {
   timestamp?: string;
 }
 
-import { STORAGE_KEY_AUTH_TOKEN } from "@/lib/constants";
+import {
+  EVENT_NOTIFICATIONS_SHOULD_REFRESH,
+  STORAGE_KEY_AUTH_TOKEN,
+} from "@/lib/constants";
 
 // Request interceptor to add JWT token
 AXIOS_INSTANCE.interceptors.request.use(
@@ -74,7 +77,7 @@ export const customInstance = async <T>(
       config.method?.toUpperCase() === "POST" &&
       config.url?.match(/\/projects\/[^/]+\/events/)
     ) {
-      window.dispatchEvent(new CustomEvent("notifications:should-refresh"));
+      window.dispatchEvent(new CustomEvent(EVENT_NOTIFICATIONS_SHOULD_REFRESH));
     }
     return res.data;
   });

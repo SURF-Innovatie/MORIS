@@ -19,6 +19,9 @@ func NewEntRepo(cli *ent.Client) *EntRepo {
 }
 
 func (r *EntRepo) Create(ctx context.Context, p entities.Person) (*entities.Person, error) {
+	if p.ORCiD != nil && *p.ORCiD == "" {
+		p.ORCiD = nil
+	}
 	row, err := r.cli.Person.
 		Create().
 		SetName(p.Name).
@@ -57,7 +60,11 @@ func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, p entities.Person) (
 		SetNillableDescription(p.Description).
 		SetOrgCustomFields(p.OrgCustomFields)
 
-	q.SetNillableOrcidID(p.ORCiD)
+	if p.ORCiD != nil && *p.ORCiD == "" {
+		q.ClearOrcidID()
+	} else {
+		q.SetNillableOrcidID(p.ORCiD)
+	}
 
 	row, err := q.Save(ctx)
 	if err != nil {
@@ -114,4 +121,17 @@ func (r *EntRepo) ClearORCID(ctx context.Context, personID uuid.UUID) error {
 		ClearOrcidID().
 		Save(ctx)
 	return err
+}
+
+func (r *EntRepo) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]entities.Person, error) {
+	if len(ids) == 0 {
+		return []entities.Person{}, nil
+	}
+	rows, err := r.cli.Person.Query().
+		Where(pe.IDIn(ids...)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return transform.ToEntities[entities.Person](rows), nil
 }
