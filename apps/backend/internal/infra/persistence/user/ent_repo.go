@@ -36,7 +36,8 @@ func (r *EntRepo) GetByPersonID(ctx context.Context, personID uuid.UUID) (*entit
 
 func (r *EntRepo) Create(ctx context.Context, u entities.User) (*entities.User, error) {
 	builder := r.cli.User.Create().
-		SetPersonID(u.PersonID)
+		SetPersonID(u.PersonID).
+		SetIsSysAdmin(u.IsSysAdmin)
 
 	// Only set password if provided (OAuth-only users don't have passwords)
 	if u.Password != "" {
@@ -54,6 +55,7 @@ func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, u entities.User) (*e
 	row, err := r.cli.User.UpdateOneID(id).
 		SetPersonID(u.PersonID).
 		SetPassword(u.Password).
+		SetIsSysAdmin(u.IsSysAdmin).
 		Save(ctx)
 	if err != nil {
 		return nil, err
