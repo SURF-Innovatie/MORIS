@@ -71,18 +71,27 @@ func DecideProjectRoleAssigned(
 		}
 	}
 
+	base := NewBase(projectID, actor, status)
+	base.FriendlyNameStr = ProjectRoleAssignedMeta.FriendlyName
+
 	return &ProjectRoleAssigned{
-		Base:          NewBase(projectID, actor, status),
+		Base:          base,
 		PersonID:      in.PersonID,
 		ProjectRoleID: in.ProjectRoleID,
 	}, nil
 }
 
+var ProjectRoleAssignedMeta = EventMeta{
+	Type:         ProjectRoleAssignedType,
+	FriendlyName: "Project Role Assignment",
+}
+
 func init() {
-	RegisterMeta(EventMeta{
-		Type:         ProjectRoleAssignedType,
-		FriendlyName: "Project Role Assignment",
-	}, func() Event { return &ProjectRoleAssigned{} })
+	RegisterMeta(ProjectRoleAssignedMeta, func() Event {
+		return &ProjectRoleAssigned{
+			Base: Base{FriendlyNameStr: ProjectRoleAssignedMeta.FriendlyName},
+		}
+	})
 
 	RegisterDecider[ProjectRoleAssignedInput](ProjectRoleAssignedType,
 		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in ProjectRoleAssignedInput, status Status) (Event, error) {

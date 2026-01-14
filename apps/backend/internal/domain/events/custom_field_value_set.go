@@ -52,8 +52,11 @@ func DecideCustomFieldValueSet(ctx context.Context, projectID, userID uuid.UUID,
 		return nil, errors.New("definition_id is required")
 	}
 
+	base := NewBase(projectID, userID, status)
+	base.FriendlyNameStr = CustomFieldValueSetMeta.FriendlyName
+
 	return &CustomFieldValueSet{
-		Base:         NewBase(projectID, userID, status),
+		Base:         base,
 		DefinitionID: cmd.DefinitionID,
 		Value:        cmd.Value,
 	}, nil

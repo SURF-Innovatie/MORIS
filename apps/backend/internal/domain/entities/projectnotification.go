@@ -16,14 +16,15 @@ const (
 )
 
 type Notification struct {
-	ID        uuid.UUID
-	UserID    uuid.UUID
-	EventID   *uuid.UUID // optional
-	ProjectID *uuid.UUID // optional, derived from event
-	Message   string
-	Type      NotificationType
-	Read      bool
-	SentAt    time.Time
+	ID                uuid.UUID
+	UserID            uuid.UUID
+	EventID           *uuid.UUID // optional
+	ProjectID         *uuid.UUID // optional, derived from event
+	Message           string
+	Type              NotificationType
+	Read              bool
+	SentAt            time.Time
+	EventFriendlyName *string
 }
 
 func (n *Notification) FromEnt(row *ent.Notification) *Notification {

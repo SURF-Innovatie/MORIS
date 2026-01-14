@@ -49,17 +49,26 @@ func DecideDescriptionChanged(
 	if cur.Description == in.Description {
 		return nil, nil
 	}
+	base := NewBase(projectID, actor, status)
+	base.FriendlyNameStr = DescriptionChangedMeta.FriendlyName
+
 	return &DescriptionChanged{
-		Base:        NewBase(projectID, actor, status),
+		Base:        base,
 		Description: in.Description,
 	}, nil
 }
 
+var DescriptionChangedMeta = EventMeta{
+	Type:         DescriptionChangedType,
+	FriendlyName: "Description Change",
+}
+
 func init() {
-	RegisterMeta(EventMeta{
-		Type:         DescriptionChangedType,
-		FriendlyName: "Description Change",
-	}, func() Event { return &DescriptionChanged{} })
+	RegisterMeta(DescriptionChangedMeta, func() Event {
+		return &DescriptionChanged{
+			Base: Base{FriendlyNameStr: DescriptionChangedMeta.FriendlyName},
+		}
+	})
 
 	RegisterDecider[DescriptionChangedInput](DescriptionChangedType,
 		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in DescriptionChangedInput, status Status) (Event, error) {

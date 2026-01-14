@@ -70,8 +70,11 @@ func DecideProjectStarted(
 		return nil, errors.New("end date before start date")
 	}
 
+	base := NewBase(projectID, actor, status)
+	base.FriendlyNameStr = ProjectStartedMeta.FriendlyName
+
 	return &ProjectStarted{
-		Base:            NewBase(projectID, actor, status),
+		Base:            base,
 		Title:           in.Title,
 		Description:     in.Description,
 		StartDate:       in.StartDate,
@@ -81,11 +84,17 @@ func DecideProjectStarted(
 	}, nil
 }
 
+var ProjectStartedMeta = EventMeta{
+	Type:         ProjectStartedType,
+	FriendlyName: "Project Proposal",
+}
+
 func init() {
-	RegisterMeta(EventMeta{
-		Type:         ProjectStartedType,
-		FriendlyName: "Project Proposal",
-	}, func() Event { return &ProjectStarted{} })
+	RegisterMeta(ProjectStartedMeta, func() Event {
+		return &ProjectStarted{
+			Base: Base{FriendlyNameStr: ProjectStartedMeta.FriendlyName},
+		}
+	})
 
 	RegisterDecider[ProjectStartedInput](ProjectStartedType,
 		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in ProjectStartedInput, status Status) (Event, error) {

@@ -53,17 +53,26 @@ func DecideOwningOrgNodeChanged(
 		return nil, nil
 	}
 
+	base := NewBase(projectID, actor, status)
+	base.FriendlyNameStr = OwningOrgNodeChangedMeta.FriendlyName
+
 	return &OwningOrgNodeChanged{
-		Base:            NewBase(projectID, actor, status),
+		Base:            base,
 		OwningOrgNodeID: in.OwningOrgNodeID,
 	}, nil
 }
 
+var OwningOrgNodeChangedMeta = EventMeta{
+	Type:         OwningOrgNodeChangedType,
+	FriendlyName: "Owning Organisation Node Change",
+}
+
 func init() {
-	RegisterMeta(EventMeta{
-		Type:         OwningOrgNodeChangedType,
-		FriendlyName: "Owning Organisation Node Change",
-	}, func() Event { return &OwningOrgNodeChanged{} })
+	RegisterMeta(OwningOrgNodeChangedMeta, func() Event {
+		return &OwningOrgNodeChanged{
+			Base: Base{FriendlyNameStr: OwningOrgNodeChangedMeta.FriendlyName},
+		}
+	})
 
 	RegisterDecider[OwningOrgNodeChangedInput](OwningOrgNodeChangedType,
 		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in OwningOrgNodeChangedInput, status Status) (Event, error) {

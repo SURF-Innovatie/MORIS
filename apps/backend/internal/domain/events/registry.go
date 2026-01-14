@@ -23,7 +23,11 @@ func GetInputSchema(eventType string) map[string]any {
 }
 
 func init() {
-	RegisterMeta(CustomFieldValueSetMeta, func() Event { return &CustomFieldValueSet{} })
+	RegisterMeta(CustomFieldValueSetMeta, func() Event {
+		return &CustomFieldValueSet{
+			Base: Base{FriendlyNameStr: CustomFieldValueSetMeta.FriendlyName},
+		}
+	})
 	RegisterDecider(CustomFieldValueSetType, DecideCustomFieldValueSet)
 	RegisterInputType(CustomFieldValueSetType, CustomFieldValueSetInput{})
 }

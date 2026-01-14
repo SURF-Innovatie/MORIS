@@ -11,6 +11,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/projectrole"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/customfield"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/sirupsen/logrus"
 )
@@ -293,6 +294,7 @@ func (h *Handler) ListChildren(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param q query string true "Search query"
+// @Param permission query string false "Permission filter"
 // @Success 200 {array} dto.OrganisationResponse
 // @Failure 401 {string} string "unauthorized"
 // @Failure 500 {string} string "internal server error"
@@ -304,7 +306,22 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nodes, err := h.svc.Search(r.Context(), query)
+	permission := r.URL.Query().Get("permission")
+
+	var nodes []entities.OrganisationNode
+	var err error
+
+	if permission == "create_project" {
+		user, ok := httputil.GetUserFromContext(r.Context())
+		if !ok {
+			httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
+			return
+		}
+		nodes, err = h.svc.SearchForProjectCreation(r.Context(), query, user.Person.ID)
+	} else {
+		nodes, err = h.svc.Search(r.Context(), query)
+	}
+
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return

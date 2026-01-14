@@ -17,6 +17,7 @@ type Event interface {
 	OccurredAt() time.Time
 	GetID() uuid.UUID
 	Type() string
+	FriendlyName() string
 	String() string
 	CreatedByID() uuid.UUID
 	GetStatus() Status
@@ -96,11 +97,12 @@ func (m EventMeta) IsAllowed(ctx context.Context, event Event, client *ent.Clien
 
 // Base struct provides common event fields
 type Base struct {
-	ID        uuid.UUID `json:"id"`
-	ProjectID uuid.UUID `json:"projectId"`
-	At        time.Time `json:"at"`
-	CreatedBy uuid.UUID `json:"createdBy"`
-	Status    Status    `json:"status"`
+	ID              uuid.UUID `json:"id"`
+	ProjectID       uuid.UUID `json:"projectId"`
+	FriendlyNameStr string    `json:"friendly_name"`
+	At              time.Time `json:"at"`
+	CreatedBy       uuid.UUID `json:"createdBy"`
+	Status          Status    `json:"status"`
 }
 
 func NewBase(projectID, actor uuid.UUID, status Status) Base {
@@ -113,6 +115,7 @@ func NewBase(projectID, actor uuid.UUID, status Status) Base {
 }
 
 func (b *Base) AggregateID() uuid.UUID { return b.ProjectID }
+func (b *Base) FriendlyName() string   { return b.FriendlyNameStr }
 func (b *Base) OccurredAt() time.Time  { return b.At }
 func (b *Base) GetID() uuid.UUID       { return b.ID }
 func (b *Base) CreatedByID() uuid.UUID { return b.CreatedBy }

@@ -51,17 +51,26 @@ func DecideEndDateChanged(
 	if cur.EndDate.Equal(in.EndDate) {
 		return nil, nil
 	}
+	base := NewBase(projectID, actor, status)
+	base.FriendlyNameStr = EndDateChangedMeta.FriendlyName
+
 	return &EndDateChanged{
-		Base:    NewBase(projectID, actor, status),
+		Base:    base,
 		EndDate: in.EndDate,
 	}, nil
 }
 
+var EndDateChangedMeta = EventMeta{
+	Type:         EndDateChangedType,
+	FriendlyName: "End Date Change",
+}
+
 func init() {
-	RegisterMeta(EventMeta{
-		Type:         EndDateChangedType,
-		FriendlyName: "End Date Change",
-	}, func() Event { return &EndDateChanged{} })
+	RegisterMeta(EndDateChangedMeta, func() Event {
+		return &EndDateChanged{
+			Base: Base{FriendlyNameStr: EndDateChangedMeta.FriendlyName},
+		}
+	})
 
 	RegisterDecider[EndDateChangedInput](EndDateChangedType,
 		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in EndDateChangedInput, status Status) (Event, error) {

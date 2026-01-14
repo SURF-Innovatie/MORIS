@@ -393,7 +393,7 @@ func (e *evaluator) buildMessage(policy entities.EventPolicy, event events.Event
 
 	// Default message based on action type
 	if policy.ActionType == entities.ActionTypeRequestApproval {
-		return fmt.Sprintf("Approval requested for event '%s' on project '%s'", event.Type(), project.Title)
+		return fmt.Sprintf("Approval requested for event '%s' on project '%s'", event.FriendlyName(), project.Title)
 	}
-	return fmt.Sprintf("Event '%s' occurred on project '%s'", event.Type(), project.Title)
+	return fmt.Sprintf("Event '%s' occurred on project '%s'", event.FriendlyName(), project.Title)
 }

@@ -14,11 +14,13 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/organisationnode"
 	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
+	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
+	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation_rbac"
 	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/projectrole"
 	"github.com/google/uuid"
@@ -166,7 +168,9 @@ func main() {
 
 	orgRepo := organisationrepo.NewEntRepo(client)
 	personRepo := personrepo.NewEntRepo(client)
-	orgSvc := organisation.NewService(orgRepo, personRepo)
+	rbacRepo := organisationrbacrepo.NewEntRepo(client)
+	rbacSvc := organisationrbac.NewService(rbacRepo)
+	orgSvc := organisation.NewService(orgRepo, personRepo, rbacSvc)
 
 	orgRoot, err := orgSvc.CreateRoot(ctx, "Nederland", nil, nil, nil)
 	if err != nil {

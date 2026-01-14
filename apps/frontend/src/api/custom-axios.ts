@@ -67,7 +67,17 @@ export const customInstance = async <T>(
     ...config,
     ...options,
     cancelToken: source.token,
-  }).then((res) => res.data);
+  }).then((res) => {
+    // Check if it's an event creation call
+    // The url usually looks like /projects/{id}/events
+    if (
+      config.method?.toUpperCase() === "POST" &&
+      config.url?.match(/\/projects\/[^/]+\/events/)
+    ) {
+      window.dispatchEvent(new CustomEvent("notifications:should-refresh"));
+    }
+    return res.data;
+  });
   // @ts-ignore
   promise.cancel = () => {
     source.cancel("Query was cancelled");

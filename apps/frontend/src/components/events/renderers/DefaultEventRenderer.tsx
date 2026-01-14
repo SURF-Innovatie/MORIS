@@ -3,12 +3,16 @@ import { ProjectEvent } from "@/api/events";
 import { CalendarDays, User } from "lucide-react";
 import { format } from "date-fns";
 
-export const DefaultEventRenderer: FC<{ event: ProjectEvent }> = ({ event }) => {
+export const DefaultEventRenderer: FC<{ event: ProjectEvent }> = ({
+  event,
+}) => {
   // Format "project.person_added" -> "Person Added"
   const formattedType =
+    event.friendlyName ||
     event.type
       ?.replace(/^project\./, "") // Remove project. prefix
-      ?.replace(/_/g, " ") || "Event"; // Replace underscores with spaces
+      ?.replace(/_/g, " ") ||
+    "Event"; // Replace underscores with spaces
 
   return (
     <div className="flex flex-col gap-1">

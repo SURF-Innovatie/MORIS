@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
+	orgrole "github.com/SURF-Innovatie/MORIS/internal/app/organisation/role"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -19,16 +21,18 @@ type Service interface {
 	ListRoots(ctx context.Context) ([]entities.OrganisationNode, error)
 	ListChildren(ctx context.Context, parentID uuid.UUID) ([]entities.OrganisationNode, error)
 	Search(ctx context.Context, query string) ([]entities.OrganisationNode, error)
+	SearchForProjectCreation(ctx context.Context, query string, actorID uuid.UUID) ([]entities.OrganisationNode, error)
 	UpdateMemberCustomFields(ctx context.Context, orgID uuid.UUID, personID uuid.UUID, values map[string]interface{}) error
 }
 
 type service struct {
 	repo       Repository
 	personRepo PersonRepository
+	rbac       rbacsvc.Service
 }
 
-func NewService(repo Repository, personRepo PersonRepository) Service {
-	return &service{repo: repo, personRepo: personRepo}
+func NewService(repo Repository, personRepo PersonRepository, rbac rbacsvc.Service) Service {
+	return &service{repo: repo, personRepo: personRepo, rbac: rbac}
 }
 
 func (s *service) CreateRoot(ctx context.Context, name string, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error) {
@@ -103,6 +107,24 @@ func (s *service) ListChildren(ctx context.Context, parentID uuid.UUID) ([]entit
 
 func (s *service) Search(ctx context.Context, query string) ([]entities.OrganisationNode, error) {
 	return s.repo.Search(ctx, query, 20)
+}
+
+func (s *service) SearchForProjectCreation(ctx context.Context, query string, actorID uuid.UUID) ([]entities.OrganisationNode, error) {
+	nodes, err := s.repo.Search(ctx, query, 100)
+	if err != nil {
+		return nil, err
+	}
+
+	// Filter nodes where the user has PermissionCreateProject
+	// HasPermission checks for direct or inherited permission (via ancestry)
+	filtered := make([]entities.OrganisationNode, 0, len(nodes))
+	for _, node := range nodes {
+		ok, err := s.rbac.HasPermission(ctx, actorID, node.ID, orgrole.PermissionCreateProject)
+		if err == nil && ok {
+			filtered = append(filtered, node)
+		}
+	}
+	return filtered, nil
 }
 
 func (s *service) UpdateMemberCustomFields(ctx context.Context, orgID uuid.UUID, personID uuid.UUID, values map[string]interface{}) error {

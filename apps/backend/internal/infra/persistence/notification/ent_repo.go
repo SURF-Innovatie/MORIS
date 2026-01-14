@@ -8,6 +8,7 @@ import (
 	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
 )
 
@@ -45,7 +46,13 @@ func (r *EntRepo) Get(ctx context.Context, id uuid.UUID) (*entities.Notification
 		return nil, err
 	}
 
-	return transform.ToEntityPtr[entities.Notification](row), nil
+	entity := transform.ToEntityPtr[entities.Notification](row)
+	if row.Edges.Event != nil {
+		meta := events.GetMeta(row.Edges.Event.Type)
+		fname := meta.FriendlyName
+		entity.EventFriendlyName = &fname
+	}
+	return entity, nil
 }
 
 func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, n entities.Notification) (*entities.Notification, error) {
@@ -74,7 +81,15 @@ func (r *EntRepo) List(ctx context.Context) ([]entities.Notification, error) {
 		return nil, err
 	}
 
-	return transform.ToEntities[entities.Notification](rows), nil
+	dtos := transform.ToEntities[entities.Notification](rows)
+	for i, row := range rows {
+		if row.Edges.Event != nil {
+			meta := events.GetMeta(row.Edges.Event.Type)
+			fname := meta.FriendlyName
+			dtos[i].EventFriendlyName = &fname
+		}
+	}
+	return dtos, nil
 }
 
 func (r *EntRepo) ListForUser(ctx context.Context, userID uuid.UUID) ([]entities.Notification, error) {
@@ -87,7 +102,15 @@ func (r *EntRepo) ListForUser(ctx context.Context, userID uuid.UUID) ([]entities
 		return nil, err
 	}
 
-	return transform.ToEntities[entities.Notification](rows), nil
+	dtos := transform.ToEntities[entities.Notification](rows)
+	for i, row := range rows {
+		if row.Edges.Event != nil {
+			meta := events.GetMeta(row.Edges.Event.Type)
+			fname := meta.FriendlyName
+			dtos[i].EventFriendlyName = &fname
+		}
+	}
+	return dtos, nil
 }
 
 func (r *EntRepo) MarkAsRead(ctx context.Context, id uuid.UUID) error {

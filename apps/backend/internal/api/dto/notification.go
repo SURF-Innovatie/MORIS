@@ -13,14 +13,15 @@ type NotificationResponse struct {
 	EventID   *uuid.UUID `json:"event_id,omitempty"`
 	ProjectID *uuid.UUID `json:"project_id,omitempty"`
 
-	Message string    `json:"message"`
-	Type    string    `json:"type"`
-	Read    bool      `json:"read"`
-	SentAt  time.Time `json:"sent_at"`
+	Message           string    `json:"message"`
+	Type              string    `json:"type"`
+	Read              bool      `json:"read"`
+	SentAt            time.Time `json:"sent_at"`
+	EventFriendlyName string    `json:"event_friendly_name,omitempty"`
 }
 
 func (r NotificationResponse) FromEntity(n entities.Notification) NotificationResponse {
-	return NotificationResponse{
+	resp := NotificationResponse{
 		ID:        n.ID,
 		UserID:    n.UserID,
 		EventID:   n.EventID,
@@ -30,4 +31,8 @@ func (r NotificationResponse) FromEntity(n entities.Notification) NotificationRe
 		Read:      n.Read,
 		SentAt:    n.SentAt,
 	}
+	if n.EventFriendlyName != nil {
+		resp.EventFriendlyName = *n.EventFriendlyName
+	}
+	return resp
 }

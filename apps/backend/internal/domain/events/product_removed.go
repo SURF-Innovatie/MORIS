@@ -71,17 +71,26 @@ func DecideProductRemoved(
 		return nil, fmt.Errorf("product %s not found for project %s", in.ProductID, cur.Id)
 	}
 
+	base := NewBase(projectID, actor, status)
+	base.FriendlyNameStr = ProductRemovedMeta.FriendlyName
+
 	return &ProductRemoved{
-		Base:      NewBase(projectID, actor, status),
+		Base:      base,
 		ProductID: in.ProductID,
 	}, nil
 }
 
+var ProductRemovedMeta = EventMeta{
+	Type:         ProductRemovedType,
+	FriendlyName: "Product Removal",
+}
+
 func init() {
-	RegisterMeta(EventMeta{
-		Type:         ProductRemovedType,
-		FriendlyName: "Product Removal",
-	}, func() Event { return &ProductRemoved{} })
+	RegisterMeta(ProductRemovedMeta, func() Event {
+		return &ProductRemoved{
+			Base: Base{FriendlyNameStr: ProductRemovedMeta.FriendlyName},
+		}
+	})
 
 	RegisterDecider[ProductRemovedInput](ProductRemovedType,
 		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in ProductRemovedInput, status Status) (Event, error) {

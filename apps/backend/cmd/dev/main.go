@@ -188,7 +188,7 @@ func main() {
 	roleSvc := projectrolesvc.NewService(roleRepo, orgRepo)
 	customFieldSvc := customfield.NewService(client)
 
-	organisationSvc := organisation.NewService(orgRepo, personRepo)
+	organisationSvc := organisation.NewService(orgRepo, personRepo, rbacSvc)
 	organisationHandler := organisationhandler.NewHandler(organisationSvc, rbacSvc, roleSvc, customFieldSvc)
 
 	crossrefConfig := &crossref2.Config{
@@ -249,7 +249,7 @@ func main() {
 	notificationAdapter := eventpolicyrepo.NewNotificationAdapter(client)
 	policyEvaluator := eventpolicy.NewEvaluator(eventPolicyRepo, orgClosureProvider, recipientResolver, notificationAdapter)
 
-	projCmdSvc := command.NewService(esStore, eventSvc, cacheSvc, refreshSvc, curUser, entProv, roleSvc, policyEvaluator)
+	projCmdSvc := command.NewService(esStore, eventSvc, cacheSvc, refreshSvc, curUser, entProv, roleSvc, policyEvaluator, organisationSvc, rbacSvc)
 	projCmdHandler := commandHandler.NewHandler(projCmdSvc)
 
 	// Register handler for EventPolicyAdded/Removed events

@@ -56,17 +56,26 @@ func DecideTitleChanged(
 		return nil, nil
 	}
 
+	base := NewBase(id, actor, status)
+	base.FriendlyNameStr = TitleChangedMeta.FriendlyName
+
 	return &TitleChanged{
-		Base:  NewBase(id, actor, status),
+		Base:  base,
 		Title: in.Title,
 	}, nil
 }
 
+var TitleChangedMeta = EventMeta{
+	Type:         TitleChangedType,
+	FriendlyName: "Title Change",
+}
+
 func init() {
-	RegisterMeta(EventMeta{
-		Type:         TitleChangedType,
-		FriendlyName: "Title Change",
-	}, func() Event { return &TitleChanged{} })
+	RegisterMeta(TitleChangedMeta, func() Event {
+		return &TitleChanged{
+			Base: Base{FriendlyNameStr: TitleChangedMeta.FriendlyName},
+		}
+	})
 
 	RegisterDecider[TitleChangedInput](TitleChangedType,
 		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in TitleChangedInput, status Status) (Event, error) {

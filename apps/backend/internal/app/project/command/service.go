@@ -2,11 +2,15 @@ package command
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	appauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/app/commandbus"
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
+	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
+	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
+	orgrole "github.com/SURF-Innovatie/MORIS/internal/app/organisation/role"
 	"github.com/SURF-Innovatie/MORIS/internal/app/projectrole"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
@@ -33,6 +37,8 @@ type service struct {
 	entClient   EntClientProvider
 	roleSvc     projectrole.Service
 	evaluator   eventpolicy.Evaluator
+	orgSvc      organisation.Service
+	rbacSvc     rbacsvc.Service
 }
 
 func NewService(
@@ -44,6 +50,8 @@ func NewService(
 	entClient EntClientProvider,
 	roleSvc projectrole.Service,
 	evaluator eventpolicy.Evaluator,
+	orgSvc organisation.Service,
+	rbacSvc rbacsvc.Service,
 ) Service {
 	s := &service{
 		es:          es,
@@ -54,6 +62,8 @@ func NewService(
 		entClient:   entClient,
 		roleSvc:     roleSvc,
 		evaluator:   evaluator,
+		orgSvc:      orgSvc,
+		rbacSvc:     rbacSvc,
 		exec: commandbus.NewExecutor[entities.Project](
 			es,
 			evtSvc,
@@ -111,6 +121,25 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*e
 	}
 	cli := s.entClient.Client()
 
+	if req.Type == events.ProjectStartedType {
+		// Parse input safely using json encoding
+		var inputMap map[string]interface{}
+		if err := json.Unmarshal(req.Input, &inputMap); err == nil {
+			if strID, ok := inputMap["owning_org_node_id"].(string); ok {
+				orgID, err := uuid.Parse(strID)
+				if err == nil {
+					has, err := s.rbacSvc.HasPermission(ctx, u.PersonID(), orgID, orgrole.PermissionCreateProject)
+					if err != nil {
+						return nil, err
+					}
+					if !has {
+						return nil, fmt.Errorf("you do not have permission to create projects in this organisation")
+					}
+				}
+			}
+		}
+	}
+
 	decider, ok := events.GetDecider(req.Type)
 	if !ok {
 		return nil, fmt.Errorf("unknown event type: %s", req.Type)
@@ -130,6 +159,27 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*e
 		}
 		if e == nil {
 			return nil, nil
+		}
+
+		// Auto-role assignment for ProjectStarted
+		if e.Type() == events.ProjectStartedType {
+			if started, ok := e.(*events.ProjectStarted); ok {
+				// Find a role that allows all events
+				role, err := s.findPermissiveRole(ctx, started.OwningOrgNodeID)
+				if err != nil {
+					return nil, fmt.Errorf("failed to assign initial role: %w", err)
+				}
+
+				// Manually construct ProjectRoleAssigned event since we are in genesis block
+				// and don't have a valid 'cur' project state for the standard decider.
+				assignEvt := &events.ProjectRoleAssigned{
+					Base:          events.NewBase(started.ProjectID, u.UserID(), events.StatusApproved),
+					PersonID:      u.PersonID(),
+					ProjectRoleID: role.ID,
+				}
+
+				return []events.Event{e, assignEvt}, nil
+			}
 		}
 
 		// Check role-based permissions (EBAC)
@@ -208,6 +258,31 @@ func (s *service) getUserProjectRole(ctx context.Context, projectID, personID uu
 		}
 	}
 	return nil
+}
+
+func (s *service) findPermissiveRole(ctx context.Context, orgID uuid.UUID) (*entities.ProjectRole, error) {
+	roles, err := s.roleSvc.ListAvailableForNode(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+
+	// Strategy: Check if role has all known event types.
+	allEvents := events.GetRegisteredEventTypes()
+
+	for _, r := range roles {
+
+		// Let's check if it has all events.
+		missing := lo.Filter(allEvents, func(t string, _ int) bool {
+			return !r.CanUseEventType(t)
+		})
+
+		if len(missing) == 0 {
+			return &r, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no permissive role found for organisation %s", orgID)
 }
 
 func (s *service) onStatusChange(ctx context.Context, e events.Event) error {

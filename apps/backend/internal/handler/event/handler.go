@@ -103,13 +103,14 @@ func (h *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dtoEvent := dto.Event{
-		ID:        e.GetID(),
-		ProjectID: e.AggregateID(),
-		Type:      e.Type(),
-		Status:    e.GetStatus(),
-		CreatedBy: e.CreatedByID(),
-		At:        e.OccurredAt(),
-		Details:   e.String(),
+		ID:           e.GetID(),
+		ProjectID:    e.AggregateID(),
+		Type:         e.Type(),
+		Status:       e.GetStatus(),
+		CreatedBy:    e.CreatedByID(),
+		At:           e.OccurredAt(),
+		Details:      e.String(),
+		FriendlyName: e.FriendlyName(),
 	}
 
 	// Enrich DTO with related IDs

@@ -76,11 +76,11 @@ export default function CreateProjectRoute() {
         description: "The new project has been successfully created.",
       });
       navigate("/dashboard");
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Something went wrong. Please try again.",
+        description: error.message || "Something went wrong. Please try again.",
       });
     } finally {
       setIsCreating(false);

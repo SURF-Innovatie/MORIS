@@ -27,12 +27,14 @@ interface OrganisationSearchSelectProps {
     organisation: OrganisationResponse
   ) => void;
   disabled?: boolean;
+  permission?: string;
 }
 
 export const OrganisationSearchSelect = ({
   value,
   onSelect,
   disabled,
+  permission,
 }: OrganisationSearchSelectProps) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -41,7 +43,7 @@ export const OrganisationSearchSelect = ({
 
   // Search organisations using the backend search endpoint
   const { data: results, isLoading } = useGetOrganisationNodesSearch(
-    { q: query },
+    { q: query, permission },
     { query: { enabled: open && query.length >= 3 } }
   );
 

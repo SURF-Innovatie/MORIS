@@ -61,17 +61,26 @@ func DecideProductAdded(
 		}
 	}
 
+	base := NewBase(projectID, actor, status)
+	base.FriendlyNameStr = ProductAddedMeta.FriendlyName
+
 	return &ProductAdded{
-		Base:      NewBase(projectID, actor, status),
+		Base:      base,
 		ProductID: in.ProductID,
 	}, nil
 }
 
+var ProductAddedMeta = EventMeta{
+	Type:         ProductAddedType,
+	FriendlyName: "Product Addition",
+}
+
 func init() {
-	RegisterMeta(EventMeta{
-		Type:         ProductAddedType,
-		FriendlyName: "Product Addition",
-	}, func() Event { return &ProductAdded{} })
+	RegisterMeta(ProductAddedMeta, func() Event {
+		return &ProductAdded{
+			Base: Base{FriendlyNameStr: ProductAddedMeta.FriendlyName},
+		}
+	})
 
 	RegisterDecider[ProductAddedInput](ProductAddedType,
 		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in ProductAddedInput, status Status) (Event, error) {

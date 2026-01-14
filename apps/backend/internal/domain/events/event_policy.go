@@ -59,8 +59,11 @@ func DecideEventPolicyAdded(
 	in EventPolicyAddedInput,
 	status Status,
 ) (Event, error) {
+	base := NewBase(projectID, actor, status)
+	base.FriendlyNameStr = EventPolicyAddedMeta.FriendlyName
+
 	return &EventPolicyAdded{
-		Base:                    NewBase(projectID, actor, status),
+		Base:                    base,
 		PolicyID:                uuid.New(), // Generate new policy ID
 		Name:                    in.Name,
 		Description:             in.Description,
@@ -106,8 +109,11 @@ func DecideEventPolicyRemoved(
 	in EventPolicyRemovedInput,
 	status Status,
 ) (Event, error) {
+	base := NewBase(projectID, actor, status)
+	base.FriendlyNameStr = EventPolicyRemovedMeta.FriendlyName
+
 	return &EventPolicyRemoved{
-		Base:     NewBase(projectID, actor, status),
+		Base:     base,
 		PolicyID: in.PolicyID,
 		Name:     in.Name,
 	}, nil
@@ -161,8 +167,11 @@ func DecideEventPolicyUpdated(
 	in EventPolicyUpdatedInput,
 	status Status,
 ) (Event, error) {
+	base := NewBase(projectID, actor, status)
+	base.FriendlyNameStr = EventPolicyUpdatedMeta.FriendlyName
+
 	return &EventPolicyUpdated{
-		Base:                    NewBase(projectID, actor, status),
+		Base:                    base,
 		PolicyID:                in.PolicyID,
 		Name:                    in.Name,
 		Description:             in.Description,
@@ -176,12 +185,26 @@ func DecideEventPolicyUpdated(
 	}, nil
 }
 
+var EventPolicyAddedMeta = EventMeta{
+	Type:         EventPolicyAddedType,
+	FriendlyName: "Event Policy Added",
+}
+var EventPolicyRemovedMeta = EventMeta{
+	Type:         EventPolicyRemovedType,
+	FriendlyName: "Event Policy Removed",
+}
+var EventPolicyUpdatedMeta = EventMeta{
+	Type:         EventPolicyUpdatedType,
+	FriendlyName: "Event Policy Updated",
+}
+
 func init() {
 	// Register EventPolicyAdded
-	RegisterMeta(EventMeta{
-		Type:         EventPolicyAddedType,
-		FriendlyName: "Event Policy Added",
-	}, func() Event { return &EventPolicyAdded{} })
+	RegisterMeta(EventPolicyAddedMeta, func() Event {
+		return &EventPolicyAdded{
+			Base: Base{FriendlyNameStr: EventPolicyAddedMeta.FriendlyName},
+		}
+	})
 
 	RegisterDecider[EventPolicyAddedInput](EventPolicyAddedType,
 		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in EventPolicyAddedInput, status Status) (Event, error) {
@@ -191,10 +214,11 @@ func init() {
 	RegisterInputType(EventPolicyAddedType, EventPolicyAddedInput{})
 
 	// Register EventPolicyRemoved
-	RegisterMeta(EventMeta{
-		Type:         EventPolicyRemovedType,
-		FriendlyName: "Event Policy Removed",
-	}, func() Event { return &EventPolicyRemoved{} })
+	RegisterMeta(EventPolicyRemovedMeta, func() Event {
+		return &EventPolicyRemoved{
+			Base: Base{FriendlyNameStr: EventPolicyRemovedMeta.FriendlyName},
+		}
+	})
 
 	RegisterDecider[EventPolicyRemovedInput](EventPolicyRemovedType,
 		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in EventPolicyRemovedInput, status Status) (Event, error) {
@@ -204,10 +228,11 @@ func init() {
 	RegisterInputType(EventPolicyRemovedType, EventPolicyRemovedInput{})
 
 	// Register EventPolicyUpdated
-	RegisterMeta(EventMeta{
-		Type:         EventPolicyUpdatedType,
-		FriendlyName: "Event Policy Updated",
-	}, func() Event { return &EventPolicyUpdated{} })
+	RegisterMeta(EventPolicyUpdatedMeta, func() Event {
+		return &EventPolicyUpdated{
+			Base: Base{FriendlyNameStr: EventPolicyUpdatedMeta.FriendlyName},
+		}
+	})
 
 	RegisterDecider[EventPolicyUpdatedInput](EventPolicyUpdatedType,
 		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in EventPolicyUpdatedInput, status Status) (Event, error) {

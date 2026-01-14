@@ -34,13 +34,13 @@ func NewRBACHandler(r rbacsvc.Service) *RBACHandler {
 func (h *RBACHandler) ListPermissions(w http.ResponseWriter, r *http.Request) {
 	// Simple mapping for now - ideally this would be in the service or domain
 	// But since it's just constants + display info, we can do it here or helper
-	perms := []dto.PermissionDefinition{
-		{Key: string(role.PermissionManageMembers), Label: "Manage Members", Description: "Can invite, remove, and manage members"},
-		{Key: string(role.PermissionManageProjectRoles), Label: "Manage Project Roles", Description: "Can create and manage project-level roles"},
-		{Key: string(role.PermissionManageOrganisationRoles), Label: "Manage Organisation Roles", Description: "Can create and manage organisation-level roles"},
-		{Key: string(role.PermissionManageCustomFields), Label: "Manage Custom Fields", Description: "Can manage custom fields for projects and people"},
-		{Key: string(role.PermissionManageDetails), Label: "Manage Details", Description: "Can update organisation details"},
-	}
+	perms := lo.Map(role.Definitions, func(d role.PermissionDefinition, _ int) dto.PermissionDefinition {
+		return dto.PermissionDefinition{
+			Key:         string(d.Permission),
+			Label:       d.Label,
+			Description: d.Description,
+		}
+	})
 
 	_ = httputil.WriteJSON(w, http.StatusOK, dto.GetPermissionsResponse{Permissions: perms})
 }

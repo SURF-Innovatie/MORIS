@@ -17,6 +17,7 @@ type Event struct {
 	At           time.Time     `json:"at"`
 	Details      string        `json:"details"`
 	ProjectTitle string        `json:"projectTitle"`
+	FriendlyName string        `json:"friendlyName,omitempty"`
 
 	// Optional "related object" pointers (IDs only)
 	PersonID      *uuid.UUID `json:"personId,omitempty"`
@@ -88,6 +89,7 @@ func (e Event) fromCore(ev events.Event, projectTitle string) Event {
 		At:           ev.OccurredAt(),
 		Details:      ev.String(),
 		ProjectTitle: projectTitle,
+		FriendlyName: ev.FriendlyName(),
 		Data:         ev,
 	}
 
