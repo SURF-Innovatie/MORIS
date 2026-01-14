@@ -3,6 +3,7 @@ package orcid
 import (
 	"net/http"
 
+	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	"github.com/SURF-Innovatie/MORIS/internal/app/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/go-chi/chi/v5"
@@ -30,7 +31,7 @@ func MountRoutes(r chi.Router, h *Handler) {
 // @Produce json
 // @Security BearerAuth
 // @Param q query string true "Search query"
-// @Success 200 {array} object
+// @Success 200 {array} dto.OrcidPerson
 // @Failure 401 {object} httputil.BackendError "User not authenticated"
 // @Failure 500 {object} httputil.BackendError "Internal server error"
 // @Router /orcid/search [get]
@@ -46,5 +47,17 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
+
+	out := make([]dto.OrcidPerson, 0, len(results))
+	for _, p := range results {
+		out = append(out, dto.OrcidPerson{
+			FirstName:  p.FirstName,
+			LastName:   p.LastName,
+			CreditName: p.CreditName,
+			Biography:  p.Biography,
+			ORCID:      p.ORCID,
+		})
+	}
+
 	httputil.WriteJSON(w, http.StatusOK, results)
 }

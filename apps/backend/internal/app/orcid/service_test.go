@@ -1,4 +1,4 @@
-package orcid
+package orcid_test
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	ext "github.com/SURF-Innovatie/MORIS/external/orcid"
+	"github.com/SURF-Innovatie/MORIS/internal/app/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
@@ -114,6 +115,14 @@ func (r *fakeUserRepo) GetByPersonID(ctx context.Context, personID uuid.UUID) (*
 	return r.Get(ctx, uid)
 }
 
+func (r *fakeUserRepo) SetZenodoTokens(context.Context, uuid.UUID, string, string) error {
+	return errors.New("not implemented")
+}
+
+func (r *fakeUserRepo) ClearZenodoTokens(context.Context, uuid.UUID) error {
+	return errors.New("not implemented")
+}
+
 type fakePersonRepo struct {
 	byID map[uuid.UUID]entities.Person
 }
@@ -215,7 +224,7 @@ func TestService_Search_DelegatesToClient(t *testing.T) {
 		},
 	}
 
-	svc := NewService(users, people, client)
+	svc := orcid.NewService(users, people, client)
 
 	got, err := svc.Search(context.Background(), "John Doe")
 	if err != nil {
@@ -249,10 +258,10 @@ func TestService_Link_AlreadyLinked(t *testing.T) {
 
 	client := &fakeOrcidClient{exchangeOut: "0000-0002-1111-2222"}
 
-	svc := NewService(users, people, client)
+	svc := orcid.NewService(users, people, client)
 
 	err := svc.Link(context.Background(), userID, "AUTH_CODE")
-	if !errors.Is(err, ErrAlreadyLinked) {
+	if !errors.Is(err, orcid.ErrAlreadyLinked) {
 		t.Fatalf("expected ErrAlreadyLinked, got %v", err)
 	}
 }
@@ -276,7 +285,7 @@ func TestService_Link_SetsORCIDOnPerson(t *testing.T) {
 
 	client := &fakeOrcidClient{exchangeOut: "0000-0002-1111-2222"}
 
-	svc := NewService(users, people, client)
+	svc := orcid.NewService(users, people, client)
 
 	if err := svc.Link(context.Background(), userID, "AUTH_CODE"); err != nil {
 		t.Fatalf("Link failed: %v", err)
@@ -308,7 +317,7 @@ func TestService_Unlink_ClearsORCIDOnPerson(t *testing.T) {
 
 	client := &fakeOrcidClient{}
 
-	svc := NewService(users, people, client)
+	svc := orcid.NewService(users, people, client)
 
 	if err := svc.Unlink(context.Background(), userID); err != nil {
 		t.Fatalf("Unlink failed: %v", err)

@@ -10,7 +10,9 @@ import (
 	"time"
 
 	exorcid "github.com/SURF-Innovatie/MORIS/external/orcid"
+	exzenodo "github.com/SURF-Innovatie/MORIS/external/zenodo"
 	"github.com/SURF-Innovatie/MORIS/internal/app/orcid"
+	"github.com/SURF-Innovatie/MORIS/internal/app/zenodo"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	logger "github.com/chi-middleware/logrus-logger"
 	"github.com/go-chi/chi/v5"
@@ -23,7 +25,6 @@ import (
 	_ "github.com/SURF-Innovatie/MORIS/api/swag-docs"
 	"github.com/SURF-Innovatie/MORIS/ent"
 	crossref2 "github.com/SURF-Innovatie/MORIS/external/crossref"
-	"github.com/SURF-Innovatie/MORIS/external/zenodo"
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
@@ -164,10 +165,7 @@ func main() {
 	userSvc := user.NewService(userRepo, personSvc, esStore, membershipRepo)
 	authSvc := auth.NewJWTService(client, userSvc, personSvc, env.Global.JWTSecret)
 
-	orcidOpts, err := env.ORCIDOptionsFromEnv()
-	if err != nil {
-		logrus.Fatalf("failed to get ORCiD config from env: %v", err)
-	}
+	orcidOpts := env.ORCIDOptionsFromEnv()
 
 	orcidCli := exorcid.NewClient(http.DefaultClient, orcidOpts)
 	orcidSvc := orcid.NewService(userRepo, personRepo, orcidCli)
@@ -218,8 +216,12 @@ func main() {
 	// Create HTTP handler/controller
 	authHandler := authhandler.NewHandler(userSvc, authSvc, orcidSvc)
 	orcidHandler := orcidhandler.NewHandler(orcidSvc)
-	zenodoSvc := zenodo.NewService(client, userSvc, http.DefaultClient)
+
+	zenodoOpts := env.ZenodoOptionsFromEnv()
+	zenodoClient := exzenodo.NewClient(http.DefaultClient, zenodoOpts)
+	zenodoSvc := zenodo.NewService(userRepo, zenodoClient)
 	zenodoHandler := zenodohandler.NewHandler(zenodoSvc, curUser)
+
 	systemHandler := systemhandler.NewHandler()
 
 	cacheSvc := cache.NewRedisProjectCache(rdb, 24*time.Hour)
@@ -252,9 +254,7 @@ func main() {
 	projCmdSvc := command.NewService(esStore, eventSvc, cacheSvc, refreshSvc, curUser, entProv, roleSvc, policyEvaluator, organisationSvc, rbacSvc)
 	projCmdHandler := commandHandler.NewHandler(projCmdSvc)
 
-	// Register handler for EventPolicyAdded/Removed events
 	eventSvc.RegisterNotificationHandler(&event.EventPolicyHandler{PolicyRepo: eventPolicyRepo, Cli: client})
-	// Register handler to execute policies for all events
 	eventSvc.RegisterNotificationHandler(&event.PolicyExecutionHandler{Evaluator: policyEvaluator, ProjectSvc: projSvc})
 
 	userHandler := userhandler.NewHandler(userSvc, projSvc)

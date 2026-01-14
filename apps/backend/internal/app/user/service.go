@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 
+	"github.com/SURF-Innovatie/MORIS/internal/app/person"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
@@ -26,14 +27,14 @@ type Service interface {
 
 type service struct {
 	users      Repository
-	people     PersonRepository
+	people     person.Repository
 	es         EventStore
 	membership ProjectMembershipRepository
 }
 
 func NewService(
 	users Repository,
-	people PersonRepository,
+	people person.Repository,
 	es EventStore,
 	membership ProjectMembershipRepository,
 ) Service {

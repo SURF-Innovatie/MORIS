@@ -5,20 +5,23 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/SURF-Innovatie/MORIS/external/zenodo"
+	exzenodo "github.com/SURF-Innovatie/MORIS/external/zenodo"
 	appauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
+	appzenodo "github.com/SURF-Innovatie/MORIS/internal/app/zenodo"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
+
+	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	"github.com/go-chi/chi/v5"
 )
 
 // Handler provides HTTP handlers for Zenodo integration
 type Handler struct {
-	zenodoService zenodo.Service
+	zenodoService appzenodo.Service
 	currentUser   appauth.CurrentUserProvider
 }
 
 // NewHandler creates a new Zenodo handler
-func NewHandler(zenodoService zenodo.Service, currentUser appauth.CurrentUserProvider) *Handler {
+func NewHandler(zenodoService appzenodo.Service, currentUser appauth.CurrentUserProvider) *Handler {
 	return &Handler{
 		zenodoService: zenodoService,
 		currentUser:   currentUser,
@@ -66,6 +69,11 @@ func (h *Handler) GetAuthURL(w http.ResponseWriter, r *http.Request) {
 	httputil.WriteJSON(w, http.StatusOK, map[string]string{"auth_url": authURL})
 }
 
+// LinkRequest is the request body for linking a Zenodo account
+type LinkRequest struct {
+	Code string `json:"code"`
+}
+
 // Link godoc
 // @Summary Link Zenodo account
 // @Description Exchanges an authorization code for tokens and links the Zenodo account
@@ -90,15 +98,18 @@ func (h *Handler) Link(w http.ResponseWriter, r *http.Request) {
 	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
-
 	if req.Code == "" {
 		httputil.WriteError(w, r, http.StatusBadRequest, "code is required", nil)
 		return
 	}
 
 	if err := h.zenodoService.Link(r.Context(), u.UserID(), req.Code); err != nil {
-		if err == zenodo.ErrAlreadyLinked {
+		if err == appzenodo.ErrAlreadyLinked {
 			httputil.WriteError(w, r, http.StatusBadRequest, "Zenodo account already linked", nil)
+			return
+		}
+		if err == appzenodo.ErrMissingCode {
+			httputil.WriteError(w, r, http.StatusBadRequest, "code is required", nil)
 			return
 		}
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
@@ -106,11 +117,6 @@ func (h *Handler) Link(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httputil.WriteJSON(w, http.StatusOK, map[string]string{"status": "linked"})
-}
-
-// LinkRequest is the request body for linking a Zenodo account
-type LinkRequest struct {
-	Code string `json:"code"`
 }
 
 // Unlink godoc
@@ -136,6 +142,11 @@ func (h *Handler) Unlink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httputil.WriteJSON(w, http.StatusOK, map[string]string{"status": "unlinked"})
+}
+
+// StatusResponse is the response for the status endpoint
+type StatusResponse struct {
+	Linked bool `json:"linked"`
 }
 
 // GetStatus godoc
@@ -164,18 +175,13 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 	httputil.WriteJSON(w, http.StatusOK, StatusResponse{Linked: linked})
 }
 
-// StatusResponse is the response for the status endpoint
-type StatusResponse struct {
-	Linked bool `json:"linked"`
-}
-
 // ListDepositions godoc
 // @Summary List Zenodo depositions
 // @Description Returns all depositions for the current user
 // @Tags zenodo
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {array} zenodo.Deposition
+// @Success 200 {array} dto.Deposition
 // @Failure 401 {object} httputil.BackendError "User not authenticated"
 // @Failure 500 {object} httputil.BackendError "Internal server error"
 // @Router /zenodo/depositions [get]
@@ -186,9 +192,9 @@ func (h *Handler) ListDepositions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	depositions, err := h.zenodoService.ListDepositions(r.Context(), u.UserID())
+	deps, err := h.zenodoService.ListDepositions(r.Context(), u.UserID())
 	if err != nil {
-		if err == zenodo.ErrNotLinked {
+		if err == appzenodo.ErrNotLinked {
 			httputil.WriteError(w, r, http.StatusBadRequest, "Zenodo account not linked", nil)
 			return
 		}
@@ -196,7 +202,7 @@ func (h *Handler) ListDepositions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httputil.WriteJSON(w, http.StatusOK, depositions)
+	httputil.WriteJSON(w, http.StatusOK, dto.FromExternalDepositions(deps))
 }
 
 // CreateDeposition godoc
@@ -205,7 +211,7 @@ func (h *Handler) ListDepositions(w http.ResponseWriter, r *http.Request) {
 // @Tags zenodo
 // @Produce json
 // @Security BearerAuth
-// @Success 201 {object} zenodo.Deposition
+// @Success 201 {object} dto.Deposition
 // @Failure 401 {object} httputil.BackendError "User not authenticated"
 // @Failure 500 {object} httputil.BackendError "Internal server error"
 // @Router /zenodo/depositions [post]
@@ -216,9 +222,9 @@ func (h *Handler) CreateDeposition(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deposition, err := h.zenodoService.CreateDeposition(r.Context(), u.UserID())
+	dep, err := h.zenodoService.CreateDeposition(r.Context(), u.UserID())
 	if err != nil {
-		if err == zenodo.ErrNotLinked {
+		if err == appzenodo.ErrNotLinked {
 			httputil.WriteError(w, r, http.StatusBadRequest, "Zenodo account not linked", nil)
 			return
 		}
@@ -226,7 +232,7 @@ func (h *Handler) CreateDeposition(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httputil.WriteJSON(w, http.StatusCreated, deposition)
+	httputil.WriteJSON(w, http.StatusCreated, dto.FromExternalDeposition(*dep))
 }
 
 // GetDeposition godoc
@@ -236,7 +242,7 @@ func (h *Handler) CreateDeposition(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path int true "Deposition ID"
-// @Success 200 {object} zenodo.Deposition
+// @Success 200 {object} dto.Deposition
 // @Failure 400 {object} httputil.BackendError "Invalid ID"
 // @Failure 401 {object} httputil.BackendError "User not authenticated"
 // @Failure 500 {object} httputil.BackendError "Internal server error"
@@ -254,9 +260,9 @@ func (h *Handler) GetDeposition(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deposition, err := h.zenodoService.GetDeposition(r.Context(), u.UserID(), id)
+	dep, err := h.zenodoService.GetDeposition(r.Context(), u.UserID(), id)
 	if err != nil {
-		if err == zenodo.ErrNotLinked {
+		if err == appzenodo.ErrNotLinked {
 			httputil.WriteError(w, r, http.StatusBadRequest, "Zenodo account not linked", nil)
 			return
 		}
@@ -264,7 +270,7 @@ func (h *Handler) GetDeposition(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httputil.WriteJSON(w, http.StatusOK, deposition)
+	httputil.WriteJSON(w, http.StatusOK, dto.FromExternalDeposition(*dep))
 }
 
 // UpdateDeposition godoc
@@ -275,8 +281,8 @@ func (h *Handler) GetDeposition(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path int true "Deposition ID"
-// @Param body body zenodo.DepositionMetadata true "Deposition metadata"
-// @Success 200 {object} zenodo.Deposition
+// @Param body body dto.DepositionMetadata true "Deposition metadata"
+// @Success 200 {object} dto.Deposition
 // @Failure 400 {object} httputil.BackendError "Invalid request"
 // @Failure 401 {object} httputil.BackendError "User not authenticated"
 // @Failure 500 {object} httputil.BackendError "Internal server error"
@@ -294,14 +300,16 @@ func (h *Handler) UpdateDeposition(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var metadata zenodo.DepositionMetadata
-	if !httputil.ReadJSON(w, r, &metadata) {
+	var req dto.DepositionMetadata
+	if !httputil.ReadJSON(w, r, &req) {
 		return
 	}
 
-	deposition, err := h.zenodoService.UpdateDeposition(r.Context(), u.UserID(), id, &metadata)
+	md := toExternalDepositionMetadata(req)
+
+	dep, err := h.zenodoService.UpdateDeposition(r.Context(), u.UserID(), id, &md)
 	if err != nil {
-		if err == zenodo.ErrNotLinked {
+		if err == appzenodo.ErrNotLinked {
 			httputil.WriteError(w, r, http.StatusBadRequest, "Zenodo account not linked", nil)
 			return
 		}
@@ -309,7 +317,7 @@ func (h *Handler) UpdateDeposition(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httputil.WriteJSON(w, http.StatusOK, deposition)
+	httputil.WriteJSON(w, http.StatusOK, dto.FromExternalDeposition(*dep))
 }
 
 // DeleteDeposition godoc
@@ -338,7 +346,7 @@ func (h *Handler) DeleteDeposition(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.zenodoService.DeleteDeposition(r.Context(), u.UserID(), id); err != nil {
-		if err == zenodo.ErrNotLinked {
+		if err == appzenodo.ErrNotLinked {
 			httputil.WriteError(w, r, http.StatusBadRequest, "Zenodo account not linked", nil)
 			return
 		}
@@ -358,7 +366,7 @@ func (h *Handler) DeleteDeposition(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Param id path int true "Deposition ID"
 // @Param file formData file true "File to upload"
-// @Success 201 {object} zenodo.DepositionFile
+// @Success 201 {object} dto.DepositionFile
 // @Failure 400 {object} httputil.BackendError "Invalid request"
 // @Failure 401 {object} httputil.BackendError "User not authenticated"
 // @Failure 500 {object} httputil.BackendError "Internal server error"
@@ -376,7 +384,6 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse multipart form (max 50GB as per Zenodo limits)
 	if err := r.ParseMultipartForm(50 << 30); err != nil {
 		httputil.WriteError(w, r, http.StatusBadRequest, "failed to parse form", nil)
 		return
@@ -389,12 +396,9 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Create a reader that properly handles the file
-	reader := io.Reader(file)
-
-	depositionFile, err := h.zenodoService.UploadFile(r.Context(), u.UserID(), id, header.Filename, reader)
+	depFile, err := h.zenodoService.UploadFile(r.Context(), u.UserID(), id, header.Filename, io.Reader(file))
 	if err != nil {
-		if err == zenodo.ErrNotLinked {
+		if err == appzenodo.ErrNotLinked {
 			httputil.WriteError(w, r, http.StatusBadRequest, "Zenodo account not linked", nil)
 			return
 		}
@@ -402,7 +406,7 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httputil.WriteJSON(w, http.StatusCreated, depositionFile)
+	httputil.WriteJSON(w, http.StatusCreated, dto.FromExternalDepositionFilePtr(depFile))
 }
 
 // Publish godoc
@@ -412,7 +416,7 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path int true "Deposition ID"
-// @Success 202 {object} zenodo.Deposition
+// @Success 202 {object} dto.Deposition
 // @Failure 400 {object} httputil.BackendError "Invalid request"
 // @Failure 401 {object} httputil.BackendError "User not authenticated"
 // @Failure 500 {object} httputil.BackendError "Internal server error"
@@ -430,9 +434,9 @@ func (h *Handler) Publish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deposition, err := h.zenodoService.Publish(r.Context(), u.UserID(), id)
+	dep, err := h.zenodoService.Publish(r.Context(), u.UserID(), id)
 	if err != nil {
-		if err == zenodo.ErrNotLinked {
+		if err == appzenodo.ErrNotLinked {
 			httputil.WriteError(w, r, http.StatusBadRequest, "Zenodo account not linked", nil)
 			return
 		}
@@ -440,5 +444,80 @@ func (h *Handler) Publish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httputil.WriteJSON(w, http.StatusAccepted, deposition)
+	httputil.WriteJSON(w, http.StatusAccepted, dto.FromExternalDeposition(*dep))
+}
+
+func toExternalDepositionMetadata(m dto.DepositionMetadata) exzenodo.DepositionMetadata {
+	out := exzenodo.DepositionMetadata{
+		Title:           m.Title,
+		UploadType:      exzenodo.UploadType(m.UploadType),
+		PublicationType: exzenodo.PublicationType(m.PublicationType),
+		Description:     m.Description,
+		AccessRight:     exzenodo.AccessRight(m.AccessRight),
+		License:         m.License,
+		DOI:             m.DOI,
+		Keywords:        m.Keywords,
+		Notes:           m.Notes,
+		References:      m.References,
+		PublicationDate: m.PublicationDate,
+	}
+
+	if m.PrereserveDOI != nil {
+		out.PrereserveDOI = &exzenodo.PrereserveDOI{
+			DOI:   m.PrereserveDOI.DOI,
+			RecID: m.PrereserveDOI.RecID,
+		}
+	}
+
+	if len(m.Creators) > 0 {
+		out.Creators = make([]exzenodo.Creator, 0, len(m.Creators))
+		for _, c := range m.Creators {
+			out.Creators = append(out.Creators, exzenodo.Creator{
+				Name:        c.Name,
+				Affiliation: c.Affiliation,
+				ORCID:       c.ORCID,
+				GND:         c.GND,
+			})
+		}
+	}
+
+	if len(m.Contributors) > 0 {
+		out.Contributors = make([]exzenodo.Contributor, 0, len(m.Contributors))
+		for _, c := range m.Contributors {
+			out.Contributors = append(out.Contributors, exzenodo.Contributor{
+				Name:        c.Name,
+				Type:        exzenodo.ContributorType(c.Type),
+				Affiliation: c.Affiliation,
+				ORCID:       c.ORCID,
+				GND:         c.GND,
+			})
+		}
+	}
+
+	if len(m.RelatedIDs) > 0 {
+		out.RelatedIDs = make([]exzenodo.RelatedIdentifier, 0, len(m.RelatedIDs))
+		for _, rid := range m.RelatedIDs {
+			out.RelatedIDs = append(out.RelatedIDs, exzenodo.RelatedIdentifier{
+				Identifier:   rid.Identifier,
+				Relation:     rid.Relation,
+				ResourceType: rid.ResourceType,
+			})
+		}
+	}
+
+	if len(m.Communities) > 0 {
+		out.Communities = make([]exzenodo.Community, 0, len(m.Communities))
+		for _, c := range m.Communities {
+			out.Communities = append(out.Communities, exzenodo.Community{Identifier: c.Identifier})
+		}
+	}
+
+	if len(m.Grants) > 0 {
+		out.Grants = make([]exzenodo.Grant, 0, len(m.Grants))
+		for _, g := range m.Grants {
+			out.Grants = append(out.Grants, exzenodo.Grant{ID: g.ID})
+		}
+	}
+
+	return out
 }

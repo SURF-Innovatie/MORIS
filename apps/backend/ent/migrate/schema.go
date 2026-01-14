@@ -282,8 +282,6 @@ var (
 		{Name: "avatar_url", Type: field.TypeString, Nullable: true},
 		{Name: "description", Type: field.TypeString, Nullable: true},
 		{Name: "org_custom_fields", Type: field.TypeJSON, Nullable: true},
-		{Name: "zenodo_access_token", Type: field.TypeString, Nullable: true},
-		{Name: "zenodo_refresh_token", Type: field.TypeString, Nullable: true},
 	}
 	// PersonsTable holds the schema information for the "persons" table.
 	PersonsTable = &schema.Table{
@@ -376,6 +374,8 @@ var (
 		{Name: "password", Type: field.TypeString},
 		{Name: "is_sys_admin", Type: field.TypeBool, Default: false},
 		{Name: "is_active", Type: field.TypeBool, Default: true},
+		{Name: "zenodo_access_token", Type: field.TypeString, Nullable: true},
+		{Name: "zenodo_refresh_token", Type: field.TypeString, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{

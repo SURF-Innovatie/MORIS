@@ -20,6 +20,13 @@ func (User) Fields() []ent.Field {
 		field.String("password").NotEmpty().Sensitive(),
 		field.Bool("is_sys_admin").Default(false),
 		field.Bool("is_active").Default(true),
+		// Zenodo OAuth tokens
+		field.String("zenodo_access_token").
+			Optional().
+			Sensitive(),
+		field.String("zenodo_refresh_token").
+			Optional().
+			Sensitive(),
 	}
 }
 

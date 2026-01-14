@@ -13,8 +13,6 @@ type Repository interface {
 	Update(ctx context.Context, id uuid.UUID, p entities.Person) (*entities.Person, error)
 	List(ctx context.Context) ([]*entities.Person, error)
 	GetByEmail(ctx context.Context, email string) (*entities.Person, error)
-
-	// needed by user.SearchPersons (and generally useful)
 	Search(ctx context.Context, query string, limit int) ([]entities.Person, error)
 	SetORCID(ctx context.Context, personID uuid.UUID, orcidID string) error
 	ClearORCID(ctx context.Context, personID uuid.UUID) error

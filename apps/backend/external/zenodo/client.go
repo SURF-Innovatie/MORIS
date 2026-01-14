@@ -7,23 +7,123 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strings"
 )
 
 // Client provides low-level HTTP access to the Zenodo API
 type Client struct {
 	httpClient *http.Client
-	config     *Config
+	opts       Options
 }
 
 // NewClient creates a new Zenodo API client
-func NewClient(httpClient *http.Client, config *Config) *Client {
+func NewClient(httpClient *http.Client, opts Options) *Client {
 	if httpClient == nil {
 		httpClient = &http.Client{}
 	}
 	return &Client{
 		httpClient: httpClient,
-		config:     config,
+		opts:       opts,
 	}
+}
+
+func (c *Client) AuthURL(state string) (string, error) {
+	return c.opts.authURL(state)
+}
+
+func (c *Client) ExchangeCode(ctx context.Context, code string) (*TokenResponse, error) {
+	if err := c.opts.ValidateOAuth(); err != nil {
+		return nil, err
+	}
+	if code == "" {
+		return nil, fmt.Errorf("missing code")
+	}
+
+	data := url.Values{}
+	data.Set("client_id", c.opts.ClientID)
+	data.Set("client_secret", c.opts.ClientSecret)
+	data.Set("grant_type", "authorization_code")
+	data.Set("code", code)
+	data.Set("redirect_uri", c.opts.RedirectURL)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.opts.TokenURL, strings.NewReader(data.Encode()))
+	if err != nil {
+		return nil, fmt.Errorf("create token request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("token request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		var apiErr APIError
+		if err := json.NewDecoder(resp.Body).Decode(&apiErr); err == nil && apiErr.Message != "" {
+			apiErr.Status = resp.StatusCode
+			return nil, &apiErr
+		}
+		return nil, fmt.Errorf("token request failed: status %d", resp.StatusCode)
+	}
+
+	var out TokenResponse
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		return nil, fmt.Errorf("decode token response: %w", err)
+	}
+	if out.AccessToken == "" {
+		return nil, fmt.Errorf("no access token returned")
+	}
+	return &out, nil
+}
+
+// RefreshToken refreshes an expired access token
+func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*TokenResponse, error) {
+	if err := c.opts.ValidateOAuth(); err != nil {
+		return nil, err
+	}
+	if refreshToken == "" {
+		return nil, fmt.Errorf("missing refresh token")
+	}
+
+	data := url.Values{}
+	data.Set("client_id", c.opts.ClientID)
+	data.Set("client_secret", c.opts.ClientSecret)
+	data.Set("grant_type", "refresh_token")
+	data.Set("refresh_token", refreshToken)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.opts.TokenURL, strings.NewReader(data.Encode()))
+	if err != nil {
+		return nil, fmt.Errorf("create refresh request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("refresh request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		var apiErr APIError
+		if err := json.NewDecoder(resp.Body).Decode(&apiErr); err == nil && apiErr.Message != "" {
+			apiErr.Status = resp.StatusCode
+			return nil, &apiErr
+		}
+		return nil, fmt.Errorf("refresh request failed: status %d", resp.StatusCode)
+	}
+
+	var out TokenResponse
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		return nil, fmt.Errorf("decode refresh response: %w", err)
+	}
+	if out.AccessToken == "" {
+		return nil, fmt.Errorf("no access token returned")
+	}
+	return &out, nil
 }
 
 // doRequest performs an authenticated request to the Zenodo API
@@ -32,15 +132,15 @@ func (c *Client) doRequest(ctx context.Context, method, path, accessToken string
 	if body != nil {
 		jsonBody, err := json.Marshal(body)
 		if err != nil {
-			return nil, fmt.Errorf("failed to marshal request body: %w", err)
+			return nil, fmt.Errorf("marshal request body: %w", err)
 		}
 		bodyReader = bytes.NewReader(jsonBody)
 	}
 
-	url := fmt.Sprintf("%s%s", c.config.APIURL, path)
-	req, err := http.NewRequestWithContext(ctx, method, url, bodyReader)
+	u := strings.TrimRight(c.opts.APIURL, "/") + path
+	req, err := http.NewRequestWithContext(ctx, method, u, bodyReader)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, fmt.Errorf("create request: %w", err)
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))

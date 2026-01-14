@@ -25,8 +25,3 @@ type Repository interface {
 	DeleteClosures(ctx context.Context, ancestorIDs, descendantIDs []uuid.UUID) error
 	CreateClosuresBulk(ctx context.Context, rows []entities.OrganisationNodeClosure) error
 }
-
-type PersonRepository interface {
-	Get(ctx context.Context, id uuid.UUID) (*entities.Person, error)
-	Update(ctx context.Context, id uuid.UUID, p entities.Person) (*entities.Person, error)
-}

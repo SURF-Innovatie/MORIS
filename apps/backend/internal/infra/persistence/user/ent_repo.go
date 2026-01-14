@@ -76,3 +76,20 @@ func (r *EntRepo) ListUsers(ctx context.Context, limit, offset int) ([]entities.
 
 	return transform.ToEntities[entities.User](rows), total, nil
 }
+
+func (r *EntRepo) SetZenodoTokens(ctx context.Context, userID uuid.UUID, access, refresh string) error {
+	upd := r.cli.User.UpdateOneID(userID).SetZenodoAccessToken(access)
+	if refresh != "" {
+		upd = upd.SetZenodoRefreshToken(refresh)
+	}
+	_, err := upd.Save(ctx)
+	return err
+}
+
+func (r *EntRepo) ClearZenodoTokens(ctx context.Context, userID uuid.UUID) error {
+	_, err := r.cli.User.UpdateOneID(userID).
+		ClearZenodoAccessToken().
+		ClearZenodoRefreshToken().
+		Save(ctx)
+	return err
+}

@@ -17,12 +17,8 @@ type Repository interface {
 
 	ListUsers(ctx context.Context, limit, offset int) ([]entities.User, int, error)
 	GetByPersonID(ctx context.Context, personID uuid.UUID) (*entities.User, error)
-}
-
-type PersonRepository interface {
-	Get(ctx context.Context, id uuid.UUID) (*entities.Person, error)
-	GetByEmail(ctx context.Context, email string) (*entities.Person, error)
-	Search(ctx context.Context, query string, limit int) ([]entities.Person, error)
+	SetZenodoTokens(ctx context.Context, userID uuid.UUID, access, refresh string) error
+	ClearZenodoTokens(ctx context.Context, userID uuid.UUID) error
 }
 
 type EventStore interface {

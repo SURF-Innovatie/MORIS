@@ -14,6 +14,8 @@ type Service interface {
 	List(ctx context.Context) ([]*entities.Person, error)
 	GetByEmail(ctx context.Context, email string) (*entities.Person, error)
 	Search(ctx context.Context, query string, limit int) ([]entities.Person, error)
+	SetORCID(ctx context.Context, personID uuid.UUID, orcidID string) error
+	ClearORCID(ctx context.Context, personID uuid.UUID) error
 }
 
 type service struct {
@@ -46,4 +48,12 @@ func (s *service) GetByEmail(ctx context.Context, email string) (*entities.Perso
 
 func (s *service) Search(ctx context.Context, query string, limit int) ([]entities.Person, error) {
 	return s.repo.Search(ctx, query, limit)
+}
+
+func (s *service) SetORCID(ctx context.Context, personID uuid.UUID, orcidID string) error {
+	return s.repo.SetORCID(ctx, personID, orcidID)
+}
+
+func (s *service) ClearORCID(ctx context.Context, personID uuid.UUID) error {
+	return s.repo.ClearORCID(ctx, personID)
 }

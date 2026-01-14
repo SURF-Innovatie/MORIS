@@ -6,6 +6,7 @@ import (
 
 	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	orgrole "github.com/SURF-Innovatie/MORIS/internal/app/organisation/role"
+	"github.com/SURF-Innovatie/MORIS/internal/app/person"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -27,11 +28,11 @@ type Service interface {
 
 type service struct {
 	repo       Repository
-	personRepo PersonRepository
+	personRepo person.Repository
 	rbac       rbacsvc.Service
 }
 
-func NewService(repo Repository, personRepo PersonRepository, rbac rbacsvc.Service) Service {
+func NewService(repo Repository, personRepo person.Repository, rbac rbacsvc.Service) Service {
 	return &service{repo: repo, personRepo: personRepo, rbac: rbac}
 }
 
