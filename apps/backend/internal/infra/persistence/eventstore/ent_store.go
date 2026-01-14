@@ -107,11 +107,12 @@ func (s *EntStore) Append(
 	// Update event IDs in the original event objects so handlers can use them
 	for i, e := range list {
 		base := events.Base{
-			ID:        eventIDs[i],
-			ProjectID: projectID,
-			At:        now,
-			CreatedBy: e.CreatedByID(),
-			Status:    e.GetStatus(),
+			ID:              eventIDs[i],
+			ProjectID:       projectID,
+			At:              now,
+			CreatedBy:       e.CreatedByID(),
+			Status:          e.GetStatus(),
+			FriendlyNameStr: e.FriendlyName(),
 		}
 		e.SetBase(base)
 	}
@@ -228,6 +229,8 @@ func (s *EntStore) mapEventRow(r *ent.Event) (events.Event, error) {
 		return nil, err
 	}
 
+	// Preserve friendly name from the unmarshaled event
+	base.FriendlyNameStr = evt.FriendlyName()
 	evt.SetBase(base)
 
 	return evt, nil

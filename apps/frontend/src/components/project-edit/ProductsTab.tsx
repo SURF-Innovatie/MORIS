@@ -354,6 +354,7 @@ export function ProductsTab({
             product={product}
             onRemove={(id) => setProductToDelete(id)}
             canRemove={hasAccess(ProjectEventType.ProductRemoved)}
+            pending={(product as any).pending}
           />
         ))}
         {products.length === 0 && (

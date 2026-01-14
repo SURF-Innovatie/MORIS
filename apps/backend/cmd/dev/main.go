@@ -209,8 +209,6 @@ func main() {
 	statusUpdateHandler := &event.StatusUpdateNotificationHandler{Cli: client}
 	eventSvc.RegisterStatusChangeHandler(statusUpdateHandler.Handle)
 
-	evtHandler := eventHandler.NewHandler(eventSvc, client)
-
 	notificationHandler := notificationhandler.NewHandler(notifierSvc)
 
 	// Create HTTP handler/controller
@@ -237,8 +235,10 @@ func main() {
 	warmup := cachewarmup.NewService(repo, ldr, cacheSvc)
 	entProv := entclient.New(client)
 
-	projSvc := queries.NewService(esStore, ldr, repo, roleRepo, curUser)
+	projSvc := queries.NewService(esStore, ldr, repo, roleRepo, curUser, userSvc)
 	projHandler := projecthandler.NewHandler(projSvc, customFieldSvc)
+
+	evtHandler := eventHandler.NewHandler(eventSvc, projSvc, userSvc, client)
 
 	// Event Policies
 	eventPolicyRepo := eventpolicyrepo.NewEntRepository(client)

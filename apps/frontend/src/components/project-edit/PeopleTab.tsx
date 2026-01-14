@@ -75,8 +75,9 @@ function MemberRow({
   const { hasAccess } = useAccess();
   const canEditRole = hasAccess(ProjectEventType.ProjectRoleAssigned);
   const canRemove = hasAccess(ProjectEventType.ProjectRoleUnassigned);
+  const pending = (member as any).pending;
 
-  if (!canEditRole && !canRemove) {
+  if (pending || (!canEditRole && !canRemove)) {
     return (
       <div className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors">
         <MemberInfo member={member} />
@@ -124,9 +125,19 @@ function MemberRow({
   );
 }
 
-function MemberInfo({ member }: { member: ProjectMemberResponse }) {
+function MemberInfo({
+  member,
+}: {
+  member: ProjectMemberResponse & { pending?: boolean };
+}) {
   return (
-    <div className="flex items-center gap-4">
+    <div
+      className={
+        member.pending
+          ? "flex items-center gap-4 opacity-70"
+          : "flex items-center gap-4"
+      }
+    >
       <Avatar className="h-10 w-10 border">
         <AvatarImage src={member.avatarUrl || ""} />
         <AvatarFallback className="font-semibold text-primary">
@@ -143,6 +154,14 @@ function MemberInfo({ member }: { member: ProjectMemberResponse }) {
           <p className="font-semibold leading-none">
             {member.name || "Unknown"}
           </p>
+          {member.pending && (
+            <Badge
+              variant="outline"
+              className="text-[10px] h-5 px-1.5 border-yellow-500 text-yellow-600 bg-yellow-50"
+            >
+              Pending
+            </Badge>
+          )}
           {member.role === "lead" && (
             <Crown className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
           )}

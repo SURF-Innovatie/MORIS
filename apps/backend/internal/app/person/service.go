@@ -16,6 +16,7 @@ type Service interface {
 	Search(ctx context.Context, query string, limit int) ([]entities.Person, error)
 	SetORCID(ctx context.Context, personID uuid.UUID, orcidID string) error
 	ClearORCID(ctx context.Context, personID uuid.UUID) error
+	GetByIDs(ctx context.Context, ids []uuid.UUID) ([]entities.Person, error)
 }
 
 type service struct {
@@ -56,4 +57,8 @@ func (s *service) SetORCID(ctx context.Context, personID uuid.UUID, orcidID stri
 
 func (s *service) ClearORCID(ctx context.Context, personID uuid.UUID) error {
 	return s.repo.ClearORCID(ctx, personID)
+}
+
+func (s *service) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]entities.Person, error) {
+	return s.repo.GetByIDs(ctx, ids)
 }

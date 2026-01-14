@@ -8,7 +8,7 @@ import (
 	en "github.com/SURF-Innovatie/MORIS/ent/event"
 	"github.com/SURF-Innovatie/MORIS/ent/membership"
 	"github.com/SURF-Innovatie/MORIS/ent/notification"
-	entperson "github.com/SURF-Innovatie/MORIS/ent/person"
+	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/ent/rolescope"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
@@ -103,9 +103,9 @@ func (r *RecipientAdapter) ResolveUsers(ctx context.Context, personIDs []uuid.UU
 	}
 
 	var userIDs []uuid.UUID
-	err := r.client.Person.Query().
-		Where(entperson.IDIn(personIDs...)).
-		Select(entperson.FieldUserID).
+	err := r.client.User.Query().
+		Where(entuser.PersonIDIn(personIDs...)).
+		Select(entuser.FieldID).
 		Scan(ctx, &userIDs)
 	if err != nil {
 		return nil, err
@@ -145,9 +145,9 @@ func (r *RecipientAdapter) ResolveRole(ctx context.Context, roleID uuid.UUID, pr
 
 	// Resolve PersonIDs to UserIDs
 	var userIDs []uuid.UUID
-	err = r.client.Person.Query().
-		Where(entperson.IDIn(personIDs...)).
-		Select(entperson.FieldUserID).
+	err = r.client.User.Query().
+		Where(entuser.PersonIDIn(personIDs...)).
+		Select(entuser.FieldID).
 		Scan(ctx, &userIDs)
 	if err != nil {
 		return nil, err
@@ -165,18 +165,31 @@ func (r *RecipientAdapter) ResolveOrgRole(ctx context.Context, roleID uuid.UUID,
 				rolescope.RoleIDEQ(roleID),
 			),
 		).
-		WithPerson().
 		All(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	userIDs := lo.FilterMap(memberships, func(m *ent.Membership, _ int) (uuid.UUID, bool) {
-		if m.Edges.Person != nil {
-			return m.Edges.Person.UserID, true
+	personIDs := lo.FilterMap(memberships, func(m *ent.Membership, _ int) (uuid.UUID, bool) {
+		if m.PersonID != uuid.Nil {
+			return m.PersonID, true
 		}
 		return uuid.Nil, false
 	})
+
+	personIDs = lo.Uniq(personIDs)
+	if len(personIDs) == 0 {
+		return []uuid.UUID{}, nil
+	}
+
+	var userIDs []uuid.UUID
+	err = r.client.User.Query().
+		Where(entuser.PersonIDIn(personIDs...)).
+		Select(entuser.FieldID).
+		Scan(ctx, &userIDs)
+	if err != nil {
+		return nil, err
+	}
 
 	return lo.Uniq(userIDs), nil
 }
@@ -212,9 +225,9 @@ func (r *RecipientAdapter) ResolveDynamic(ctx context.Context, dynType string, p
 		}
 
 		var userIDs []uuid.UUID
-		err = r.client.Person.Query().
-			Where(entperson.IDIn(personIDs...)).
-			Select(entperson.FieldUserID).
+		err = r.client.User.Query().
+			Where(entuser.PersonIDIn(personIDs...)).
+			Select(entuser.FieldID).
 			Scan(ctx, &userIDs)
 		if err != nil {
 			return nil, err

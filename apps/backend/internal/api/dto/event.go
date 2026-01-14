@@ -31,6 +31,8 @@ type Event struct {
 	ProjectRole *ProjectRoleResponse `json:"projectRole,omitempty"`
 	// OrgNode     *OrganisationNodeResponse `json:"orgNode,omitempty"` // TODO: Add DTO if needed
 
+	Creator *PersonResponse `json:"creator,omitempty"`
+
 	// The raw event data (input payload)
 	Data any `json:"data,omitempty"`
 }
@@ -69,6 +71,10 @@ func (e Event) FromDetailedEntity(dev events.DetailedEvent) Event {
 	if dev.ProjectRole != nil {
 		r := transform.ToDTOItem[ProjectRoleResponse](*dev.ProjectRole)
 		dto.ProjectRole = &r
+	}
+	if dev.Creator != nil {
+		p := transform.ToDTOItem[PersonResponse](*dev.Creator)
+		dto.Creator = &p
 	}
 
 	return dto

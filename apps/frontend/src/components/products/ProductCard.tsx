@@ -39,13 +39,21 @@ export function ProductCard({
   product,
   onRemove,
   canRemove,
-}: ProductCardProps) {
+  pending,
+}: ProductCardProps & { pending?: boolean }) {
   return (
-    <Card>
+    <Card className={pending ? "opacity-70 border-dashed" : ""}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium line-clamp-2">
-          {product.name}
-        </CardTitle>
+        <div className="flex justify-between items-start">
+          <CardTitle className="text-base font-medium line-clamp-2">
+            {product.name}
+          </CardTitle>
+          {pending && (
+            <span className="text-[10px] font-semibold bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full border border-yellow-200">
+              Pending
+            </span>
+          )}
+        </div>
         <CardDescription className="flex items-center gap-2">
           <span className="capitalize">
             {getProductTypeLabel(product.type)}
@@ -77,7 +85,7 @@ export function ProductCard({
             </a>
           )}
           <div className="flex-1" />
-          {canRemove && onRemove && (
+          {canRemove && onRemove && !pending && (
             <Button
               variant="ghost"
               size="sm"

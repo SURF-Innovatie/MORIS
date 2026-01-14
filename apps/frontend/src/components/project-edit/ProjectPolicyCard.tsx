@@ -14,12 +14,14 @@ import {
   ShieldCheck,
   ArrowUpRight,
   Users,
+  Pencil,
 } from "lucide-react";
 import { EventPolicyResponse, EventTypeInfo } from "@api/model";
 
 interface ProjectPolicyCardProps {
   policy: EventPolicyResponse;
   eventTypes: EventTypeInfo[];
+  onEdit?: () => void;
   onDelete?: () => void;
   isDeleting?: boolean;
   inherited?: boolean;
@@ -28,6 +30,7 @@ interface ProjectPolicyCardProps {
 export function ProjectPolicyCard({
   policy,
   eventTypes,
+  onEdit,
   onDelete,
   isDeleting,
   inherited,
@@ -60,20 +63,27 @@ export function ProjectPolicyCard({
               )}
             </div>
           </div>
-          {!inherited && onDelete && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onDelete}
-              disabled={isDeleting}
-            >
-              {isDeleting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4 text-destructive" />
-              )}
-            </Button>
-          )}
+          <div className="flex items-center gap-1">
+            {!inherited && onEdit && (
+              <Button variant="ghost" size="icon" onClick={onEdit}>
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+            {!inherited && onDelete && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pt-0">

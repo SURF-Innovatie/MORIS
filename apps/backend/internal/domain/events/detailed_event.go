@@ -14,4 +14,5 @@ type DetailedEvent struct {
 	Product     *entities.Product
 	ProjectRole *entities.ProjectRole
 	OrgNode     *entities.OrganisationNode
+	Creator     *entities.Person
 }
