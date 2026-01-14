@@ -17,9 +17,11 @@ type User struct {
 
 func (u *User) FromEnt(row *ent.User) *User {
 	return &User{
-		ID:         row.ID,
-		PersonID:   row.PersonID,
-		IsSysAdmin: row.IsSysAdmin,
-		IsActive:   row.IsActive,
+		ID:                 row.ID,
+		PersonID:           row.PersonID,
+		IsSysAdmin:         row.IsSysAdmin,
+		IsActive:           row.IsActive,
+		ZenodoAccessToken:  &row.ZenodoAccessToken,
+		ZenodoRefreshToken: &row.ZenodoRefreshToken,
 	}
 }
