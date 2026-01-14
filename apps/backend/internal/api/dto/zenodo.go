@@ -1,178 +1,26 @@
 package dto
 
-import "time"
 import ex "github.com/SURF-Innovatie/MORIS/external/zenodo"
 
-// Deposition represents a Zenodo deposition resource.
-type Deposition struct {
-	ID        int                 `json:"id"`
-	ConceptID string              `json:"conceptrecid,omitempty"`
-	DOI       string              `json:"doi,omitempty"`
-	DOIURL    string              `json:"doi_url,omitempty"`
-	RecordID  int                 `json:"record_id,omitempty"`
-	RecordURL string              `json:"record_url,omitempty"`
-	Created   time.Time           `json:"created,omitempty"`
-	Modified  time.Time           `json:"modified,omitempty"`
-	Owner     int                 `json:"owner,omitempty"`
-	State     DepositionState     `json:"state,omitempty"`
-	Submitted bool                `json:"submitted,omitempty"`
-	Title     string              `json:"title,omitempty"`
-	Metadata  *DepositionMetadata `json:"metadata,omitempty"`
-	Files     []DepositionFile    `json:"files,omitempty"`
-	Links     *DepositionLinks    `json:"links,omitempty"`
-}
+type Deposition = ex.Deposition
+type DepositionState = ex.DepositionState
+type DepositionMetadata = ex.DepositionMetadata
+type PrereserveDOI = ex.PrereserveDOI
 
-type DepositionState string
+type UploadType = ex.UploadType
+type PublicationType = ex.PublicationType
+type AccessRight = ex.AccessRight
 
-const (
-	StateInProgress  DepositionState = "inprogress"
-	StateDone        DepositionState = "done"
-	StateError       DepositionState = "error"
-	StateUnsubmitted DepositionState = "unsubmitted"
-)
+type Creator = ex.Creator
+type Contributor = ex.Contributor
+type ContributorType = ex.ContributorType
+type RelatedIdentifier = ex.RelatedIdentifier
+type Community = ex.Community
+type Grant = ex.Grant
 
-type DepositionMetadata struct {
-	Title           string              `json:"title,omitempty"`
-	UploadType      UploadType          `json:"upload_type,omitempty"`
-	PublicationType PublicationType     `json:"publication_type,omitempty"`
-	Description     string              `json:"description,omitempty"`
-	Creators        []Creator           `json:"creators,omitempty"`
-	AccessRight     AccessRight         `json:"access_right,omitempty"`
-	License         string              `json:"license,omitempty"`
-	DOI             string              `json:"doi,omitempty"`
-	PrereserveDOI   *PrereserveDOI      `json:"prereserve_doi,omitempty"`
-	Keywords        []string            `json:"keywords,omitempty"`
-	Notes           string              `json:"notes,omitempty"`
-	RelatedIDs      []RelatedIdentifier `json:"related_identifiers,omitempty"`
-	Contributors    []Contributor       `json:"contributors,omitempty"`
-	References      []string            `json:"references,omitempty"`
-	Communities     []Community         `json:"communities,omitempty"`
-	Grants          []Grant             `json:"grants,omitempty"`
-	PublicationDate string              `json:"publication_date,omitempty"`
-}
-
-type PrereserveDOI struct {
-	DOI   string `json:"doi"`
-	RecID int    `json:"recid"`
-}
-
-type UploadType string
-
-const (
-	UploadTypePublication    UploadType = "publication"
-	UploadTypePoster         UploadType = "poster"
-	UploadTypePresentation   UploadType = "presentation"
-	UploadTypeDataset        UploadType = "dataset"
-	UploadTypeImage          UploadType = "image"
-	UploadTypeVideo          UploadType = "video"
-	UploadTypeSoftware       UploadType = "software"
-	UploadTypeLesson         UploadType = "lesson"
-	UploadTypePhysicalObject UploadType = "physicalobject"
-	UploadTypeOther          UploadType = "other"
-)
-
-type PublicationType string
-
-const (
-	PubTypeArticle               PublicationType = "article"
-	PubTypeBook                  PublicationType = "book"
-	PubTypeBookSection           PublicationType = "section"
-	PubTypeConferencePaper       PublicationType = "conferencepaper"
-	PubTypeDataManagementPlan    PublicationType = "datamanagementplan"
-	PubTypePatent                PublicationType = "patent"
-	PubTypePreprint              PublicationType = "preprint"
-	PubTypeReport                PublicationType = "report"
-	PubTypeSoftwareDocumentation PublicationType = "softwaredocumentation"
-	PubTypeTechnicalNote         PublicationType = "technicalnote"
-	PubTypeThesis                PublicationType = "thesis"
-	PubTypeWorkingPaper          PublicationType = "workingpaper"
-	PubTypeOther                 PublicationType = "other"
-)
-
-type AccessRight string
-
-const (
-	AccessOpen       AccessRight = "open"
-	AccessEmbargoed  AccessRight = "embargoed"
-	AccessRestricted AccessRight = "restricted"
-	AccessClosed     AccessRight = "closed"
-)
-
-type Creator struct {
-	Name        string `json:"name"`
-	Affiliation string `json:"affiliation,omitempty"`
-	ORCID       string `json:"orcid,omitempty"`
-	GND         string `json:"gnd,omitempty"`
-}
-
-type Contributor struct {
-	Name        string          `json:"name"`
-	Type        ContributorType `json:"type"`
-	Affiliation string          `json:"affiliation,omitempty"`
-	ORCID       string          `json:"orcid,omitempty"`
-	GND         string          `json:"gnd,omitempty"`
-}
-
-type ContributorType string
-
-const (
-	ContribContactPerson      ContributorType = "ContactPerson"
-	ContribDataCollector      ContributorType = "DataCollector"
-	ContribDataCurator        ContributorType = "DataCurator"
-	ContribDataManager        ContributorType = "DataManager"
-	ContribEditor             ContributorType = "Editor"
-	ContribHostingInstitution ContributorType = "HostingInstitution"
-	ContribProducer           ContributorType = "Producer"
-	ContribProjectLeader      ContributorType = "ProjectLeader"
-	ContribProjectManager     ContributorType = "ProjectManager"
-	ContribProjectMember      ContributorType = "ProjectMember"
-	ContribResearcher         ContributorType = "Researcher"
-	ContribResearchGroup      ContributorType = "ResearchGroup"
-	ContribRightsHolder       ContributorType = "RightsHolder"
-	ContribSupervisor         ContributorType = "Supervisor"
-	ContribSponsor            ContributorType = "Sponsor"
-	ContribOther              ContributorType = "Other"
-)
-
-type RelatedIdentifier struct {
-	Identifier   string `json:"identifier"`
-	Relation     string `json:"relation"`
-	ResourceType string `json:"resource_type,omitempty"`
-}
-
-type Community struct {
-	Identifier string `json:"identifier"`
-}
-
-type Grant struct {
-	ID string `json:"id"`
-}
-
-type DepositionFile struct {
-	ID       string     `json:"id"`
-	Filename string     `json:"filename"`
-	Filesize int64      `json:"filesize"`
-	Checksum string     `json:"checksum"`
-	Links    *FileLinks `json:"links,omitempty"`
-}
-
-type FileLinks struct {
-	Self     string `json:"self,omitempty"`
-	Download string `json:"download,omitempty"`
-}
-
-type DepositionLinks struct {
-	Bucket          string `json:"bucket,omitempty"`
-	Discard         string `json:"discard,omitempty"`
-	Edit            string `json:"edit,omitempty"`
-	Files           string `json:"files,omitempty"`
-	HTML            string `json:"html,omitempty"`
-	LatestDraft     string `json:"latest_draft,omitempty"`
-	LatestDraftHTML string `json:"latest_draft_html,omitempty"`
-	Publish         string `json:"publish,omitempty"`
-	Self            string `json:"self,omitempty"`
-	NewVersion      string `json:"newversion,omitempty"`
-}
+type DepositionFile = ex.DepositionFile
+type FileLinks = ex.FileLinks
+type DepositionLinks = ex.DepositionLinks
 
 func FromExternalDeposition(d ex.Deposition) Deposition {
 	out := Deposition{
@@ -185,7 +33,7 @@ func FromExternalDeposition(d ex.Deposition) Deposition {
 		Created:   d.Created,
 		Modified:  d.Modified,
 		Owner:     d.Owner,
-		State:     DepositionState(d.State),
+		State:     d.State,
 		Submitted: d.Submitted,
 		Title:     d.Title,
 	}
@@ -217,10 +65,10 @@ func FromExternalDepositions(ds []ex.Deposition) []Deposition {
 func FromExternalDepositionMetadata(m ex.DepositionMetadata) *DepositionMetadata {
 	out := DepositionMetadata{
 		Title:           m.Title,
-		UploadType:      UploadType(m.UploadType),
-		PublicationType: PublicationType(m.PublicationType),
+		UploadType:      m.UploadType,
+		PublicationType: m.PublicationType,
 		Description:     m.Description,
-		AccessRight:     AccessRight(m.AccessRight),
+		AccessRight:     m.AccessRight,
 		License:         m.License,
 		DOI:             m.DOI,
 		Keywords:        m.Keywords,
@@ -250,7 +98,7 @@ func FromExternalDepositionMetadata(m ex.DepositionMetadata) *DepositionMetadata
 		for _, c := range m.Contributors {
 			out.Contributors = append(out.Contributors, Contributor{
 				Name:        c.Name,
-				Type:        ContributorType(c.Type),
+				Type:        c.Type,
 				Affiliation: c.Affiliation,
 				ORCID:       c.ORCID,
 				GND:         c.GND,
