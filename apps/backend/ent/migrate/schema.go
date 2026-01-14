@@ -371,7 +371,7 @@ var (
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "person_id", Type: field.TypeUUID, Unique: true},
-		{Name: "password", Type: field.TypeString},
+		{Name: "password", Type: field.TypeString, Nullable: true},
 		{Name: "is_sys_admin", Type: field.TypeBool, Default: false},
 		{Name: "is_active", Type: field.TypeBool, Default: true},
 		{Name: "zenodo_access_token", Type: field.TypeString, Nullable: true},

@@ -105,33 +105,22 @@ export function UserDialog({ open, onOpenChange, user }: UserDialogProps) {
           data: {
             name: data.name,
             email: data.email, // Email change might require verification in real app, but allowed here
-          } as any,
+          },
         });
 
         // 2. Update User details (only send password if provided)
-        const userUpdateData: any = {
-          person_id: user.person_id!, // We need to pass person_id as per DTO requirement usually
-          is_sys_admin: data.is_sys_admin,
-        };
-        if (data.password) {
-          userUpdateData.password = data.password;
-        }
-
         await updateUser({
           id: user.id!,
-          data: userUpdateData,
+          data: {
+            person_id: user.person_id!,
+            is_sys_admin: data.is_sys_admin,
+            ...(data.password ? { password: data.password } : {}),
+          },
         });
 
         toast({ title: "Success", description: "User updated successfully" });
       } else {
         // Create new
-        if (!data.password) {
-          form.setError("password", {
-            message: "Password is required for new users",
-          });
-          return;
-        }
-
         // 1. Create Person
         const person = await createPerson({
           data: {
@@ -144,13 +133,13 @@ export function UserDialog({ open, onOpenChange, user }: UserDialogProps) {
           throw new Error("Failed to create person");
         }
 
-        // 2. Create User
+        // 2. Create User (password is optional for OAuth-only users)
         await createUser({
           data: {
-            person_id: person.id!,
-            password: data.password!,
+            person_id: person.id,
             is_sys_admin: data.is_sys_admin,
-          } as any,
+            ...(data.password ? { password: data.password } : {}),
+          },
         });
 
         toast({ title: "Success", description: "User created successfully" });
@@ -218,22 +207,22 @@ export function UserDialog({ open, onOpenChange, user }: UserDialogProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {isEditMode ? "New Password (Optional)" : "Password"}
+                    {isEditMode ? "New Password (Optional)" : "Password (Optional)"}
                   </FormLabel>
                   <FormControl>
                     <Input
                       type="password"
                       placeholder={
-                        isEditMode ? "Leave blank to keep current" : "******"
+                        isEditMode ? "Leave blank to keep current" : "Leave blank for OAuth-only user"
                       }
                       {...field}
                     />
                   </FormControl>
-                  {isEditMode && (
-                    <FormDescription>
-                      Only enter a value if you want to change the password.
-                    </FormDescription>
-                  )}
+                  <FormDescription>
+                    {isEditMode
+                      ? "Only enter a value if you want to change the password."
+                      : "Leave blank if the user will only login via SURFconext or other OAuth providers."}
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

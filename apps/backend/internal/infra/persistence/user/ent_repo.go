@@ -35,10 +35,15 @@ func (r *EntRepo) GetByPersonID(ctx context.Context, personID uuid.UUID) (*entit
 }
 
 func (r *EntRepo) Create(ctx context.Context, u entities.User) (*entities.User, error) {
-	row, err := r.cli.User.Create().
-		SetPersonID(u.PersonID).
-		SetPassword(u.Password).
-		Save(ctx)
+	builder := r.cli.User.Create().
+		SetPersonID(u.PersonID)
+
+	// Only set password if provided (OAuth-only users don't have passwords)
+	if u.Password != "" {
+		builder.SetPassword(u.Password)
+	}
+
+	row, err := builder.Save(ctx)
 	if err != nil {
 		return nil, err
 	}

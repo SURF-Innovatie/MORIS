@@ -11,6 +11,10 @@ func MountRoutes(r chi.Router, authSvc coreauth.Service, h *Handler) {
 
 	r.Post("/login", h.Login)
 
+	// SURFconext (OIDC) login
+	r.Get("/auth/surfconext/url", h.GetSurfconextAuthURL)
+	r.Post("/auth/surfconext/login", h.LoginWithSurfconext)
+
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware(authSvc))
 

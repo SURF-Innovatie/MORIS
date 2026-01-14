@@ -162,6 +162,43 @@ func main() {
 	}
 	logrus.Infof("Created user for person %s", testUserName)
 
+	// --- Additional Admin Users ---
+	adminUsers := []struct {
+		Name  string
+		Email string
+	}{
+		{Name: "Geert Haans", Email: "geert.haans@surf.nl"},
+		{Name: "Ben Stokmans", Email: "ben.stokmans@surf.nl"},
+	}
+
+	for _, admin := range adminUsers {
+		adminAccountID := uuid.New()
+		adminPerson, err := client.Person.
+			Create().
+			SetName(admin.Name).
+			SetUserID(adminAccountID).
+			SetEmail(admin.Email).
+			SetAvatarURL(avatarUrl).
+			SetDescription("SURF admin account").
+			Save(ctx)
+		if err != nil {
+			logrus.Fatalf("failed creating %s person: %v", admin.Name, err)
+		}
+		personIDs[admin.Name] = adminPerson.ID
+		logrus.Infof("Created person %s (%s)", admin.Name, adminPerson.ID)
+
+		_, err = client.User.
+			Create().
+			SetID(adminAccountID).
+			SetPersonID(adminPerson.ID).
+			SetIsSysAdmin(true).
+			Save(ctx)
+		if err != nil {
+			logrus.Fatalf("failed creating user for %s: %v", admin.Name, err)
+		}
+		logrus.Infof("Created admin user for person %s", admin.Name)
+	}
+
 	es := eventstore.NewEntStore(client)
 
 	// --- Seed Roles / Scopes / Memberships for org tree ---

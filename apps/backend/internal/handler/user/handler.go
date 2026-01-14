@@ -12,6 +12,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Handler struct {
@@ -63,9 +64,20 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		isSysAdmin = *req.IsSysAdmin
 	}
 
+	// Hash password if provided (OAuth-only users don't have passwords)
+	var hashedPassword string
+	if req.Password != nil && *req.Password != "" {
+		hash, err := bcrypt.GenerateFromPassword([]byte(*req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			httputil.WriteError(w, r, http.StatusInternalServerError, "failed to hash password", nil)
+			return
+		}
+		hashedPassword = string(hash)
+	}
+
 	u, err := h.svc.Create(r.Context(), entities.User{
 		PersonID:   req.PersonID,
-		Password:   req.Password,
+		Password:   hashedPassword,
 		IsSysAdmin: isSysAdmin,
 	})
 	if err != nil {
@@ -166,8 +178,13 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if req.PersonID != uuid.Nil {
 		existingUser.PersonID = req.PersonID
 	}
-	if req.Password != "" {
-		existingUser.Password = req.Password
+	if req.Password != nil && *req.Password != "" {
+		hash, err := bcrypt.GenerateFromPassword([]byte(*req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			httputil.WriteError(w, r, http.StatusInternalServerError, "failed to hash password", nil)
+			return
+		}
+		existingUser.Password = string(hash)
 	}
 	if req.IsSysAdmin != nil {
 		existingUser.IsSysAdmin = *req.IsSysAdmin

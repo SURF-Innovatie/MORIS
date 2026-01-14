@@ -15,7 +15,7 @@ type UserPaginatedResponse struct {
 
 type UserRequest struct {
 	PersonID   uuid.UUID `json:"person_id"`
-	Password   string    `json:"password"`
+	Password   *string   `json:"password,omitempty"`
 	IsSysAdmin *bool     `json:"is_sys_admin"`
 }
 

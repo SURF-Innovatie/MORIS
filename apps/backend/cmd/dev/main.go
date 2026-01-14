@@ -10,8 +10,10 @@ import (
 	"time"
 
 	exorcid "github.com/SURF-Innovatie/MORIS/external/orcid"
+	exsurfconext "github.com/SURF-Innovatie/MORIS/external/surfconext"
 	exzenodo "github.com/SURF-Innovatie/MORIS/external/zenodo"
 	"github.com/SURF-Innovatie/MORIS/internal/app/orcid"
+	surfconextapp "github.com/SURF-Innovatie/MORIS/internal/app/surfconext"
 	"github.com/SURF-Innovatie/MORIS/internal/app/zenodo"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	logger "github.com/chi-middleware/logrus-logger"
@@ -169,6 +171,10 @@ func main() {
 
 	orcidCli := exorcid.NewClient(http.DefaultClient, orcidOpts)
 	orcidSvc := orcid.NewService(userRepo, personRepo, orcidCli)
+
+	surfOpts := env.SurfconextOptionsFromEnv()
+	surfClient := exsurfconext.NewClient(http.DefaultClient, surfOpts)
+	surfSvc := surfconextapp.NewService(surfClient, authSvc)
 	curUser := auth.NewCurrentUserProvider(client)
 
 	personHandler := personhandler.NewHandler(personSvc)
@@ -212,7 +218,7 @@ func main() {
 	notificationHandler := notificationhandler.NewHandler(notifierSvc)
 
 	// Create HTTP handler/controller
-	authHandler := authhandler.NewHandler(userSvc, authSvc, orcidSvc)
+	authHandler := authhandler.NewHandler(userSvc, authSvc, orcidSvc, surfSvc)
 	orcidHandler := orcidhandler.NewHandler(orcidSvc)
 
 	zenodoOpts := env.ZenodoOptionsFromEnv()

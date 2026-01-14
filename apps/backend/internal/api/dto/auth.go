@@ -53,3 +53,15 @@ type ORCIDAuthURLResponse struct {
 type LinkORCIDRequest struct {
 	Code string `json:"code" example:"authentication_code_from_orcid"`
 }
+
+// SurfconextAuthURLResponse swagger:model SurfconextAuthURLResponse
+// Represents the response body for getting the SURFconext auth URL.
+type SurfconextAuthURLResponse struct {
+	URL string `json:"url" example:"https://connect.surfconext.nl/oidc/authorize?..."`
+}
+
+// SurfconextLoginRequest swagger:model SurfconextLoginRequest
+// Represents the request body for exchanging a SURFconext authorization code for a MORIS JWT.
+type SurfconextLoginRequest struct {
+	Code string `json:"code" example:"authorization_code_from_surfconext"`
+}

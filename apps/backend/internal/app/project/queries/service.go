@@ -74,7 +74,14 @@ func (s *service) GetAllProjects(ctx context.Context) ([]*ProjectDetails, error)
 		return nil, err
 	}
 
-	ids, err := s.repo.ProjectIDsForPerson(ctx, u.PersonID())
+	var ids []uuid.UUID
+
+	// Sysadmins can see all projects
+	if u.IsSysAdmin() {
+		ids, err = s.repo.ProjectIDsStarted(ctx)
+	} else {
+		ids, err = s.repo.ProjectIDsForPerson(ctx, u.PersonID())
+	}
 	if err != nil {
 		return nil, err
 	}
