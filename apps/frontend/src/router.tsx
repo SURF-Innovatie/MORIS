@@ -23,6 +23,7 @@ import { AdminOrganisationsRoute } from "@/routes/admin-organisations";
 import { UserOrganisationsRoute } from "@/routes/user-organisations";
 import { UserOrganisationRolesRoute } from "@/routes/user-organisation-roles";
 import { MultiRoleManagementRoute } from "@/routes/admin-organisation-roles";
+import OrgAnalyticsRoute from "@/routes/org-analytics";
 
 export function createAppRouter() {
   const routes: RouteObject[] = [
@@ -70,6 +71,10 @@ export function createAppRouter() {
             {
               path: "organisations/:nodeId/members",
               element: <UserOrganisationRolesRoute />,
+            },
+            {
+              path: "organisations/:orgId/analytics",
+              element: <OrgAnalyticsRoute />,
             },
             {
               path: "admin",

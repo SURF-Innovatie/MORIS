@@ -3,6 +3,7 @@ import { ProfileInfo } from "@/components/profile/ProfileInfo";
 import { OrcidConnection } from "@/components/profile/OrcidConnection";
 import { ZenodoConnection } from "@/components/profile/ZenodoConnection";
 import { ProfileActivity } from "@/components/profile/ProfileActivity";
+import { APIKeysSettings } from "@/components/profile/APIKeysSettings";
 import {
   Card,
   CardContent,
@@ -39,6 +40,17 @@ const ProfileRoute = () => {
               <OrcidConnection user={user} refetchProfile={refetchProfile} />
               <ZenodoConnection user={user} refetchProfile={refetchProfile} />
             </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>API Keys</CardTitle>
+            <CardDescription>
+              Manage API keys for Power BI and external tools
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <APIKeysSettings />
           </CardContent>
         </Card>
       </div>

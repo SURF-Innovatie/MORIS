@@ -8,7 +8,12 @@ import { Loader2, ArrowLeft, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { useGetProjectsId, useGetProjectsIdPendingEvents } from "@api/moris";
+import {
+  useGetProjectsId,
+  useGetProjectsIdPendingEvents,
+  usePostProjectsProjectIdBudget,
+} from "@api/moris";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   createTitleChangedEvent,
   createDescriptionChangedEvent,
@@ -24,6 +29,8 @@ import { PeopleTab } from "@/components/project-edit/PeopleTab";
 import { ChangelogTab } from "@/components/project-edit/ChangelogTab";
 import { ProductsTab } from "@/components/project-edit/ProductsTab";
 import { ProjectEventPoliciesTab } from "@/components/project-edit/ProjectEventPoliciesTab";
+import { BudgetOverview } from "@/components/budget/BudgetOverview";
+import { BudgetEditor } from "@/components/budget/BudgetEditor";
 import { projectFormSchema } from "@/lib/schemas/project";
 import { EMPTY_UUID } from "@/lib/constants";
 import { ProjectAccessProvider } from "@/context/ProjectAccessContext";
@@ -40,6 +47,7 @@ function ProjectEditForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "general";
@@ -77,6 +85,7 @@ function ProjectEditForm() {
   }, [project, pendingEventsData]);
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditingBudget, setIsEditingBudget] = useState(false);
 
   const form = useForm<z.infer<typeof projectFormSchema>>({
     resolver: standardSchemaResolver(projectFormSchema),
@@ -219,6 +228,32 @@ function ProjectEditForm() {
     }
   }
 
+  const createBudgetMutation = usePostProjectsProjectIdBudget();
+
+  const handleCreateBudget = async () => {
+    try {
+      if (!id) return;
+      await createBudgetMutation.mutateAsync({
+        projectId: id,
+        data: {
+          title: `${projectedProject?.title} Budget`,
+          description: "Initial budget draft",
+        },
+      });
+      await queryClient.invalidateQueries({ queryKey: ["budget", id] });
+      toast({
+        title: "Budget Created",
+        description: "A new budget has been initialized for this project.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to create budget. Please try again.",
+      });
+    }
+  };
+
   if (isLoadingProject) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -268,10 +303,11 @@ function ProjectEditForm() {
           className="space-y-8"
         >
           <div className="flex items-center justify-between">
-            <TabsList className="grid w-full max-w-xl grid-cols-5">
+            <TabsList className="grid w-full max-w-2xl grid-cols-6">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="people">People</TabsTrigger>
               <TabsTrigger value="products">Products</TabsTrigger>
+              <TabsTrigger value="budget">Budget</TabsTrigger>
               <TabsTrigger value="policies">Policies</TabsTrigger>
               <TabsTrigger value="changelog">Changelog</TabsTrigger>
             </TabsList>
@@ -312,6 +348,21 @@ function ProjectEditForm() {
               projectId={id!}
               orgNodeId={projectedProject?.owning_org_node?.id || ""}
             />
+          </TabsContent>
+
+          <TabsContent value="budget">
+            {isEditingBudget ? (
+              <BudgetEditor
+                projectId={id!}
+                onDone={() => setIsEditingBudget(false)}
+              />
+            ) : (
+              <BudgetOverview
+                projectId={id!}
+                onCreateBudget={handleCreateBudget}
+                onEditBudget={() => setIsEditingBudget(true)}
+              />
+            )}
           </TabsContent>
         </Tabs>
       </main>

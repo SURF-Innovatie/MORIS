@@ -83,6 +83,16 @@ import (
 	eventpolicysvc "github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	eventpolicyhandler "github.com/SURF-Innovatie/MORIS/internal/handler/eventpolicy"
 	eventpolicyrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventpolicy"
+
+	// Budget tracking
+	analyticsadapter "github.com/SURF-Innovatie/MORIS/internal/adapter/analytics"
+	odataadapter "github.com/SURF-Innovatie/MORIS/internal/adapter/odata"
+	analyticsapp "github.com/SURF-Innovatie/MORIS/internal/app/analytics"
+	odataapp "github.com/SURF-Innovatie/MORIS/internal/app/odata"
+	analyticshandler "github.com/SURF-Innovatie/MORIS/internal/handler/analytics"
+	apikeyhandler "github.com/SURF-Innovatie/MORIS/internal/handler/apikey"
+	budgethandler "github.com/SURF-Innovatie/MORIS/internal/handler/budget"
+	odatahandler "github.com/SURF-Innovatie/MORIS/internal/handler/odata"
 )
 
 // @title MORIS
@@ -273,6 +283,21 @@ func main() {
 
 	userHandler := userhandler.NewHandler(userSvc, projSvc)
 
+	// Budget Tracking Handlers
+	budgetHandler := budgethandler.NewHandler(client)
+	apikeyHandler := apikeyhandler.NewHandler(client)
+
+	// OData Service (DDD pattern)
+	odataRepo := odataadapter.NewEntRepository(client)
+	odataParser := odataadapter.NewParser()
+	odataSvc := odataapp.NewService(odataRepo, odataParser)
+	odataHandler := odatahandler.NewHandler(odataSvc)
+
+	// Analytics Service
+	analyticsRepo := analyticsadapter.NewEntRepository(client)
+	analyticsSvc := analyticsapp.NewService(analyticsRepo)
+	analyticsHandler := analyticshandler.NewHandler(analyticsSvc)
+
 	// Adapters (Sources/Sinks)
 	registry := adapter.NewRegistry()
 	registry.RegisterSource(csvsource.NewCSVSource("/tmp/import.csv"))
@@ -302,8 +327,11 @@ func main() {
 				projecthandler.MountProjectRoutes(r, projHandler)
 				r.Get("/{id}/roles", projHandler.ListAvailableRoles)
 				commandHandler.MountProjectCommandRouter(r, projCmdHandler)
+				commandHandler.MountProjectCommandRouter(r, projCmdHandler)
 				// Event policy routes for projects
 				eventPolicyHandler.RegisterProjectRoutes(r)
+				// Budget routes for projects
+				budgetHandler.RegisterProjectRoutes(r)
 			})
 			organisationhandler.MountOrganisationRoutes(r, organisationHandler, rbacHandler)
 			eventHandler.MountEventRoutes(r, evtHandler)
@@ -322,6 +350,12 @@ func main() {
 				r.Get("/", eventPolicyHandler.ListForOrgNode)
 				r.Post("/", eventPolicyHandler.CreateForOrgNode)
 			})
+
+			// Budget Tracking routes
+			budgetHandler.RegisterRoutes(r)
+			apikeyHandler.RegisterRoutes(r)
+			odataHandler.RegisterRoutes(r)
+			analyticsHandler.RegisterRoutes(r)
 		})
 	})
 

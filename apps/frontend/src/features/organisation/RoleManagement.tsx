@@ -45,6 +45,7 @@ import { RoleList } from "./components/RoleList"; // New component
 
 import { OrganisationEditTab } from "./components/OrganisationEditTab";
 import { EventPoliciesTab } from "./components/EventPoliciesTab";
+import { OrgAnalyticsDashboard } from "@/components/analytics/OrgAnalyticsDashboard";
 
 export const RoleManagement = () => {
   const { nodeId } = useParams<{ nodeId: string }>();
@@ -76,6 +77,7 @@ export const RoleManagement = () => {
       >
         <TabsList className="mb-4">
           <TabsTrigger value="members">Members & Permissions</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="roles">Roles</TabsTrigger>
           <TabsTrigger value="project-roles">Project Roles</TabsTrigger>
           <TabsTrigger value="custom-fields">Custom Fields</TabsTrigger>
@@ -142,6 +144,14 @@ export const RoleManagement = () => {
               </tbody>
             </table>
           </div>
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          {nodeId ? (
+            <OrgAnalyticsDashboard orgId={nodeId} />
+          ) : (
+            <div>Invalid Node ID</div>
+          )}
         </TabsContent>
 
         <TabsContent value="roles">

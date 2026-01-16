@@ -33,5 +33,6 @@ func (User) Fields() []ent.Field {
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("notifications", Notification.Type),
+		edge.To("api_keys", APIKey.Type),
 	}
 }
