@@ -49,12 +49,12 @@ func GetUserFromContext(ctx context.Context) (*entities.UserAccount, bool) {
 }
 
 // GetUserIDFromContext helper to extract user ID safely
-func GetUserIDFromContext(ctx context.Context) string {
+func GetUserIDFromContext(ctx context.Context) *uuid.UUID {
 	userCtx, ok := GetUserFromContext(ctx)
 	if !ok || userCtx == nil {
-		return ""
+		return nil
 	}
-	return userCtx.User.ID.String()
+	return &userCtx.User.ID
 }
 
 // WriteError writes a standardized error response

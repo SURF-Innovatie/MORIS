@@ -19,6 +19,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/zenodo"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	customfieldrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/customfield"
+	errorlogrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/error_log"
 	logger "github.com/chi-middleware/logrus-logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -30,6 +31,7 @@ import (
 	_ "github.com/SURF-Innovatie/MORIS/api/swag-docs"
 	"github.com/SURF-Innovatie/MORIS/ent"
 	excrossref "github.com/SURF-Innovatie/MORIS/external/crossref"
+	"github.com/SURF-Innovatie/MORIS/internal/app/errorlog"
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
@@ -43,7 +45,6 @@ import (
 	projectrolesvc "github.com/SURF-Innovatie/MORIS/internal/app/projectrole"
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
-	"github.com/SURF-Innovatie/MORIS/internal/errorlog"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
 	authhandler "github.com/SURF-Innovatie/MORIS/internal/handler/auth"
 	crossrefhandler "github.com/SURF-Innovatie/MORIS/internal/handler/crossref"
@@ -210,7 +211,9 @@ func main() {
 
 	notifRepo := notificationrepo.NewEntRepo(client)
 	notifierSvc := notification.NewService(notifRepo)
-	errorLogSvc := errorlog.NewService(client)
+
+	errorLogRepo := errorlogrepo.NewRepository(client)
+	errorLogSvc := errorlog.NewService(errorLogRepo)
 
 	eventSvc := event.NewService(esStore, client, notifierSvc)
 
