@@ -12,6 +12,7 @@ import (
 	exorcid "github.com/SURF-Innovatie/MORIS/external/orcid"
 	exsurfconext "github.com/SURF-Innovatie/MORIS/external/surfconext"
 	exzenodo "github.com/SURF-Innovatie/MORIS/external/zenodo"
+	"github.com/SURF-Innovatie/MORIS/internal/app/crossref"
 	"github.com/SURF-Innovatie/MORIS/internal/app/orcid"
 	surfconextapp "github.com/SURF-Innovatie/MORIS/internal/app/surfconext"
 	"github.com/SURF-Innovatie/MORIS/internal/app/zenodo"
@@ -26,7 +27,7 @@ import (
 
 	_ "github.com/SURF-Innovatie/MORIS/api/swag-docs"
 	"github.com/SURF-Innovatie/MORIS/ent"
-	crossref2 "github.com/SURF-Innovatie/MORIS/external/crossref"
+	excrossref "github.com/SURF-Innovatie/MORIS/external/crossref"
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
@@ -195,12 +196,14 @@ func main() {
 	organisationSvc := organisation.NewService(orgRepo, personRepo, rbacSvc)
 	organisationHandler := organisationhandler.NewHandler(organisationSvc, rbacSvc, roleSvc, customFieldSvc)
 
-	crossrefConfig := &crossref2.Config{
+	crossrefConfig := &excrossref.Config{
 		BaseURL:   "https://api.crossref.org",
 		UserAgent: "MORIS/1.0 (mailto:support@moris.org)",
 		Mailto:    "support@moris.org",
 	}
-	crossrefSvc := crossref2.NewService(crossrefConfig)
+
+	crossrefClient := excrossref.NewClient(crossrefConfig)
+	crossrefSvc := crossref.NewService(crossrefClient)
 	crossrefHandler := crossrefhandler.NewHandler(crossrefSvc)
 
 	notifRepo := notificationrepo.NewEntRepo(client)

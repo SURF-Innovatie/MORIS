@@ -1,17 +1,19 @@
 package crossref
 
 import (
+	"errors"
 	"net/http"
 
-	"github.com/SURF-Innovatie/MORIS/external/crossref"
+	_ "github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	app "github.com/SURF-Innovatie/MORIS/internal/app/crossref"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 )
 
 type Handler struct {
-	svc crossref.Service
+	svc app.Service
 }
 
-func NewHandler(svc crossref.Service) *Handler {
+func NewHandler(svc app.Service) *Handler {
 	return &Handler{svc: svc}
 }
 
@@ -22,10 +24,10 @@ func NewHandler(svc crossref.Service) *Handler {
 // @Accept json
 // @Produce json
 // @Param doi query string true "DOI"
-// @Success 200 {object} crossref.Work
-// @Failure 400 {string} string "invalid doi"
-// @Failure 404 {string} string "work not found"
-// @Failure 500 {string} string "internal server error"
+// @Success 200 {object} dto.Work
+// @Failure 400 {object} httputil.BackendError "doi is required"
+// @Failure 404 {object} httputil.BackendError "work not found"
+// @Failure 500 {object} httputil.BackendError "internal server error"
 // @Router /crossref/works [get]
 func (h *Handler) GetWork(w http.ResponseWriter, r *http.Request) {
 	doi := r.URL.Query().Get("doi")
@@ -34,13 +36,15 @@ func (h *Handler) GetWork(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// No need to unescape path, query params are decoded by net/http
 	work, err := h.svc.GetWork(r.Context(), doi)
 	if err != nil {
-		// TODO: Handle 404 specifically if the service returns a specific error for it
+		if errors.Is(err, app.ErrNotFound) {
+			httputil.WriteError(w, r, http.StatusNotFound, "work not found", nil)
+			return
+		}
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, work)
+	_ = httputil.WriteJSON(w, http.StatusOK, *work)
 }
