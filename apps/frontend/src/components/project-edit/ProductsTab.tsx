@@ -1,17 +1,10 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { z } from "zod";
-import { Loader2, Plus, Search, Trash2, ExternalLink } from "lucide-react";
+import { Loader2, Plus, Search, Upload, ChevronDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +12,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -29,16 +21,27 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useGetCrossrefWorks, usePostProducts } from "@api/moris";
 import {
-  useGetCrossrefWorks,
-  usePostProjectsIdProductsProductID,
-  useDeleteProjectsIdProductsProductID,
-  usePostProducts,
-} from "@api/moris";
-import { Product, ProductType } from "@api/model";
+  createProductAddedEvent,
+  createProductRemovedEvent,
+} from "@/api/events";
+import { ProductResponse, ProductType } from "@api/model";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { Allowed } from "@/components/auth/Allowed";
+import { ProjectEventType } from "@/api/events";
+import { ZenodoUploadDialog } from "@/components/products/ZenodoUploadDialog";
+import { useGetZenodoStatus } from "@api/moris";
+import { ProductCard, getProductTypeLabel } from "../products/ProductCard";
+import { useAccess } from "@/context/AccessContext";
 
 // Schema for the DOI search form
 const doiFormSchema = z.object({
@@ -47,7 +50,7 @@ const doiFormSchema = z.object({
 
 interface ProductsTabProps {
   projectId: string;
-  products: Product[];
+  products: ProductResponse[];
   onRefresh: () => void;
 }
 
@@ -57,28 +60,23 @@ export function ProductsTab({
   onRefresh,
 }: ProductsTabProps) {
   const { toast } = useToast();
+  const { hasAccess } = useAccess();
+  const { mutateAsync: addProduct } = usePostProducts();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isZenodoDialogOpen, setIsZenodoDialogOpen] = useState(false);
   const [searchedProduct, setSearchedProduct] = useState<any>(null); // TODO: Type properly based on Crossref response
   const [isSearching, setIsSearching] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
 
+  const { data: zenodoStatus } = useGetZenodoStatus();
+
   const form = useForm<z.infer<typeof doiFormSchema>>({
-    resolver: zodResolver(doiFormSchema),
+    resolver: standardSchemaResolver(doiFormSchema),
     defaultValues: {
       doi: "",
     },
   });
 
-  // API hooks
-  // We don't use the hook directly for search because we want to trigger it manually
-  // But we can use the query client or just a direct fetch if needed,
-  // or better, use the generated hook in a way that allows manual triggering.
-  // Orval generates react-query hooks. We can use `useQuery` with `enabled: false` but that's for caching.
-  // For a search action, a mutation or direct axios call might be better, OR just use the hook with a state variable.
-
-  // Let's use a direct call to the generated hook's underlying fetcher if possible, or just use the hook with a key.
-  // Actually, for a "search" button, it's often easier to just use the hook with a state variable for the DOI,
-  // and `enabled: !!doi`.
   const [searchDoi, setSearchDoi] = useState<string | null>(null);
 
   const {
@@ -124,10 +122,6 @@ export function ProductsTab({
   }
 
   const { mutateAsync: createProduct } = usePostProducts();
-  const { mutateAsync: addProductToProject } =
-    usePostProjectsIdProductsProductID();
-  const { mutateAsync: removeProductFromProject } =
-    useDeleteProjectsIdProductsProductID();
 
   function onSearch(values: z.infer<typeof doiFormSchema>) {
     setIsSearching(true);
@@ -149,21 +143,24 @@ export function ProductsTab({
         },
       });
 
-      // 2. Link it to the project
-      await addProductToProject({
-        id: projectId,
-        productID: newProduct.id!,
-      });
+      // 2. Link it to the project via event
+      if (newProduct && newProduct.id) {
+        await createProductAddedEvent(projectId, {
+          product_id: newProduct.id,
+        });
 
-      toast({
-        title: "Product added",
-        description: "The product has been successfully added to the project.",
-      });
-      setIsDialogOpen(false);
-      form.reset();
-      setSearchedProduct(null);
-      onRefresh();
+        toast({
+          title: "Product added",
+          description:
+            "The product has been successfully added to the project.",
+        });
+        setIsDialogOpen(false);
+        form.reset();
+        setSearchedProduct(null);
+        onRefresh();
+      }
     } catch (error) {
+      console.error(error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -176,10 +173,10 @@ export function ProductsTab({
     if (!productToDelete) return;
 
     try {
-      await removeProductFromProject({
-        id: projectId,
-        productID: productToDelete,
+      await createProductRemovedEvent(projectId, {
+        product_id: productToDelete,
       });
+
       toast({
         title: "Product removed",
         description: "The product has been removed from the project.",
@@ -187,10 +184,52 @@ export function ProductsTab({
       setProductToDelete(null);
       onRefresh();
     } catch (error) {
+      console.error(error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to remove product.",
+      });
+    }
+  }
+
+  async function handleZenodoUploadSuccess(
+    doi: string,
+    _zenodoUrl: string,
+    depositionId: number,
+    title: string
+  ) {
+    try {
+      // Create the product in our DB with the DOI from Zenodo
+      const newProduct = await addProduct({
+        data: {
+          name: title, // Use user-provided title from upload dialog
+          doi: doi,
+          type: 0, // Dataset type
+          language: "en",
+          zenodo_deposition_id: depositionId,
+        },
+      });
+
+      if (newProduct && newProduct.id) {
+        await createProductAddedEvent(projectId, {
+          product_id: newProduct.id,
+        });
+
+        toast({
+          title: "Product uploaded to Zenodo",
+          description:
+            "The product has been published and added to the project.",
+        });
+        setIsZenodoDialogOpen(false);
+        onRefresh();
+      }
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to add product. Please try again.",
       });
     }
   }
@@ -204,119 +243,119 @@ export function ProductsTab({
             Manage the products associated with this project.
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
+        <Allowed event={ProjectEventType.ProductAdded}>
+          {zenodoStatus?.linked ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Product
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsDialogOpen(true)}>
+                  <Search className="mr-2 h-4 w-4" />
+                  Import from DOI
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsZenodoDialogOpen(true)}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload to Zenodo
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button onClick={() => setIsDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Add Product
             </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Add Product</DialogTitle>
-              <DialogDescription>
-                Search for a product by DOI to add it to the project.
-              </DialogDescription>
-            </DialogHeader>
+          )}
 
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSearch)}
-                className="space-y-4"
-              >
-                <FormField
-                  control={form.control}
-                  name="doi"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>DOI</FormLabel>
-                      <div className="flex gap-2">
-                        <FormControl>
-                          <Input placeholder="10.1038/..." {...field} />
-                        </FormControl>
-                        <Button
-                          type="submit"
-                          disabled={isSearching || isLoadingCrossref}
-                        >
-                          {isSearching || isLoadingCrossref ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Search className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </form>
-            </Form>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Add Product</DialogTitle>
+                <DialogDescription>
+                  Search for a product by DOI to add it to the project.
+                </DialogDescription>
+              </DialogHeader>
 
-            {searchedProduct && (
-              <div className="mt-4 rounded-md border p-4">
-                <h4 className="font-medium">{searchedProduct.title}</h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  DOI: {searchedProduct.doi}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Type: {getProductTypeLabel(searchedProduct.type)}
-                </p>
-              </div>
-            )}
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSearch)}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={form.control}
+                    name="doi"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>DOI</FormLabel>
+                        <div className="flex gap-2">
+                          <FormControl>
+                            <Input placeholder="10.1038/..." {...field} />
+                          </FormControl>
+                          <Button
+                            type="submit"
+                            disabled={isSearching || isLoadingCrossref}
+                          >
+                            {isSearching || isLoadingCrossref ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Search className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </form>
+              </Form>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setIsDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button onClick={onAddProduct} disabled={!searchedProduct}>
-                Add to Project
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              {searchedProduct && (
+                <div className="mt-4 rounded-md border p-4">
+                  <h4 className="font-medium">{searchedProduct.title}</h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    DOI: {searchedProduct.doi}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Type: {getProductTypeLabel(searchedProduct.type)}
+                  </p>
+                </div>
+              )}
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={onAddProduct} disabled={!searchedProduct}>
+                  Add to Project
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </Allowed>
+        <ZenodoUploadDialog
+          open={isZenodoDialogOpen}
+          onOpenChange={setIsZenodoDialogOpen}
+          onSuccess={handleZenodoUploadSuccess}
+        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {products.map((product) => (
-          <Card key={product.id}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-medium line-clamp-2">
-                {product.name}
-              </CardTitle>
-              <CardDescription className="flex items-center gap-2">
-                <span className="capitalize">
-                  {getProductTypeLabel(product.type)}
-                </span>
-                {product.doi && (
-                  <a
-                    href={`https://doi.org/${product.doi}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline inline-flex items-center"
-                  >
-                    <ExternalLink className="h-3 w-3 ml-1" />
-                  </a>
-                )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-end">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-destructive hover:text-destructive/90"
-                  onClick={() => setProductToDelete(product.id!)}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Remove
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <ProductCard
+            key={product.id}
+            product={product}
+            onRemove={(id) => setProductToDelete(id)}
+            canRemove={hasAccess(ProjectEventType.ProductRemoved)}
+            pending={(product as any).pending}
+          />
         ))}
         {products.length === 0 && (
           <div className="col-span-full flex flex-col items-center justify-center p-8 text-center border rounded-lg border-dashed text-muted-foreground">
@@ -350,9 +389,4 @@ function mapCrossrefType(type: string | undefined): ProductType {
   // Let's check the generated model for ProductType.
   // For now, returning 0 (which usually is a safe default or "Other").
   return 0;
-}
-
-function getProductTypeLabel(_type: ProductType | undefined): string {
-  // TODO: Implement proper label mapping based on enum
-  return "Product";
 }

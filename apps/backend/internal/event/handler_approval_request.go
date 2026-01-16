@@ -2,15 +2,14 @@ package event
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/notification"
 	"github.com/SURF-Innovatie/MORIS/ent/user"
+	orgsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
-	orgsvc "github.com/SURF-Innovatie/MORIS/internal/organisation"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -18,21 +17,16 @@ import (
 type ApprovalRequestNotificationHandler struct {
 	Cli  *ent.Client
 	ES   eventstore.Store
-	RBAC orgsvc.RBACService
-}
-
-func (h *ApprovalRequestNotificationHandler) CanHandle(e events.Event) bool {
-	// Add other “needs approval” events here too
-	switch e.(type) {
-	case events.ProjectRoleAssigned, events.ProjectRoleUnassigned:
-		return true
-	default:
-		return false
-	}
+	RBAC orgsvc.Service
 }
 
 func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e events.Event) error {
 	if e.GetStatus() != "pending" {
+		return nil
+	}
+
+	meta := events.GetMeta(e.Type())
+	if !meta.NeedsApproval(ctx, e, h.Cli) {
 		return nil
 	}
 
@@ -71,7 +65,14 @@ func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e event
 	}
 
 	for _, em := range effs {
-		if !em.HasAdminRights {
+		hasAdminRights := false
+		for _, p := range em.Permissions {
+			if p == "manage_details" {
+				hasAdminRights = true
+				break
+			}
+		}
+		if !hasAdminRights {
 			continue
 		}
 
@@ -95,12 +96,8 @@ func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e event
 }
 
 func (h *ApprovalRequestNotificationHandler) buildApprovalMessage(ctx context.Context, e events.Event, projectTitle string) (string, error) {
-	switch e.(type) {
-	case events.ProjectRoleAssigned:
-		return fmt.Sprintf("Approval requested: role assigned in project '%s'.", projectTitle), nil
-	case events.ProjectRoleUnassigned:
-		return fmt.Sprintf("Approval requested: role unassigned in project '%s'.", projectTitle), nil
-	default:
-		return "", nil
+	if n, ok := e.(events.ApprovalNotifier); ok {
+		return n.ApprovalMessage(projectTitle), nil
 	}
+	return "", nil
 }

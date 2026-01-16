@@ -3,7 +3,7 @@
   "globalDependencies": ["**/.env.*local"],
   "tasks": {
     "build": {
-      "dependsOn": ["^build", "generate-api"],
+      "dependsOn": ["^build", "api:generate"],
       "outputs": [
         "dist/**",
         "build/**",
@@ -12,7 +12,17 @@
         "apps/frontend/dist/**"
       ]
     },
-    "lint": {},
+    "lint": {
+      "dependsOn": ["api:generate"],
+      "inputs": [
+        "**/*.{ts,tsx,js,jsx,go,json,yml,yaml}",
+        ".eslintrc*",
+        ".golangci.yml",
+        "go.mod",
+        "go.sum",
+        "package.json"
+      ]
+    },
     "dev": {
       "cache": false,
       "persistent": true
@@ -20,15 +30,15 @@
     "start": {
       "cache": false
     },
-    "generate-api": {
-      "dependsOn": ["backend#ent-gen"],
+    "api:generate": {
+      "dependsOn": ["backend#generate:ent"],
       "outputs": ["apps/frontend/src/api/generated-orval/**"],
       "inputs": [
         "apps/backend/ent/api/openapi.json",
         "apps/frontend/orval.config.ts"
       ]
     },
-    "backend#swag-init": {
+    "backend#generate:swag": {
       "dependsOn": ["^build"],
       "inputs": [
         "apps/backend/cmd/dev/main.go",
@@ -41,25 +51,25 @@
         "apps/backend/api/swag-docs/docs.go"
       ]
     },
-    "backend#ent-gen": {
-      "dependsOn": ["^build", "backend#swag-init"],
+    "backend#generate:ent": {
+      "dependsOn": ["^build", "backend#generate:swag"],
       "inputs": [
         "apps/backend/ent/**",
         "apps/backend/api/swag-docs/swagger.json"
       ],
-  "outputs": ["apps/backend/ent/api/openapi.json"]
+      "outputs": ["apps/backend/ent/api/openapi.json"]
     },
     "backend#build": {
-      "dependsOn": ["backend#ent-gen"],
+      "dependsOn": ["backend#generate:ent"],
       "outputs": ["bin/**", "apps/backend/ent/api/openapi.json"]
     },
     "backend#dev": {
-      "dependsOn": ["backend#ent-gen"],
+      "dependsOn": ["backend#generate:ent"],
       "cache": false,
       "persistent": true
     },
     "frontend#build": {
-      "dependsOn": ["^build", "generate-api"],
+      "dependsOn": ["^build", "api:generate"],
       "outputs": ["dist/**"]
     }
   }

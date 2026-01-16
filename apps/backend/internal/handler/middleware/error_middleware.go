@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"github.com/SURF-Innovatie/MORIS/internal/env"
-	"github.com/SURF-Innovatie/MORIS/internal/errorlog"
+	"github.com/SURF-Innovatie/MORIS/internal/app/errorlog"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -33,7 +33,7 @@ func ErrorLoggingMiddleware(svc errorlog.Service) func(http.Handler) http.Handle
 
 					// Log the panic
 					userId := httputil.GetUserIDFromContext(r.Context())
-					svc.Log(context.Background(), userId, r.Method, r.URL.Path, http.StatusInternalServerError, msg, stack)
+					svc.Log(context.Background(), userId, r.Method, r.URL.Path, http.StatusInternalServerError, msg, &stack)
 
 					// detailed error for dev, generic for prod
 					respMsg := msg
@@ -83,7 +83,7 @@ func ErrorLoggingMiddleware(svc errorlog.Service) func(http.Handler) http.Handle
 						detailStr = fmt.Sprintf("%v", details)
 					}
 
-					svc.Log(context.Background(), userId, r.Method, r.URL.Path, ww.Status(), msg, detailStr)
+					svc.Log(context.Background(), userId, r.Method, r.URL.Path, ww.Status(), msg, &detailStr)
 				}
 			}()
 

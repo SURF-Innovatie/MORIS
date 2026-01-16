@@ -4,20 +4,23 @@ import (
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
+	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
-	"github.com/SURF-Innovatie/MORIS/internal/project"
-	"github.com/SURF-Innovatie/MORIS/internal/user"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Handler struct {
 	svc     user.Service
-	projSvc project.Service
+	projSvc queries.Service
 }
 
-func NewHandler(svc user.Service, projSvc project.Service) *Handler {
+func NewHandler(svc user.Service, projSvc queries.Service) *Handler {
 	return &Handler{svc: svc, projSvc: projSvc}
 }
 
@@ -44,9 +47,38 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	authUser, ok := httputil.GetUserFromContext(r.Context())
+	if !ok {
+		httputil.WriteError(w, r, http.StatusUnauthorized, "user not authenticated", nil)
+		return
+	}
+
+	canMakeSysAdmin := authUser.User.IsSysAdmin
+	if req.IsSysAdmin != nil && *req.IsSysAdmin && !canMakeSysAdmin {
+		httputil.WriteError(w, r, http.StatusForbidden, "only admins can create admins", nil)
+		return
+	}
+
+	isSysAdmin := false
+	if req.IsSysAdmin != nil {
+		isSysAdmin = *req.IsSysAdmin
+	}
+
+	// Hash password if provided (OAuth-only users don't have passwords)
+	var hashedPassword string
+	if req.Password != nil && *req.Password != "" {
+		hash, err := bcrypt.GenerateFromPassword([]byte(*req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			httputil.WriteError(w, r, http.StatusInternalServerError, "failed to hash password", nil)
+			return
+		}
+		hashedPassword = string(hash)
+	}
+
 	u, err := h.svc.Create(r.Context(), entities.User{
-		PersonID: req.PersonID,
-		Password: req.Password,
+		PersonID:   req.PersonID,
+		Password:   hashedPassword,
+		IsSysAdmin: isSysAdmin,
 	})
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
@@ -127,10 +159,38 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.svc.Update(r.Context(), id, entities.User{
-		PersonID: req.PersonID,
-		Password: req.Password,
-	})
+	if req.IsSysAdmin != nil {
+		// Only admins can change admin status
+		if !authUser.User.IsSysAdmin {
+			httputil.WriteError(w, r, http.StatusForbidden, "only admins can change admin status", nil)
+			return
+		}
+	}
+
+	// Fetch existing to merge state
+	existingUser, err := h.svc.Get(r.Context(), id)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	// Merge
+	if req.PersonID != uuid.Nil {
+		existingUser.PersonID = req.PersonID
+	}
+	if req.Password != nil && *req.Password != "" {
+		hash, err := bcrypt.GenerateFromPassword([]byte(*req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			httputil.WriteError(w, r, http.StatusInternalServerError, "failed to hash password", nil)
+			return
+		}
+		existingUser.Password = string(hash)
+	}
+	if req.IsSysAdmin != nil {
+		existingUser.IsSysAdmin = *req.IsSysAdmin
+	}
+
+	_, err = h.svc.Update(r.Context(), id, *existingUser)
 
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
@@ -209,24 +269,92 @@ func (h *Handler) GetApprovedEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	events, err := h.svc.GetApprovedEvents(r.Context(), id)
+	apprEvents, err := h.svc.GetApprovedEvents(r.Context(), id)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
-	// Map to DTO
-	dtos := make([]dto.Event, 0, len(events))
-	for _, e := range events {
+	// Collect related IDs
+	personIDs := make([]uuid.UUID, 0)
+	roleIDs := make([]uuid.UUID, 0)
+	productIDs := make([]uuid.UUID, 0)
+	creatorIDs := make([]uuid.UUID, 0)
 
+	for _, e := range apprEvents {
+		// Related IDs
+		if r, ok := e.(events.HasRelatedIDs); ok {
+			ids := r.RelatedIDs()
+			if ids.PersonID != nil {
+				personIDs = append(personIDs, *ids.PersonID)
+			}
+			if ids.ProjectRoleID != nil {
+				roleIDs = append(roleIDs, *ids.ProjectRoleID)
+			}
+			if ids.ProductID != nil {
+				productIDs = append(productIDs, *ids.ProductID)
+			}
+		}
+		// Creator ID
+		if c, ok := any(e).(interface{ CreatedByID() uuid.UUID }); ok {
+			cid := c.CreatedByID()
+			if cid != uuid.Nil {
+				creatorIDs = append(creatorIDs, cid)
+			}
+		}
+	}
+
+	// Batch fetch related entities
+	// We ignore errors here to allow partial success (rendering events without full details is better than failing)
+	personsMap, _ := h.svc.GetPeopleByIDs(r.Context(), lo.Uniq(personIDs))
+	rolesMap, _ := h.projSvc.GetProjectRolesByIDs(r.Context(), lo.Uniq(roleIDs))
+	productsMap, _ := h.projSvc.GetProductsByIDs(r.Context(), lo.Uniq(productIDs))
+	creatorsMap, _ := h.svc.GetPeopleByUserIDs(r.Context(), lo.Uniq(creatorIDs))
+
+	// Map to DTO
+	dtos := lo.Map(apprEvents, func(e events.Event, _ int) dto.Event {
 		proj, _ := h.projSvc.GetProject(r.Context(), e.AggregateID())
 		projectTitle := ""
 		if proj != nil {
 			projectTitle = proj.Project.Title
 		}
 
-		dtos = append(dtos, dto.Event{}.FromEntityWithTitle(e, projectTitle))
-	}
+		dtoEvent := dto.Event{}.FromEntityWithTitle(e, projectTitle)
+
+		// Enrich
+		if r, ok := e.(events.HasRelatedIDs); ok {
+			ids := r.RelatedIDs()
+			if ids.PersonID != nil {
+				if p, ok := personsMap[*ids.PersonID]; ok {
+					pdto := transform.ToDTOItem[dto.PersonResponse](p)
+					dtoEvent.Person = &pdto
+				}
+			}
+			if ids.ProjectRoleID != nil {
+				if r, ok := rolesMap[*ids.ProjectRoleID]; ok {
+					rdto := transform.ToDTOItem[dto.ProjectRoleResponse](r)
+					dtoEvent.ProjectRole = &rdto
+				}
+			}
+			if ids.ProductID != nil {
+				if p, ok := productsMap[*ids.ProductID]; ok {
+					pdto := transform.ToDTOItem[dto.ProductResponse](p)
+					dtoEvent.Product = &pdto
+				}
+			}
+		}
+
+		// Enrich Creator
+		if c, ok := any(e).(interface{ CreatedByID() uuid.UUID }); ok {
+			cid := c.CreatedByID()
+			if p, ok := creatorsMap[cid]; ok {
+				pdto := transform.ToDTOItem[dto.PersonResponse](p)
+				dtoEvent.Creator = &pdto
+			}
+		}
+
+		return dtoEvent
+	})
 
 	_ = httputil.WriteJSON(w, http.StatusOK, dto.EventResponse{Events: dtos})
 }

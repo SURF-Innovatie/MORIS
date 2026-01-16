@@ -84,9 +84,9 @@ export function NotificationList({ limit }: NotificationListProps) {
                   {notification.message}
                 </p>
                 <p className="text-xs text-muted-foreground/70">
-                  {notification.sentAt
+                  {notification.sent_at
                     ? format(
-                        new Date(notification.sentAt),
+                        new Date(notification.sent_at),
                         "MMM d, yyyy 'at' h:mm a"
                       )
                     : "Just now"}
@@ -111,15 +111,15 @@ export function NotificationList({ limit }: NotificationListProps) {
             </div>
           );
 
-          if (isApproval && notification.projectId && notification.eventId) {
+          if (isApproval && notification.project_id && notification.event_id) {
             return (
               <div
                 key={notification.id}
                 onClick={() => {
                   // No manual mark as read on click for approval
                   setSelectedApproval({
-                    projectId: notification.projectId!,
-                    eventId: notification.eventId!,
+                    projectId: notification.project_id!,
+                    eventId: notification.event_id!,
                     message: notification.message || "No details available",
                   });
                 }}
@@ -131,8 +131,8 @@ export function NotificationList({ limit }: NotificationListProps) {
           }
 
           const linkTarget =
-            notification.projectId && notification.projectId != EMPTY_UUID
-              ? `/projects/${notification.projectId}`
+            notification.project_id && notification.project_id != EMPTY_UUID
+              ? `/projects/${notification.project_id}`
               : null;
 
           return (

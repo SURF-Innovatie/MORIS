@@ -3,21 +3,26 @@ package main
 import (
 	"context"
 	"database/sql"
+	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
-	"github.com/SURF-Innovatie/MORIS/ent/migrate"
 	"github.com/SURF-Innovatie/MORIS/ent/organisationnode"
-	entprojectrole "github.com/SURF-Innovatie/MORIS/ent/projectrole"
 	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
+	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
+	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
-	"github.com/SURF-Innovatie/MORIS/internal/organisation"
+	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
+	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation_rbac"
+	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/projectrole"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -54,6 +59,11 @@ func main() {
 	dbName := os.Getenv("DB_NAME")
 	dbPort := os.Getenv("DB_PORT")
 
+	skipSeed := flag.Bool("skip-seed", false, "Skip seeding data, only reset schema and apply migrations")
+	skipMigrations := flag.Bool("skip-migrations", false, "Skip applying database migrations")
+	noReset := flag.Bool("no-reset", false, "Skip database schema reset (do not drop public schema)")
+	flag.Parse()
+
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		dbHost, dbPort, dbUser, dbPassword, dbName)
 
@@ -70,23 +80,42 @@ func main() {
 	ctx := context.Background()
 
 	// Hard reset: drop and recreate the public schema
-	rawDB, err := sql.Open("postgres", dsn)
-	if err != nil {
-		logrus.Fatalf("failed opening raw db connection: %v", err)
-	}
-	if _, err := rawDB.ExecContext(ctx, `DROP SCHEMA public CASCADE; CREATE SCHEMA public;`); err != nil {
-		logrus.Fatalf("failed resetting schema: %v", err)
-	}
-	if err := rawDB.Close(); err != nil {
-		logrus.Fatalf("failed closing raw db: %v", err)
-	}
-	logrus.Info("Database schema reset (dropped and recreated).")
+	if !*noReset {
+		if os.Getenv("ALLOW_DESTRUCTIVE_SEED") != "true" && os.Getenv("NODE_ENV") == "production" {
+			logrus.Fatal("Destructive seed requested in production but ALLOW_DESTRUCTIVE_SEED is not set to true")
+		}
 
-	if err := client.Schema.Create(
-		ctx,
-		migrate.WithGlobalUniqueID(true),
-	); err != nil {
-		logrus.Fatalf("failed running Ent database migrations: %v", err)
+		rawDB, err := sql.Open("postgres", dsn)
+		if err != nil {
+			logrus.Fatalf("failed opening raw db connection: %v", err)
+		}
+		if _, err := rawDB.ExecContext(ctx, `DROP SCHEMA public CASCADE; CREATE SCHEMA public; DROP SCHEMA IF EXISTS atlas_schema_revisions CASCADE;`); err != nil {
+			logrus.Fatalf("failed resetting schema: %v", err)
+		}
+		if err := rawDB.Close(); err != nil {
+			logrus.Fatalf("failed closing raw db: %v", err)
+		}
+		logrus.Info("Database schema reset (dropped and recreated).")
+	} else {
+		logrus.Info("Skipping database schema reset as requested by -no-reset flag.")
+	}
+
+	if !*skipMigrations {
+		logrus.Info("Applying database migrations...")
+		cmd := exec.Command("pnpm", "run", "db:migrate:apply")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			logrus.Fatalf("failed running database migrations: %v", err)
+		}
+		logrus.Info("Database migrations applied.")
+	} else {
+		logrus.Info("Skipping database migrations as requested.")
+	}
+
+	if *skipSeed {
+		logrus.Info("Skipping data seeding as requested.")
+		return
 	}
 
 	// Default password
@@ -133,21 +162,65 @@ func main() {
 	}
 	logrus.Infof("Created user for person %s", testUserName)
 
-	es := eventstore.NewEntStore(client)
-
-	if _, err := client.ProjectRole.
-		Create().
-		SetKey("contributor").
-		SetName("Contributor").
-		Save(ctx); err != nil {
-		logrus.Fatalf("create project role contributor: %v", err)
+	// --- Additional Admin Users ---
+	adminUsers := []struct {
+		Name  string
+		Email string
+	}{
+		{Name: "Geert Haans", Email: "geert.haans@surf.nl"},
+		{Name: "Ben Stokmans", Email: "ben.stokmans@surf.nl"},
 	}
 
-	if _, err := client.ProjectRole.
-		Create().
-		SetKey("admin"). // or "lead" if you prefer; must match what you query later
-		SetName("Project Lead").
-		Save(ctx); err != nil {
+	for _, admin := range adminUsers {
+		adminAccountID := uuid.New()
+		adminPerson, err := client.Person.
+			Create().
+			SetName(admin.Name).
+			SetUserID(adminAccountID).
+			SetEmail(admin.Email).
+			SetAvatarURL(avatarUrl).
+			SetDescription("SURF admin account").
+			Save(ctx)
+		if err != nil {
+			logrus.Fatalf("failed creating %s person: %v", admin.Name, err)
+		}
+		personIDs[admin.Name] = adminPerson.ID
+		logrus.Infof("Created person %s (%s)", admin.Name, adminPerson.ID)
+
+		_, err = client.User.
+			Create().
+			SetID(adminAccountID).
+			SetPersonID(adminPerson.ID).
+			SetIsSysAdmin(true).
+			Save(ctx)
+		if err != nil {
+			logrus.Fatalf("failed creating user for %s: %v", admin.Name, err)
+		}
+		logrus.Infof("Created admin user for person %s", admin.Name)
+	}
+
+	es := eventstore.NewEntStore(client)
+
+	// --- Seed Roles / Scopes / Memberships for org tree ---
+
+	orgRepo := organisationrepo.NewEntRepo(client)
+	personRepo := personrepo.NewEntRepo(client)
+	rbacRepo := organisationrbacrepo.NewEntRepo(client)
+	rbacSvc := organisationrbac.NewService(rbacRepo)
+	orgSvc := organisation.NewService(orgRepo, personRepo, rbacSvc)
+
+	orgRoot, err := orgSvc.CreateRoot(ctx, "Nederland", nil, nil, nil)
+	if err != nil {
+		logrus.Fatalf("create root org node: %v", err)
+	}
+	orgNodeIDs["Nederland"] = orgRoot.ID
+
+	roleRepo := projectrole.NewRepository(client)
+
+	if _, err := roleRepo.Create(ctx, "contributor", "Contributor", orgRoot.ID); err != nil {
+		logrus.Fatalf("create project role contributor: %v", err)
+	}
+	if _, err := roleRepo.Create(ctx, "admin", "Project Lead", orgRoot.ID); err != nil {
 		logrus.Fatalf("create project role admin: %v", err)
 	}
 
@@ -247,14 +320,6 @@ func main() {
 		}
 		return id
 	}
-
-	orgSvc := organisation.NewService(client)
-
-	orgRoot, err := orgSvc.CreateRoot(ctx, "Nederland")
-	if err != nil {
-		logrus.Fatalf("create root org node: %v", err)
-	}
-	orgNodeIDs["Nederland"] = orgRoot.ID
 
 	universities, err := getOrCreateChild(ctx, client, orgSvc, orgRoot.ID, "Universities")
 	if err != nil {
@@ -387,83 +452,115 @@ func main() {
 		}
 	}
 
-	// --- Seed Roles / Scopes / Memberships for org tree (Option A) ---
+	// --- Seed Roles / Scopes / Memberships for org tree ---
 
-	adminRole, err := client.OrganisationRole.Create().SetKey("admin").SetHasAdminRights(true).Save(ctx)
-	if err != nil {
-		logrus.Fatalf("create admin role: %v", err)
-	}
-	researcherRole, err := client.OrganisationRole.Create().SetKey("researcher").SetHasAdminRights(false).Save(ctx)
-	if err != nil {
-		logrus.Fatalf("create researcher role: %v", err)
-	}
-	studentsRole, err := client.OrganisationRole.Create().SetKey("students").SetHasAdminRights(false).Save(ctx)
-	if err != nil {
-		logrus.Fatalf("create students role: %v", err)
-	}
-
-	// Scopes:
-	// - Admin scope applies from the true root (orgRoot).
-	// - Researcher scope applies from the true root (orgRoot).
-	// - Students scope applies from a subtree root. For demo: pick one org node if present, else orgRoot.
-	studentsRootID := orgRoot.ID
-	if id, ok := orgNodeIDs["Cybersecurity Lab – Utrecht University"]; ok {
-		// Put "students" scope under this subtree, as an example.
-		studentsRootID = id
+	// Helper to create roles for an org
+	createRolesForOrg := func(orgID uuid.UUID) (adminRoleID, researcherRoleID, studentsRoleID uuid.UUID) {
+		orgEnt, err := client.OrganisationNode.Get(ctx, orgID)
 		if err != nil {
-			logrus.Fatalf("get students root node: %v", err)
+			logrus.Fatalf("failed getting org %s for roles: %v", orgID, err)
 		}
+
+		// Admin
+		adminRole, err := client.OrganisationRole.Create().
+			SetKey("admin").
+			SetDisplayName("Administrator").
+			SetOrganisation(orgEnt).
+			SetPermissions([]string{
+				"manage_members",
+				"manage_project_roles",
+				"manage_organisation_roles",
+				"manage_custom_fields",
+				"manage_details",
+			}).
+			Save(ctx)
+		if err != nil {
+			logrus.Fatalf("create admin role for %s: %v", orgID, err)
+		}
+
+		// Create legacy Scope for Admin
+		adminScope, err := client.RoleScope.Create().
+			SetRole(adminRole).
+			SetRootNode(orgEnt).
+			Save(ctx)
+		if err != nil {
+			logrus.Fatalf("create admin scope for %s: %v", orgID, err)
+		}
+
+		// Researcher
+		researcherRole, err := client.OrganisationRole.Create().
+			SetKey("researcher").
+			SetDisplayName("Researcher").
+			SetOrganisation(orgEnt).
+			SetPermissions([]string{}). // Basic access
+			Save(ctx)
+		if err != nil {
+			logrus.Fatalf("create researcher role for %s: %v", orgID, err)
+		}
+
+		researcherScope, err := client.RoleScope.Create().
+			SetRole(researcherRole).
+			SetRootNode(orgEnt).
+			Save(ctx)
+		if err != nil {
+			logrus.Fatalf("create researcher scope: %v", err)
+		}
+
+		// Students
+		studentsRole, err := client.OrganisationRole.Create().
+			SetKey("students").
+			SetDisplayName("Student").
+			SetOrganisation(orgEnt).
+			SetPermissions([]string{}).
+			Save(ctx)
+		if err != nil {
+			logrus.Fatalf("create students role for %s: %v", orgID, err)
+		}
+
+		studentsScope, err := client.RoleScope.Create().
+			SetRole(studentsRole).
+			SetRootNode(orgEnt).
+			Save(ctx)
+		if err != nil {
+			logrus.Fatalf("create students scope: %v", err)
+		}
+
+		return adminScope.ID, researcherScope.ID, studentsScope.ID
 	}
 
-	orgRootEnt, err := client.OrganisationNode.Get(ctx, orgRoot.ID)
-	if err != nil {
-		logrus.Fatalf("get org root ent node: %v", err)
+	// Create roles for Root Org
+	rootAdminScopeID, rootResearcherScopeID, rootStudentsScopeID := createRolesForOrg(orgRoot.ID)
+
+	// For demo: create specific roles for sub-orgs if needed, or re-use root roles?
+	// The previous seed had "Students" scoped to a subtree. Now roles are strictly per-org.
+	// If "Students" was scoped to "Cybersecurity Lab", we must create a role there.
+
+	// studentsRootID := orgRoot.ID (removed unused)
+
+	studentsScopeID := rootStudentsScopeID
+
+	if id, ok := orgNodeIDs["Cybersecurity Lab – Utrecht University"]; ok {
+		// studentsRootID = id // removed unused
+		// Create roles for this sub-org
+		_, _, subStudentsScopeID := createRolesForOrg(id)
+		studentsScopeID = subStudentsScopeID
 	}
 
-	studentsRootEnt, err := client.OrganisationNode.Get(ctx, studentsRootID)
-	if err != nil {
-		logrus.Fatalf("get students root ent node: %v", err)
-	}
-
-	adminScope, err := client.RoleScope.Create().
-		SetRole(adminRole).
-		SetRootNode(orgRootEnt).
-		Save(ctx)
-	if err != nil {
-		logrus.Fatalf("create admin scope: %v", err)
-	}
-
-	researcherScope, err := client.RoleScope.Create().
-		SetRole(researcherRole).
-		SetRootNode(orgRootEnt).
-		Save(ctx)
-	if err != nil {
-		logrus.Fatalf("create researcher scope: %v", err)
-	}
-
-	studentsScope, err := client.RoleScope.Create().
-		SetRole(studentsRole).
-		SetRootNode(studentsRootEnt).
-		Save(ctx)
-	if err != nil {
-		logrus.Fatalf("create students scope: %v", err)
-	}
-
-	// Memberships: example assignments (adjust to your needs)
-	_, err = client.Membership.Create().SetPersonID(mustPersonID(testUserName)).SetRoleScopeID(adminScope.ID).Save(ctx)
+	// Memberships: example assignments
+	_, err = client.Membership.Create().SetPersonID(mustPersonID(testUserName)).SetRoleScopeID(rootAdminScopeID).Save(ctx)
 	if err != nil {
 		logrus.Fatalf("create admin membership: %v", err)
 	}
 
-	// If these people exist in seed list, assign them too
 	if _, ok := personIDs["Dr. Elaine Carter"]; ok {
-		_, err = client.Membership.Create().SetPersonID(mustPersonID("Dr. Elaine Carter")).SetRoleScopeID(researcherScope.ID).Save(ctx)
+		_, err = client.Membership.Create().SetPersonID(mustPersonID("Dr. Elaine Carter")).SetRoleScopeID(rootResearcherScopeID).Save(ctx)
 		if err != nil {
 			logrus.Fatalf("create researcher membership: %v", err)
 		}
 	}
 	if _, ok := personIDs["Tomas Ternovski"]; ok {
-		_, err = client.Membership.Create().SetPersonID(mustPersonID("Tomas Ternovski")).SetRoleScopeID(studentsScope.ID).Save(ctx)
+		// Use the students scope we determined earlier (Root or Subtree)
+		_, err = client.Membership.Create().SetPersonID(mustPersonID("Tomas Ternovski")).SetRoleScopeID(studentsScopeID).Save(ctx)
 		if err != nil {
 			logrus.Fatalf("create students membership: %v", err)
 		}
@@ -474,7 +571,7 @@ func main() {
 	for _, sp := range projects {
 		projectID := uuid.New()
 
-		startEvent := events.ProjectStarted{
+		startEvent := &events.ProjectStarted{
 			Base: events.Base{
 				ID:        uuid.New(),
 				ProjectID: projectID,
@@ -495,21 +592,17 @@ func main() {
 		version := 1
 
 		// fetch project role IDs
-		contributorRoleID, err := client.ProjectRole.
-			Query().
-			Where(entprojectrole.KeyEQ("contributor")).
-			OnlyID(ctx)
+		contributorRole, err := roleRepo.GetByKeyAndOrg(ctx, "contributor", orgRoot.ID)
 		if err != nil {
-			logrus.Fatalf("fetch contributor role id: %v", err)
+			logrus.Fatalf("fetch contributor role: %v", err)
+		}
+		leadRole, err := roleRepo.GetByKeyAndOrg(ctx, "admin", orgRoot.ID)
+		if err != nil {
+			logrus.Fatalf("fetch admin role: %v", err)
 		}
 
-		leadRoleID, err := client.ProjectRole.
-			Query().
-			Where(entprojectrole.KeyEQ("admin")).
-			OnlyID(ctx)
-		if err != nil {
-			logrus.Fatalf("fetch lead/admin role id: %v", err)
-		}
+		contributorRoleID := contributorRole.ID
+		leadRoleID := leadRole.ID
 
 		for _, name := range sp.People {
 			personID := mustPersonID(name)
@@ -519,7 +612,7 @@ func main() {
 				roleID = leadRoleID // make test user the project lead/admin
 			}
 
-			pevt := events.ProjectRoleAssigned{
+			pevt := &events.ProjectRoleAssigned{
 				Base: events.Base{
 					ID:        uuid.New(),
 					ProjectID: projectID,
@@ -539,7 +632,7 @@ func main() {
 		for _, prod := range sp.Products {
 			productID := mustProductID(prod.DOI)
 
-			pevt := events.ProductAdded{
+			pevt := &events.ProductAdded{
 				Base: events.Base{
 					ProjectID: projectID,
 					At:        time.Now().UTC(),
@@ -610,7 +703,7 @@ func main() {
 func createPath(ctx context.Context, orgSvc organisation.Service, rootID uuid.UUID, names ...string) (uuid.UUID, error) {
 	parentID := rootID
 	for _, name := range names {
-		n, err := orgSvc.CreateChild(ctx, parentID, name)
+		n, err := orgSvc.CreateChild(ctx, parentID, name, nil, nil, nil)
 		if err != nil {
 			return uuid.Nil, err
 		}
@@ -634,5 +727,5 @@ func getOrCreateChild(ctx context.Context, cli *ent.Client, orgSvc organisation.
 	if !ent.IsNotFound(err) {
 		return nil, err
 	}
-	return orgSvc.CreateChild(ctx, parentID, name)
+	return orgSvc.CreateChild(ctx, parentID, name, nil, nil, nil)
 }

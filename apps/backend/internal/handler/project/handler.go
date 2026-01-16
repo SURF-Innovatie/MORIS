@@ -2,21 +2,24 @@ package project
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	"github.com/SURF-Innovatie/MORIS/internal/app/customfield"
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
-	"github.com/SURF-Innovatie/MORIS/internal/project"
+	"github.com/samber/lo"
 )
 
 type Handler struct {
-	svc project.Service
+	svc            queries.Service
+	customFieldSvc customfield.Service
 }
 
-func NewHandler(svc project.Service) *Handler {
-	return &Handler{svc: svc}
+func NewHandler(svc queries.Service, cfs customfield.Service) *Handler {
+	return &Handler{svc: svc, customFieldSvc: cfs}
 }
 
 // GetProject godoc
@@ -45,112 +48,6 @@ func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProjectResponse](proj))
 }
 
-// StartProject godoc
-// @Summary Start a new project
-// @Description Creates and starts a new project with the provided details
-// @Tags projects
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param project body dto.ProjectRequest true "Project details"
-// @Success 200 {object} dto.ProjectResponse
-// @Failure 400 {string} string "invalid body or date format"
-// @Failure 500 {string} string "internal server error"
-// @Router /projects [post]
-func (h *Handler) StartProject(w http.ResponseWriter, r *http.Request) {
-	req := dto.ProjectRequest{}
-	if !httputil.ReadJSON(w, r, &req) {
-		return
-	}
-
-	start, err := time.Parse(time.RFC3339, req.StartDate)
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusBadRequest, "invalid startDate", nil)
-		return
-	}
-
-	end, err := time.Parse(time.RFC3339, req.EndDate)
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusBadRequest, "invalid endDate", nil)
-		return
-	}
-
-	params := project.StartProjectParams{
-		Title:           req.Title,
-		Description:     req.Description,
-		OwningOrgNodeID: req.OwningOrgNodeID,
-		StartDate:       start,
-		EndDate:         end,
-	}
-
-	proj, err := h.svc.StartProject(r.Context(), params)
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
-		return
-	}
-
-	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProjectResponse](proj))
-}
-
-// UpdateProject godoc
-// @Summary Update a project
-// @Description Updates an existing project with the provided details
-// @Tags projects
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "Project ID (UUID)"
-// @Param project body dto.ProjectRequest true "Project details"
-// @Success 200 {object} dto.ProjectResponse
-// @Failure 400 {string} string "invalid body, id or date format"
-// @Failure 404 {string} string "project not found"
-// @Failure 500 {string} string "internal server error"
-// @Router /projects/{id} [put]
-func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
-	id, err := httputil.ParseUUIDParam(r, "id")
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
-		return
-	}
-
-	req := dto.ProjectRequest{}
-	if !httputil.ReadJSON(w, r, &req) {
-		return
-	}
-
-	start, err := time.Parse(time.RFC3339, req.StartDate)
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusBadRequest, "invalid startDate", nil)
-		return
-	}
-
-	end, err := time.Parse(time.RFC3339, req.EndDate)
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusBadRequest, "invalid endDate", nil)
-		return
-	}
-
-	params := project.UpdateProjectParams{
-		Title:           req.Title,
-		Description:     req.Description,
-		OwningOrgNodeID: req.OwningOrgNodeID,
-		StartDate:       start,
-		EndDate:         end,
-	}
-
-	proj, err := h.svc.UpdateProject(r.Context(), id, params)
-	if err != nil {
-		if err == project.ErrNotFound {
-			httputil.WriteError(w, r, http.StatusNotFound, err.Error(), nil)
-			return
-		}
-		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
-		return
-	}
-
-	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProjectResponse](proj))
-}
-
 // GetAllProjects godoc
 // @Summary Get all projects
 // @Description Retrieves a list of all projects
@@ -170,185 +67,6 @@ func (h *Handler) GetAllProjects(w http.ResponseWriter, r *http.Request) {
 	}
 	resps := transform.ToDTOs[dto.ProjectResponse](projs)
 	_ = httputil.WriteJSON(w, http.StatusOK, resps)
-}
-
-// AddPerson godoc
-// @Summary Add a person to a project
-// @Description Adds a new person to the specified project
-// @Tags projects
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "Project ID (UUID)"
-// @Param personId path string true "Person ID (UUID)"
-// @Success 200 {object} dto.ProjectResponse
-// @Failure 400 {string} string "invalid project id or body"
-// @Failure 500 {string} string "internal server error"
-// @Router /projects/{id}/people/{personId} [post]
-func (h *Handler) AddPerson(w http.ResponseWriter, r *http.Request) {
-	id, err := httputil.ParseUUIDParam(r, "id")
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
-		return
-	}
-
-	personID, err := httputil.ParseUUIDParam(r, "personId")
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusBadRequest, "invalid person id", nil)
-		return
-	}
-
-	proj, err := h.svc.AddPerson(r.Context(), id, personID)
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
-		return
-	}
-	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProjectResponse](proj))
-}
-
-// RemovePerson godoc
-// @Summary Remove a person from a project
-// @Description Removes a person from the specified project
-// @Tags projects
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "Project ID (UUID)"
-// @Param personId path string true "Person ID (UUID)"
-// @Success 200 {object} dto.ProjectResponse
-// @Failure 400 {string} string "invalid project id or person id"
-// @Failure 500 {string} string "internal server error"
-// @Router /projects/{id}/people/{personId} [delete]
-func (h *Handler) RemovePerson(w http.ResponseWriter, r *http.Request) {
-	id, err := httputil.ParseUUIDParam(r, "id")
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
-		return
-	}
-
-	personId, err := httputil.ParseUUIDParam(r, "personId")
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusBadRequest, "invalid personId", nil)
-		return
-	}
-
-	proj, err := h.svc.RemovePerson(r.Context(), id, personId)
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
-		return
-	}
-
-	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProjectResponse](proj))
-}
-
-// UpdatePerson godoc
-// @Summary Update a person's role in a project
-// @Description Updates the role of a person in the specified project
-// @Tags projects
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "Project ID (UUID)"
-// @Param personId path string true "Person ID (UUID)"
-// @Param body body dto.ProjectUpdateMemberRequest true "Role details"
-// @Success 200 {object} dto.ProjectResponse
-// @Failure 400 {string} string "invalid project id, person id or body"
-// @Failure 500 {string} string "internal server error"
-// @Router /projects/{id}/people/{personId} [put]
-func (h *Handler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
-	id, err := httputil.ParseUUIDParam(r, "id")
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
-		return
-	}
-
-	personID, err := httputil.ParseUUIDParam(r, "personId")
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusBadRequest, "invalid person id", nil)
-		return
-	}
-
-	req := dto.ProjectUpdateMemberRequest{}
-	if !httputil.ReadJSON(w, r, &req) {
-		return
-	}
-
-	proj, err := h.svc.UpdateMemberRole(r.Context(), id, personID, req.Role)
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
-		return
-	}
-	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProjectResponse](proj))
-}
-
-// AddProduct godoc
-// @Summary Add a product to a project
-// @Description Adds an existing product to the specified project using its ID
-// @Tags projects
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "Project ID (UUID)"
-// @Param productID path string true "Product ID (UUID)"
-// @Success 200 {object} dto.ProjectResponse
-// @Failure 400 {string} string "invalid project id or product id"
-// @Failure 500 {string} string "internal server error"
-// @Router /projects/{id}/products/{productID} [post]
-func (h *Handler) AddProduct(w http.ResponseWriter, r *http.Request) {
-	id, err := httputil.ParseUUIDParam(r, "id")
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
-		return
-	}
-
-	productID, err := httputil.ParseUUIDParam(r, "productID")
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusBadRequest, "invalid productID", nil)
-		return
-	}
-
-	proj, err := h.svc.AddProduct(r.Context(), id, productID)
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
-		return
-	}
-
-	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProjectResponse](proj))
-}
-
-// RemoveProduct godoc
-// @Summary Remove a product from a project
-// @Description Removes a product association from the specified project
-// @Tags projects
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "Project ID (UUID)"
-// @Param productID path string true "Product ID (UUID)"
-// @Success 200 {object} dto.ProjectResponse
-// @Failure 400 {string} string "invalid project id or product id"
-// @Failure 500 {string} string "internal server error"
-// @Router /projects/{id}/products/{productID} [delete]
-func (h *Handler) RemoveProduct(w http.ResponseWriter, r *http.Request) {
-	id, err := httputil.ParseUUIDParam(r, "id")
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
-		return
-	}
-
-	productID, err := httputil.ParseUUIDParam(r, "productID")
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusBadRequest, "invalid productID", nil)
-		return
-	}
-
-	proj, err := h.svc.RemoveProduct(r.Context(), id, productID)
-	if err != nil {
-		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
-		return
-	}
-
-	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.ProjectResponse](proj))
 }
 
 // GetChangelog godoc
@@ -405,39 +123,110 @@ func (h *Handler) GetPendingEvents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := dto.EventResponse{
-		Events: make([]dto.Event, 0, len(pendingEvents)),
-	}
-	for _, e := range pendingEvents {
-		resp.Events = append(resp.Events, transform.ToDTOItem[dto.Event](e))
+		Events: lo.Map(pendingEvents, func(e events.DetailedEvent, _ int) dto.Event {
+			var d dto.Event
+			return d.FromDetailedEntity(e)
+		}),
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, resp)
 }
 
-// GetProjectRoles godoc
-// @Summary Get project roles
-// @Description Retrieves a list of all available project roles
+// ListAvailableRoles godoc
+// @Summary List available roles for a project
+// @Description Retrieves all roles available to be assigned in a project (inherited from organisation hierarchy)
 // @Tags projects
 // @Accept json
 // @Produce json
 // @Security BearerAuth
+// @Param id path string true "Project ID (UUID)"
 // @Success 200 {array} dto.ProjectRoleResponse
+// @Failure 400 {string} string "invalid project id"
 // @Failure 500 {string} string "internal server error"
-// @Router /projects/roles [get]
-func (h *Handler) GetProjectRoles(w http.ResponseWriter, r *http.Request) {
-	roles, err := h.svc.GetProjectRoles(r.Context())
+// @Router /projects/{id}/roles [get]
+func (h *Handler) ListAvailableRoles(w http.ResponseWriter, r *http.Request) {
+	id, err := httputil.ParseUUIDParam(r, "id")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
+		return
+	}
+
+	roles, err := h.svc.ListAvailableRoles(r.Context(), id)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
-	resps := make([]dto.ProjectRoleResponse, 0, len(roles))
-	for _, role := range roles {
-		resps = append(resps, dto.ProjectRoleResponse{
-			Key:  role.Key,
-			Name: role.Name,
-		})
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOs[dto.ProjectRoleResponse](roles))
+}
+
+// GetAllowedEvents godoc
+// @Summary Get allowed events for a project
+// @Description Retrieves a list of events the user is allowed to perform on the project
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Project ID (UUID)"
+// @Success 200 {array} string
+// @Failure 400 {string} string "invalid project id"
+// @Failure 500 {string} string "internal server error"
+// @Router /projects/{id}/allowed-events [get]
+func (h *Handler) GetAllowedEvents(w http.ResponseWriter, r *http.Request) {
+	id, err := httputil.ParseUUIDParam(r, "id")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
+		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, resps)
+	allowedEvents, err := h.svc.GetAllowedEventTypes(r.Context(), id)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	if len(allowedEvents) == 0 {
+		// force write of empty array otherwise httputil.WriteJSON will write null
+		httputil.WriteJSON(w, http.StatusOK, []string{})
+		return
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, allowedEvents)
+}
+
+// ListAvailableCustomFields godoc
+// @Summary List available custom fields for a project
+// @Description Retrieves all custom fields available to be populated in a project (inherited from organisation hierarchy)
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Project ID (UUID)"
+// @Success 200 {array} dto.CustomFieldDefinitionResponse
+// @Failure 400 {string} string "invalid project id"
+// @Failure 500 {string} string "internal server error"
+// @Router /projects/{id}/custom-fields [get]
+func (h *Handler) ListAvailableCustomFields(w http.ResponseWriter, r *http.Request) {
+	id, err := httputil.ParseUUIDParam(r, "id")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
+		return
+	}
+
+	// 1. Get Project to find OwningOrgNode
+	proj, err := h.svc.GetProject(r.Context(), id)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusNotFound, "project not found", nil)
+		return
+	}
+
+	// 2. List definitions for that Org Node
+	category := entities.CustomFieldCategory("PROJECT")
+	defs, err := h.customFieldSvc.ListAvailableForNode(r.Context(), proj.OwningOrgNode.ID, &category)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOs[dto.CustomFieldDefinitionResponse](defs))
 }

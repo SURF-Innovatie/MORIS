@@ -1,8 +1,3 @@
-/**
- * This program has been developed by students from the bachelor Computer Science at Utrecht
- * University within the Software Project course.
- * © Copyright Utrecht University (Department of Information and Computing Sciences)
- */
 const OrcidIcon = ({ width = 16, height = 16, ...props }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"

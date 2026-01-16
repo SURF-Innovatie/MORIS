@@ -12,7 +12,10 @@ export interface BackendError {
   timestamp?: string;
 }
 
-import { STORAGE_KEY_AUTH_TOKEN } from "@/lib/constants";
+import {
+  EVENT_NOTIFICATIONS_SHOULD_REFRESH,
+  STORAGE_KEY_AUTH_TOKEN,
+} from "@/lib/constants";
 
 // Request interceptor to add JWT token
 AXIOS_INSTANCE.interceptors.request.use(
@@ -67,7 +70,17 @@ export const customInstance = async <T>(
     ...config,
     ...options,
     cancelToken: source.token,
-  }).then((res) => res.data);
+  }).then((res) => {
+    // Check if it's an event creation call
+    // The url usually looks like /projects/{id}/events
+    if (
+      config.method?.toUpperCase() === "POST" &&
+      config.url?.match(/\/projects\/[^/]+\/events/)
+    ) {
+      window.dispatchEvent(new CustomEvent(EVENT_NOTIFICATIONS_SHOULD_REFRESH));
+    }
+    return res.data;
+  });
   // @ts-ignore
   promise.cancel = () => {
     source.cancel("Query was cancelled");

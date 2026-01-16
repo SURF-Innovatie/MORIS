@@ -1,35 +1,31 @@
 import { useGetOrganisationMembershipsMine } from "@api/moris";
 import { Button } from "@/components/ui/button";
-import { Users, Plus } from "lucide-react";
+import { Plus, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { OrganisationNode } from "./components/OrganisationNode";
 import { CreateChildDialog } from "./components/CreateChildDialog";
 import { OrganisationEffectiveMembershipResponse } from "@/api/generated-orval/model";
+import { OrganisationListLayout } from "./components/OrganisationListLayout";
 
 export const UserOrganisationManagement = () => {
   const { data: memberships, isLoading } = useGetOrganisationMembershipsMine();
 
-  if (isLoading) return <div>Loading...</div>;
-
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">My Organizations</h1>
-      <div className="space-y-2">
-        {memberships?.map(
-          (membership: OrganisationEffectiveMembershipResponse) => (
-            <UserOrganisationNode
-              key={membership.membershipId}
-              membership={membership}
-            />
-          )
-        )}
-        {memberships?.length === 0 && (
-          <div className="text-gray-500">
-            You are not a member of any organization.
-          </div>
-        )}
-      </div>
-    </div>
+    <OrganisationListLayout
+      title="My Organizations"
+      isLoading={isLoading}
+      isEmpty={memberships?.length === 0}
+      emptyMessage="You are not a member of any organization."
+    >
+      {memberships?.map(
+        (membership: OrganisationEffectiveMembershipResponse) => (
+          <UserOrganisationNode
+            key={membership.membershipId}
+            membership={membership}
+          />
+        )
+      )}
+    </OrganisationListLayout>
   );
 };
 
@@ -63,7 +59,7 @@ const UserOrganisationNode = ({
               className="h-7 text-xs px-2"
             >
               <Link to={`/dashboard/organisations/${node.id}/members`}>
-                <Users size={14} className="mr-1" /> Members
+                <Settings size={14} className="mr-1" /> Settings
               </Link>
             </Button>
             <CreateChildDialog
@@ -88,7 +84,7 @@ const UserOrganisationNode = ({
     <OrganisationNode
       node={rootNode}
       renderActions={renderActions}
-      defaultExpanded={false}
+      defaultExpanded={true}
     />
   );
 };

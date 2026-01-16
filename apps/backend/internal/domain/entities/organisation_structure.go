@@ -6,9 +6,12 @@ import (
 )
 
 type OrganisationNode struct {
-	ID       uuid.UUID
-	ParentID *uuid.UUID
-	Name     string
+	ID          uuid.UUID
+	ParentID    *uuid.UUID
+	RorID       *string
+	Name        string
+	Description *string
+	AvatarURL   *string
 }
 
 func (o *OrganisationNode) FromEnt(row *ent.OrganisationNode) *OrganisationNode {
@@ -22,8 +25,11 @@ func (o *OrganisationNode) FromEnt(row *ent.OrganisationNode) *OrganisationNode 
 	}
 
 	return &OrganisationNode{
-		ID:       row.ID,
-		ParentID: parentID,
-		Name:     row.Name,
+		ID:          row.ID,
+		ParentID:    parentID,
+		Name:        row.Name,
+		RorID:       row.RorID,
+		Description: row.Description,
+		AvatarURL:   row.AvatarURL,
 	}
 }

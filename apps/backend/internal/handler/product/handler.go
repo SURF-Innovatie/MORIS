@@ -4,18 +4,20 @@ import (
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	appauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
+	productsvc "github.com/SURF-Innovatie/MORIS/internal/app/product"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
-	productsvc "github.com/SURF-Innovatie/MORIS/internal/product"
 )
 
 type Handler struct {
-	svc productsvc.Service
+	svc         productsvc.Service
+	currentUser appauth.CurrentUserProvider
 }
 
-func NewHandler(svc productsvc.Service) *Handler {
-	return &Handler{svc: svc}
+func NewHandler(svc productsvc.Service, cu appauth.CurrentUserProvider) *Handler {
+	return &Handler{svc: svc, currentUser: cu}
 }
 
 // Create godoc
@@ -41,11 +43,17 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var zenodoID int
+	if req.ZenodoDepositionID != nil {
+		zenodoID = *req.ZenodoDepositionID
+	}
+
 	p, err := h.svc.Create(r.Context(), entities.Product{
-		Name:     req.Name,
-		Language: req.Language,
-		Type:     entities.ProductType(req.Type),
-		DOI:      req.DOI,
+		Name:               req.Name,
+		Language:           req.Language,
+		Type:               entities.ProductType(req.Type),
+		DOI:                req.DOI,
+		ZenodoDepositionID: zenodoID,
 	})
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
@@ -61,7 +69,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Tags products
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {array} entities.Product
+// @Success 200 {array} dto.ProductResponse
 // @Failure 500 {string} string "internal server error"
 // @Router /products [get]
 func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +78,13 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
-	_ = httputil.WriteJSON(w, http.StatusOK, products)
+
+	dtos := make([]dto.ProductResponse, len(products))
+	for i, p := range products {
+		dtos[i] = transform.ToDTOItem[dto.ProductResponse](*p)
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, dtos)
 }
 
 // GetMe godoc
@@ -83,18 +97,19 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /products/me [get]
 func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
-	userCtx, ok := httputil.GetUserFromContext(r.Context())
-	if !ok || userCtx == nil {
-		httputil.WriteError(w, r, http.StatusUnauthorized, "User not authenticated or found in context", nil)
+	u, err := h.currentUser.Current(r.Context())
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
 		return
 	}
 
-	products, err := h.svc.GetAllForUser(r.Context(), userCtx.User.PersonID)
+	products, err := h.svc.GetAllForUser(r.Context(), u.PersonID())
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
+	// TODO: make getall return non pointer slice
 	dtos := make([]dto.ProductResponse, len(products))
 	for i, p := range products {
 		dtos[i] = transform.ToDTOItem[dto.ProductResponse](*p)
@@ -156,11 +171,16 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteError(w, r, http.StatusBadRequest, "name is required", nil)
 		return
 	}
+	var zenodoID int
+	if req.ZenodoDepositionID != nil {
+		zenodoID = *req.ZenodoDepositionID
+	}
 	p, err := h.svc.Update(r.Context(), id, entities.Product{
-		Name:     req.Name,
-		Language: req.Language,
-		Type:     entities.ProductType(req.Type),
-		DOI:      req.DOI,
+		Name:               req.Name,
+		Language:           req.Language,
+		Type:               entities.ProductType(req.Type),
+		DOI:                req.DOI,
+		ZenodoDepositionID: zenodoID,
 	})
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)

@@ -13,12 +13,16 @@ import {
 import { ProjectFormValues } from "@/lib/schemas/project";
 import { ProjectResponse } from "@api/model";
 import { ProjectFields } from "@/components/project-form/ProjectFields";
+import { CustomFieldsRenderer } from "@/components/project-form/CustomFieldsRenderer";
+import { useAccess } from "@/context/AccessContext";
+import { ProjectEventType, ProjectEvent } from "@/api/events";
 
 interface GeneralTabProps {
   form: UseFormReturn<ProjectFormValues>;
   onSubmit: (values: ProjectFormValues) => Promise<void>;
   isUpdating: boolean;
   project?: ProjectResponse;
+  pendingEvents?: ProjectEvent[];
 }
 
 export function GeneralTab({
@@ -26,7 +30,40 @@ export function GeneralTab({
   onSubmit,
   isUpdating,
   project,
+  pendingEvents,
 }: GeneralTabProps) {
+  const { hasAccess } = useAccess();
+
+  const pendingFields = {
+    title: pendingEvents?.some((e) => e.type === ProjectEventType.TitleChanged),
+    description: pendingEvents?.some(
+      (e) => e.type === ProjectEventType.DescriptionChanged
+    ),
+    startDate: pendingEvents?.some(
+      (e) => e.type === ProjectEventType.StartDateChanged
+    ),
+    endDate: pendingEvents?.some(
+      (e) => e.type === ProjectEventType.EndDateChanged
+    ),
+  };
+
+  const disabledFields = {
+    title: !hasAccess(ProjectEventType.TitleChanged) || pendingFields.title,
+    description:
+      !hasAccess(ProjectEventType.DescriptionChanged) ||
+      pendingFields.description,
+    startDate:
+      !hasAccess(ProjectEventType.StartDateChanged) || pendingFields.startDate,
+    endDate:
+      !hasAccess(ProjectEventType.EndDateChanged) || pendingFields.endDate,
+  };
+
+  const oneFieldEditable =
+    !disabledFields.title ||
+    !disabledFields.description ||
+    !disabledFields.startDate ||
+    !disabledFields.endDate;
+
   return (
     <div className="grid gap-8 lg:grid-cols-3">
       <div className="lg:col-span-2 space-y-8">
@@ -43,10 +80,24 @@ export function GeneralTab({
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-6"
               >
-                <ProjectFields form={form} />
+                <ProjectFields
+                  form={form}
+                  disabledFields={disabledFields}
+                  pendingFields={pendingFields}
+                />
+
+                {project?.owning_org_node?.id && (
+                  <CustomFieldsRenderer
+                    form={form}
+                    organisationId={project.owning_org_node.id}
+                  />
+                )}
 
                 <div className="flex justify-start">
-                  <Button type="submit" disabled={isUpdating}>
+                  <Button
+                    type="submit"
+                    disabled={isUpdating || !oneFieldEditable}
+                  >
                     {isUpdating ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

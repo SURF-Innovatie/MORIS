@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
+	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
-	"github.com/SURF-Innovatie/MORIS/internal/notification"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -18,12 +18,12 @@ type Service interface {
 	RegisterNotificationHandler(handler NotificationHandler)
 	RegisterStatusChangeHandler(handler StatusChangeHandler)
 	GetEvent(ctx context.Context, eventID uuid.UUID) (events.Event, error)
+	GetEventTypes(ctx context.Context) ([]events.EventMeta, error)
 }
 
 type StatusChangeHandler func(ctx context.Context, event events.Event) error
 
 type NotificationHandler interface {
-	CanHandle(event events.Event) bool
 	Handle(ctx context.Context, event events.Event) error
 }
 
@@ -51,10 +51,8 @@ func (s *service) HandleEvents(ctx context.Context, evts ...events.Event) error 
 	for _, e := range evts {
 		// Existing logic integrated via handlers now
 		for _, handler := range s.notificationHandlers {
-			if handler.CanHandle(e) {
-				if err := handler.Handle(ctx, e); err != nil {
-					logrus.Errorf("Error handling event %s with handler %T: %v\n", e.GetID(), handler, err)
-				}
+			if err := handler.Handle(ctx, e); err != nil {
+				logrus.Errorf("Error handling event %s with handler %T: %v\n", e.GetID(), handler, err)
 			}
 		}
 	}
@@ -65,6 +63,11 @@ func (s *service) ApproveEvent(ctx context.Context, eventID uuid.UUID) error {
 	// 1. Update status
 	if err := s.es.UpdateEventStatus(ctx, eventID, "approved"); err != nil {
 		return err
+	}
+
+	// 2. Mark related notifications as read
+	if err := s.notifier.MarkAsReadByEventID(ctx, eventID); err != nil {
+		logrus.Warnf("Failed to mark notifications as read for event %s: %v", eventID, err)
 	}
 
 	event, err := s.es.LoadEvent(ctx, eventID)
@@ -87,6 +90,11 @@ func (s *service) RejectEvent(ctx context.Context, eventID uuid.UUID) error {
 		return err
 	}
 
+	// Mark related notifications as read
+	if err := s.notifier.MarkAsReadByEventID(ctx, eventID); err != nil {
+		logrus.Warnf("Failed to mark notifications as read for event %s: %v", eventID, err)
+	}
+
 	event, err := s.es.LoadEvent(ctx, eventID)
 	if err != nil {
 		return err
@@ -104,4 +112,10 @@ func (s *service) RejectEvent(ctx context.Context, eventID uuid.UUID) error {
 
 func (s *service) GetEvent(ctx context.Context, eventID uuid.UUID) (events.Event, error) {
 	return s.es.LoadEvent(ctx, eventID)
+}
+
+func (s *service) GetEventTypes(ctx context.Context) ([]events.EventMeta, error) {
+	metas := events.GetAllMetas()
+
+	return metas, nil
 }

@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
@@ -35,10 +36,9 @@ type LoginResponse struct {
 }
 
 func FromEntity(token string, user *entities.UserAccount) LoginResponse {
-	var u UserResponse
 	return LoginResponse{
 		Token: token,
-		User:  u.FromEntity(user),
+		User:  transform.ToDTOItem[UserResponse](user),
 	}
 }
 
@@ -52,4 +52,16 @@ type ORCIDAuthURLResponse struct {
 // Represents the request body for linking an ORCID ID.
 type LinkORCIDRequest struct {
 	Code string `json:"code" example:"authentication_code_from_orcid"`
+}
+
+// SurfconextAuthURLResponse swagger:model SurfconextAuthURLResponse
+// Represents the response body for getting the SURFconext auth URL.
+type SurfconextAuthURLResponse struct {
+	URL string `json:"url" example:"https://connect.surfconext.nl/oidc/authorize?..."`
+}
+
+// SurfconextLoginRequest swagger:model SurfconextLoginRequest
+// Represents the request body for exchanging a SURFconext authorization code for a MORIS JWT.
+type SurfconextLoginRequest struct {
+	Code string `json:"code" example:"authorization_code_from_surfconext"`
 }

@@ -3,18 +3,26 @@ package event
 import (
 	"net/http"
 
+	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
+	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
+	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 type Handler struct {
-	svc event.Service
+	svc      event.Service
+	querySvc queries.Service
+	userSvc  user.Service
+	cli      *ent.Client
 }
 
-func NewHandler(svc event.Service) *Handler {
-	return &Handler{svc: svc}
+func NewHandler(svc event.Service, querySvc queries.Service, userSvc user.Service, cli *ent.Client) *Handler {
+	return &Handler{svc: svc, querySvc: querySvc, userSvc: userSvc, cli: cli}
 }
 
 // ApproveEvent godoc
@@ -99,26 +107,75 @@ func (h *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dtoEvent := dto.Event{
-		ID:        e.GetID(),
-		ProjectID: e.AggregateID(),
-		Type:      e.Type(),
-		Status:    e.GetStatus(),
-		CreatedBy: e.CreatedByID(),
-		At:        e.OccurredAt(),
-		Details:   e.String(),
+	detailed := events.DetailedEvent{Event: e}
+	if hr, ok := e.(events.HasRelatedIDs); ok {
+		ids := hr.RelatedIDs()
+		if ids.PersonID != nil {
+			people, _ := h.querySvc.GetPeopleByIDs(r.Context(), []uuid.UUID{*ids.PersonID})
+			if p, ok := people[*ids.PersonID]; ok {
+				detailed.Person = &p
+			}
+		}
+		if ids.ProjectRoleID != nil {
+			roles, _ := h.querySvc.GetProjectRolesByIDs(r.Context(), []uuid.UUID{*ids.ProjectRoleID})
+			if role, ok := roles[*ids.ProjectRoleID]; ok {
+				detailed.ProjectRole = &role
+			}
+		}
+		if ids.ProductID != nil {
+			products, _ := h.querySvc.GetProductsByIDs(r.Context(), []uuid.UUID{*ids.ProductID})
+			if product, ok := products[*ids.ProductID]; ok {
+				detailed.Product = &product
+			}
+		}
 	}
 
-	switch ev := e.(type) {
-	case events.ProjectRoleAssigned:
-		dtoEvent.PersonID = &ev.PersonID
-	case events.ProjectRoleUnassigned:
-		dtoEvent.PersonID = &ev.PersonID
-	case events.ProductAdded:
-		dtoEvent.ProductID = &ev.ProductID
-	case events.ProductRemoved:
-		dtoEvent.ProductID = &ev.ProductID
+	// Resolve Creator
+	creatorID := e.CreatedByID()
+	people, err := h.userSvc.GetPeopleByUserIDs(r.Context(), []uuid.UUID{creatorID})
+	if err == nil {
+		if p, ok := people[creatorID]; ok {
+			detailed.Creator = &p
+		}
 	}
+
+	var d dto.Event
+	dtoEvent := d.FromDetailedEntity(detailed)
 
 	_ = httputil.WriteJSON(w, http.StatusOK, dtoEvent)
+}
+
+// ListEventTypes godoc
+// @Summary List all event types
+// @Description Lists all event types and whether the current user is allowed to trigger them
+// @Tags events
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} []dto.EventTypeResponse
+// @Failure 500 {string} string "internal server error"
+// @Router /events/types [get]
+func (h *Handler) ListEventTypes(w http.ResponseWriter, r *http.Request) {
+	types, err := h.svc.GetEventTypes(r.Context())
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	eventTypes := lo.FilterMap(types, func(t events.EventMeta, _ int) (dto.EventTypeResponse, bool) {
+		ev, err := events.Create(t.Type)
+		if err != nil {
+			return dto.EventTypeResponse{}, false
+		}
+
+		allowed := t.IsAllowed(r.Context(), ev, h.cli)
+
+		return dto.EventTypeResponse{
+			Type:         t.Type,
+			FriendlyName: t.FriendlyName,
+			Allowed:      allowed,
+		}, true
+	})
+
+	_ = httputil.WriteJSON(w, http.StatusOK, eventTypes)
 }

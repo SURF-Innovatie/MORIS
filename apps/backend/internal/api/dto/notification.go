@@ -8,30 +8,31 @@ import (
 )
 
 type NotificationResponse struct {
-	ID uuid.UUID `json:"id"`
-	// TODO: communicate information about the event
-	ProjectID uuid.UUID `json:"projectId"`
-	EventID   uuid.UUID `json:"eventId"`
-	Message   string    `json:"message"`
-	Type      string    `json:"type"`
-	Read      bool      `json:"read"`
-	SentAt    time.Time `json:"sentAt"`
+	ID        uuid.UUID  `json:"id"`
+	UserID    uuid.UUID  `json:"user_id"`
+	EventID   *uuid.UUID `json:"event_id,omitempty"`
+	ProjectID *uuid.UUID `json:"project_id,omitempty"`
+
+	Message           string    `json:"message"`
+	Type              string    `json:"type"`
+	Read              bool      `json:"read"`
+	SentAt            time.Time `json:"sent_at"`
+	EventFriendlyName string    `json:"event_friendly_name,omitempty"`
 }
 
 func (r NotificationResponse) FromEntity(n entities.Notification) NotificationResponse {
-	projectId := uuid.Nil
-	eventId := uuid.Nil
-	if n.Event != nil {
-		projectId = n.Event.ProjectID
-		eventId = n.Event.ID
-	}
-	return NotificationResponse{
-		ID:        n.Id,
+	resp := NotificationResponse{
+		ID:        n.ID,
+		UserID:    n.UserID,
+		EventID:   n.EventID,
+		ProjectID: n.ProjectID,
 		Message:   n.Message,
-		Type:      n.Type,
+		Type:      string(n.Type),
 		Read:      n.Read,
-		ProjectID: projectId,
-		EventID:   eventId,
 		SentAt:    n.SentAt,
 	}
+	if n.EventFriendlyName != nil {
+		resp.EventFriendlyName = *n.EventFriendlyName
+	}
+	return resp
 }

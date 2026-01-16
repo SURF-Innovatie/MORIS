@@ -21,18 +21,12 @@ type Project struct {
 	Members         []ProjectMember
 	OwningOrgNodeID uuid.UUID
 	ProductIDs      []uuid.UUID
+	CustomFields    map[string]interface{}
 }
 
 type ProjectMemberDetail struct {
 	Person Person
 	Role   ProjectRole
-}
-
-type ProjectDetails struct {
-	Project       Project
-	OwningOrgNode OrganisationNode
-	Members       []ProjectMemberDetail
-	Products      []Product
 }
 
 type ChangeLogEntry struct {

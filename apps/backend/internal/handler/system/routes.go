@@ -8,4 +8,5 @@ import (
 func MountRoutes(r chi.Router, h *Handler) {
 	r.Get("/health", h.Health)
 	r.Get("/status", h.Status)
+	r.Get("/event-types", h.ListEventTypes)
 }

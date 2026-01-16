@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useGetOrganisationNodesIdChildren } from "@api/moris";
 import { OrganisationResponse } from "@api/model";
 import { ChevronRight, ChevronDown } from "lucide-react";
+import { RorDisplay } from "./RorDisplay";
 
 interface OrganisationNodeProps {
   node: OrganisationResponse;
@@ -32,6 +33,11 @@ export const OrganisationNode = ({
           {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
         </button>
         <span className="font-medium">{node.name}</span>
+        {node.rorId && (
+            <div className="ml-2">
+                <RorDisplay rorId={node.rorId} />
+            </div>
+        )}
 
         {renderActions && (
           <div className="ml-auto flex gap-2">{renderActions(node)}</div>

@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 )
@@ -16,13 +17,21 @@ func (User) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New).Immutable().Unique(),
 		field.UUID("person_id", uuid.UUID{}).Default(uuid.New).Unique(),
-		field.String("password").NotEmpty().Sensitive(),
+		field.String("password").Optional().Sensitive(),
 		field.Bool("is_sys_admin").Default(false),
 		field.Bool("is_active").Default(true),
+		// Zenodo OAuth tokens
+		field.String("zenodo_access_token").
+			Optional().
+			Sensitive(),
+		field.String("zenodo_refresh_token").
+			Optional().
+			Sensitive(),
 	}
 }
 
-// Edges of the User.
 func (User) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("notifications", Notification.Type),
+	}
 }

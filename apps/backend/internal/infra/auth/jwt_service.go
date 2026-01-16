@@ -7,10 +7,10 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	userent "github.com/SURF-Innovatie/MORIS/ent/user"
-	coreauth "github.com/SURF-Innovatie/MORIS/internal/auth"
+	coreauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
+	"github.com/SURF-Innovatie/MORIS/internal/app/person"
+	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/person"
-	"github.com/SURF-Innovatie/MORIS/internal/user"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -44,21 +44,49 @@ func (s *service) Login(ctx context.Context, email, password string) (string, *e
 		return "", nil, fmt.Errorf("failed to query user: %w", err)
 	}
 
-	usrPwd, err := s.client.User.
+	u, err := s.client.User.
 		Query().
 		Where(userent.IDEQ(usr.User.ID)).
-		Select(userent.FieldPassword).
-		String(ctx)
+		Only(ctx)
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to query user password: %w", err)
+		return "", nil, fmt.Errorf("failed to query user: %w", err)
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(usrPwd), []byte(password))
+	// Check if user has a password set (OAuth-only users don't)
+	if u.Password == "" {
+		return "", nil, fmt.Errorf("invalid credentials") // OAuth-only user, can't login with password
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 	if err != nil {
 		return "", nil, fmt.Errorf("invalid credentials")
 	}
 
 	// Generate JWT token
+	token, err := s.generateJWT(usr)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to generate token: %w", err)
+	}
+
+	return token, usr, nil
+}
+
+// LoginByEmail issues a JWT for an existing user identified by email.
+// This is intended for external IdP logins (e.g. SURFconext) where MORIS is not
+// handling a local password challenge.
+func (s *service) LoginByEmail(ctx context.Context, email string) (string, *entities.UserAccount, error) {
+	usr, err := s.userSvc.GetAccountByEmail(ctx, email)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return "", nil, fmt.Errorf("invalid credentials")
+		}
+		return "", nil, fmt.Errorf("failed to query user: %w", err)
+	}
+
+	if !usr.User.IsActive {
+		return "", nil, fmt.Errorf("user account is inactive")
+	}
+
 	token, err := s.generateJWT(usr)
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to generate token: %w", err)
@@ -89,7 +117,7 @@ func (s *service) generateJWT(usr *entities.UserAccount) (string, error) {
 
 // ValidateToken validates a JWT token and returns the user info
 func (s *service) ValidateToken(tokenString string) (*entities.UserAccount, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}

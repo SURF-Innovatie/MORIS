@@ -1,7 +1,7 @@
 package auth
 
 import (
-	coreauth "github.com/SURF-Innovatie/MORIS/internal/auth"
+	coreauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
 	"github.com/go-chi/chi/v5"
 )
@@ -10,6 +10,10 @@ import (
 func MountRoutes(r chi.Router, authSvc coreauth.Service, h *Handler) {
 
 	r.Post("/login", h.Login)
+
+	// SURFconext (OIDC) login
+	r.Get("/auth/surfconext/url", h.GetSurfconextAuthURL)
+	r.Post("/auth/surfconext/login", h.LoginWithSurfconext)
 
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware(authSvc))

@@ -5,25 +5,28 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/SURF-Innovatie/MORIS/external/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
-	coreauth "github.com/SURF-Innovatie/MORIS/internal/auth"
+	coreauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
+	"github.com/SURF-Innovatie/MORIS/internal/app/orcid"
+	surfconextapp "github.com/SURF-Innovatie/MORIS/internal/app/surfconext"
+	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
-	"github.com/SURF-Innovatie/MORIS/internal/user"
 )
 
 type Handler struct {
 	userService  user.Service
 	authService  coreauth.Service
 	orcidService orcid.Service
+	surfService  surfconextapp.Service
 }
 
-func NewHandler(userService user.Service, authService coreauth.Service, orcidService orcid.Service) *Handler {
+func NewHandler(userService user.Service, authService coreauth.Service, orcidService orcid.Service, surfService surfconextapp.Service) *Handler {
 	return &Handler{
 		userService:  userService,
 		authService:  authService,
 		orcidService: orcidService,
+		surfService:  surfService,
 	}
 }
 
@@ -47,6 +50,65 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	token, authUser, err := h.authService.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
 		_ = httputil.WriteError(w, r, http.StatusUnauthorized, "Invalid credentials", nil)
+		return
+	}
+
+	resp := dto.FromEntity(token, authUser)
+	_ = httputil.WriteJSON(w, http.StatusOK, resp)
+}
+
+// GetSurfconextAuthURL godoc
+// @Summary Get SURFconext authorization URL
+// @Description Returns the URL to redirect the user to for SURFconext (OIDC) login
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.SurfconextAuthURLResponse
+// @Failure 500 {object} httputil.BackendError "Internal server error"
+// @Router /auth/surfconext/url [get]
+func (h *Handler) GetSurfconextAuthURL(w http.ResponseWriter, r *http.Request) {
+	url, err := h.surfService.AuthURL(r.Context())
+	if err != nil {
+		_ = httputil.WriteError(w, r, http.StatusInternalServerError, "Failed to create authorization URL", map[string]any{"error": err.Error()})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(dto.SurfconextAuthURLResponse{URL: url})
+}
+
+// LoginWithSurfconext godoc
+// @Summary Login with SURFconext
+// @Description Exchanges an OIDC authorization code for a MORIS JWT token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.SurfconextLoginRequest true "SURFconext login request"
+// @Success 200 {object} dto.LoginResponse
+// @Failure 400 {object} httputil.BackendError "Invalid request"
+// @Failure 401 {object} httputil.BackendError "User not allowed / not found"
+// @Failure 500 {object} httputil.BackendError "Internal server error"
+// @Router /auth/surfconext/login [post]
+func (h *Handler) LoginWithSurfconext(w http.ResponseWriter, r *http.Request) {
+	var req dto.SurfconextLoginRequest
+	if !httputil.ReadJSON(w, r, &req) {
+		return
+	}
+
+	token, authUser, err := h.surfService.LoginWithCode(r.Context(), req.Code)
+	if err != nil {
+		statusCode := http.StatusInternalServerError
+		switch {
+		case errors.Is(err, surfconextapp.ErrMissingCode):
+			statusCode = http.StatusBadRequest
+		case errors.Is(err, surfconextapp.ErrNoEmail):
+			statusCode = http.StatusUnauthorized
+		default:
+			// If the wrapped error contains "invalid credentials" from LoginByEmail
+			statusCode = http.StatusUnauthorized
+		}
+
+		_ = httputil.WriteError(w, r, statusCode, err.Error(), nil)
 		return
 	}
 

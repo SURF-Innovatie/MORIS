@@ -16,6 +16,9 @@ func (OrganisationNode) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New),
 		field.String("name"),
+		field.String("description").Optional().Nillable(),
+		field.String("avatar_url").Optional().Nillable(),
+		field.String("ror_id").Optional().Nillable(),
 
 		// Explicit FK column (nullable => root nodes)
 		field.UUID("parent_id", uuid.UUID{}).
@@ -33,6 +36,10 @@ func (OrganisationNode) Edges() []ent.Edge {
 			Field("parent_id"),
 
 		edge.To("children", OrganisationNode.Type),
+
+		edge.To("project_roles", ProjectRole.Type),
+		edge.To("organisation_roles", OrganisationRole.Type),
+		edge.To("custom_field_definitions", CustomFieldDefinition.Type),
 	}
 }
 

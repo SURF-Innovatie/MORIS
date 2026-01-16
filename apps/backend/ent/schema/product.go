@@ -24,6 +24,10 @@ func (Product) Fields() []ent.Field {
 		field.String("doi").
 			Optional().
 			Nillable(),
+		// Zenodo integration
+		field.Int("zenodo_deposition_id").
+			Optional().
+			Nillable(),
 	}
 }
 

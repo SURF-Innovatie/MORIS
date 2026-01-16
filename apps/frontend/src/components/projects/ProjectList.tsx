@@ -186,7 +186,7 @@ export const ProjectList = ({ showCreateButton = true }: ProjectListProps) => {
                             className="h-6 w-6 ring-2 ring-background"
                           >
                             <AvatarImage
-                              src={member.avatar_url || ""}
+                              src={member.avatarUrl || ""}
                               alt={member.email}
                             />
                             <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">

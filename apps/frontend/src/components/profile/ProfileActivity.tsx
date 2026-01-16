@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/card";
 import { useGetUsersIdEventsApproved } from "@api/moris";
 import { EventRenderer } from "@/components/events/EventRenderer";
+import { ProjectEvent } from "@/api/events";
 
 interface ProfileActivityProps {
   userId: string;
@@ -22,14 +23,14 @@ export function ProfileActivity({ userId }: ProfileActivityProps) {
     });
 
   return (
-    <Card className="h-full border-dashed">
+    <Card className="flex flex-col h-[calc(100vh-10rem)] border-dashed">
       <CardHeader>
         <CardTitle>Recent Activity</CardTitle>
         <CardDescription>
           Your recent publications and project updates.
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col">
+      <CardContent className="flex-1 overflow-y-auto min-h-0">
         {isLoadingEvents ? (
           <div className="py-12 text-center text-muted-foreground">
             Loading activity...
@@ -41,7 +42,7 @@ export function ProfileActivity({ userId }: ProfileActivityProps) {
                 key={event.id}
                 className="flex flex-col gap-1 border-b pb-4 last:border-0 last:pb-0"
               >
-                <EventRenderer event={event} />
+                <EventRenderer event={event as ProjectEvent} />
               </div>
             ))}
           </div>
