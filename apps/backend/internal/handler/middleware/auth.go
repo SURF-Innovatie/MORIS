@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	coreauth "github.com/SURF-Innovatie/MORIS/internal/auth"
+	coreauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 )
 

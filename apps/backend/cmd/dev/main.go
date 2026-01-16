@@ -13,10 +13,12 @@ import (
 	exsurfconext "github.com/SURF-Innovatie/MORIS/external/surfconext"
 	exzenodo "github.com/SURF-Innovatie/MORIS/external/zenodo"
 	"github.com/SURF-Innovatie/MORIS/internal/app/crossref"
+	"github.com/SURF-Innovatie/MORIS/internal/app/customfield"
 	"github.com/SURF-Innovatie/MORIS/internal/app/orcid"
 	surfconextapp "github.com/SURF-Innovatie/MORIS/internal/app/surfconext"
 	"github.com/SURF-Innovatie/MORIS/internal/app/zenodo"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
+	customfieldrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/customfield"
 	logger "github.com/chi-middleware/logrus-logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -40,7 +42,6 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	projectrolesvc "github.com/SURF-Innovatie/MORIS/internal/app/projectrole"
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
-	"github.com/SURF-Innovatie/MORIS/internal/customfield"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/errorlog"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
@@ -191,7 +192,8 @@ func main() {
 
 	roleRepo := projectrole.NewRepository(client)
 	roleSvc := projectrolesvc.NewService(roleRepo, orgRepo)
-	customFieldSvc := customfield.NewService(client)
+	customFieldRepo := customfieldrepo.NewRepository(client)
+	customFieldSvc := customfield.NewService(customFieldRepo)
 
 	organisationSvc := organisation.NewService(orgRepo, personRepo, rbacSvc)
 	organisationHandler := organisationhandler.NewHandler(organisationSvc, rbacSvc, roleSvc, customFieldSvc)

@@ -3,14 +3,13 @@ package organisation
 import (
 	"net/http"
 
-	"github.com/SURF-Innovatie/MORIS/ent/customfielddefinition"
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	"github.com/SURF-Innovatie/MORIS/internal/app/customfield"
 	organisationsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	orgrole "github.com/SURF-Innovatie/MORIS/internal/app/organisation/role"
 	"github.com/SURF-Innovatie/MORIS/internal/app/projectrole"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/customfield"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/sirupsen/logrus"
@@ -611,7 +610,7 @@ func (h *Handler) CreateCustomField(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fd, err := h.customFieldSvc.Create(r.Context(), id, req.Name, customfielddefinition.Type(req.Type), customfielddefinition.Category(req.Category), req.Description, req.ValidationRegex, req.ExampleValue, req.Required)
+	fd, err := h.customFieldSvc.Create(r.Context(), id, req.Name, entities.CustomFieldType(req.Type), entities.CustomFieldCategory(req.Category), req.Description, req.ValidationRegex, req.ExampleValue, req.Required)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -692,9 +691,9 @@ func (h *Handler) ListCustomFields(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var category *customfielddefinition.Category
+	var category *entities.CustomFieldCategory
 	if c := r.URL.Query().Get("category"); c != "" {
-		val := customfielddefinition.Category(c)
+		val := entities.CustomFieldCategory(c)
 		category = &val
 	}
 

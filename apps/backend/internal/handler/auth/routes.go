@@ -1,7 +1,7 @@
 package auth
 
 import (
-	coreauth "github.com/SURF-Innovatie/MORIS/internal/auth"
+	coreauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
 	"github.com/go-chi/chi/v5"
 )

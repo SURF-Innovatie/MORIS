@@ -3,11 +3,11 @@ package project
 import (
 	"net/http"
 
-	"github.com/SURF-Innovatie/MORIS/ent/customfielddefinition"
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	"github.com/SURF-Innovatie/MORIS/internal/app/customfield"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/customfield"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/samber/lo"
@@ -221,7 +221,7 @@ func (h *Handler) ListAvailableCustomFields(w http.ResponseWriter, r *http.Reque
 	}
 
 	// 2. List definitions for that Org Node
-	category := customfielddefinition.Category("PROJECT")
+	category := entities.CustomFieldCategory("PROJECT")
 	defs, err := h.customFieldSvc.ListAvailableForNode(r.Context(), proj.OwningOrgNode.ID, &category)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)

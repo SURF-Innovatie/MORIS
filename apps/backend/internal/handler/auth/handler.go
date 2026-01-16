@@ -6,10 +6,10 @@ import (
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	coreauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/app/orcid"
 	surfconextapp "github.com/SURF-Innovatie/MORIS/internal/app/surfconext"
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
-	coreauth "github.com/SURF-Innovatie/MORIS/internal/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 )
