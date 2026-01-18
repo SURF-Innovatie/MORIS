@@ -9,6 +9,7 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/events/hydrator"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
@@ -27,6 +28,7 @@ type evaluator struct {
 	closureProvider    OrgClosureProvider
 	recipientResolver  RecipientResolver
 	notificationSender NotificationSender
+	hydrator           *hydrator.Hydrator
 }
 
 // NewEvaluator creates a new policy evaluator
@@ -35,12 +37,14 @@ func NewEvaluator(
 	closureProvider OrgClosureProvider,
 	recipientResolver RecipientResolver,
 	notificationSender NotificationSender,
+	hydrator *hydrator.Hydrator,
 ) Evaluator {
 	return &evaluator{
 		repo:               repo,
 		closureProvider:    closureProvider,
 		recipientResolver:  recipientResolver,
 		notificationSender: notificationSender,
+		hydrator:           hydrator,
 	}
 }
 
@@ -333,7 +337,7 @@ func (e *evaluator) executeAction(ctx context.Context, policy entities.EventPoli
 	logrus.Infof("executeAction: Resolved %d recipients for policy %s. Sending %s...", len(userIDs), policy.Name, policy.ActionType)
 
 	// Build message
-	message := e.buildMessage(policy, event, project)
+	message := e.buildMessage(ctx, policy, event, project)
 
 	switch policy.ActionType {
 	case entities.ActionTypeNotify:
@@ -401,15 +405,68 @@ func (e *evaluator) resolveAllRecipients(ctx context.Context, policy entities.Ev
 }
 
 // buildMessage creates the notification message
-func (e *evaluator) buildMessage(policy entities.EventPolicy, event events.Event, project *entities.Project) string {
-	if policy.MessageTemplate != nil && *policy.MessageTemplate != "" {
-		// TODO: implement template substitution (e.g., {{project.title}})
-		return *policy.MessageTemplate
+func (e *evaluator) buildMessage(ctx context.Context, policy entities.EventPolicy, event events.Event, project *entities.Project) string {
+	template := ""
+	vars := make(map[string]string)
+
+	// 1. Try event's rich template first
+	if rn, ok := event.(events.RichNotifier); ok {
+		template = rn.NotificationTemplate()
+		for k, v := range rn.NotificationVariables() {
+			vars[k] = v
+		}
 	}
 
-	// Default message based on action type
+	// 2. Try policy's custom template (overrides event template if present)
+	if policy.MessageTemplate != nil && *policy.MessageTemplate != "" {
+		template = *policy.MessageTemplate
+	}
+
+	if template != "" {
+		// Hydrate event for entity name resolution
+		detailed := e.hydrator.HydrateOne(ctx, event)
+
+		// Add standard vars
+		vars["project.Title"] = project.Title
+		vars["project.Description"] = project.Description
+
+		if detailed.Creator != nil {
+			vars["creator.Name"] = detailed.Creator.Name
+		}
+		if detailed.Product != nil {
+			// Assuming Product has a Name/Title field. Using Name based on common patterns.
+			// If compilation fails, will adjust.
+			vars["product.Name"] = detailed.Product.Name
+		}
+		if detailed.Person != nil {
+			vars["person.Name"] = detailed.Person.Name
+		}
+		if detailed.OrgNode != nil {
+			vars["org_node.Name"] = detailed.OrgNode.Name
+		}
+		if detailed.ProjectRole != nil {
+			vars["role.Name"] = detailed.ProjectRole.Name
+		}
+
+		return e.renderTemplate(template, vars)
+	}
+
+	// 3. Fall back to basic Notifier
+	if n, ok := event.(events.Notifier); ok {
+		return n.NotificationMessage()
+	}
+
+	// 4. Default fallback
 	if policy.ActionType == entities.ActionTypeRequestApproval {
 		return fmt.Sprintf("Approval requested for event '%s' on project '%s'", event.FriendlyName(), project.Title)
 	}
 	return fmt.Sprintf("Event '%s' occurred on project '%s'", event.FriendlyName(), project.Title)
+}
+
+func (e *evaluator) renderTemplate(template string, vars map[string]string) string {
+	result := template
+	for k, v := range vars {
+		result = strings.ReplaceAll(result, fmt.Sprintf("{{%s}}", k), v)
+	}
+	return result
 }

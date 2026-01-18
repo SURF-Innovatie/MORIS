@@ -58,7 +58,7 @@ func NewService(
 		roleRepo:    roleRepo,
 		currentUser: currentUser,
 		userSvc:     userSvc,
-		hydrator:    hydrator.New(repo, repo, repo, userSvc),
+		hydrator:    hydrator.New(repo, repo, repo, repo, userSvc),
 	}
 }
 

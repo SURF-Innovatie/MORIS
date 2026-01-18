@@ -39,6 +39,16 @@ func (e *ProductAdded) NotificationMessage() string {
 	return "A new product has been added to the project."
 }
 
+func (e *ProductAdded) NotificationTemplate() string {
+	return "Product '{{product.Name}}' was added to project '{{project.Title}}'"
+}
+
+func (e *ProductAdded) NotificationVariables() map[string]string {
+	return map[string]string{
+		"event.ProductID": e.ProductID.String(),
+	}
+}
+
 type ProductAddedInput struct {
 	ProductID uuid.UUID `json:"product_id"`
 }
@@ -102,6 +112,20 @@ func (e *ProductRemoved) Apply(project *entities.Project) {
 
 func (e *ProductRemoved) RelatedIDs() RelatedIDs {
 	return RelatedIDs{ProductID: &e.ProductID}
+}
+
+func (e *ProductRemoved) NotificationMessage() string {
+	return "A product has been removed from the project."
+}
+
+func (e *ProductRemoved) NotificationTemplate() string {
+	return "Product '{{product.Name}}' was removed from project '{{project.Title}}'"
+}
+
+func (e *ProductRemoved) NotificationVariables() map[string]string {
+	return map[string]string{
+		"event.ProductID": e.ProductID.String(),
+	}
 }
 
 type ProductRemovedInput struct {

@@ -1,7 +1,17 @@
 # Event Configuration
 # Used by gen/generator.go to produce *_gen.go files
+#
+# Relation Types:
+# - field_events: Simple value changes (string, time.Time, uuid.UUID)
+# - entity_ref_events: Changes to one-to-one entity references (UUID -> Entity)
+# - entity_collection_events: Add/remove for one-to-many entity references ([]UUID)
+#
+# Notification Templates:
+# - Use {{variable}} syntax for placeholders
+# - Available: {{project.Title}}, {{creator.Name}}, {{product.Name}}, {{person.Name}}, 
+#              {{org_node.Name}}, {{role.Name}}, {{event.FieldName}}
 
-# Tier 1: Simple field change events
+# Tier 1: Simple field changes (no entity relation)
 field_events:
   - type: "project.title_changed"
     field: Title
@@ -9,12 +19,14 @@ field_events:
     json_key: title
     friendly_name: "Title Change"
     no_op_on_empty: true
+    notification_template: "Project title changed to '{{event.Title}}'"
 
   - type: "project.description_changed"
     field: Description
     field_type: string
     json_key: description
     friendly_name: "Description Change"
+    notification_template: "Project description has been updated"
 
   - type: "project.start_date_changed"
     field: StartDate
@@ -22,6 +34,7 @@ field_events:
     json_key: startDate
     friendly_name: "Start Date Change"
     compare_func: Equal
+    notification_template: "Project start date changed to {{event.StartDate}}"
 
   - type: "project.end_date_changed"
     field: EndDate
@@ -29,17 +42,24 @@ field_events:
     json_key: endDate
     friendly_name: "End Date Change"
     compare_func: Equal
+    notification_template: "Project end date changed to {{event.EndDate}}"
 
+# Tier 2: One-to-one entity reference changes
+# These are UUID fields that reference a single entity
+# The hydrator will resolve the entity for display
+entity_ref_events:
   - type: "project.owning_org_node_changed"
     field: OwningOrgNodeID
-    field_type: uuid.UUID
     json_key: owning_org_node_id
     friendly_name: "Owning Organisation Node Change"
+    entity: OrganisationNode
     related_id: OrgNodeID
     require_non_nil: true
+    notification_template: "Project transferred to organisation '{{org_node.Name}}'"
 
-# Tier 2: Entity add/remove events
-entity_events:
+# Tier 3: One-to-many entity collection events (add/remove)
+# These generate both Added and Removed event types
+entity_collection_events:
   - entity: Product
     id_field: ProductID
     slice_field: ProductIDs
@@ -47,3 +67,5 @@ entity_events:
     add_friendly_name: "Product Addition"
     remove_friendly_name: "Product Removal"
     related_id: ProductID
+    add_notification_template: "Product '{{product.Name}}' was added to project '{{project.Title}}'"
+    remove_notification_template: "Product '{{product.Name}}' was removed from project '{{project.Title}}'"

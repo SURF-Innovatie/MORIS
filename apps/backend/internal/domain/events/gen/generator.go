@@ -1,7 +1,5 @@
 //go:build ignore
 
-// Generator for event boilerplate from YAML config.
-// Run with: go run gen/generator.go
 package main
 
 import (
@@ -17,30 +15,45 @@ import (
 )
 
 type FieldEvent struct {
-	Type          string `yaml:"type"`
-	Field         string `yaml:"field"`
-	FieldType     string `yaml:"field_type"`
-	JSONKey       string `yaml:"json_key"`
-	FriendlyName  string `yaml:"friendly_name"`
-	NoOpOnEmpty   bool   `yaml:"no_op_on_empty"`
-	CompareFunc   string `yaml:"compare_func"` // e.g., "Equal" for time.Time
-	RelatedID     string `yaml:"related_id"`   // e.g., "OrgNodeID"
-	RequireNonNil bool   `yaml:"require_non_nil"`
+	Type                 string `yaml:"type"`
+	Field                string `yaml:"field"`
+	FieldType            string `yaml:"field_type"`
+	JSONKey              string `yaml:"json_key"`
+	FriendlyName         string `yaml:"friendly_name"`
+	NoOpOnEmpty          bool   `yaml:"no_op_on_empty"`
+	CompareFunc          string `yaml:"compare_func"` // e.g., "Equal" for time.Time
+	RelatedID            string `yaml:"related_id"`   // e.g., "OrgNodeID"
+	RequireNonNil        bool   `yaml:"require_non_nil"`
+	NotificationTemplate string `yaml:"notification_template"`
 }
 
-type EntityEvent struct {
-	Entity             string `yaml:"entity"`
-	IDField            string `yaml:"id_field"`
-	SliceField         string `yaml:"slice_field"`
-	JSONKey            string `yaml:"json_key"`
-	AddFriendlyName    string `yaml:"add_friendly_name"`
-	RemoveFriendlyName string `yaml:"remove_friendly_name"`
-	RelatedID          string `yaml:"related_id"`
+type EntityRefEvent struct {
+	Type                 string `yaml:"type"`
+	Field                string `yaml:"field"`
+	JSONKey              string `yaml:"json_key"`
+	FriendlyName         string `yaml:"friendly_name"`
+	Entity               string `yaml:"entity"`     // e.g., "OrganisationNode"
+	RelatedID            string `yaml:"related_id"` // e.g., "OrgNodeID"
+	RequireNonNil        bool   `yaml:"require_non_nil"`
+	NotificationTemplate string `yaml:"notification_template"`
+}
+
+type EntityCollectionEvent struct {
+	Entity                     string `yaml:"entity"`
+	IDField                    string `yaml:"id_field"`
+	SliceField                 string `yaml:"slice_field"`
+	JSONKey                    string `yaml:"json_key"`
+	AddFriendlyName            string `yaml:"add_friendly_name"`
+	RemoveFriendlyName         string `yaml:"remove_friendly_name"`
+	RelatedID                  string `yaml:"related_id"`
+	AddNotificationTemplate    string `yaml:"add_notification_template"`
+	RemoveNotificationTemplate string `yaml:"remove_notification_template"`
 }
 
 type Config struct {
-	FieldEvents  []FieldEvent  `yaml:"field_events"`
-	EntityEvents []EntityEvent `yaml:"entity_events"`
+	FieldEvents            []FieldEvent            `yaml:"field_events"`
+	EntityRefEvents        []EntityRefEvent        `yaml:"entity_ref_events"`
+	EntityCollectionEvents []EntityCollectionEvent `yaml:"entity_collection_events"`
 }
 
 func main() {
@@ -57,15 +70,29 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Generate field events
-	if err := generateFieldEvents(cfg.FieldEvents); err != nil {
+	// Generate field events (including entity ref events which use same template)
+	allFieldEvents := cfg.FieldEvents
+	for _, e := range cfg.EntityRefEvents {
+		allFieldEvents = append(allFieldEvents, FieldEvent{
+			Type:                 e.Type,
+			Field:                e.Field,
+			FieldType:            "uuid.UUID",
+			JSONKey:              e.JSONKey,
+			FriendlyName:         e.FriendlyName,
+			RelatedID:            e.RelatedID,
+			RequireNonNil:        e.RequireNonNil,
+			NotificationTemplate: e.NotificationTemplate,
+		})
+	}
+
+	if err := generateFieldEvents(allFieldEvents); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to generate field events: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Generate entity events
-	if err := generateEntityEvents(cfg.EntityEvents); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to generate entity events: %v\n", err)
+	// Generate entity collection events (add/remove)
+	if err := generateEntityCollectionEvents(cfg.EntityCollectionEvents); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to generate entity collection events: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -122,7 +149,7 @@ func generateFieldEvents(events []FieldEvent) error {
 	return os.WriteFile("field_events_gen.go", formatted, 0644)
 }
 
-func generateEntityEvents(events []EntityEvent) error {
+func generateEntityCollectionEvents(events []EntityCollectionEvent) error {
 	tmpl := template.Must(template.New("entity").Funcs(template.FuncMap{
 		"lower": strings.ToLower,
 	}).Parse(entityEventTemplate))
@@ -297,7 +324,17 @@ func (e *{{eventName .Type}}) Apply(project *entities.Project) {
 func (e *{{eventName .Type}}) NotificationMessage() string {
 	return "Project {{.Field | lower}} has been updated."
 }
-{{if .RelatedID}}
+{{if .NotificationTemplate}}
+func (e *{{eventName .Type}}) NotificationTemplate() string {
+	return "{{.NotificationTemplate}}"
+}
+
+func (e *{{eventName .Type}}) NotificationVariables() map[string]string {
+	return map[string]string{
+		"event.{{.Field}}": fmt.Sprint(e.{{.Field}}),
+	}
+}
+{{end}}{{if .RelatedID}}
 func (e *{{eventName .Type}}) RelatedIDs() RelatedIDs {
 	return RelatedIDs{ {{.RelatedID}}: &e.{{.Field}} }
 }
@@ -371,6 +408,17 @@ func (e *{{.Entity}}Added) RelatedIDs() RelatedIDs {
 func (e *{{.Entity}}Added) NotificationMessage() string {
 	return "A new {{.Entity | lower}} has been added to the project."
 }
+{{if .AddNotificationTemplate}}
+func (e *{{.Entity}}Added) NotificationTemplate() string {
+	return "{{.AddNotificationTemplate}}"
+}
+
+func (e *{{.Entity}}Added) NotificationVariables() map[string]string {
+	return map[string]string{
+		"event.{{.IDField}}": e.{{.IDField}}.String(),
+	}
+}
+{{end}}
 
 type {{.Entity}}AddedInput struct {
 	{{.IDField}} uuid.UUID ` + "`json:\"{{.JSONKey}}\"`" + `
@@ -436,6 +484,21 @@ func (e *{{.Entity}}Removed) Apply(project *entities.Project) {
 func (e *{{.Entity}}Removed) RelatedIDs() RelatedIDs {
 	return RelatedIDs{ {{.RelatedID}}: &e.{{.IDField}} }
 }
+{{if .RemoveNotificationTemplate}}
+func (e *{{.Entity}}Removed) NotificationMessage() string {
+	return "A {{.Entity | lower}} has been removed from the project."
+}
+
+func (e *{{.Entity}}Removed) NotificationTemplate() string {
+	return "{{.RemoveNotificationTemplate}}"
+}
+
+func (e *{{.Entity}}Removed) NotificationVariables() map[string]string {
+	return map[string]string{
+		"event.{{.IDField}}": e.{{.IDField}}.String(),
+	}
+}
+{{end}}
 
 type {{.Entity}}RemovedInput struct {
 	{{.IDField}} uuid.UUID ` + "`json:\"{{.JSONKey}}\"`" + `

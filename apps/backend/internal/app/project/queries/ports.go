@@ -13,6 +13,7 @@ type ProjectReadRepository interface {
 	ProjectRolesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.ProjectRole, error)
 	ProductsByIDs(ctx context.Context, ids []uuid.UUID) ([]entities.Product, error)
 	OrganisationNodeByID(ctx context.Context, id uuid.UUID) (entities.OrganisationNode, error)
+	OrganisationNodesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.OrganisationNode, error)
 
 	ProjectIDsForPerson(ctx context.Context, personID uuid.UUID) ([]uuid.UUID, error)
 

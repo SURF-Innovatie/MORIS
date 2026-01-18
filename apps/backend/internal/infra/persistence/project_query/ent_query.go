@@ -91,6 +91,25 @@ func (r *EntRepo) OrganisationNodeByID(ctx context.Context, id uuid.UUID) (entit
 	return transform.ToEntity[entities.OrganisationNode](row), nil
 }
 
+func (r *EntRepo) OrganisationNodesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.OrganisationNode, error) {
+	out := make(map[uuid.UUID]entities.OrganisationNode)
+	if len(ids) == 0 {
+		return out, nil
+	}
+
+	rows, err := r.cli.OrganisationNode.
+		Query().
+		Where(organisationent.IDIn(ids...)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return lo.Associate(rows, func(o *ent.OrganisationNode) (uuid.UUID, entities.OrganisationNode) {
+		return o.ID, transform.ToEntity[entities.OrganisationNode](o)
+	}), nil
+}
+
 func (r *EntRepo) ProjectIDsForPerson(ctx context.Context, personID uuid.UUID) ([]uuid.UUID, error) {
 	evts, err := r.cli.Event.
 		Query().

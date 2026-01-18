@@ -34,6 +34,16 @@ func (e *TitleChanged) NotificationMessage() string {
 	return "Project title has been updated."
 }
 
+func (e *TitleChanged) NotificationTemplate() string {
+	return "Project title changed to '{{event.Title}}'"
+}
+
+func (e *TitleChanged) NotificationVariables() map[string]string {
+	return map[string]string{
+		"event.Title": fmt.Sprint(e.Title),
+	}
+}
+
 type TitleChangedInput struct {
 	Title string `json:"title"`
 }
@@ -94,6 +104,16 @@ func (e *DescriptionChanged) NotificationMessage() string {
 	return "Project description has been updated."
 }
 
+func (e *DescriptionChanged) NotificationTemplate() string {
+	return "Project description has been updated"
+}
+
+func (e *DescriptionChanged) NotificationVariables() map[string]string {
+	return map[string]string{
+		"event.Description": fmt.Sprint(e.Description),
+	}
+}
+
 type DescriptionChangedInput struct {
 	Description string `json:"description"`
 }
@@ -149,6 +169,16 @@ func (e *StartDateChanged) Apply(project *entities.Project) {
 
 func (e *StartDateChanged) NotificationMessage() string {
 	return "Project startdate has been updated."
+}
+
+func (e *StartDateChanged) NotificationTemplate() string {
+	return "Project start date changed to {{event.StartDate}}"
+}
+
+func (e *StartDateChanged) NotificationVariables() map[string]string {
+	return map[string]string{
+		"event.StartDate": fmt.Sprint(e.StartDate),
+	}
 }
 
 type StartDateChangedInput struct {
@@ -208,6 +238,16 @@ func (e *EndDateChanged) NotificationMessage() string {
 	return "Project enddate has been updated."
 }
 
+func (e *EndDateChanged) NotificationTemplate() string {
+	return "Project end date changed to {{event.EndDate}}"
+}
+
+func (e *EndDateChanged) NotificationVariables() map[string]string {
+	return map[string]string{
+		"event.EndDate": fmt.Sprint(e.EndDate),
+	}
+}
+
 type EndDateChangedInput struct {
 	EndDate time.Time `json:"endDate"`
 }
@@ -263,6 +303,16 @@ func (e *OwningOrgNodeChanged) Apply(project *entities.Project) {
 
 func (e *OwningOrgNodeChanged) NotificationMessage() string {
 	return "Project owningorgnodeid has been updated."
+}
+
+func (e *OwningOrgNodeChanged) NotificationTemplate() string {
+	return "Project transferred to organisation '{{org_node.Name}}'"
+}
+
+func (e *OwningOrgNodeChanged) NotificationVariables() map[string]string {
+	return map[string]string{
+		"event.OwningOrgNodeID": fmt.Sprint(e.OwningOrgNodeID),
+	}
 }
 
 func (e *OwningOrgNodeChanged) RelatedIDs() RelatedIDs {

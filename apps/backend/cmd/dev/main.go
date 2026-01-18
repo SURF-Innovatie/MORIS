@@ -253,7 +253,7 @@ func main() {
 	projSvc := queries.NewService(esStore, ldr, repo, roleRepo, curUser, userSvc)
 	projHandler := projecthandler.NewHandler(projSvc, customFieldSvc)
 
-	evtHydrator := hydrator.New(repo, repo, repo, userSvc)
+	evtHydrator := hydrator.New(repo, repo, repo, repo, userSvc)
 	evtHandler := eventHandler.NewHandler(eventSvc, projSvc, userSvc, client, evtHydrator)
 
 	// Event Policies
@@ -265,7 +265,7 @@ func main() {
 	// Policy Evaluator Components
 	recipientResolver := eventpolicyrepo.NewRecipientAdapter(client)
 	notificationAdapter := eventpolicyrepo.NewNotificationAdapter(client)
-	policyEvaluator := eventpolicy.NewEvaluator(eventPolicyRepo, orgClosureProvider, recipientResolver, notificationAdapter)
+	policyEvaluator := eventpolicy.NewEvaluator(eventPolicyRepo, orgClosureProvider, recipientResolver, notificationAdapter, evtHydrator)
 
 	projCmdSvc := command.NewService(esStore, eventSvc, cacheSvc, refreshSvc, curUser, entProv, roleSvc, policyEvaluator, organisationSvc, rbacSvc)
 	projCmdHandler := commandHandler.NewHandler(projCmdSvc)
