@@ -45,6 +45,18 @@ func (e *ProjectStarted) NotificationTemplate() string {
 	return "Project proposal '{{event.Title}}' created in '{{org_node.Name}}'"
 }
 
+func (e *ProjectStarted) ApprovalRequestTemplate() string {
+	return "Project proposal '{{event.Title}}' requires approval."
+}
+
+func (e *ProjectStarted) ApprovedTemplate() string {
+	return "Project proposal '{{event.Title}}' has been approved."
+}
+
+func (e *ProjectStarted) RejectedTemplate() string {
+	return "Project proposal '{{event.Title}}' has been rejected."
+}
+
 func (e *ProjectStarted) NotificationVariables() map[string]string {
 	return map[string]string{
 		"event.Title":       e.Title,

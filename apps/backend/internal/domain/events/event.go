@@ -38,6 +38,12 @@ type Notifier interface {
 type RichNotifier interface {
 	// NotificationTemplate returns a template string with {{variable}} placeholders
 	NotificationTemplate() string
+	// ApprovalRequestTemplate returns a template for approval requests
+	ApprovalRequestTemplate() string
+	// ApprovedTemplate returns a template for approved status updates
+	ApprovedTemplate() string
+	// RejectedTemplate returns a template for rejected status updates
+	RejectedTemplate() string
 	// NotificationVariables returns event-specific values for template substitution
 	NotificationVariables() map[string]string
 }

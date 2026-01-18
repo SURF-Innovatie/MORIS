@@ -43,6 +43,18 @@ func (e *ProductAdded) NotificationTemplate() string {
 	return "Product '{{product.Name}}' was added to project '{{project.Title}}'"
 }
 
+func (e *ProductAdded) ApprovalRequestTemplate() string {
+	return "Request to add product '{{product.Name}}' requires approval"
+}
+
+func (e *ProductAdded) ApprovedTemplate() string {
+	return "Addition of product '{{product.Name}}' approved"
+}
+
+func (e *ProductAdded) RejectedTemplate() string {
+	return "Addition of product '{{product.Name}}' rejected"
+}
+
 func (e *ProductAdded) NotificationVariables() map[string]string {
 	return map[string]string{
 		"event.ProductID": e.ProductID.String(),
@@ -120,6 +132,18 @@ func (e *ProductRemoved) NotificationMessage() string {
 
 func (e *ProductRemoved) NotificationTemplate() string {
 	return "Product '{{product.Name}}' was removed from project '{{project.Title}}'"
+}
+
+func (e *ProductRemoved) ApprovalRequestTemplate() string {
+	return "Request to remove product '{{product.Name}}' requires approval"
+}
+
+func (e *ProductRemoved) ApprovedTemplate() string {
+	return "Removal of product '{{product.Name}}' approved"
+}
+
+func (e *ProductRemoved) RejectedTemplate() string {
+	return "Removal of product '{{product.Name}}' rejected"
 }
 
 func (e *ProductRemoved) NotificationVariables() map[string]string {

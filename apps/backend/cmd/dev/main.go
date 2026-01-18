@@ -221,9 +221,6 @@ func main() {
 	eventSvc.RegisterNotificationHandler(&event.ProjectEventNotificationHandler{Cli: client, ES: esStore})
 	eventSvc.RegisterNotificationHandler(&event.ApprovalRequestNotificationHandler{Cli: client, ES: esStore, RBAC: rbacSvc})
 
-	statusUpdateHandler := &event.StatusUpdateNotificationHandler{Cli: client}
-	eventSvc.RegisterStatusChangeHandler(statusUpdateHandler.Handle)
-
 	notificationHandler := notificationhandler.NewHandler(notifierSvc)
 
 	// Create HTTP handler/controller
@@ -255,6 +252,13 @@ func main() {
 
 	evtHydrator := hydrator.New(repo, repo, repo, repo, userSvc)
 	evtHandler := eventHandler.NewHandler(eventSvc, projSvc, userSvc, client, evtHydrator)
+
+	statusUpdateHandler := &event.StatusUpdateNotificationHandler{
+		Cli:            client,
+		Hydrator:       evtHydrator,
+		ProjectService: projSvc,
+	}
+	eventSvc.RegisterStatusChangeHandler(statusUpdateHandler.Handle)
 
 	// Event Policies
 	eventPolicyRepo := eventpolicyrepo.NewEntRepository(client)

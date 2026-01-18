@@ -38,6 +38,18 @@ func (e *TitleChanged) NotificationTemplate() string {
 	return "Project title changed to '{{event.Title}}'"
 }
 
+func (e *TitleChanged) ApprovalRequestTemplate() string {
+	return "Request to change project title to '{{event.Title}}' requires approval"
+}
+
+func (e *TitleChanged) ApprovedTemplate() string {
+	return "Title change to '{{event.Title}}' approved"
+}
+
+func (e *TitleChanged) RejectedTemplate() string {
+	return "Title change to '{{event.Title}}' rejected"
+}
+
 func (e *TitleChanged) NotificationVariables() map[string]string {
 	return map[string]string{
 		"event.Title": fmt.Sprint(e.Title),
@@ -108,6 +120,18 @@ func (e *DescriptionChanged) NotificationTemplate() string {
 	return "Project description has been updated"
 }
 
+func (e *DescriptionChanged) ApprovalRequestTemplate() string {
+	return ""
+}
+
+func (e *DescriptionChanged) ApprovedTemplate() string {
+	return ""
+}
+
+func (e *DescriptionChanged) RejectedTemplate() string {
+	return ""
+}
+
 func (e *DescriptionChanged) NotificationVariables() map[string]string {
 	return map[string]string{
 		"event.Description": fmt.Sprint(e.Description),
@@ -173,6 +197,18 @@ func (e *StartDateChanged) NotificationMessage() string {
 
 func (e *StartDateChanged) NotificationTemplate() string {
 	return "Project start date changed to {{event.StartDate}}"
+}
+
+func (e *StartDateChanged) ApprovalRequestTemplate() string {
+	return "Request to change start date to {{event.StartDate}} requires approval"
+}
+
+func (e *StartDateChanged) ApprovedTemplate() string {
+	return "Start date change to {{event.StartDate}} approved"
+}
+
+func (e *StartDateChanged) RejectedTemplate() string {
+	return "Start date change to {{event.StartDate}} rejected"
 }
 
 func (e *StartDateChanged) NotificationVariables() map[string]string {
@@ -242,6 +278,18 @@ func (e *EndDateChanged) NotificationTemplate() string {
 	return "Project end date changed to {{event.EndDate}}"
 }
 
+func (e *EndDateChanged) ApprovalRequestTemplate() string {
+	return "Request to change end date to {{event.EndDate}} requires approval"
+}
+
+func (e *EndDateChanged) ApprovedTemplate() string {
+	return "End date change to {{event.EndDate}} approved"
+}
+
+func (e *EndDateChanged) RejectedTemplate() string {
+	return "End date change to {{event.EndDate}} rejected"
+}
+
 func (e *EndDateChanged) NotificationVariables() map[string]string {
 	return map[string]string{
 		"event.EndDate": fmt.Sprint(e.EndDate),
@@ -307,6 +355,18 @@ func (e *OwningOrgNodeChanged) NotificationMessage() string {
 
 func (e *OwningOrgNodeChanged) NotificationTemplate() string {
 	return "Project transferred to organisation '{{org_node.Name}}'"
+}
+
+func (e *OwningOrgNodeChanged) ApprovalRequestTemplate() string {
+	return "Request to transfer project to '{{org_node.Name}}' requires approval"
+}
+
+func (e *OwningOrgNodeChanged) ApprovedTemplate() string {
+	return "Transfer to '{{org_node.Name}}' approved"
+}
+
+func (e *OwningOrgNodeChanged) RejectedTemplate() string {
+	return "Transfer to '{{org_node.Name}}' rejected"
 }
 
 func (e *OwningOrgNodeChanged) NotificationVariables() map[string]string {

@@ -411,7 +411,12 @@ func (e *evaluator) buildMessage(ctx context.Context, policy entities.EventPolic
 
 	// 1. Try event's rich template first
 	if rn, ok := event.(events.RichNotifier); ok {
-		template = rn.NotificationTemplate()
+		if policy.ActionType == entities.ActionTypeRequestApproval {
+			template = rn.ApprovalRequestTemplate()
+		} else {
+			template = rn.NotificationTemplate()
+		}
+
 		for k, v := range rn.NotificationVariables() {
 			vars[k] = v
 		}

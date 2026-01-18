@@ -15,39 +15,51 @@ import (
 )
 
 type FieldEvent struct {
-	Type                 string `yaml:"type"`
-	Field                string `yaml:"field"`
-	FieldType            string `yaml:"field_type"`
-	JSONKey              string `yaml:"json_key"`
-	FriendlyName         string `yaml:"friendly_name"`
-	NoOpOnEmpty          bool   `yaml:"no_op_on_empty"`
-	CompareFunc          string `yaml:"compare_func"` // e.g., "Equal" for time.Time
-	RelatedID            string `yaml:"related_id"`   // e.g., "OrgNodeID"
-	RequireNonNil        bool   `yaml:"require_non_nil"`
-	NotificationTemplate string `yaml:"notification_template"`
+	Type                    string `yaml:"type"`
+	Field                   string `yaml:"field"`
+	FieldType               string `yaml:"field_type"`
+	JSONKey                 string `yaml:"json_key"`
+	FriendlyName            string `yaml:"friendly_name"`
+	NoOpOnEmpty             bool   `yaml:"no_op_on_empty"`
+	NotificationTemplate    string `yaml:"notification_template"`
+	ApprovalRequestTemplate string `yaml:"approval_request_template"`
+	ApprovedTemplate        string `yaml:"approved_template"`
+	RejectedTemplate        string `yaml:"rejected_template"`
+	CompareFunc             string `yaml:"compare_func"` // e.g., "Equal" for time.Time
+	RelatedID               string `yaml:"related_id"`   // e.g., "OrgNodeID"
+	RequireNonNil           bool   `yaml:"require_non_nil"`
 }
 
 type EntityRefEvent struct {
-	Type                 string `yaml:"type"`
-	Field                string `yaml:"field"`
-	JSONKey              string `yaml:"json_key"`
-	FriendlyName         string `yaml:"friendly_name"`
-	Entity               string `yaml:"entity"`     // e.g., "OrganisationNode"
-	RelatedID            string `yaml:"related_id"` // e.g., "OrgNodeID"
-	RequireNonNil        bool   `yaml:"require_non_nil"`
-	NotificationTemplate string `yaml:"notification_template"`
+	Type                    string `yaml:"type"`
+	Field                   string `yaml:"field"`
+	JSONKey                 string `yaml:"json_key"`
+	FriendlyName            string `yaml:"friendly_name"`
+	Entity                  string `yaml:"entity"`     // e.g., "OrganisationNode"
+	RelatedID               string `yaml:"related_id"` // e.g., "OrgNodeID"
+	RequireNonNil           bool   `yaml:"require_non_nil"`
+	NotificationTemplate    string `yaml:"notification_template"`
+	ApprovalRequestTemplate string `yaml:"approval_request_template"`
+	ApprovedTemplate        string `yaml:"approved_template"`
+	RejectedTemplate        string `yaml:"rejected_template"`
 }
 
 type EntityCollectionEvent struct {
-	Entity                     string `yaml:"entity"`
-	IDField                    string `yaml:"id_field"`
-	SliceField                 string `yaml:"slice_field"`
-	JSONKey                    string `yaml:"json_key"`
-	AddFriendlyName            string `yaml:"add_friendly_name"`
-	RemoveFriendlyName         string `yaml:"remove_friendly_name"`
-	RelatedID                  string `yaml:"related_id"`
-	AddNotificationTemplate    string `yaml:"add_notification_template"`
-	RemoveNotificationTemplate string `yaml:"remove_notification_template"`
+	Entity                        string `yaml:"entity"`
+	IDField                       string `yaml:"id_field"`
+	SliceField                    string `yaml:"slice_field"`
+	JSONKey                       string `yaml:"json_key"`
+	AddFriendlyName               string `yaml:"add_friendly_name"`
+	RemoveFriendlyName            string `yaml:"remove_friendly_name"`
+	RelatedID                     string `yaml:"related_id"`
+	AddNotificationTemplate       string `yaml:"add_notification_template"`
+	RemoveNotificationTemplate    string `yaml:"remove_notification_template"`
+	AddApprovalRequestTemplate    string `yaml:"add_approval_request_template"`
+	RemoveApprovalRequestTemplate string `yaml:"remove_approval_request_template"`
+	AddApprovedTemplate           string `yaml:"add_approved_template"`
+	RemoveApprovedTemplate        string `yaml:"remove_approved_template"`
+	AddRejectedTemplate           string `yaml:"add_rejected_template"`
+	RemoveRejectedTemplate        string `yaml:"remove_rejected_template"`
 }
 
 type Config struct {
@@ -74,14 +86,17 @@ func main() {
 	allFieldEvents := cfg.FieldEvents
 	for _, e := range cfg.EntityRefEvents {
 		allFieldEvents = append(allFieldEvents, FieldEvent{
-			Type:                 e.Type,
-			Field:                e.Field,
-			FieldType:            "uuid.UUID",
-			JSONKey:              e.JSONKey,
-			FriendlyName:         e.FriendlyName,
-			RelatedID:            e.RelatedID,
-			RequireNonNil:        e.RequireNonNil,
-			NotificationTemplate: e.NotificationTemplate,
+			Type:                    e.Type,
+			Field:                   e.Field,
+			FieldType:               "uuid.UUID",
+			JSONKey:                 e.JSONKey,
+			FriendlyName:            e.FriendlyName,
+			RelatedID:               e.RelatedID,
+			RequireNonNil:           e.RequireNonNil,
+			NotificationTemplate:    e.NotificationTemplate,
+			ApprovalRequestTemplate: e.ApprovalRequestTemplate,
+			ApprovedTemplate:        e.ApprovedTemplate,
+			RejectedTemplate:        e.RejectedTemplate,
 		})
 	}
 
@@ -329,6 +344,18 @@ func (e *{{eventName .Type}}) NotificationTemplate() string {
 	return "{{.NotificationTemplate}}"
 }
 
+func (e *{{eventName .Type}}) ApprovalRequestTemplate() string {
+	return "{{.ApprovalRequestTemplate}}"
+}
+
+func (e *{{eventName .Type}}) ApprovedTemplate() string {
+	return "{{.ApprovedTemplate}}"
+}
+
+func (e *{{eventName .Type}}) RejectedTemplate() string {
+	return "{{.RejectedTemplate}}"
+}
+
 func (e *{{eventName .Type}}) NotificationVariables() map[string]string {
 	return map[string]string{
 		"event.{{.Field}}": fmt.Sprint(e.{{.Field}}),
@@ -413,6 +440,18 @@ func (e *{{.Entity}}Added) NotificationTemplate() string {
 	return "{{.AddNotificationTemplate}}"
 }
 
+func (e *{{.Entity}}Added) ApprovalRequestTemplate() string {
+	return "{{.AddApprovalRequestTemplate}}"
+}
+
+func (e *{{.Entity}}Added) ApprovedTemplate() string {
+	return "{{.AddApprovedTemplate}}"
+}
+
+func (e *{{.Entity}}Added) RejectedTemplate() string {
+	return "{{.AddRejectedTemplate}}"
+}
+
 func (e *{{.Entity}}Added) NotificationVariables() map[string]string {
 	return map[string]string{
 		"event.{{.IDField}}": e.{{.IDField}}.String(),
@@ -491,6 +530,18 @@ func (e *{{.Entity}}Removed) NotificationMessage() string {
 
 func (e *{{.Entity}}Removed) NotificationTemplate() string {
 	return "{{.RemoveNotificationTemplate}}"
+}
+
+func (e *{{.Entity}}Removed) ApprovalRequestTemplate() string {
+	return "{{.RemoveApprovalRequestTemplate}}"
+}
+
+func (e *{{.Entity}}Removed) ApprovedTemplate() string {
+	return "{{.RemoveApprovedTemplate}}"
+}
+
+func (e *{{.Entity}}Removed) RejectedTemplate() string {
+	return "{{.RemoveRejectedTemplate}}"
 }
 
 func (e *{{.Entity}}Removed) NotificationVariables() map[string]string {
