@@ -8,6 +8,7 @@
     "db:reset": "pnpm run generate:ent && pnpm run generate:swag && pnpm run db:seed",
     "dev": "wgo run ./cmd/dev/main.go",
     "db:seed": "go run ./cmd/seed/main.go",
+    "db:add-admin": "go run ./cmd/add_admin/main.go",
     "generate:ent": "go generate ./ent/...",
     "generate:swag": "swag init -g cmd/dev/main.go --output api/swag-docs --parseDependency --parseInternal",
     "generate:events": "go generate ./internal/domain/events/...",
@@ -15,7 +16,7 @@
     "db:migrate:diff": "go run -mod=mod ./ent/migrate/main.go",
     "db:migrate:apply": "atlas migrate apply --env local",
     "db:migrate:status": "atlas migrate status --env local",
-    "db:migrate:dev": "go run ./cmd/seed/main.go -skip-seed && go run -mod=mod ./ent/migrate/main.go $1 && pnpm run db:migrate:apply",
+    "db:migrate:dev": "sh -c 'go run ./cmd/seed/main.go -skip-seed && go run -mod=mod ./ent/migrate/main.go \"$1\" && pnpm run db:migrate:apply' --",
     "db:migrate:squash": "go run -mod=mod ./ent/migrate/squash/main.go",
     "lint": "golangci-lint run ./...",
     "test": "go test ./..."

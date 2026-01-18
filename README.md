@@ -5,12 +5,14 @@ MORIS (Modular Research Information System) is a comprehensive backend and front
 ## Table of Contents
 - [Project Overview](#project-overview)
 - [Prerequisites](#prerequisites)
-- [Setup](#setup)
-  - [Configuration](#configuration)
-  - [Building the Project](#building-the-project)
-  - [Running the Project](#running-the-project)
+- [Development Environment Setup](#development-environment-setup)
+  - [Initial Setup](#initial-setup)
+  - [Backend Configuration](#backend-configuration)
+  - [Frontend Configuration](#frontend-configuration)
+  - [Infrastructure & Seeding](#infrastructure--seeding)
+  - [Running the Application](#running-the-application)
+- [Production Environment Setup](#production-environment-setup)
 - [Database Migrations](#database-migrations)
-- [Usage](#usage)
 - [Contributing](#contributing)
 
 ## Project Overview
@@ -29,7 +31,11 @@ Before you begin, ensure you have the following installed:
 - [podman](https://podman.io/) (Container management)
 - [atlas](https://atlasgo.io/) (Database migration tool)
 
-## Setup
+## Development Environment Setup
+
+Follow these steps to set up a local development environment.
+
+### Initial Setup
 
 1.  **Clone the repository:**
     ```sh
@@ -43,50 +49,148 @@ Before you begin, ensure you have the following installed:
     pnpm install
     ```
 
-3.  **Setup Go environment:**
-    Ensure you are in the `apps/backend` directory or have the workspace configured correctly for Go tools.
-
-### Configuration
-
-The project uses `.env` files for configuration. Copy the example files to create your local configuration:
-
--   **Backend:**
+3.  **Initialize Backend:**
+    Download Go dependencies and generate Ent definitions and Swag documentation:
     ```sh
-    cp apps/backend/.env.example apps/backend/.env
+    cd apps/backend
+    go get ./...
+    pnpm run api:generate
     ```
-    Edit `apps/backend/.env` to set your database credentials, API secrets (ORCID, Crossref), and JWT secret.
 
--   **Frontend:**
+### Backend Configuration
+
+Create the backend environment file and configure the defaults.
+
+1.  **Create `.env`:**
     ```sh
-    cp apps/frontend/.env.example apps/frontend/.env
+    # Assuming you are still in apps/backend
+    cp .env.example .env
     ```
-    Edit `apps/frontend/.env` to point to your backend API URL.
 
-### Building the Project
+2.  **Configure `.env`:**
+    Update the file with the following development defaults:
 
-Use Turbo to build the entire monorepo:
+    ```bash
+    # App Configuration
+    APP_ENV=dev
+    PORT=8080
+    JWT_SECRET=this0is1a2secret
+
+    # Database (PostgreSQL)
+    DB_HOST=localhost
+    DB_PORT=8765
+    DB_USER=moris
+    DB_PASSWORD=moris
+    DB_NAME=moris
+
+    # Redis Cache
+    CACHE_HOST=localhost
+    CACHE_PORT=6380
+    CACHE_PASSWORD=moris
+    CACHE_USER=
+
+    # ORCID Integration
+    ORCID_CLIENT_ID=
+    ORCID_CLIENT_SECRET=
+    ORCID_REDIRECT_URL=http://127.0.0.1:3000/orcid-callback
+    ORCID_SANDBOX=true
+
+    # Crossref Integration
+    CROSSREF_USER_AGENT=MORIS/1.0 (https://github.com/SURF-Innovatie/MORIS)
+    CROSSREF_MAILTO=your_email@example.com
+    CROSSREF_BASE_URL=https://api.crossref.org
+
+    # RAiD Integration
+    RAID_API_URL=https://api.demo.raid.org.au/
+    RAID_AUTH_URL=https://auth.demo.raid.org.au/realms/RAiD/protocol/openid-connect/token
+    RAID_USERNAME=
+    RAID_PASSWORD=
+
+    # Zenodo Integration
+    ZENODO_CLIENT_ID=
+    ZENODO_CLIENT_SECRET=
+    ZENODO_REDIRECT_URL=http://127.0.0.1:3000/zenodo-callback
+    ZENODO_SANDBOX=true
+
+    # SURFconext (OpenID Connect) Integration
+    SURFCONEXT_ISSUER_URL=
+    SURFCONEXT_CLIENT_ID=
+    SURFCONEXT_CLIENT_SECRET=
+    SURFCONEXT_REDIRECT_URL=http://127.0.0.1:3000/surfconext-callback
+    SURFCONEXT_SCOPES=
+    ```
+
+### Frontend Configuration
+
+Install dependencies and configure the frontend environment.
+
+1.  **Initialize Frontend:**
+    ```sh
+    cd ../frontend
+    pnpm install
+    pnpm run api:generate
+    ```
+
+2.  **Configure `.env`:**
+    ```sh
+    cp .env.example .env
+    ```
+
+    Update the file content:
+    ```bash
+    # App Name
+    VITE_APP_NAME="MORIS"
+
+    # API URL (Backend endpoint)
+    VITE_API_BASE_URL=/api
+    ```
+
+### Infrastructure & Seeding
+
+1.  **Start Services:**
+    Spin up the database and Redis containers using Podman from the root directory:
+    ```sh
+    cd ../..
+    podman compose up -d
+    ```
+
+2.  **Seed Database (Optional):**
+    If you need dummy data for development:
+    ```sh
+    cd apps/backend
+    pnpm run db:seed
+    cd ../..
+    ```
+
+3. **Add Admin User (if you skipped seeding the database)**
+    ```
+    cd apps/backend
+    pnpm run db:add-admin --email="verify_admin@example.com" --name="Verify Admin" --password="password123"
+    cd ../..
+    ```
+
+### Running the Application
+
+Start the development server. This runs both the backend (with hot-reload via `wgo`) and the frontend (via Vite) concurrently:
+
 ```sh
-pnpm build
-```
-Or build specific parts:
-```sh
-turbo run build --filter=backend
-turbo run build --filter=frontend
+# From the root directory
+pnpm run dev
 ```
 
-### Running the Project
+-   **Frontend:** `http://127.0.0.1:3000`
+-   **Backend API:** `http://localhost:8080`
+-   **API Docs:** `http://localhost:8080/swagger/index.html`
 
-1.  **Start Dependencies (Database, Redis, etc.):**
-    ```sh
-    pnpm db:start
-    ```
-    This uses `podman compose` to start the required services.
+---
 
-2.  **Run Development Server:**
-    ```sh
-    pnpm dev
-    ```
-    This will start both the backend (using `wgo` for hot reload) and the frontend (using Vite).
+## Production Environment Setup
+
+> **Coming Soon**
+>
+> The production environment setup is currently under development. It will utilize optimized Docker images for both the backend and frontend services.
+
+---
 
 ## Database Migrations
 
@@ -95,7 +199,7 @@ MORIS uses [Atlas](https://atlasgo.io/) for versioned database migrations with [
 ### Prerequisites
 
 - [Atlas CLI](https://atlasgo.io/getting-started#installation) installed (`brew install ariga/tap/atlas` or `curl -sSf https://atlasgo.sh | sh`)
-- Docker running (for the dev database used in schema diffing)
+- Docker/Podman running (for the dev database used in schema diffing)
 
 ### Generating Migrations
 
@@ -105,8 +209,7 @@ After modifying ent schemas in `apps/backend/ent/schema/`, generate a new migrat
 cd apps/backend
 pnpm run db:migrate:diff <migration_name>
 ```
-
-This will create timestamped SQL files in `apps/backend/ent/migrate/migrations/`.
+This creates timestamped SQL files in `apps/backend/ent/migrate/migrations/`.
 
 ### Applying Migrations
 
@@ -125,12 +228,6 @@ View which migrations have been applied:
 cd apps/backend
 pnpm run db:migrate:status
 ```
-
-## Usage
-
--   **Frontend:** Accessed via `http://127.0.0.1:3000` (default Vite port).
--   **Backend API:** Accessed via `http://localhost:8080` (or configured port).
--   **API Documentation:** Usage of `swag` implies Swagger UI is available, typically at `/swagger/index.html` on the backend URL.
 
 ## Contributing
 
