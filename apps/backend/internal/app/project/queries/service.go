@@ -10,6 +10,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/events/hydrator"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -39,6 +40,7 @@ type service struct {
 	currentUser appauth.CurrentUserProvider
 	roleRepo    ProjectRoleRepository
 	userSvc     user.Service
+	hydrator    *hydrator.Hydrator
 }
 
 func NewService(
@@ -56,6 +58,7 @@ func NewService(
 		roleRepo:    roleRepo,
 		currentUser: currentUser,
 		userSvc:     userSvc,
+		hydrator:    hydrator.New(repo, repo, repo, userSvc),
 	}
 }
 
@@ -118,91 +121,7 @@ func (s *service) GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]
 		return e.GetStatus() == "pending"
 	})
 
-	// Hydration
-	var personIDs []uuid.UUID
-	var roleIDs []uuid.UUID
-	var productIDs []uuid.UUID
-	var creatorUserIDs []uuid.UUID
-
-	for _, e := range pendingEvts {
-		if r, ok := e.(events.HasRelatedIDs); ok {
-			ids := r.RelatedIDs()
-			if ids.PersonID != nil {
-				personIDs = append(personIDs, *ids.PersonID)
-			}
-			if ids.ProjectRoleID != nil {
-				roleIDs = append(roleIDs, *ids.ProjectRoleID)
-			}
-			if ids.ProductID != nil {
-				productIDs = append(productIDs, *ids.ProductID)
-			}
-		}
-		creatorUserIDs = append(creatorUserIDs, e.CreatedByID())
-	}
-
-	personMap := make(map[uuid.UUID]entities.Person)
-	if len(personIDs) > 0 {
-		pm, err := s.repo.PeopleByIDs(ctx, personIDs)
-		if err == nil {
-			personMap = pm
-		}
-	}
-
-	roleMap := make(map[uuid.UUID]entities.ProjectRole)
-	if len(roleIDs) > 0 {
-		rm, err := s.repo.ProjectRolesByIDs(ctx, roleIDs)
-		if err == nil {
-			roleMap = rm
-		}
-	}
-
-	productMap := make(map[uuid.UUID]entities.Product)
-	if len(productIDs) > 0 {
-		pm, err := s.repo.ProductsByIDs(ctx, productIDs)
-		if err == nil {
-			productMap = make(map[uuid.UUID]entities.Product)
-			for _, p := range pm {
-				productMap[p.Id] = p
-			}
-		}
-	}
-
-	creatorMap := make(map[uuid.UUID]entities.Person)
-	if len(creatorUserIDs) > 0 {
-		cm, err := s.userSvc.GetPeopleByUserIDs(ctx, lo.Uniq(creatorUserIDs))
-		if err == nil {
-			creatorMap = cm
-		}
-	}
-
-	return lo.Map(pendingEvts, func(e events.Event, _ int) events.DetailedEvent {
-		de := events.DetailedEvent{Event: e}
-
-		if r, ok := e.(events.HasRelatedIDs); ok {
-			ids := r.RelatedIDs()
-			if ids.PersonID != nil {
-				if p, ok := personMap[*ids.PersonID]; ok {
-					de.Person = &p
-				}
-			}
-			if ids.ProjectRoleID != nil {
-				if r, ok := roleMap[*ids.ProjectRoleID]; ok {
-					de.ProjectRole = &r
-				}
-			}
-			if ids.ProductID != nil {
-				if p, ok := productMap[*ids.ProductID]; ok {
-					de.Product = &p
-				}
-			}
-		}
-
-		if p, ok := creatorMap[e.CreatedByID()]; ok {
-			de.Creator = &p
-		}
-
-		return de
-	}), nil
+	return s.hydrator.HydrateMany(ctx, pendingEvts), nil
 }
 
 func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Project) (*ProjectDetails, error) {

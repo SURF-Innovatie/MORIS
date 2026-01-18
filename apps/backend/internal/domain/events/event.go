@@ -55,36 +55,10 @@ type EventMeta struct {
 	Type         string
 	FriendlyName string
 
-	// CheckApproval determines if this event requires approval.
-	// Receives context, event, and ent client for DB access.
-	// If nil, defaults to false (no approval required).
-	CheckApproval func(ctx context.Context, event Event, client *ent.Client) bool
-
-	// CheckNotification determines if this event should send notifications.
-	// Receives context, event, and ent client for DB access.
-	// If nil, defaults to false (no notification).
-	CheckNotification func(ctx context.Context, event Event, client *ent.Client) bool
-
 	// CheckAllowed determines if the actor is allowed to trigger this event.
 	// Receives context, event, and ent client for DB access.
 	// If nil, defaults to true (all users allowed).
 	CheckAllowed func(ctx context.Context, event Event, client *ent.Client) bool
-}
-
-// NeedsApproval checks if this event requires approval.
-func (m EventMeta) NeedsApproval(ctx context.Context, event Event, client *ent.Client) bool {
-	if m.CheckApproval == nil {
-		return false
-	}
-	return m.CheckApproval(ctx, event, client)
-}
-
-// ShouldNotify checks if this event should send notifications.
-func (m EventMeta) ShouldNotify(ctx context.Context, event Event, client *ent.Client) bool {
-	if m.CheckNotification == nil {
-		return false
-	}
-	return m.CheckNotification(ctx, event, client)
 }
 
 // IsAllowed checks if the actor is allowed to trigger this event.

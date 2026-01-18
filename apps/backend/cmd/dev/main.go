@@ -45,6 +45,7 @@ import (
 	projectrolesvc "github.com/SURF-Innovatie/MORIS/internal/app/projectrole"
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/events/hydrator"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
 	authhandler "github.com/SURF-Innovatie/MORIS/internal/handler/auth"
 	crossrefhandler "github.com/SURF-Innovatie/MORIS/internal/handler/crossref"
@@ -252,7 +253,8 @@ func main() {
 	projSvc := queries.NewService(esStore, ldr, repo, roleRepo, curUser, userSvc)
 	projHandler := projecthandler.NewHandler(projSvc, customFieldSvc)
 
-	evtHandler := eventHandler.NewHandler(eventSvc, projSvc, userSvc, client)
+	evtHydrator := hydrator.New(repo, repo, repo, userSvc)
+	evtHandler := eventHandler.NewHandler(eventSvc, projSvc, userSvc, client, evtHydrator)
 
 	// Event Policies
 	eventPolicyRepo := eventpolicyrepo.NewEntRepository(client)

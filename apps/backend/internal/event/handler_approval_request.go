@@ -21,14 +21,8 @@ type ApprovalRequestNotificationHandler struct {
 }
 
 func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e events.Event) error {
-	if e.GetStatus() != "pending" {
-		return nil
-	}
-
-	meta := events.GetMeta(e.Type())
-	if !meta.NeedsApproval(ctx, e, h.Cli) {
-		return nil
-	}
+	// Legacy approval logic removed. Policies now handle this.
+	return nil
 
 	projectID := e.AggregateID()
 

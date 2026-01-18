@@ -8,9 +8,9 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/events/hydrator"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
-	"github.com/google/uuid"
 	"github.com/samber/lo"
 )
 
@@ -19,10 +19,11 @@ type Handler struct {
 	querySvc queries.Service
 	userSvc  user.Service
 	cli      *ent.Client
+	hydrator *hydrator.Hydrator
 }
 
-func NewHandler(svc event.Service, querySvc queries.Service, userSvc user.Service, cli *ent.Client) *Handler {
-	return &Handler{svc: svc, querySvc: querySvc, userSvc: userSvc, cli: cli}
+func NewHandler(svc event.Service, querySvc queries.Service, userSvc user.Service, cli *ent.Client, h *hydrator.Hydrator) *Handler {
+	return &Handler{svc: svc, querySvc: querySvc, userSvc: userSvc, cli: cli, hydrator: h}
 }
 
 // ApproveEvent godoc
@@ -107,37 +108,7 @@ func (h *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	detailed := events.DetailedEvent{Event: e}
-	if hr, ok := e.(events.HasRelatedIDs); ok {
-		ids := hr.RelatedIDs()
-		if ids.PersonID != nil {
-			people, _ := h.querySvc.GetPeopleByIDs(r.Context(), []uuid.UUID{*ids.PersonID})
-			if p, ok := people[*ids.PersonID]; ok {
-				detailed.Person = &p
-			}
-		}
-		if ids.ProjectRoleID != nil {
-			roles, _ := h.querySvc.GetProjectRolesByIDs(r.Context(), []uuid.UUID{*ids.ProjectRoleID})
-			if role, ok := roles[*ids.ProjectRoleID]; ok {
-				detailed.ProjectRole = &role
-			}
-		}
-		if ids.ProductID != nil {
-			products, _ := h.querySvc.GetProductsByIDs(r.Context(), []uuid.UUID{*ids.ProductID})
-			if product, ok := products[*ids.ProductID]; ok {
-				detailed.Product = &product
-			}
-		}
-	}
-
-	// Resolve Creator
-	creatorID := e.CreatedByID()
-	people, err := h.userSvc.GetPeopleByUserIDs(r.Context(), []uuid.UUID{creatorID})
-	if err == nil {
-		if p, ok := people[creatorID]; ok {
-			detailed.Creator = &p
-		}
-	}
+	detailed := h.hydrator.HydrateOne(r.Context(), e)
 
 	var d dto.Event
 	dtoEvent := d.FromDetailedEntity(detailed)

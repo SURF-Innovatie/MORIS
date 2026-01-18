@@ -64,8 +64,7 @@ func DecideCustomFieldValueSet(ctx context.Context, projectID, userID uuid.UUID,
 
 // Meta
 var CustomFieldValueSetMeta = EventMeta{
-	Type:          CustomFieldValueSetType,
-	FriendlyName:  "Set Custom Field Value",
-	CheckAllowed:  func(ctx context.Context, e Event, cli *ent.Client) bool { return true },
-	CheckApproval: func(ctx context.Context, e Event, cli *ent.Client) bool { return false },
+	Type:         CustomFieldValueSetType,
+	FriendlyName: "Set Custom Field Value",
+	CheckAllowed: func(ctx context.Context, e Event, cli *ent.Client) bool { return true },
 }

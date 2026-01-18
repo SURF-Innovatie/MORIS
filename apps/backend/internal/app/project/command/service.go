@@ -213,19 +213,6 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*e
 				FriendlyNameStr: e.FriendlyName(),
 			}
 			e.SetBase(base)
-		} else {
-			// Check legacy approval mechanism if no policy triggered it
-			if meta.NeedsApproval(ctx, e, cli) {
-				base := events.Base{
-					ID:              e.GetID(),
-					ProjectID:       e.AggregateID(),
-					At:              e.OccurredAt(),
-					CreatedBy:       e.CreatedByID(),
-					Status:          events.StatusPending,
-					FriendlyNameStr: e.FriendlyName(),
-				}
-				e.SetBase(base)
-			}
 		}
 
 		return []events.Event{e}, nil

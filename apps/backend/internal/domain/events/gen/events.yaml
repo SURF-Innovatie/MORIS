@@ -1,0 +1,49 @@
+# Event Configuration
+# Used by gen/generator.go to produce *_gen.go files
+
+# Tier 1: Simple field change events
+field_events:
+  - type: "project.title_changed"
+    field: Title
+    field_type: string
+    json_key: title
+    friendly_name: "Title Change"
+    no_op_on_empty: true
+
+  - type: "project.description_changed"
+    field: Description
+    field_type: string
+    json_key: description
+    friendly_name: "Description Change"
+
+  - type: "project.start_date_changed"
+    field: StartDate
+    field_type: time.Time
+    json_key: startDate
+    friendly_name: "Start Date Change"
+    compare_func: Equal
+
+  - type: "project.end_date_changed"
+    field: EndDate
+    field_type: time.Time
+    json_key: endDate
+    friendly_name: "End Date Change"
+    compare_func: Equal
+
+  - type: "project.owning_org_node_changed"
+    field: OwningOrgNodeID
+    field_type: uuid.UUID
+    json_key: owning_org_node_id
+    friendly_name: "Owning Organisation Node Change"
+    related_id: OrgNodeID
+    require_non_nil: true
+
+# Tier 2: Entity add/remove events
+entity_events:
+  - entity: Product
+    id_field: ProductID
+    slice_field: ProductIDs
+    json_key: product_id
+    add_friendly_name: "Product Addition"
+    remove_friendly_name: "Product Removal"
+    related_id: ProductID
