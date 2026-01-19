@@ -77,7 +77,7 @@ func (h *Handler) GetAllProjects(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Project ID (UUID)"
-// @Success 200 {object} dto.Changelog
+// @Success 200 {object} dto.EventResponse
 // @Failure 400 {string} string "invalid project id"
 // @Failure 500 {string} string "internal server error"
 // @Router /projects/{id}/changelog [get]
@@ -88,13 +88,20 @@ func (h *Handler) GetChangelog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	changeLog, err := h.svc.GetChangeLog(r.Context(), id)
+	detailedEvents, err := h.svc.GetChangeLog(r.Context(), id)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.Changelog](*changeLog))
+	resp := dto.EventResponse{
+		Events: lo.Map(detailedEvents, func(e events.DetailedEvent, _ int) dto.Event {
+			var d dto.Event
+			return d.FromDetailedEntity(e)
+		}),
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, resp)
 }
 
 // GetPendingEvents godoc
