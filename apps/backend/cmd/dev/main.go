@@ -15,6 +15,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/crossref"
 	"github.com/SURF-Innovatie/MORIS/internal/app/customfield"
 	"github.com/SURF-Innovatie/MORIS/internal/app/orcid"
+	appraid "github.com/SURF-Innovatie/MORIS/internal/app/raid"
 	surfconextapp "github.com/SURF-Innovatie/MORIS/internal/app/surfconext"
 	"github.com/SURF-Innovatie/MORIS/internal/app/zenodo"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
@@ -58,6 +59,7 @@ import (
 	producthandler "github.com/SURF-Innovatie/MORIS/internal/handler/product"
 	projecthandler "github.com/SURF-Innovatie/MORIS/internal/handler/project"
 	commandHandler "github.com/SURF-Innovatie/MORIS/internal/handler/project/command"
+	raidhandler "github.com/SURF-Innovatie/MORIS/internal/handler/raid"
 	systemhandler "github.com/SURF-Innovatie/MORIS/internal/handler/system"
 	userhandler "github.com/SURF-Innovatie/MORIS/internal/handler/user"
 	zenodohandler "github.com/SURF-Innovatie/MORIS/internal/handler/zenodo"
@@ -284,10 +286,11 @@ func main() {
 	registry.RegisterSource(csvsource.NewCSVSource("/tmp/import.csv"))
 
 	// RAiD configuration
-	raidOpts := raid.DefaultOptions()
-	// raidOpts.Username = env.Global.RAiDUsername // TODO: Add to env
-	// raidOpts.Password = env.Global.RAiDPassword // TODO: Add to env
+	raidOpts := env.RaidOptionsFromEnv()
 	raidClient := raid.NewClient(http.DefaultClient, raidOpts)
+
+	raidSvc := appraid.NewService(raidClient)
+	raidHandler := raidhandler.NewHandler(raidSvc, curUser)
 
 	registry.RegisterSink(raidsink.NewRAiDSink(raidClient))
 	adapterHandler := adapterhandler.NewHandler(registry, projSvc)
@@ -316,6 +319,7 @@ func main() {
 			personhandler.MountPersonRoutes(r, personHandler)
 			orcidhandler.MountRoutes(r, orcidHandler)
 			zenodohandler.MountRoutes(r, zenodoHandler)
+			raidhandler.MountRoutes(r, raidHandler)
 			producthandler.MountProductRoutes(r, productHandler)
 			notificationhandler.MountNotificationRoutes(r, notificationHandler)
 			userhandler.MountUserRoutes(r, userHandler)
