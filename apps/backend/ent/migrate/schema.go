@@ -334,6 +334,29 @@ var (
 			},
 		},
 	}
+	// RaidInfosColumns holds the columns for the "raid_infos" table.
+	RaidInfosColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "raid_id", Type: field.TypeString, Unique: true},
+		{Name: "schema_uri", Type: field.TypeString, Default: "https://raid.org/"},
+		{Name: "registration_agency_id", Type: field.TypeString},
+		{Name: "registration_agency_schema_uri", Type: field.TypeString},
+		{Name: "owner_id", Type: field.TypeString},
+		{Name: "owner_schema_uri", Type: field.TypeString},
+		{Name: "owner_service_point", Type: field.TypeInt64, Nullable: true},
+		{Name: "project_id", Type: field.TypeUUID},
+		{Name: "license", Type: field.TypeString},
+		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "latest_sync", Type: field.TypeTime, Nullable: true},
+		{Name: "dirty", Type: field.TypeBool, Default: false},
+		{Name: "checksum", Type: field.TypeString, Nullable: true},
+	}
+	// RaidInfosTable holds the schema information for the "raid_infos" table.
+	RaidInfosTable = &schema.Table{
+		Name:       "raid_infos",
+		Columns:    RaidInfosColumns,
+		PrimaryKey: []*schema.Column{RaidInfosColumns[0]},
+	}
 	// RoleScopesColumns holds the columns for the "role_scopes" table.
 	RoleScopesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -422,6 +445,7 @@ var (
 		PersonsTable,
 		ProductsTable,
 		ProjectRolesTable,
+		RaidInfosTable,
 		RoleScopesTable,
 		UsersTable,
 		PersonProductsTable,

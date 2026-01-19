@@ -22,6 +22,7 @@ type Project struct {
 	OwningOrgNodeID uuid.UUID
 	ProductIDs      []uuid.UUID
 	CustomFields    map[string]interface{}
+	RAiDInfo        *RAiDInfo
 }
 
 type ProjectMemberDetail struct {

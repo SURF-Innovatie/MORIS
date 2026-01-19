@@ -53,6 +53,21 @@ field_events:
     approved_template: "End date change to {{event.EndDate}} approved"
     rejected_template: "End date change to {{event.EndDate}} rejected"
 
+  - type: "project.raid_linked"
+    field: RAiDInfo
+    field_type: "*entities.RAiDInfo"
+    json_key: raid_info
+    friendly_name: "RAiD Linked"
+    notification_template: "RAiD minted for project '{{project.Title}}'"
+    # compare_func: "" # Pointer comparison is default (not equal)
+
+  - type: "project.raid_updated"
+    field: RAiDInfo
+    field_type: "*entities.RAiDInfo"
+    json_key: raid_info
+    friendly_name: "RAiD Updated"
+    notification_template: "RAiD metadata updated for {{event.RAiDInfo.RAiDId}}"
+
 # Tier 2: One-to-one entity reference changes
 # These are UUID fields that reference a single entity
 # The hydrator will resolve the entity for display

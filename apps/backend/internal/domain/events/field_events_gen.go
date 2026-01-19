@@ -330,6 +330,164 @@ var EndDateChangedMeta = EventMeta{
 	FriendlyName: "End Date Change",
 }
 
+// --- RaidLinked ---
+
+const RaidLinkedType = "project.raid_linked"
+
+type RaidLinked struct {
+	Base
+	RAiDInfo *entities.RAiDInfo `json:"raid_info"`
+}
+
+func (RaidLinked) isEvent()     {}
+func (RaidLinked) Type() string { return RaidLinkedType }
+func (e RaidLinked) String() string {
+	return "RAiD Linked: " + fmt.Sprint(e.RAiDInfo)
+}
+
+func (e *RaidLinked) Apply(project *entities.Project) {
+	project.RAiDInfo = e.RAiDInfo
+}
+
+func (e *RaidLinked) NotificationMessage() string {
+	return "Project raidinfo has been updated."
+}
+
+func (e *RaidLinked) NotificationTemplate() string {
+	return "Project linked to RAiD {{event.RAiDInfo.RAiDId}}"
+}
+
+func (e *RaidLinked) ApprovalRequestTemplate() string {
+	return ""
+}
+
+func (e *RaidLinked) ApprovedTemplate() string {
+	return ""
+}
+
+func (e *RaidLinked) RejectedTemplate() string {
+	return ""
+}
+
+func (e *RaidLinked) NotificationVariables() map[string]string {
+	return map[string]string{
+		"event.RAiDInfo": fmt.Sprint(e.RAiDInfo),
+	}
+}
+
+type RaidLinkedInput struct {
+	RAiDInfo *entities.RAiDInfo `json:"raid_info"`
+}
+
+func DecideRaidLinked(
+	projectID uuid.UUID,
+	actor uuid.UUID,
+	cur *entities.Project,
+	in RaidLinkedInput,
+	status Status,
+) (Event, error) {
+	if projectID == uuid.Nil {
+		return nil, errors.New("project id is required")
+	}
+	if cur == nil {
+		return nil, errors.New("current project is required")
+	}
+	if cur.RAiDInfo == in.RAiDInfo {
+		return nil, nil
+	}
+	base := NewBase(projectID, actor, status)
+	base.FriendlyNameStr = RaidLinkedMeta.FriendlyName
+
+	return &RaidLinked{
+		Base:     base,
+		RAiDInfo: in.RAiDInfo,
+	}, nil
+}
+
+var RaidLinkedMeta = EventMeta{
+	Type:         RaidLinkedType,
+	FriendlyName: "RAiD Linked",
+}
+
+// --- RaidUpdated ---
+
+const RaidUpdatedType = "project.raid_updated"
+
+type RaidUpdated struct {
+	Base
+	RAiDInfo *entities.RAiDInfo `json:"raid_info"`
+}
+
+func (RaidUpdated) isEvent()     {}
+func (RaidUpdated) Type() string { return RaidUpdatedType }
+func (e RaidUpdated) String() string {
+	return "RAiD Updated: " + fmt.Sprint(e.RAiDInfo)
+}
+
+func (e *RaidUpdated) Apply(project *entities.Project) {
+	project.RAiDInfo = e.RAiDInfo
+}
+
+func (e *RaidUpdated) NotificationMessage() string {
+	return "Project raidinfo has been updated."
+}
+
+func (e *RaidUpdated) NotificationTemplate() string {
+	return "RAiD metadata updated for {{event.RAiDInfo.RAiDId}}"
+}
+
+func (e *RaidUpdated) ApprovalRequestTemplate() string {
+	return ""
+}
+
+func (e *RaidUpdated) ApprovedTemplate() string {
+	return ""
+}
+
+func (e *RaidUpdated) RejectedTemplate() string {
+	return ""
+}
+
+func (e *RaidUpdated) NotificationVariables() map[string]string {
+	return map[string]string{
+		"event.RAiDInfo": fmt.Sprint(e.RAiDInfo),
+	}
+}
+
+type RaidUpdatedInput struct {
+	RAiDInfo *entities.RAiDInfo `json:"raid_info"`
+}
+
+func DecideRaidUpdated(
+	projectID uuid.UUID,
+	actor uuid.UUID,
+	cur *entities.Project,
+	in RaidUpdatedInput,
+	status Status,
+) (Event, error) {
+	if projectID == uuid.Nil {
+		return nil, errors.New("project id is required")
+	}
+	if cur == nil {
+		return nil, errors.New("current project is required")
+	}
+	if cur.RAiDInfo == in.RAiDInfo {
+		return nil, nil
+	}
+	base := NewBase(projectID, actor, status)
+	base.FriendlyNameStr = RaidUpdatedMeta.FriendlyName
+
+	return &RaidUpdated{
+		Base:     base,
+		RAiDInfo: in.RAiDInfo,
+	}, nil
+}
+
+var RaidUpdatedMeta = EventMeta{
+	Type:         RaidUpdatedType,
+	FriendlyName: "RAiD Updated",
+}
+
 // --- OwningOrgNodeChanged ---
 
 const OwningOrgNodeChangedType = "project.owning_org_node_changed"
@@ -449,6 +607,22 @@ func init() {
 			return DecideEndDateChanged(projectID, actor, cur, in, status)
 		})
 	RegisterInputType(EndDateChangedType, EndDateChangedInput{})
+	RegisterMeta(RaidLinkedMeta, func() Event {
+		return &RaidLinked{Base: Base{FriendlyNameStr: RaidLinkedMeta.FriendlyName}}
+	})
+	RegisterDecider[RaidLinkedInput](RaidLinkedType,
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in RaidLinkedInput, status Status) (Event, error) {
+			return DecideRaidLinked(projectID, actor, cur, in, status)
+		})
+	RegisterInputType(RaidLinkedType, RaidLinkedInput{})
+	RegisterMeta(RaidUpdatedMeta, func() Event {
+		return &RaidUpdated{Base: Base{FriendlyNameStr: RaidUpdatedMeta.FriendlyName}}
+	})
+	RegisterDecider[RaidUpdatedInput](RaidUpdatedType,
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in RaidUpdatedInput, status Status) (Event, error) {
+			return DecideRaidUpdated(projectID, actor, cur, in, status)
+		})
+	RegisterInputType(RaidUpdatedType, RaidUpdatedInput{})
 	RegisterMeta(OwningOrgNodeChangedMeta, func() Event {
 		return &OwningOrgNodeChanged{Base: Base{FriendlyNameStr: OwningOrgNodeChangedMeta.FriendlyName}}
 	})

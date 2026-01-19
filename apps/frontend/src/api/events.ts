@@ -6,15 +6,9 @@ export type Datetime = string;
 
 export enum ProjectEventType {
 
-  EventPolicyAdded = 'project.event_policy_added',
+  ProductAdded = 'project.product_added',
 
-  EventPolicyRemoved = 'project.event_policy_removed',
-
-  EventPolicyUpdated = 'project.event_policy_updated',
-
-  ProjectRoleUnassigned = 'project.role_unassigned',
-
-  CustomFieldValueSet = 'project.custom_field_value_set',
+  ProductRemoved = 'project.product_removed',
 
   TitleChanged = 'project.title_changed',
 
@@ -24,15 +18,25 @@ export enum ProjectEventType {
 
   EndDateChanged = 'project.end_date_changed',
 
-  OwningOrgNodeChanged = 'project.owning_org_node_changed',
+  RaidLinked = 'project.raid_linked',
 
-  ProjectRoleAssigned = 'project.project_role_assigned',
+  RaidUpdated = 'project.raid_updated',
+
+  OwningOrgNodeChanged = 'project.owning_org_node_changed',
 
   ProjectStarted = 'project.started',
 
-  ProductAdded = 'project.product_added',
+  CustomFieldValueSet = 'project.custom_field_value_set',
 
-  ProductRemoved = 'project.product_removed',
+  EventPolicyAdded = 'project.event_policy_added',
+
+  EventPolicyRemoved = 'project.event_policy_removed',
+
+  EventPolicyUpdated = 'project.event_policy_updated',
+
+  ProjectRoleAssigned = 'project.project_role_assigned',
+
+  ProjectRoleUnassigned = 'project.role_unassigned',
 
 }
 
@@ -60,29 +64,14 @@ export interface BaseEvent {
 
 // Specific Event Interfaces
 
-export interface EventPolicyAddedEvent extends BaseEvent {
-  type: ProjectEventType.EventPolicyAdded;
-  data: EventPolicyAddedInput;
+export interface ProductAddedEvent extends BaseEvent {
+  type: ProjectEventType.ProductAdded;
+  data: ProductAddedInput;
 }
 
-export interface EventPolicyRemovedEvent extends BaseEvent {
-  type: ProjectEventType.EventPolicyRemoved;
-  data: EventPolicyRemovedInput;
-}
-
-export interface EventPolicyUpdatedEvent extends BaseEvent {
-  type: ProjectEventType.EventPolicyUpdated;
-  data: EventPolicyUpdatedInput;
-}
-
-export interface ProjectRoleUnassignedEvent extends BaseEvent {
-  type: ProjectEventType.ProjectRoleUnassigned;
-  data: ProjectRoleUnassignedInput;
-}
-
-export interface CustomFieldValueSetEvent extends BaseEvent {
-  type: ProjectEventType.CustomFieldValueSet;
-  data: CustomFieldValueSetInput;
+export interface ProductRemovedEvent extends BaseEvent {
+  type: ProjectEventType.ProductRemoved;
+  data: ProductRemovedInput;
 }
 
 export interface TitleChangedEvent extends BaseEvent {
@@ -105,14 +94,19 @@ export interface EndDateChangedEvent extends BaseEvent {
   data: EndDateChangedInput;
 }
 
+export interface RaidLinkedEvent extends BaseEvent {
+  type: ProjectEventType.RaidLinked;
+  data: RaidLinkedInput;
+}
+
+export interface RaidUpdatedEvent extends BaseEvent {
+  type: ProjectEventType.RaidUpdated;
+  data: RaidUpdatedInput;
+}
+
 export interface OwningOrgNodeChangedEvent extends BaseEvent {
   type: ProjectEventType.OwningOrgNodeChanged;
   data: OwningOrgNodeChangedInput;
-}
-
-export interface ProjectRoleAssignedEvent extends BaseEvent {
-  type: ProjectEventType.ProjectRoleAssigned;
-  data: ProjectRoleAssignedInput;
 }
 
 export interface ProjectStartedEvent extends BaseEvent {
@@ -120,131 +114,85 @@ export interface ProjectStartedEvent extends BaseEvent {
   data: ProjectStartedInput;
 }
 
-export interface ProductAddedEvent extends BaseEvent {
-  type: ProjectEventType.ProductAdded;
-  data: ProductAddedInput;
+export interface CustomFieldValueSetEvent extends BaseEvent {
+  type: ProjectEventType.CustomFieldValueSet;
+  data: CustomFieldValueSetInput;
 }
 
-export interface ProductRemovedEvent extends BaseEvent {
-  type: ProjectEventType.ProductRemoved;
-  data: ProductRemovedInput;
+export interface EventPolicyAddedEvent extends BaseEvent {
+  type: ProjectEventType.EventPolicyAdded;
+  data: EventPolicyAddedInput;
+}
+
+export interface EventPolicyRemovedEvent extends BaseEvent {
+  type: ProjectEventType.EventPolicyRemoved;
+  data: EventPolicyRemovedInput;
+}
+
+export interface EventPolicyUpdatedEvent extends BaseEvent {
+  type: ProjectEventType.EventPolicyUpdated;
+  data: EventPolicyUpdatedInput;
+}
+
+export interface ProjectRoleAssignedEvent extends BaseEvent {
+  type: ProjectEventType.ProjectRoleAssigned;
+  data: ProjectRoleAssignedInput;
+}
+
+export interface ProjectRoleUnassignedEvent extends BaseEvent {
+  type: ProjectEventType.ProjectRoleUnassigned;
+  data: ProjectRoleUnassignedInput;
 }
 
 
 // Union Type
 export type ProjectEvent =
-  | EventPolicyAddedEvent
-  | EventPolicyRemovedEvent
-  | EventPolicyUpdatedEvent
-  | ProjectRoleUnassignedEvent
-  | CustomFieldValueSetEvent
+  | ProductAddedEvent
+  | ProductRemovedEvent
   | TitleChangedEvent
   | DescriptionChangedEvent
   | StartDateChangedEvent
   | EndDateChangedEvent
+  | RaidLinkedEvent
+  | RaidUpdatedEvent
   | OwningOrgNodeChangedEvent
-  | ProjectRoleAssignedEvent
   | ProjectStartedEvent
-  | ProductAddedEvent
-  | ProductRemovedEvent;
+  | CustomFieldValueSetEvent
+  | EventPolicyAddedEvent
+  | EventPolicyRemovedEvent
+  | EventPolicyUpdatedEvent
+  | ProjectRoleAssignedEvent
+  | ProjectRoleUnassignedEvent;
 
 // Input Interfaces
 
-export interface EventPolicyAddedInput {
-  name: string;
-  description: string;
-  event_types: string[];
-  action_type: string;
-  recipient_user_ids: any[];
-  recipient_project_role_ids: any[];
-  recipient_org_role_ids: any[];
-  recipient_dynamic: string[];
-  enabled: boolean;
+export interface ProductAddedInput {
+  product_id: string;
 }
 
-export const createEventPolicyAddedEvent = (projectId: string, input: EventPolicyAddedInput) => {
+export const createProductAddedEvent = (projectId: string, input: ProductAddedInput) => {
   return customInstance<any>({
     url: `/projects/${projectId}/events`,
     method: 'POST',
     data: {
       projectId,
-      type: 'project.event_policy_added',
+      type: 'project.product_added',
       input
     }
   });
 };
 
-export interface EventPolicyRemovedInput {
-  policy_id: string;
-  name: string;
+export interface ProductRemovedInput {
+  product_id: string;
 }
 
-export const createEventPolicyRemovedEvent = (projectId: string, input: EventPolicyRemovedInput) => {
+export const createProductRemovedEvent = (projectId: string, input: ProductRemovedInput) => {
   return customInstance<any>({
     url: `/projects/${projectId}/events`,
     method: 'POST',
     data: {
       projectId,
-      type: 'project.event_policy_removed',
-      input
-    }
-  });
-};
-
-export interface EventPolicyUpdatedInput {
-  policy_id: string;
-  name: string;
-  description: string;
-  event_types: string[];
-  action_type: string;
-  recipient_user_ids: any[];
-  recipient_project_role_ids: any[];
-  recipient_org_role_ids: any[];
-  recipient_dynamic: string[];
-  enabled: boolean;
-}
-
-export const createEventPolicyUpdatedEvent = (projectId: string, input: EventPolicyUpdatedInput) => {
-  return customInstance<any>({
-    url: `/projects/${projectId}/events`,
-    method: 'POST',
-    data: {
-      projectId,
-      type: 'project.event_policy_updated',
-      input
-    }
-  });
-};
-
-export interface ProjectRoleUnassignedInput {
-  person_id: string;
-  project_role_id: string;
-}
-
-export const createProjectRoleUnassignedEvent = (projectId: string, input: ProjectRoleUnassignedInput) => {
-  return customInstance<any>({
-    url: `/projects/${projectId}/events`,
-    method: 'POST',
-    data: {
-      projectId,
-      type: 'project.role_unassigned',
-      input
-    }
-  });
-};
-
-export interface CustomFieldValueSetInput {
-  definition_id: string;
-  value: string;
-}
-
-export const createCustomFieldValueSetEvent = (projectId: string, input: CustomFieldValueSetInput) => {
-  return customInstance<any>({
-    url: `/projects/${projectId}/events`,
-    method: 'POST',
-    data: {
-      projectId,
-      type: 'project.custom_field_value_set',
+      type: 'project.product_removed',
       input
     }
   });
@@ -314,6 +262,38 @@ export const createEndDateChangedEvent = (projectId: string, input: EndDateChang
   });
 };
 
+export interface RaidLinkedInput {
+  raid_info: RAiDInfo;
+}
+
+export const createRaidLinkedEvent = (projectId: string, input: RaidLinkedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'project.raid_linked',
+      input
+    }
+  });
+};
+
+export interface RaidUpdatedInput {
+  raid_info: RAiDInfo;
+}
+
+export const createRaidUpdatedEvent = (projectId: string, input: RaidUpdatedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'project.raid_updated',
+      input
+    }
+  });
+};
+
 export interface OwningOrgNodeChangedInput {
   owning_org_node_id: string;
 }
@@ -325,23 +305,6 @@ export const createOwningOrgNodeChangedEvent = (projectId: string, input: Owning
     data: {
       projectId,
       type: 'project.owning_org_node_changed',
-      input
-    }
-  });
-};
-
-export interface ProjectRoleAssignedInput {
-  person_id: string;
-  project_role_id: string;
-}
-
-export const createProjectRoleAssignedEvent = (projectId: string, input: ProjectRoleAssignedInput) => {
-  return customInstance<any>({
-    url: `/projects/${projectId}/events`,
-    method: 'POST',
-    data: {
-      projectId,
-      type: 'project.project_role_assigned',
       input
     }
   });
@@ -368,35 +331,136 @@ export const createProjectStartedEvent = (projectId: string, input: ProjectStart
   });
 };
 
-export interface ProductAddedInput {
-  product_id: string;
+export interface CustomFieldValueSetInput {
+  definition_id: string;
+  value: string;
 }
 
-export const createProductAddedEvent = (projectId: string, input: ProductAddedInput) => {
+export const createCustomFieldValueSetEvent = (projectId: string, input: CustomFieldValueSetInput) => {
   return customInstance<any>({
     url: `/projects/${projectId}/events`,
     method: 'POST',
     data: {
       projectId,
-      type: 'project.product_added',
+      type: 'project.custom_field_value_set',
       input
     }
   });
 };
 
-export interface ProductRemovedInput {
-  product_id: string;
+export interface EventPolicyAddedInput {
+  name: string;
+  description: string;
+  event_types: string[];
+  action_type: string;
+  recipient_user_ids: any[];
+  recipient_project_role_ids: any[];
+  recipient_org_role_ids: any[];
+  recipient_dynamic: string[];
+  enabled: boolean;
 }
 
-export const createProductRemovedEvent = (projectId: string, input: ProductRemovedInput) => {
+export const createEventPolicyAddedEvent = (projectId: string, input: EventPolicyAddedInput) => {
   return customInstance<any>({
     url: `/projects/${projectId}/events`,
     method: 'POST',
     data: {
       projectId,
-      type: 'project.product_removed',
+      type: 'project.event_policy_added',
       input
     }
   });
 };
 
+export interface EventPolicyRemovedInput {
+  policy_id: string;
+  name: string;
+}
+
+export const createEventPolicyRemovedEvent = (projectId: string, input: EventPolicyRemovedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'project.event_policy_removed',
+      input
+    }
+  });
+};
+
+export interface EventPolicyUpdatedInput {
+  policy_id: string;
+  name: string;
+  description: string;
+  event_types: string[];
+  action_type: string;
+  recipient_user_ids: any[];
+  recipient_project_role_ids: any[];
+  recipient_org_role_ids: any[];
+  recipient_dynamic: string[];
+  enabled: boolean;
+}
+
+export const createEventPolicyUpdatedEvent = (projectId: string, input: EventPolicyUpdatedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'project.event_policy_updated',
+      input
+    }
+  });
+};
+
+export interface ProjectRoleAssignedInput {
+  person_id: string;
+  project_role_id: string;
+}
+
+export const createProjectRoleAssignedEvent = (projectId: string, input: ProjectRoleAssignedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'project.project_role_assigned',
+      input
+    }
+  });
+};
+
+export interface ProjectRoleUnassignedInput {
+  person_id: string;
+  project_role_id: string;
+}
+
+export const createProjectRoleUnassignedEvent = (projectId: string, input: ProjectRoleUnassignedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'project.role_unassigned',
+      input
+    }
+  });
+};
+
+
+export interface RAiDInfo {
+    raid_id: string;
+    schema_uri: string;
+    registration_agency_id: string;
+    registration_agency_schema_uri: string;
+    owner_id: string;
+    owner_schema_uri: string;
+    owner_service_point?: number;
+    project_id: string;
+    license: string;
+    version: number;
+    latest_sync?: string;
+    dirty: boolean;
+    checksum?: string;
+}

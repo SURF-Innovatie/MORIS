@@ -75,11 +75,11 @@ import (
 	projectmembershiprepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_membership"
 	projectquery "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_query"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/projectrole"
+	raidrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/raid"
 	userrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/user"
 
 	"github.com/SURF-Innovatie/MORIS/external/raid"
 	"github.com/SURF-Innovatie/MORIS/internal/adapter"
-	raidsink "github.com/SURF-Innovatie/MORIS/internal/adapter/sinks/raid"
 	csvsource "github.com/SURF-Innovatie/MORIS/internal/adapter/sources/csv"
 	adapterhandler "github.com/SURF-Innovatie/MORIS/internal/handler/adapter"
 
@@ -289,10 +289,14 @@ func main() {
 	raidOpts := env.RaidOptionsFromEnv()
 	raidClient := raid.NewClient(http.DefaultClient, raidOpts)
 
-	raidSvc := appraid.NewService(raidClient)
-	raidHandler := raidhandler.NewHandler(raidSvc, curUser)
+	raidRepo := raidrepo.NewEntRepo(client)
+	raidSvc := appraid.NewService(raidClient, raidRepo, esStore)
 
-	registry.RegisterSink(raidsink.NewRAiDSink(raidClient))
+	// RAiD Mapper Service (for project-to-RAiD mapping)
+	raidMapperSvc := appraid.NewMapperService(esStore, personRepo, orgRepo)
+	raidHandler := raidhandler.NewHandler(raidSvc, raidMapperSvc, curUser)
+	_ = raidMapperSvc // Available for use in handlers
+
 	adapterHandler := adapterhandler.NewHandler(registry, projSvc)
 
 	// Router
@@ -313,6 +317,10 @@ func main() {
 				commandHandler.MountProjectCommandRouter(r, projCmdHandler)
 				// Event policy routes for projects
 				eventPolicyHandler.RegisterProjectRoutes(r)
+
+				r.Route("/{id}", func(r chi.Router) {
+					raidhandler.MountRoutes(r, raidHandler)
+				})
 			})
 			organisationhandler.MountOrganisationRoutes(r, organisationHandler, rbacHandler)
 			eventHandler.MountEventRoutes(r, evtHandler)
