@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	en "github.com/SURF-Innovatie/MORIS/ent/event" //nolint:depguard
@@ -217,7 +217,7 @@ func (s *EntStore) mapEventRow(r *ent.Event) (events.Event, error) {
 
 	evt, err := events.Create(r.Type)
 	if err != nil {
-		logrus.Infof("unknown event type %s", r.Type)
+		log.Info().Msgf("unknown event type %s", r.Type)
 		return nil, nil
 	}
 

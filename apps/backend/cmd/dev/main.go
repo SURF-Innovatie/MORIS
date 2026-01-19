@@ -20,12 +20,11 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	customfieldrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/customfield"
 	errorlogrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/error_log"
-	logger "github.com/chi-middleware/logrus-logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	_ "github.com/lib/pq"
 	"github.com/redis/go-redis/v9"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
 	_ "github.com/SURF-Innovatie/MORIS/api/swag-docs"
@@ -111,7 +110,7 @@ func main() {
 
 	client, err := ent.Open("postgres", dsn)
 	if err != nil {
-		logrus.Fatalf("failed opening connection to postgres: %v", err)
+		log.Fatal().Err(err).Msg("failed opening connection to postgres")
 	}
 	defer client.Close()
 
@@ -119,7 +118,7 @@ func main() {
 	// if err := client.Schema.Create(
 	// 	context.Background(),
 	// Run Atlas migrations
-	logrus.Info("Running database migrations...")
+	log.Info().Msg("Running database migrations...")
 
 	// Construct URL safely to handle special characters in password
 	u := url.URL{
@@ -138,9 +137,9 @@ func main() {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		logrus.Fatalf("failed applying migrations: %v", err)
+		log.Fatal().Err(err).Msg("failed applying migrations")
 	}
-	logrus.Info("Database migrations applied successfully")
+	log.Info().Msg("Database migrations applied successfully")
 
 	// Redis Client
 	rdb := redis.NewClient(&redis.Options{
@@ -149,14 +148,14 @@ func main() {
 		Username: env.Global.CacheUser,
 	})
 	if err := rdb.Ping(context.Background()).Err(); err != nil {
-		logrus.Warnf("failed to connect to redis/valkey: %v", err)
+		log.Warn().Err(err).Msg("failed to connect to redis/valkey")
 	} else {
-		logrus.Infof("Connected to Redis at %s:%s", env.Global.CacheHost, env.Global.CachePort)
+		log.Info().Msgf("Connected to Redis at %s:%s", env.Global.CacheHost, env.Global.CachePort)
 	}
 	defer rdb.Close()
 
 	if err := events.ValidateRegistrations(); err != nil {
-		logrus.Fatalf("event registration invalid: %v", err)
+		log.Fatal().Err(err).Msg("event registration invalid")
 	}
 
 	personRepo := personrepo.NewEntRepo(client)
@@ -288,8 +287,13 @@ func main() {
 
 	// Router
 	r := chi.NewRouter()
-	log := logrus.New()
-	r.Use(logger.Logger("router", log))
+
+	// Default zerolog logger
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
+
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger) // Using standard chi logger for now, or I can implement a zerolog one
 	r.Use(middleware.Recoverer)
 
 	r.Route(env.Global.APIBasePath, func(r chi.Router) {
@@ -329,13 +333,13 @@ func main() {
 	go func() {
 		cached, err := warmup.WarmupProjects(context.Background())
 		if err != nil {
-			logrus.Errorf("Failed to warmup cache: %v", err)
+			log.Error().Err(err).Msg("Failed to warmup cache")
 		} else {
-			logrus.Infof("Warmed up cache for %d projects", cached)
+			log.Info().Msgf("Warmed up cache for %d projects", cached)
 		}
 	}()
 
-	logrus.Infof("Go Backend Server starting on http://localhost:%s", env.Global.Port)
+	log.Info().Msgf("Go Backend Server starting on http://localhost:%s", env.Global.Port)
 	// Serve the generated swagger JSON and assets and the Swagger UI at /swagger/
 	r.Get("/swagger/swagger.json", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "api/swag-docs/swagger.json")
@@ -344,5 +348,5 @@ func main() {
 		httpSwagger.URL("swagger.json"), // the url pointing to API definition
 	))
 
-	logrus.Fatal(http.ListenAndServe(":"+env.Global.Port, r))
+	log.Fatal().Err(http.ListenAndServe(":"+env.Global.Port, r)).Msg("Server failed")
 }

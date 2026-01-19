@@ -11,7 +11,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 type ApprovalRequestNotificationHandler struct {
@@ -39,14 +39,14 @@ func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e event
 
 	proj := projection.Reduce(projectID, evts)
 	if proj == nil || proj.OwningOrgNodeID == uuid.Nil {
-		logrus.Warnf("ApprovalRequest: project %s has no owning org node", projectID)
+		log.Warn().Msgf("ApprovalRequest: project %s has no owning org node", projectID)
 		return nil
 	}
 
 	approvalNode, err := h.RBAC.GetApprovalNode(ctx, proj.OwningOrgNodeID)
 	if err != nil || approvalNode == nil {
 		// no approver configured; you may want to log loudly
-		logrus.Warnf("ApprovalRequest: no approval node found for project %s: %v", projectID, err)
+		log.Warn().Err(err).Msgf("ApprovalRequest: no approval node found for project %s", projectID)
 		return nil
 	}
 

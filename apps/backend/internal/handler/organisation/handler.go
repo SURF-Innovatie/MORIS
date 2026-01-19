@@ -12,7 +12,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 type Handler struct {
@@ -387,7 +387,7 @@ func (h *Handler) CreateProjectRole(w http.ResponseWriter, r *http.Request) {
 
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
-		logrus.Debugf("CreateProjectRole: invalid id param: %v", err)
+		log.Debug().Err(err).Msg("CreateProjectRole: invalid id param")
 		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
 		return
 	}

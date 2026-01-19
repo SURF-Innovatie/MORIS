@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 type Config struct {
@@ -57,7 +57,7 @@ func getEnv(key string, required bool, fallback string) string {
 	val := os.Getenv(key)
 	if val == "" {
 		if required {
-			logrus.Fatalf("Missing required environment variable: %s", key)
+			log.Fatal().Msgf("Missing required environment variable: %s", key)
 		}
 		return fallback
 	}

@@ -7,7 +7,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 // PolicyExecutionHandler executes event policies for occurred events
@@ -38,7 +38,7 @@ func (h *PolicyExecutionHandler) Handle(ctx context.Context, event events.Event)
 		if err == queries.ErrNotFound {
 			return nil
 		}
-		logrus.Errorf("PolicyExecutionHandler: failed to get project %s: %v", projectID, err)
+		log.Error().Err(err).Msgf("PolicyExecutionHandler: failed to get project %s", projectID)
 		return err
 	}
 	if details == nil {

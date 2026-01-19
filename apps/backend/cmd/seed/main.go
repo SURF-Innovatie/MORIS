@@ -26,7 +26,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -49,8 +50,9 @@ type seedProduct struct {
 }
 
 func main() {
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	if err := godotenv.Load(); err != nil {
-		logrus.Warnf("Error loading .env file: %v", err)
+		log.Warn().Err(err).Msg("Error loading .env file")
 	}
 
 	dbHost := os.Getenv("DB_HOST")
@@ -69,11 +71,11 @@ func main() {
 
 	client, err := ent.Open("postgres", dsn)
 	if err != nil {
-		logrus.Fatalf("failed opening connection to postgres: %v", err)
+		log.Fatal().Err(err).Msg("failed opening connection to postgres")
 	}
 	defer func() {
 		if err := client.Close(); err != nil {
-			logrus.Fatalf("Failed to close client: %v", err)
+			log.Fatal().Err(err).Msg("Failed to close client")
 		}
 	}()
 
@@ -82,46 +84,46 @@ func main() {
 	// Hard reset: drop and recreate the public schema
 	if !*noReset {
 		if os.Getenv("ALLOW_DESTRUCTIVE_SEED") != "true" && os.Getenv("NODE_ENV") == "production" {
-			logrus.Fatal("Destructive seed requested in production but ALLOW_DESTRUCTIVE_SEED is not set to true")
+			log.Fatal().Msg("Destructive seed requested in production but ALLOW_DESTRUCTIVE_SEED is not set to true")
 		}
 
 		rawDB, err := sql.Open("postgres", dsn)
 		if err != nil {
-			logrus.Fatalf("failed opening raw db connection: %v", err)
+			log.Fatal().Err(err).Msg("failed opening raw db connection")
 		}
 		if _, err := rawDB.ExecContext(ctx, `DROP SCHEMA public CASCADE; CREATE SCHEMA public; DROP SCHEMA IF EXISTS atlas_schema_revisions CASCADE;`); err != nil {
-			logrus.Fatalf("failed resetting schema: %v", err)
+			log.Fatal().Err(err).Msg("failed resetting schema")
 		}
 		if err := rawDB.Close(); err != nil {
-			logrus.Fatalf("failed closing raw db: %v", err)
+			log.Fatal().Err(err).Msg("failed closing raw db")
 		}
-		logrus.Info("Database schema reset (dropped and recreated).")
+		log.Info().Msg("Database schema reset (dropped and recreated).")
 	} else {
-		logrus.Info("Skipping database schema reset as requested by -no-reset flag.")
+		log.Info().Msg("Skipping database schema reset as requested by -no-reset flag.")
 	}
 
 	if !*skipMigrations {
-		logrus.Info("Applying database migrations...")
+		log.Info().Msg("Applying database migrations...")
 		cmd := exec.Command("pnpm", "run", "db:migrate:apply")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
-			logrus.Fatalf("failed running database migrations: %v", err)
+			log.Fatal().Err(err).Msg("failed running database migrations")
 		}
-		logrus.Info("Database migrations applied.")
+		log.Info().Msg("Database migrations applied.")
 	} else {
-		logrus.Info("Skipping database migrations as requested.")
+		log.Info().Msg("Skipping database migrations as requested.")
 	}
 
 	if *skipSeed {
-		logrus.Info("Skipping data seeding as requested.")
+		log.Info().Msg("Skipping data seeding as requested.")
 		return
 	}
 
 	// Default password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)
 	if err != nil {
-		logrus.Fatalf("failed to hash password: %v", err)
+		log.Fatal().Err(err).Msg("failed to hash password")
 	}
 
 	// Seed maps
@@ -144,11 +146,11 @@ func main() {
 		SetDescription(defaultBio).
 		Save(ctx)
 	if err != nil {
-		logrus.Fatalf("failed creating %s person: %v", testUserName, err)
+		log.Fatal().Err(err).Msgf("failed creating %s person", testUserName)
 	}
 	testPersonID := testPerson.ID
 	personIDs[testUserName] = testPersonID
-	logrus.Infof("Created person %s (%s)", testUserName, testPersonID)
+	log.Info().Msgf("Created person %s (%s)", testUserName, testPersonID)
 
 	_, err = client.User.
 		Create().
@@ -158,9 +160,9 @@ func main() {
 		SetPassword(string(hashedPassword)).
 		Save(ctx)
 	if err != nil {
-		logrus.Fatalf("failed creating user for %s: %v", testUserName, err)
+		log.Fatal().Err(err).Msgf("failed creating user for %s", testUserName)
 	}
-	logrus.Infof("Created user for person %s", testUserName)
+	log.Info().Msgf("Created user for person %s", testUserName)
 
 	// --- Additional Admin Users ---
 	adminUsers := []struct {
@@ -182,10 +184,10 @@ func main() {
 			SetDescription("SURF admin account").
 			Save(ctx)
 		if err != nil {
-			logrus.Fatalf("failed creating %s person: %v", admin.Name, err)
+			log.Fatal().Err(err).Msgf("failed creating %s person", admin.Name)
 		}
 		personIDs[admin.Name] = adminPerson.ID
-		logrus.Infof("Created person %s (%s)", admin.Name, adminPerson.ID)
+		log.Info().Msgf("Created person %s (%s)", admin.Name, adminPerson.ID)
 
 		_, err = client.User.
 			Create().
@@ -194,9 +196,9 @@ func main() {
 			SetIsSysAdmin(true).
 			Save(ctx)
 		if err != nil {
-			logrus.Fatalf("failed creating user for %s: %v", admin.Name, err)
+			log.Fatal().Err(err).Msgf("failed creating user for %s", admin.Name)
 		}
-		logrus.Infof("Created admin user for person %s", admin.Name)
+		log.Info().Msgf("Created admin user for person %s", admin.Name)
 	}
 
 	es := eventstore.NewEntStore(client)
@@ -211,17 +213,17 @@ func main() {
 
 	orgRoot, err := orgSvc.CreateRoot(ctx, "Nederland", nil, nil, nil)
 	if err != nil {
-		logrus.Fatalf("create root org node: %v", err)
+		log.Fatal().Err(err).Msg("create root org node")
 	}
 	orgNodeIDs["Nederland"] = orgRoot.ID
 
 	roleRepo := projectrole.NewRepository(client)
 
 	if _, err := roleRepo.Create(ctx, "contributor", "Contributor", orgRoot.ID); err != nil {
-		logrus.Fatalf("create project role contributor: %v", err)
+		log.Fatal().Err(err).Msg("create project role contributor")
 	}
 	if _, err := roleRepo.Create(ctx, "admin", "Project Lead", orgRoot.ID); err != nil {
-		logrus.Fatalf("create project role admin: %v", err)
+		log.Fatal().Err(err).Msg("create project role admin")
 	}
 
 	projects := []seedProject{
@@ -302,28 +304,28 @@ func main() {
 	mustPersonID := func(name string) uuid.UUID {
 		id, ok := personIDs[name]
 		if !ok {
-			logrus.Fatalf("no person ID found for %q", name)
+			log.Fatal().Msgf("no person ID found for %q", name)
 		}
 		return id
 	}
 	mustOrgNodeID := func(name string) uuid.UUID {
 		id, ok := orgNodeIDs[name]
 		if !ok {
-			logrus.Fatalf("no org node ID found for %q", name)
+			log.Fatal().Msgf("no org node ID found for %q", name)
 		}
 		return id
 	}
 	mustProductID := func(doi string) uuid.UUID {
 		id, ok := productIDs[doi]
 		if !ok {
-			logrus.Fatalf("no product ID found for DOI %q", doi)
+			log.Fatal().Msgf("no product ID found for DOI %q", doi)
 		}
 		return id
 	}
 
 	universities, err := getOrCreateChild(ctx, client, orgSvc, orgRoot.ID, "Universities")
 	if err != nil {
-		logrus.Fatalf("create/get Universities node: %v", err)
+		log.Fatal().Err(err).Msg("create/get Universities node")
 	}
 
 	uuLeafID, err := createPath(ctx, orgSvc, universities.ID,
@@ -334,7 +336,7 @@ func main() {
 		"Post-Quantum Cryptography Lab",
 	)
 	if err != nil {
-		logrus.Fatalf("seed UU subtree: %v", err)
+		log.Fatal().Err(err).Msg("seed UU subtree")
 	}
 	orgNodeIDs["Cybersecurity Lab – Utrecht University"] = uuLeafID
 
@@ -346,13 +348,13 @@ func main() {
 		"Wave Rendering Lab",
 	)
 	if err != nil {
-		logrus.Fatalf("seed TU Delft subtree: %v", err)
+		log.Fatal().Err(err).Msg("seed TU Delft subtree")
 	}
 	orgNodeIDs["Distributed Graphics Lab – TU Delft"] = tudLeafID
 
 	researchInstitutes, err := getOrCreateChild(ctx, client, orgSvc, orgRoot.ID, "Research Institutes")
 	if err != nil {
-		logrus.Fatalf("create/get Institutes node: %v", err)
+		log.Fatal().Err(err).Msg("create/get Institutes node")
 	}
 
 	medaiLeafID, err := createPath(ctx, orgSvc, researchInstitutes.ID,
@@ -362,7 +364,7 @@ func main() {
 		"Adaptive Diagnostics Unit",
 	)
 	if err != nil {
-		logrus.Fatalf("seed MedAI subtree: %v", err)
+		log.Fatal().Err(err).Msg("seed MedAI subtree")
 	}
 	orgNodeIDs["MedAI Institute Rotterdam"] = medaiLeafID
 
@@ -374,7 +376,7 @@ func main() {
 		"Greenhouse Emissions Program",
 	)
 	if err != nil {
-		logrus.Fatalf("seed AgroTech subtree: %v", err)
+		log.Fatal().Err(err).Msg("seed AgroTech subtree")
 	}
 	orgNodeIDs["AgroTech Research Group"] = agroLeafID
 
@@ -385,7 +387,7 @@ func main() {
 		"Autonomous Swarms Division",
 	)
 	if err != nil {
-		logrus.Fatalf("seed Ocean subtree: %v", err)
+		log.Fatal().Err(err).Msg("seed Ocean subtree")
 	}
 	orgNodeIDs["Ocean Robotics Centre Leiden"] = oceanLeafID
 
@@ -410,12 +412,12 @@ func main() {
 				SetEmail(email).
 				Save(ctx)
 			if err != nil {
-				logrus.Fatalf("failed creating person %q: %v", name, err)
+				log.Fatal().Err(err).Msgf("failed creating person %q", name)
 			}
 
 			personIDs[name] = p.ID
 			authorIDs = append(authorIDs, p.ID)
-			logrus.Infof("Created person %s (%s)", name, p.ID)
+			log.Info().Msgf("Created person %s (%s)", name, p.ID)
 
 			_, err = client.User.
 				Create().
@@ -424,9 +426,9 @@ func main() {
 				SetPassword(string(hashedPassword)).
 				Save(ctx)
 			if err != nil {
-				logrus.Fatalf("failed creating user for person %q: %v", name, err)
+				log.Fatal().Err(err).Msgf("failed creating user for person %q", name)
 			}
-			logrus.Infof("Created user for person %s", name)
+			log.Info().Msgf("Created user for person %s", name)
 		}
 
 		// Products (create once; reuse IDs later in event stream)
@@ -444,11 +446,11 @@ func main() {
 				AddAuthorIDs(authorIDs...).
 				Save(ctx)
 			if err != nil {
-				logrus.Fatalf("failed creating product %q: %v", prod.Name, err)
+				log.Fatal().Err(err).Msgf("failed creating product %q", prod.Name)
 			}
 
 			productIDs[prod.DOI] = row.ID
-			logrus.Infof("Created product %s (%s)", prod.Name, row.ID)
+			log.Info().Msgf("Created product %s (%s)", prod.Name, row.ID)
 		}
 	}
 
@@ -458,7 +460,7 @@ func main() {
 	createRolesForOrg := func(orgID uuid.UUID) (adminRoleID, researcherRoleID, studentsRoleID uuid.UUID) {
 		orgEnt, err := client.OrganisationNode.Get(ctx, orgID)
 		if err != nil {
-			logrus.Fatalf("failed getting org %s for roles: %v", orgID, err)
+			log.Fatal().Err(err).Msgf("failed getting org %s for roles", orgID)
 		}
 
 		// Admin
@@ -475,7 +477,7 @@ func main() {
 			}).
 			Save(ctx)
 		if err != nil {
-			logrus.Fatalf("create admin role for %s: %v", orgID, err)
+			log.Fatal().Err(err).Msgf("create admin role for %s", orgID)
 		}
 
 		// Create legacy Scope for Admin
@@ -484,7 +486,7 @@ func main() {
 			SetRootNode(orgEnt).
 			Save(ctx)
 		if err != nil {
-			logrus.Fatalf("create admin scope for %s: %v", orgID, err)
+			log.Fatal().Err(err).Msgf("create admin scope for %s", orgID)
 		}
 
 		// Researcher
@@ -495,7 +497,7 @@ func main() {
 			SetPermissions([]string{}). // Basic access
 			Save(ctx)
 		if err != nil {
-			logrus.Fatalf("create researcher role for %s: %v", orgID, err)
+			log.Fatal().Err(err).Msgf("create researcher role for %s", orgID)
 		}
 
 		researcherScope, err := client.RoleScope.Create().
@@ -503,7 +505,7 @@ func main() {
 			SetRootNode(orgEnt).
 			Save(ctx)
 		if err != nil {
-			logrus.Fatalf("create researcher scope: %v", err)
+			log.Fatal().Err(err).Msg("create researcher scope")
 		}
 
 		// Students
@@ -514,7 +516,7 @@ func main() {
 			SetPermissions([]string{}).
 			Save(ctx)
 		if err != nil {
-			logrus.Fatalf("create students role for %s: %v", orgID, err)
+			log.Fatal().Err(err).Msgf("create students role for %s", orgID)
 		}
 
 		studentsScope, err := client.RoleScope.Create().
@@ -522,7 +524,7 @@ func main() {
 			SetRootNode(orgEnt).
 			Save(ctx)
 		if err != nil {
-			logrus.Fatalf("create students scope: %v", err)
+			log.Fatal().Err(err).Msg("create students scope")
 		}
 
 		return adminScope.ID, researcherScope.ID, studentsScope.ID
@@ -549,24 +551,24 @@ func main() {
 	// Memberships: example assignments
 	_, err = client.Membership.Create().SetPersonID(mustPersonID(testUserName)).SetRoleScopeID(rootAdminScopeID).Save(ctx)
 	if err != nil {
-		logrus.Fatalf("create admin membership: %v", err)
+		log.Fatal().Err(err).Msg("create admin membership")
 	}
 
 	if _, ok := personIDs["Dr. Elaine Carter"]; ok {
 		_, err = client.Membership.Create().SetPersonID(mustPersonID("Dr. Elaine Carter")).SetRoleScopeID(rootResearcherScopeID).Save(ctx)
 		if err != nil {
-			logrus.Fatalf("create researcher membership: %v", err)
+			log.Fatal().Err(err).Msg("create researcher membership")
 		}
 	}
 	if _, ok := personIDs["Tomas Ternovski"]; ok {
 		// Use the students scope we determined earlier (Root or Subtree)
 		_, err = client.Membership.Create().SetPersonID(mustPersonID("Tomas Ternovski")).SetRoleScopeID(studentsScopeID).Save(ctx)
 		if err != nil {
-			logrus.Fatalf("create students membership: %v", err)
+			log.Fatal().Err(err).Msg("create students membership")
 		}
 	}
 
-	logrus.Info("Seeding projects (event stream)...")
+	log.Info().Msg("Seeding projects (event stream)...")
 
 	for _, sp := range projects {
 		projectID := uuid.New()
@@ -586,7 +588,7 @@ func main() {
 		}
 
 		if err := es.Append(ctx, projectID, 0, startEvent); err != nil {
-			logrus.Fatalf("append ProjectStarted for %s: %v", sp.Title, err)
+			log.Fatal().Err(err).Msgf("append ProjectStarted for %s", sp.Title)
 		}
 
 		version := 1
@@ -594,11 +596,11 @@ func main() {
 		// fetch project role IDs
 		contributorRole, err := roleRepo.GetByKeyAndOrg(ctx, "contributor", orgRoot.ID)
 		if err != nil {
-			logrus.Fatalf("fetch contributor role: %v", err)
+			log.Fatal().Err(err).Msg("fetch contributor role")
 		}
 		leadRole, err := roleRepo.GetByKeyAndOrg(ctx, "admin", orgRoot.ID)
 		if err != nil {
-			logrus.Fatalf("fetch admin role: %v", err)
+			log.Fatal().Err(err).Msg("fetch admin role")
 		}
 
 		contributorRoleID := contributorRole.ID
@@ -624,7 +626,7 @@ func main() {
 			}
 
 			if err := es.Append(ctx, projectID, version, pevt); err != nil {
-				logrus.Fatalf("append ProjectRoleAssigned for %s (%s): %v", name, sp.Title, err)
+				log.Fatal().Err(err).Msgf("append ProjectRoleAssigned for %s (%s)", name, sp.Title)
 			}
 			version++
 		}
@@ -642,18 +644,18 @@ func main() {
 			}
 
 			if err := es.Append(ctx, projectID, version, pevt); err != nil {
-				logrus.Fatalf("append ProductAdded for %s (%s): %v", prod.Name, sp.Title, err)
+				log.Fatal().Err(err).Msgf("append ProductAdded for %s (%s)", prod.Name, sp.Title)
 			}
 			version++
 		}
 
-		logrus.Infof("Seeded project: %s (%s)", sp.Title, projectID.String())
+		log.Info().Msgf("Seeded project: %s (%s)", sp.Title, projectID.String())
 	}
 
-	logrus.Info("Seeding done.")
+	log.Info().Msg("Seeding done.")
 
 	// Notifications
-	logrus.Info("Seeding notifications...")
+	log.Info().Msg("Seeding notifications...")
 	notificationRecipients := []string{
 		"Dr. Elaine Carter",
 		"Sarah Vos",
@@ -672,7 +674,7 @@ func main() {
 
 		u, err := client.User.Query().Where(entuser.PersonIDEQ(personID)).Only(ctx)
 		if err != nil {
-			logrus.Errorf("failed to find user for person %s: %v", name, err)
+			log.Error().Err(err).Msgf("failed to find user for person %s", name)
 			continue
 		}
 
@@ -683,7 +685,7 @@ func main() {
 			SetSentAt(time.Now().Add(-24 * time.Hour)).
 			Save(ctx)
 		if err != nil {
-			logrus.Errorf("failed to create notification for %s: %v", name, err)
+			log.Error().Err(err).Msgf("failed to create notification for %s", name)
 		}
 
 		_, err = client.Notification.Create().
@@ -693,10 +695,10 @@ func main() {
 			SetSentAt(time.Now().Add(-48 * time.Hour)).
 			Save(ctx)
 		if err != nil {
-			logrus.Errorf("failed to create notification for %s: %v", name, err)
+			log.Error().Err(err).Msgf("failed to create notification for %s", name)
 		}
 	}
-	logrus.Info("Notifications seeded.")
+	log.Info().Msg("Notifications seeded.")
 }
 
 // createPath creates a path of OrganisationNodes under the given root.
