@@ -15,9 +15,13 @@ import (
 )
 
 type ApprovalRequestNotificationHandler struct {
-	Cli  *ent.Client
-	ES   eventstore.Store
-	RBAC orgsvc.Service
+	cli  *ent.Client
+	es   eventstore.Store
+	rbac orgsvc.Service
+}
+
+func NewApprovalRequestHandler(cli *ent.Client, es eventstore.Store, rbac orgsvc.Service) *ApprovalRequestNotificationHandler {
+	return &ApprovalRequestNotificationHandler{cli: cli, es: es, rbac: rbac}
 }
 
 func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e events.Event) error {
@@ -26,13 +30,13 @@ func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e event
 	}
 
 	meta := events.GetMeta(e.Type())
-	if !meta.NeedsApproval(ctx, e, h.Cli) {
+	if !meta.NeedsApproval(ctx, e, h.cli) {
 		return nil
 	}
 
 	projectID := e.AggregateID()
 
-	evts, _, err := h.ES.Load(ctx, projectID)
+	evts, _, err := h.es.Load(ctx, projectID)
 	if err != nil || len(evts) == 0 {
 		return err
 	}
@@ -43,7 +47,7 @@ func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e event
 		return nil
 	}
 
-	approvalNode, err := h.RBAC.GetApprovalNode(ctx, proj.OwningOrgNodeID)
+	approvalNode, err := h.rbac.GetApprovalNode(ctx, proj.OwningOrgNodeID)
 	if err != nil || approvalNode == nil {
 		// no approver configured; you may want to log loudly
 		log.Warn().Err(err).Msgf("ApprovalRequest: no approval node found for project %s", projectID)
@@ -51,7 +55,7 @@ func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e event
 	}
 
 	// Notify all admins effective for that approval node
-	effs, err := h.RBAC.ListEffectiveMemberships(ctx, approvalNode.ID)
+	effs, err := h.rbac.ListEffectiveMemberships(ctx, approvalNode.ID)
 	if err != nil {
 		return err
 	}
@@ -76,14 +80,14 @@ func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e event
 			continue
 		}
 
-		u, err := h.Cli.User.Query().
+		u, err := h.cli.User.Query().
 			Where(user.PersonIDEQ(em.PersonID)).
 			Only(ctx)
 		if err != nil {
 			continue
 		}
 
-		_, _ = h.Cli.Notification.
+		_, _ = h.cli.Notification.
 			Create().
 			SetMessage(msg).
 			SetUser(u).

@@ -1,0 +1,42 @@
+package di
+
+import (
+	"net/http"
+
+	excrossref "github.com/SURF-Innovatie/MORIS/external/crossref"
+	exorcid "github.com/SURF-Innovatie/MORIS/external/orcid"
+	"github.com/SURF-Innovatie/MORIS/external/raid"
+	exsurfconext "github.com/SURF-Innovatie/MORIS/external/surfconext"
+	exzenodo "github.com/SURF-Innovatie/MORIS/external/zenodo"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
+	"github.com/samber/do/v2"
+)
+
+func provideORCIDClient(i do.Injector) (*exorcid.Client, error) {
+	opts := env.ORCIDOptionsFromEnv()
+	return exorcid.NewClient(http.DefaultClient, opts), nil
+}
+
+func provideSurfconextClient(i do.Injector) (*exsurfconext.Client, error) {
+	opts := env.SurfconextOptionsFromEnv()
+	return exsurfconext.NewClient(http.DefaultClient, opts), nil
+}
+
+func provideZenodoClient(i do.Injector) (*exzenodo.Client, error) {
+	opts := env.ZenodoOptionsFromEnv()
+	return exzenodo.NewClient(http.DefaultClient, opts), nil
+}
+
+func provideCrossrefClient(i do.Injector) (excrossref.Client, error) {
+	cfg := &excrossref.Config{
+		BaseURL:   "https://api.crossref.org",
+		UserAgent: "MORIS/1.0 (mailto:support@moris.org)",
+		Mailto:    "support@moris.org",
+	}
+	return excrossref.NewClient(cfg), nil
+}
+
+func provideRAiDClient(i do.Injector) (*raid.Client, error) {
+	opts := raid.DefaultOptions()
+	return raid.NewClient(http.DefaultClient, opts), nil
+}

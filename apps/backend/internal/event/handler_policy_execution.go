@@ -12,8 +12,12 @@ import (
 
 // PolicyExecutionHandler executes event policies for occurred events
 type PolicyExecutionHandler struct {
-	Evaluator  eventpolicy.Evaluator
-	ProjectSvc queries.Service
+	evaluator  eventpolicy.Evaluator
+	projectSvc queries.Service
+}
+
+func NewPolicyExecutionHandler(evaluator eventpolicy.Evaluator, projectSvc queries.Service) *PolicyExecutionHandler {
+	return &PolicyExecutionHandler{evaluator: evaluator, projectSvc: projectSvc}
 }
 
 func (h *PolicyExecutionHandler) Handle(ctx context.Context, event events.Event) error {
@@ -33,7 +37,7 @@ func (h *PolicyExecutionHandler) Handle(ctx context.Context, event events.Event)
 
 	// Fetch project to context (Evaluator needs it for conditions)
 	// Uses GetProject to retrieve the full project aggregate state
-	details, err := h.ProjectSvc.GetProject(ctx, projectID)
+	details, err := h.projectSvc.GetProject(ctx, projectID)
 	if err != nil {
 		if err == queries.ErrNotFound {
 			return nil
@@ -45,5 +49,5 @@ func (h *PolicyExecutionHandler) Handle(ctx context.Context, event events.Event)
 		return nil
 	}
 
-	return h.Evaluator.EvaluateAndExecute(ctx, event, &details.Project)
+	return h.evaluator.EvaluateAndExecute(ctx, event, &details.Project)
 }

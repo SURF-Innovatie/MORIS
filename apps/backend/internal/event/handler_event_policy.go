@@ -13,8 +13,12 @@ import (
 // EventPolicyHandler handles EventPolicyAdded, EventPolicyRemoved, and EventPolicyUpdated events
 // to persist/update/remove policies when these events are processed
 type EventPolicyHandler struct {
-	PolicyRepo eventpolicy.Repository
-	Cli        *ent.Client
+	policyRepo eventpolicy.Repository
+	cli        *ent.Client
+}
+
+func NewEventPolicyHandler(policyRepo eventpolicy.Repository, cli *ent.Client) *EventPolicyHandler {
+	return &EventPolicyHandler{policyRepo: policyRepo, cli: cli}
 }
 
 func (h *EventPolicyHandler) Handle(ctx context.Context, event events.Event) error {
@@ -46,7 +50,7 @@ func (h *EventPolicyHandler) handlePolicyAdded(ctx context.Context, e *events.Ev
 		Enabled:                 e.Enabled,
 	}
 
-	_, err := h.PolicyRepo.Create(ctx, policy)
+	_, err := h.policyRepo.Create(ctx, policy)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create policy from event")
 		return err
@@ -57,7 +61,7 @@ func (h *EventPolicyHandler) handlePolicyAdded(ctx context.Context, e *events.Ev
 }
 
 func (h *EventPolicyHandler) handlePolicyRemoved(ctx context.Context, e *events.EventPolicyRemoved) error {
-	err := h.PolicyRepo.Delete(ctx, e.PolicyID)
+	err := h.policyRepo.Delete(ctx, e.PolicyID)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to delete policy from event")
 		return err
@@ -84,7 +88,7 @@ func (h *EventPolicyHandler) handlePolicyUpdated(ctx context.Context, e *events.
 		Enabled:                 e.Enabled,
 	}
 
-	_, err := h.PolicyRepo.Update(ctx, e.PolicyID, policy)
+	_, err := h.policyRepo.Update(ctx, e.PolicyID, policy)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to update policy from event")
 		return err

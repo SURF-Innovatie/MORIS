@@ -35,8 +35,20 @@ type service struct {
 	statusChangeHandlers []StatusChangeHandler
 }
 
-func NewService(es eventstore.Store, cli *ent.Client, notifier notification.Service) Service {
-	return &service{es: es, cli: cli, notifier: notifier}
+func NewService(
+	es eventstore.Store,
+	cli *ent.Client,
+	notifier notification.Service,
+	notificationHandlers []NotificationHandler,
+	statusChangeHandlers []StatusChangeHandler,
+) Service {
+	return &service{
+		es:                   es,
+		cli:                  cli,
+		notifier:             notifier,
+		notificationHandlers: notificationHandlers,
+		statusChangeHandlers: statusChangeHandlers,
+	}
 }
 
 func (s *service) RegisterNotificationHandler(handler NotificationHandler) {

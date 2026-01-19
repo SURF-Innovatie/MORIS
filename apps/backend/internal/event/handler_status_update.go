@@ -11,8 +11,12 @@ import (
 )
 
 type StatusUpdateNotificationHandler struct {
-	Notifier notifservice.Service
-	Cli      *ent.Client
+	notifier notifservice.Service
+	cli      *ent.Client
+}
+
+func NewStatusUpdateHandler(cli *ent.Client) *StatusUpdateNotificationHandler {
+	return &StatusUpdateNotificationHandler{cli: cli}
 }
 
 func (h *StatusUpdateNotificationHandler) Handle(ctx context.Context, e events.Event) error {
@@ -21,7 +25,7 @@ func (h *StatusUpdateNotificationHandler) Handle(ctx context.Context, e events.E
 		return nil
 	}
 
-	u, err := ResolveUser(ctx, h.Cli, e.CreatedByID())
+	u, err := ResolveUser(ctx, h.cli, e.CreatedByID())
 	if err != nil || u == nil {
 		return err
 	}
@@ -37,7 +41,7 @@ func (h *StatusUpdateNotificationHandler) Handle(ctx context.Context, e events.E
 
 	msg := fmt.Sprintf("Your request '%s' has been %s.", friendlyName, status)
 
-	_, err = h.Cli.Notification.
+	_, err = h.cli.Notification.
 		Create().
 		SetMessage(msg).
 		SetUser(u).
