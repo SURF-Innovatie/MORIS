@@ -50,6 +50,15 @@ func (r OrganisationResponse) FromEntity(n entities.OrganisationNode) Organisati
 	}
 }
 
+type OrganisationTreeNode struct {
+	ID          uuid.UUID              `json:"id"`
+	Name        string                 `json:"name"`
+	Description *string                `json:"description,omitempty"`
+	AvatarURL   *string                `json:"avatarUrl,omitempty"`
+	RorID       *string                `json:"rorId,omitempty"`
+	Children    []OrganisationTreeNode `json:"children"`
+}
+
 type CustomFieldDefinitionCreateRequest struct {
 	Name            string  `json:"name"`
 	Type            string  `json:"type" example:"TEXT"`        // TEXT, NUMBER, BOOLEAN, DATE

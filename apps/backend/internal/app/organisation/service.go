@@ -21,6 +21,7 @@ type Service interface {
 
 	ListRoots(ctx context.Context) ([]entities.OrganisationNode, error)
 	ListChildren(ctx context.Context, parentID uuid.UUID) ([]entities.OrganisationNode, error)
+	ListAll(ctx context.Context) ([]entities.OrganisationNode, error)
 	Search(ctx context.Context, query string) ([]entities.OrganisationNode, error)
 	SearchForProjectCreation(ctx context.Context, query string, actorID uuid.UUID) ([]entities.OrganisationNode, error)
 	UpdateMemberCustomFields(ctx context.Context, orgID uuid.UUID, personID uuid.UUID, values map[string]interface{}) error
@@ -104,6 +105,10 @@ func (s *service) ListRoots(ctx context.Context) ([]entities.OrganisationNode, e
 
 func (s *service) ListChildren(ctx context.Context, parentID uuid.UUID) ([]entities.OrganisationNode, error) {
 	return s.repo.ListChildren(ctx, parentID)
+}
+
+func (s *service) ListAll(ctx context.Context) ([]entities.OrganisationNode, error) {
+	return s.repo.ListAll(ctx)
 }
 
 func (s *service) Search(ctx context.Context, query string) ([]entities.OrganisationNode, error) {

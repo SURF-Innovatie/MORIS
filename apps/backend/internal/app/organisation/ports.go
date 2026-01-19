@@ -16,6 +16,7 @@ type Repository interface {
 
 	ListRoots(ctx context.Context) ([]entities.OrganisationNode, error)
 	ListChildren(ctx context.Context, parentID uuid.UUID) ([]entities.OrganisationNode, error)
+	ListAll(ctx context.Context) ([]entities.OrganisationNode, error)
 	Search(ctx context.Context, query string, limit int) ([]entities.OrganisationNode, error)
 
 	InsertClosure(ctx context.Context, ancestorID, descendantID uuid.UUID, depth int) error
