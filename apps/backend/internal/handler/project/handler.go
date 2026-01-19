@@ -4,22 +4,25 @@ import (
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	appauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/app/customfield"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
+	"github.com/SURF-Innovatie/MORIS/pkg/odrl"
 	"github.com/samber/lo"
 )
 
 type Handler struct {
 	svc            queries.Service
 	customFieldSvc customfield.Service
+	currentUser    appauth.CurrentUserProvider
 }
 
-func NewHandler(svc queries.Service, cfs customfield.Service) *Handler {
-	return &Handler{svc: svc, customFieldSvc: cfs}
+func NewHandler(svc queries.Service, cfs customfield.Service, cu appauth.CurrentUserProvider) *Handler {
+	return &Handler{svc: svc, customFieldSvc: cfs, currentUser: cu}
 }
 
 // GetProject godoc
@@ -229,4 +232,52 @@ func (h *Handler) ListAvailableCustomFields(w http.ResponseWriter, r *http.Reque
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOs[dto.CustomFieldDefinitionResponse](defs))
+}
+
+// GetODRLPolicy godoc
+// @Summary Get ODRL policy for a project
+// @Description Retrieves an ODRL policy document expressing the current user's permissions in the project
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Project ID (UUID)"
+// @Success 200 {object} odrl.Policy
+// @Failure 400 {string} string "invalid project id"
+// @Failure 500 {string} string "internal server error"
+// @Router /projects/{id}/odrl-policy [get]
+func (h *Handler) GetODRLPolicy(w http.ResponseWriter, r *http.Request) {
+	id, err := httputil.ParseUUIDParam(r, "id")
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project id", nil)
+		return
+	}
+
+	// Get user's allowed event types for this project
+	allowedEvents, err := h.svc.GetAllowedEventTypes(r.Context(), id)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	// Get current user ID for the assignee
+	u, err := h.currentUser.Current(r.Context())
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	userID := u.UserID()
+
+	// Build the ODRL policy
+	projectURI := "urn:moris:project:" + id.String()
+	userURI := "urn:moris:user:" + userID.String()
+
+	policy := odrl.NewSet(projectURI + ":policy")
+	for _, eventType := range allowedEvents {
+		policy.AddPermission(odrl.NewPermission(eventType).
+			WithTarget(projectURI).
+			WithAssignee(userURI))
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, policy)
 }

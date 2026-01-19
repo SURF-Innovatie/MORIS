@@ -9,4 +9,5 @@ func MountProjectRoutes(r chi.Router, h *Handler) {
 	r.Get("/{id}/pending-events", h.GetPendingEvents)
 	r.Get("/{id}/allowed-events", h.GetAllowedEvents)
 	r.Get("/{id}/custom-fields", h.ListAvailableCustomFields)
+	r.Get("/{id}/odrl-policy", h.GetODRLPolicy)
 }

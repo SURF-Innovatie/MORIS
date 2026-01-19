@@ -152,7 +152,8 @@ func provideEventPolicyHTTPHandler(i do.Injector) (*eventpolicyhandler.Handler, 
 func provideProjectHandler(i do.Injector) (*projecthandler.Handler, error) {
 	svc := do.MustInvoke[queries.Service](i)
 	cfSvc := do.MustInvoke[customfield.Service](i)
-	return projecthandler.NewHandler(svc, cfSvc), nil
+	curUser := do.MustInvoke[coreauth.CurrentUserProvider](i)
+	return projecthandler.NewHandler(svc, cfSvc, curUser), nil
 }
 
 func provideProjectCommandHandler(i do.Injector) (*commandhandler.Handler, error) {
