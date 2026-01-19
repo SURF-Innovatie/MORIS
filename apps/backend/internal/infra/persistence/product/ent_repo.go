@@ -49,13 +49,19 @@ func (r *EntRepo) ListByAuthorPersonID(ctx context.Context, personID uuid.UUID) 
 }
 
 func (r *EntRepo) Create(ctx context.Context, p entities.Product) (*entities.Product, error) {
-	row, err := r.cli.Product.Create().
+	builder := r.cli.Product.Create().
 		SetName(p.Name).
 		SetType(int(p.Type)).
 		SetNillableLanguage(&p.Language).
 		SetNillableDoi(&p.DOI).
-		SetNillableZenodoDepositionID(&p.ZenodoDepositionID).
-		Save(ctx)
+		SetNillableZenodoDepositionID(&p.ZenodoDepositionID)
+
+	// Link the product to its author if provided
+	if p.AuthorPersonID != uuid.Nil {
+		builder = builder.AddAuthorIDs(p.AuthorPersonID)
+	}
+
+	row, err := builder.Save(ctx)
 	if err != nil {
 		return nil, err
 	}
