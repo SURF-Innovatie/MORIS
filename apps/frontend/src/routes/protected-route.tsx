@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 interface ProtectedRouteProps {
@@ -6,8 +6,13 @@ interface ProtectedRouteProps {
   requireSysAdmin?: boolean;
 }
 
-export default function ProtectedRoute({ children, requireSysAdmin }: ProtectedRouteProps) {
+export default function ProtectedRoute({
+  children,
+  requireSysAdmin,
+}: ProtectedRouteProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
+
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -18,7 +23,12 @@ export default function ProtectedRoute({ children, requireSysAdmin }: ProtectedR
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return (
+      <Navigate
+        to={`/?returnUrl=${encodeURIComponent(location.pathname + location.search)}`}
+        replace
+      />
+    );
   }
 
   if (requireSysAdmin && !user?.is_sys_admin) {
