@@ -12,6 +12,7 @@ import {
   Folder,
   Package,
   Building2,
+  Settings,
 } from "lucide-react";
 
 import { Button } from "../ui/button";
@@ -34,14 +35,12 @@ const NAV_GROUPS = [
     items: [
       { to: "/dashboard/projects", label: "Projects", icon: Folder },
       { to: "/dashboard/products", label: "Products", icon: Package },
-      { to: "/dashboard/organisations", label: "My Organisations", icon: Building2 },
+      {
+        to: "/dashboard/organisations",
+        label: "My Organisations",
+        icon: Building2,
+      },
       // { to: "/dashboard/datasets", label: "Datasets", icon: Database },
-    ],
-  },
-  {
-    label: "Settings",
-    items: [
-      { to: "/dashboard/profile", label: "Profile", icon: User },
     ],
   },
 ];
@@ -57,14 +56,18 @@ export const ExpandableNavbar = () => {
     ...NAV_GROUPS,
     ...(user?.is_sys_admin
       ? [
-        {
-          label: "Admin",
-          items: [
-            { to: "/dashboard/admin/users", label: "Users", icon: User },
-            { to: "/dashboard/admin/organisations", label: "Organisations", icon: Building2 },
-          ],
-        },
-      ]
+          {
+            label: "Admin",
+            items: [
+              { to: "/dashboard/admin/users", label: "Users", icon: User },
+              {
+                to: "/dashboard/admin/organisations",
+                label: "Organisations",
+                icon: Building2,
+              },
+            ],
+          },
+        ]
       : []),
   ];
 
@@ -156,6 +159,17 @@ export const ExpandableNavbar = () => {
               )}
               <Button
                 size="sm"
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={() => {
+                  navigate("/dashboard/settings");
+                  setIsMobileOpen(false);
+                }}
+              >
+                <Settings className="mr-2 h-4 w-4" aria-hidden /> Settings
+              </Button>
+              <Button
+                size="sm"
                 variant="destructive"
                 className="w-full justify-start"
                 onClick={handleLogout}
@@ -201,7 +215,7 @@ export const ExpandableNavbar = () => {
                     ].join(" ")
                   }
                 >
-                  <Icon className="h-5 w-5 flex-shrink-0" aria-hidden />
+                  <Icon className="h-5 w-5 shrink-0" aria-hidden />
                   <span className="font-medium flex-1">{label}</span>
                   {showBadge && unreadCount > 0 && (
                     <Badge
@@ -228,6 +242,15 @@ export const ExpandableNavbar = () => {
               {user?.email}
             </div>
           )}
+          <Button
+            size="sm"
+            variant="ghost"
+            className="w-full justify-start"
+            onClick={() => navigate("/dashboard/settings")}
+          >
+            <Settings className="h-4 w-4 mr-2" aria-hidden />
+            Settings
+          </Button>
           <Button
             size="sm"
             variant="destructive"

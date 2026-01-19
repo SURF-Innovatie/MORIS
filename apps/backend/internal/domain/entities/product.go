@@ -14,6 +14,7 @@ type Product struct {
 	Name               string
 	DOI                string
 	ZenodoDepositionID int
+	AuthorPersonID     uuid.UUID
 }
 
 type ProductType int

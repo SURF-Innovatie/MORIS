@@ -3,6 +3,7 @@ package analytics
 import (
 	"context"
 
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
 
@@ -17,26 +18,26 @@ func NewService(repo Repository) *Service {
 }
 
 // GetOrgSummary returns overall statistics for an organization
-func (s *Service) GetOrgSummary(ctx context.Context, orgID uuid.UUID) (OrgAnalyticsSummary, error) {
+func (s *Service) GetOrgSummary(ctx context.Context, orgID uuid.UUID) (entities.OrgAnalyticsSummary, error) {
 	return s.repo.GetOrgSummary(ctx, orgID)
 }
 
 // GetBurnRateData returns time-series burn rate data
-func (s *Service) GetBurnRateData(ctx context.Context, orgID uuid.UUID, params DateRangeParams) ([]BurnRateDataPoint, error) {
+func (s *Service) GetBurnRateData(ctx context.Context, orgID uuid.UUID, params entities.DateRangeParams) ([]entities.BurnRateDataPoint, error) {
 	return s.repo.GetBurnRateData(ctx, orgID, params)
 }
 
 // GetCategoryBreakdown returns spending grouped by category
-func (s *Service) GetCategoryBreakdown(ctx context.Context, orgID uuid.UUID) ([]CategoryBreakdown, error) {
+func (s *Service) GetCategoryBreakdown(ctx context.Context, orgID uuid.UUID) ([]entities.CategoryBreakdown, error) {
 	return s.repo.GetCategoryBreakdown(ctx, orgID)
 }
 
 // GetProjectHealth returns health summary for all projects
-func (s *Service) GetProjectHealth(ctx context.Context, orgID uuid.UUID) ([]ProjectHealthSummary, error) {
+func (s *Service) GetProjectHealth(ctx context.Context, orgID uuid.UUID) ([]entities.ProjectHealthSummary, error) {
 	return s.repo.GetProjectHealth(ctx, orgID)
 }
 
 // GetFundingBreakdown returns spending grouped by funding source
-func (s *Service) GetFundingBreakdown(ctx context.Context, orgID uuid.UUID) ([]FundingBreakdown, error) {
+func (s *Service) GetFundingBreakdown(ctx context.Context, orgID uuid.UUID) ([]entities.FundingBreakdown, error) {
 	return s.repo.GetFundingBreakdown(ctx, orgID)
 }

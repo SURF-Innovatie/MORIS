@@ -10,7 +10,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/budgetlineitem"
 	"github.com/SURF-Innovatie/MORIS/ent/event"
 	"github.com/SURF-Innovatie/MORIS/ent/organisationnodeclosure"
-	"github.com/SURF-Innovatie/MORIS/internal/app/analytics"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
 )
@@ -91,13 +91,13 @@ func (r *EntRepository) getProjectIDsForOrg(ctx context.Context, orgID uuid.UUID
 	return projectIDs, nil
 }
 
-func (r *EntRepository) GetOrgSummary(ctx context.Context, orgID uuid.UUID) (analytics.OrgAnalyticsSummary, error) {
+func (r *EntRepository) GetOrgSummary(ctx context.Context, orgID uuid.UUID) (entities.OrgAnalyticsSummary, error) {
 	projectIDs, err := r.getProjectIDsForOrg(ctx, orgID)
 	if err != nil {
-		return analytics.OrgAnalyticsSummary{}, err
+		return entities.OrgAnalyticsSummary{}, err
 	}
 	if len(projectIDs) == 0 {
-		return analytics.OrgAnalyticsSummary{}, nil
+		return entities.OrgAnalyticsSummary{}, nil
 	}
 
 	budgets, err := r.client.Budget.Query().
@@ -108,10 +108,10 @@ func (r *EntRepository) GetOrgSummary(ctx context.Context, orgID uuid.UUID) (ana
 		All(ctx)
 
 	if err != nil {
-		return analytics.OrgAnalyticsSummary{}, err
+		return entities.OrgAnalyticsSummary{}, err
 	}
 
-	var summary analytics.OrgAnalyticsSummary
+	var summary entities.OrgAnalyticsSummary
 	summary.TotalProjects = len(budgets)
 
 	for _, b := range budgets {
@@ -155,13 +155,13 @@ func (r *EntRepository) GetOrgSummary(ctx context.Context, orgID uuid.UUID) (ana
 	return summary, nil
 }
 
-func (r *EntRepository) GetBurnRateData(ctx context.Context, orgID uuid.UUID, params analytics.DateRangeParams) ([]analytics.BurnRateDataPoint, error) {
+func (r *EntRepository) GetBurnRateData(ctx context.Context, orgID uuid.UUID, params entities.DateRangeParams) ([]entities.BurnRateDataPoint, error) {
 	projectIDs, err := r.getProjectIDsForOrg(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 	if len(projectIDs) == 0 {
-		return []analytics.BurnRateDataPoint{}, nil
+		return []entities.BurnRateDataPoint{}, nil
 	}
 
 	query := r.client.BudgetActual.Query().
@@ -179,12 +179,12 @@ func (r *EntRepository) GetBurnRateData(ctx context.Context, orgID uuid.UUID, pa
 		return nil, err
 	}
 
-	var points []analytics.BurnRateDataPoint
+	var points []entities.BurnRateDataPoint
 	var runningTotal float64
 
 	for _, act := range actuals {
 		runningTotal += act.Amount
-		points = append(points, analytics.BurnRateDataPoint{
+		points = append(points, entities.BurnRateDataPoint{
 			Date:     act.RecordedDate,
 			Actual:   runningTotal,
 			Budgeted: 0,
@@ -194,13 +194,13 @@ func (r *EntRepository) GetBurnRateData(ctx context.Context, orgID uuid.UUID, pa
 	return points, nil
 }
 
-func (r *EntRepository) GetCategoryBreakdown(ctx context.Context, orgID uuid.UUID) ([]analytics.CategoryBreakdown, error) {
+func (r *EntRepository) GetCategoryBreakdown(ctx context.Context, orgID uuid.UUID) ([]entities.CategoryBreakdown, error) {
 	projectIDs, err := r.getProjectIDsForOrg(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 	if len(projectIDs) == 0 {
-		return []analytics.CategoryBreakdown{}, nil
+		return []entities.CategoryBreakdown{}, nil
 	}
 
 	items, err := r.client.BudgetLineItem.Query().
@@ -212,12 +212,12 @@ func (r *EntRepository) GetCategoryBreakdown(ctx context.Context, orgID uuid.UUI
 		return nil, err
 	}
 
-	categoryMap := make(map[string]*analytics.CategoryBreakdown)
+	categoryMap := make(map[string]*entities.CategoryBreakdown)
 
 	for _, item := range items {
 		cat := item.Category.String()
 		if _, exists := categoryMap[cat]; !exists {
-			categoryMap[cat] = &analytics.CategoryBreakdown{Category: cat}
+			categoryMap[cat] = &entities.CategoryBreakdown{Category: cat}
 		}
 
 		budgeted := item.BudgetedAmount
@@ -231,7 +231,7 @@ func (r *EntRepository) GetCategoryBreakdown(ctx context.Context, orgID uuid.UUI
 		categoryMap[cat].Remaining += (budgeted - actuals)
 	}
 
-	var result []analytics.CategoryBreakdown
+	var result []entities.CategoryBreakdown
 	for _, v := range categoryMap {
 		result = append(result, *v)
 	}
@@ -239,13 +239,13 @@ func (r *EntRepository) GetCategoryBreakdown(ctx context.Context, orgID uuid.UUI
 	return result, nil
 }
 
-func (r *EntRepository) GetProjectHealth(ctx context.Context, orgID uuid.UUID) ([]analytics.ProjectHealthSummary, error) {
+func (r *EntRepository) GetProjectHealth(ctx context.Context, orgID uuid.UUID) ([]entities.ProjectHealthSummary, error) {
 	projectIDs, err := r.getProjectIDsForOrg(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 	if len(projectIDs) == 0 {
-		return []analytics.ProjectHealthSummary{}, nil
+		return []entities.ProjectHealthSummary{}, nil
 	}
 
 	budgets, err := r.client.Budget.Query().
@@ -259,7 +259,7 @@ func (r *EntRepository) GetProjectHealth(ctx context.Context, orgID uuid.UUID) (
 		return nil, err
 	}
 
-	var healths []analytics.ProjectHealthSummary
+	var healths []entities.ProjectHealthSummary
 
 	for _, b := range budgets {
 		var actuals float64
@@ -283,7 +283,7 @@ func (r *EntRepository) GetProjectHealth(ctx context.Context, orgID uuid.UUID) (
 			status = "warning"
 		}
 
-		h := analytics.ProjectHealthSummary{
+		h := entities.ProjectHealthSummary{
 			ProjectID:   b.ProjectID,
 			BudgetID:    b.ID,
 			Budgeted:    budgeted,
@@ -300,13 +300,13 @@ func (r *EntRepository) GetProjectHealth(ctx context.Context, orgID uuid.UUID) (
 	return healths, nil
 }
 
-func (r *EntRepository) GetFundingBreakdown(ctx context.Context, orgID uuid.UUID) ([]analytics.FundingBreakdown, error) {
+func (r *EntRepository) GetFundingBreakdown(ctx context.Context, orgID uuid.UUID) ([]entities.FundingBreakdown, error) {
 	projectIDs, err := r.getProjectIDsForOrg(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 	if len(projectIDs) == 0 {
-		return []analytics.FundingBreakdown{}, nil
+		return []entities.FundingBreakdown{}, nil
 	}
 
 	items, err := r.client.BudgetLineItem.Query().
@@ -318,7 +318,7 @@ func (r *EntRepository) GetFundingBreakdown(ctx context.Context, orgID uuid.UUID
 		return nil, err
 	}
 
-	fundingMap := make(map[string]*analytics.FundingBreakdown)
+	fundingMap := make(map[string]*entities.FundingBreakdown)
 
 	for _, item := range items {
 		source := item.FundingSource.String()
@@ -327,7 +327,7 @@ func (r *EntRepository) GetFundingBreakdown(ctx context.Context, orgID uuid.UUID
 		}
 
 		if _, exists := fundingMap[source]; !exists {
-			fundingMap[source] = &analytics.FundingBreakdown{FundingSource: source}
+			fundingMap[source] = &entities.FundingBreakdown{FundingSource: source}
 		}
 
 		budgeted := item.BudgetedAmount
@@ -341,7 +341,7 @@ func (r *EntRepository) GetFundingBreakdown(ctx context.Context, orgID uuid.UUID
 		fundingMap[source].Remaining += (budgeted - actuals)
 	}
 
-	var result []analytics.FundingBreakdown
+	var result []entities.FundingBreakdown
 	for _, v := range fundingMap {
 		result = append(result, *v)
 	}

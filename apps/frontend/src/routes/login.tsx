@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useLogin } from "@/hooks/useLogin";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -15,14 +15,16 @@ export default function LoginPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isSurfconextLoading, setIsSurfconextLoading] = useState(false);
 
-  // Redirect to dashboard if already authenticated
+  // Redirect to dashboard or returnUrl if already authenticated
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      navigate("/dashboard", { replace: true });
+      const returnUrl = searchParams.get("returnUrl");
+      navigate(returnUrl || "/dashboard", { replace: true });
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, navigate, searchParams]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +38,7 @@ export default function LoginPage() {
             variant: "destructive",
           });
         },
-      }
+      },
     );
   };
 
@@ -44,18 +46,34 @@ export default function LoginPage() {
     setIsSurfconextLoading(true);
     try {
       const response = await AXIOS_INSTANCE.get<{ url: string }>(
-        "/auth/surfconext/url"
+        "/auth/surfconext/url",
       );
       if (response.data?.url) {
-        window.location.href = response.data.url;
+        // Append returnUrl to the Surfconext callback URL if present
+        const returnUrl = searchParams.get("returnUrl");
+        let redirectUrl = response.data.url;
+        if (returnUrl) {
+          // Assuming the backend handles a 'state' or determines the redirect after callback based on a param
+          // But since the current flow is strictly frontend-param based for after-login redirect:
+          // The Surfconext callback route needs to handle this.
+          // For now, let's just ensure standard login works.
+          // If Surfconext needs it, it usually involves passing state to the IdP.
+          // Let's stick to the plan which prioritized standard login first.
+          // Wait, if I am redirected to Surfconext, I leave the app.
+          // When I come back to /surfconext-callback, I lose the returnUrl unless I persist it.
+          // Use localStorage to persist returnUrl before leaving.
+          if (returnUrl) {
+            sessionStorage.setItem("auth_return_url", returnUrl);
+          }
+        }
+        window.location.href = redirectUrl;
       } else {
         throw new Error("No authorization URL received");
       }
     } catch (error: any) {
       toast({
         title: "Error",
-        description:
-          error.message || "Failed to initiate SURFconext login",
+        description: error.message || "Failed to initiate SURFconext login",
         variant: "destructive",
       });
       setIsSurfconextLoading(false);
@@ -109,7 +127,11 @@ export default function LoginPage() {
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={isPending || isSurfconextLoading}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isPending || isSurfconextLoading}
+          >
             {isPending ? "Signing in..." : "Sign In"}
           </Button>
         </form>

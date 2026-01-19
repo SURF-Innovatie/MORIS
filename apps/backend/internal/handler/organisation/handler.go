@@ -12,7 +12,8 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
-	"github.com/sirupsen/logrus"
+	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 )
 
 type Handler struct {
@@ -387,7 +388,7 @@ func (h *Handler) CreateProjectRole(w http.ResponseWriter, r *http.Request) {
 
 	id, err := httputil.ParseUUIDParam(r, "id")
 	if err != nil {
-		logrus.Debugf("CreateProjectRole: invalid id param: %v", err)
+		log.Debug().Err(err).Msg("CreateProjectRole: invalid id param")
 		httputil.WriteError(w, r, http.StatusBadRequest, "invalid id", nil)
 		return
 	}
@@ -764,4 +765,140 @@ func (h *Handler) UpdateMemberCustomFields(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// GetTree godoc
+// @Summary Get the entire organisation tree
+// @Description Retrieves the full organisation hierarchy as a tree structure. Requires SysAdmin privileges.
+// @Tags organisation
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {array} dto.OrganisationTreeNode
+// @Failure 401 {string} string "unauthorized"
+// @Failure 403 {string} string "forbidden"
+// @Failure 500 {string} string "internal server error"
+// @Router /organisation-nodes/tree [get]
+func (h *Handler) GetTree(w http.ResponseWriter, r *http.Request) {
+	user, ok := httputil.GetUserFromContext(r.Context())
+	if !ok {
+		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
+		return
+	}
+
+	if !user.User.IsSysAdmin {
+		httputil.WriteError(w, r, http.StatusForbidden, "forbidden", nil)
+		return
+	}
+
+	nodes, err := h.svc.ListAll(r.Context())
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	tree := h.buildTree(nodes)
+	_ = httputil.WriteJSON(w, http.StatusOK, tree)
+}
+
+func (h *Handler) buildTree(nodes []entities.OrganisationNode) []dto.OrganisationTreeNode {
+	// Map ID -> Node
+	nodeMap := make(map[uuid.UUID]*dto.OrganisationTreeNode)
+	for _, n := range nodes {
+		nodeMap[n.ID] = &dto.OrganisationTreeNode{
+			ID:          n.ID,
+			Name:        n.Name,
+			Description: n.Description,
+			AvatarURL:   n.AvatarURL,
+			RorID:       n.RorID,
+			Children:    make([]dto.OrganisationTreeNode, 0),
+		}
+	}
+
+	var roots []dto.OrganisationTreeNode
+
+	// Assign children to parents
+	for _, n := range nodes {
+		child := nodeMap[n.ID]
+		if n.ParentID != nil {
+			if parent, ok := nodeMap[*n.ParentID]; ok {
+				parent.Children = append(parent.Children, *child)
+			} else {
+				// Parent not found (orphan?), treat as root for safety or log warning
+				roots = append(roots, *child)
+			}
+		} else {
+			roots = append(roots, *child)
+		}
+	}
+
+	// Re-assign children in parents (because we appended to *entry in map, but we need to ensure the slice in map is updated correctly if we were appending to a copy,
+	// but here we appended to the slice field of the pointer, so it should be fine.
+	// HOWEVER, appending to a slice *header* inside a struct pointer works for the slice header in that struct,
+	// but wait:
+	// parent.Children = append(parent.Children, *child)
+	// 'parent' is a pointer to the struct in map. 'parent.Children' is the slice header.
+	// We are updating the slice header in the struct in the map.
+	// So subsequent lookups of 'parent' WILL see the new child.
+	// BUT, 'child' itself (the one we appended) is a COPY of the struct at that moment.
+	// If 'child' later gets its own children, 'parent' will have a copy of 'child' WITHOUT those new children.
+	// This is a common pitfall. We need to do this in two passes or use pointers in children slice then convert.
+	// Or, more simply, use pointers for children during build.
+
+	return h.buildTreeCorrectly(nodes)
+}
+
+func (h *Handler) buildTreeCorrectly(nodes []entities.OrganisationNode) []dto.OrganisationTreeNode {
+	// 1. Create a map of ID -> *DTO (using pointers for children to allow updates)
+	type info struct {
+		node     dto.OrganisationTreeNode
+		parentID *uuid.UUID
+		ptr      *dto.OrganisationTreeNode
+	}
+
+	// We'll use a slightly different approach:
+	// Map of ID -> *dto.OrganisationTreeNode
+	// But dto.Children is []dto.OrganisationTreeNode (values).
+	// Modifying a value in a slice is hard if we don't have the index.
+
+	// Better approach:
+	// 1. Group by ParentID
+	// 2. Recursively build tree
+
+	childrenMap := make(map[uuid.UUID][]entities.OrganisationNode)
+	var roots []entities.OrganisationNode
+
+	for _, n := range nodes {
+		if n.ParentID == nil {
+			roots = append(roots, n)
+		} else {
+			childrenMap[*n.ParentID] = append(childrenMap[*n.ParentID], n)
+		}
+	}
+
+	return h.assembleTree(roots, childrenMap)
+}
+
+func (h *Handler) assembleTree(currentLevel []entities.OrganisationNode, childrenMap map[uuid.UUID][]entities.OrganisationNode) []dto.OrganisationTreeNode {
+	result := make([]dto.OrganisationTreeNode, len(currentLevel))
+
+	for i, node := range currentLevel {
+		converted := dto.OrganisationTreeNode{
+			ID:          node.ID,
+			Name:        node.Name,
+			Description: node.Description,
+			AvatarURL:   node.AvatarURL,
+			RorID:       node.RorID,
+		}
+
+		if children, ok := childrenMap[node.ID]; ok {
+			converted.Children = h.assembleTree(children, childrenMap)
+		} else {
+			converted.Children = make([]dto.OrganisationTreeNode, 0)
+		}
+
+		result[i] = converted
+	}
+
+	return result
 }

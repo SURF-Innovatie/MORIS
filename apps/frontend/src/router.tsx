@@ -61,7 +61,7 @@ export function createAppRouter() {
               element: <ProductsRoute />,
             },
             {
-              path: "profile",
+              path: "settings",
               element: <ProfileRoute />,
             },
             {

@@ -3,6 +3,7 @@ package dto
 import (
 	"time"
 
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
@@ -26,6 +27,27 @@ type BudgetResponse struct {
 	TotalActuals  float64 `json:"totalActuals"`
 	Remaining     float64 `json:"remaining"`
 	BurnRate      float64 `json:"burnRate"` // Percentage
+}
+
+func (d BudgetResponse) FromEntity(e entities.Budget) BudgetResponse {
+	summary := e.CalculateSummary()
+	return BudgetResponse{
+		ID:            e.ID,
+		ProjectID:     e.ProjectID,
+		Title:         e.Title,
+		Description:   e.Description,
+		Status:        e.Status,
+		TotalAmount:   e.TotalAmount,
+		Currency:      e.Currency,
+		Version:       e.Version,
+		CreatedAt:     e.CreatedAt,
+		UpdatedAt:     e.UpdatedAt,
+		LineItems:     transform.ToDTOs[BudgetLineItemResponse](e.LineItems),
+		TotalBudgeted: summary.TotalBudgeted,
+		TotalActuals:  summary.TotalActuals,
+		Remaining:     summary.Remaining,
+		BurnRate:      summary.BurnRate,
+	}
 }
 
 // BudgetSummaryResponse is a lightweight list view of budgets
@@ -55,6 +77,22 @@ type BudgetLineItemResponse struct {
 	Remaining    float64 `json:"remaining"`
 }
 
+func (d BudgetLineItemResponse) FromEntity(e entities.BudgetLineItem) BudgetLineItemResponse {
+	totalActuals := e.CalculateActualTotal()
+	return BudgetLineItemResponse{
+		ID:             e.ID,
+		BudgetID:       e.BudgetID,
+		Category:       e.Category,
+		Description:    e.Description,
+		BudgetedAmount: e.BudgetedAmount,
+		Year:           e.Year,
+		FundingSource:  e.FundingSource,
+		Actuals:        transform.ToDTOs[BudgetActualResponse](e.Actuals),
+		TotalActuals:   totalActuals,
+		Remaining:      e.BudgetedAmount - totalActuals,
+	}
+}
+
 // BudgetActualResponse represents an actual expenditure
 type BudgetActualResponse struct {
 	ID           uuid.UUID `json:"id"`
@@ -64,6 +102,18 @@ type BudgetActualResponse struct {
 	RecordedDate time.Time `json:"recordedDate"`
 	Source       string    `json:"source"`
 	ExternalRef  string    `json:"externalRef,omitempty"`
+}
+
+func (d BudgetActualResponse) FromEntity(e entities.BudgetActual) BudgetActualResponse {
+	return BudgetActualResponse{
+		ID:           e.ID,
+		LineItemID:   e.LineItemID,
+		Amount:       e.Amount,
+		Description:  e.Description,
+		RecordedDate: e.RecordedDate,
+		Source:       e.Source,
+		ExternalRef:  e.ExternalRef,
+	}
 }
 
 // CreateBudgetRequest is the input for creating a budget
@@ -92,18 +142,65 @@ type RecordActualRequest struct {
 
 // BudgetAnalyticsResponse provides analytics data for a budget
 type BudgetAnalyticsResponse struct {
-	BudgetID      uuid.UUID             `json:"budgetId"`
-	ProjectID     uuid.UUID             `json:"projectId"`
-	Title         string                `json:"title"`
-	Status        entities.BudgetStatus `json:"status"`
-	TotalBudgeted float64               `json:"totalBudgeted"`
-	TotalActuals  float64               `json:"totalActuals"`
-	Remaining     float64               `json:"remaining"`
-	BurnRate      float64               `json:"burnRate"`
-	ByCategory    []CategoryBreakdown   `json:"byCategory"`
-	ByYear        []YearBreakdown       `json:"byYear"`
-	ByFunding     []FundingBreakdown    `json:"byFunding"`
-	BurnRateData  []BurnRateDataPoint   `json:"burnRateData"`
+	BudgetID      uuid.UUID                    `json:"budgetId"`
+	ProjectID     uuid.UUID                    `json:"projectId"`
+	Title         string                       `json:"title"`
+	Status        entities.BudgetStatus        `json:"status"`
+	TotalBudgeted float64                      `json:"totalBudgeted"`
+	TotalActuals  float64                      `json:"totalActuals"`
+	Remaining     float64                      `json:"remaining"`
+	BurnRate      float64                      `json:"burnRate"`
+	ByCategory    []CategoryBreakdown          `json:"byCategory"`
+	ByYear        []YearBreakdown              `json:"byYear"`
+	ByFunding     []FundingBreakdown           `json:"byFunding"`
+	BurnRateData  []entities.BurnRateDataPoint `json:"burnRateData"` // Using entities directly for now or transform if needed
+}
+
+func (d BudgetAnalyticsResponse) FromEntity(e entities.BudgetAnalytics) BudgetAnalyticsResponse {
+	var byCategory []CategoryBreakdown
+	for _, v := range e.CategoryMap {
+		byCategory = append(byCategory, CategoryBreakdown{
+			Category:  entities.BudgetCategory(v.Category),
+			Budgeted:  v.Budgeted,
+			Actuals:   v.Actuals,
+			Remaining: v.Remaining,
+		})
+	}
+
+	var byYear []YearBreakdown
+	for _, v := range e.YearMap {
+		byYear = append(byYear, YearBreakdown{
+			Year:      v.Year,
+			Budgeted:  v.Budgeted,
+			Actuals:   v.Actuals,
+			Remaining: v.Remaining,
+		})
+	}
+
+	var byFunding []FundingBreakdown
+	for _, v := range e.FundingMap {
+		byFunding = append(byFunding, FundingBreakdown{
+			FundingSource: entities.FundingSource(v.FundingSource),
+			Budgeted:      v.Budgeted,
+			Actuals:       v.Actuals,
+			Remaining:     v.Remaining,
+		})
+	}
+
+	return BudgetAnalyticsResponse{
+		BudgetID:      e.BudgetID,
+		ProjectID:     e.ProjectID,
+		Title:         e.Title,
+		Status:        e.Status,
+		TotalBudgeted: e.TotalBudgeted,
+		TotalActuals:  e.TotalActuals,
+		Remaining:     e.Remaining,
+		BurnRate:      e.BurnRate,
+		ByCategory:    byCategory,
+		ByYear:        byYear,
+		ByFunding:     byFunding,
+		BurnRateData:  []entities.BurnRateDataPoint{}, // TODO: Populate if available
+	}
 }
 
 // CategoryBreakdown shows budgeted vs actuals by category
@@ -128,12 +225,4 @@ type FundingBreakdown struct {
 	Budgeted      float64                `json:"budgeted"`
 	Actuals       float64                `json:"actuals"`
 	Remaining     float64                `json:"remaining"`
-}
-
-// BurnRateDataPoint represents a point in the burn rate time series
-type BurnRateDataPoint struct {
-	Date             time.Time `json:"date"`
-	CumulativeActual float64   `json:"cumulativeActual"`
-	IdealBurn        float64   `json:"idealBurn"`
-	ProjectedEnd     float64   `json:"projectedEnd,omitempty"`
 }

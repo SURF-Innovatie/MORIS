@@ -1,13 +1,32 @@
 import { FC } from "react";
 import { format } from "date-fns";
 import { CalendarDays, User } from "lucide-react";
+import { EventDisplayVariant } from "../types";
 import { ProjectEvent } from "@/api/events";
 
 interface EventMetaInfoProps {
   event: ProjectEvent;
+  variant?: EventDisplayVariant;
 }
 
-export const EventMetaInfo: FC<EventMetaInfoProps> = ({ event }) => {
+export const EventMetaInfo: FC<EventMetaInfoProps> = ({
+  event,
+  variant = "normal",
+}) => {
+  if (variant === "compact") {
+    return (
+      <div className="flex items-center gap-2 text-xs text-gray-400">
+        {event.at && <span>{format(new Date(event.at), "MMM d, h:mm a")}</span>}
+        {event.creator?.name && (
+          <>
+            <span>•</span>
+            <span>{event.creator.name}</span>
+          </>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
       {event.at && (

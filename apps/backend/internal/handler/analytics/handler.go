@@ -4,10 +4,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	"github.com/SURF-Innovatie/MORIS/internal/app/analytics"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 )
 
 // Handler handles organization analytics HTTP requests
@@ -39,7 +41,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 // @Produce json
 // @Security BearerAuth
 // @Param orgId path string true "Organisation ID (UUID)"
-// @Success 200 {object} analytics.OrgAnalyticsSummary
+// @Success 200 {object} dto.OrgAnalyticsSummaryResponse
 // @Failure 400 {string} string "invalid org id"
 // @Failure 403 {string} string "forbidden"
 // @Router /organisations/{orgId}/analytics/summary [get]
@@ -57,7 +59,8 @@ func (h *Handler) GetSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, summary)
+	resp := transform.ToDTOItem[dto.OrgAnalyticsSummaryResponse](summary)
+	_ = httputil.WriteJSON(w, http.StatusOK, resp)
 }
 
 // GetBurnRate godoc
@@ -70,7 +73,7 @@ func (h *Handler) GetSummary(w http.ResponseWriter, r *http.Request) {
 // @Param orgId path string true "Organisation ID (UUID)"
 // @Param startDate query string false "Start date (YYYY-MM-DD)"
 // @Param endDate query string false "End date (YYYY-MM-DD)"
-// @Success 200 {array} analytics.BurnRateDataPoint
+// @Success 200 {array} dto.BurnRateDataPointResponse
 // @Failure 400 {string} string "invalid parameters"
 // @Router /organisations/{orgId}/analytics/burn-rate [get]
 func (h *Handler) GetBurnRate(w http.ResponseWriter, r *http.Request) {
@@ -80,7 +83,7 @@ func (h *Handler) GetBurnRate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := analytics.DateRangeParams{}
+	params := entities.DateRangeParams{}
 	if startStr := r.URL.Query().Get("startDate"); startStr != "" {
 		if t, err := time.Parse("2006-01-02", startStr); err == nil {
 			params.StartDate = &t
@@ -98,11 +101,8 @@ func (h *Handler) GetBurnRate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if data == nil {
-		data = []analytics.BurnRateDataPoint{}
-	}
-
-	_ = httputil.WriteJSON(w, http.StatusOK, data)
+	resp := transform.ToDTOs[dto.BurnRateDataPointResponse](data)
+	_ = httputil.WriteJSON(w, http.StatusOK, resp)
 }
 
 // GetByCategory godoc
@@ -113,7 +113,7 @@ func (h *Handler) GetBurnRate(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param orgId path string true "Organisation ID (UUID)"
-// @Success 200 {array} analytics.CategoryBreakdown
+// @Success 200 {array} dto.CategoryBreakdownResponse
 // @Failure 400 {string} string "invalid org id"
 // @Router /organisations/{orgId}/analytics/by-category [get]
 func (h *Handler) GetByCategory(w http.ResponseWriter, r *http.Request) {
@@ -129,11 +129,8 @@ func (h *Handler) GetByCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if data == nil {
-		data = []analytics.CategoryBreakdown{}
-	}
-
-	_ = httputil.WriteJSON(w, http.StatusOK, data)
+	resp := transform.ToDTOs[dto.CategoryBreakdownResponse](data)
+	_ = httputil.WriteJSON(w, http.StatusOK, resp)
 }
 
 // GetByProject godoc
@@ -144,7 +141,7 @@ func (h *Handler) GetByCategory(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param orgId path string true "Organisation ID (UUID)"
-// @Success 200 {array} analytics.ProjectHealthSummary
+// @Success 200 {array} dto.ProjectHealthSummaryResponse
 // @Failure 400 {string} string "invalid org id"
 // @Router /organisations/{orgId}/analytics/by-project [get]
 func (h *Handler) GetByProject(w http.ResponseWriter, r *http.Request) {
@@ -160,11 +157,8 @@ func (h *Handler) GetByProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if data == nil {
-		data = []analytics.ProjectHealthSummary{}
-	}
-
-	_ = httputil.WriteJSON(w, http.StatusOK, data)
+	resp := transform.ToDTOs[dto.ProjectHealthSummaryResponse](data)
+	_ = httputil.WriteJSON(w, http.StatusOK, resp)
 }
 
 // GetByFunding godoc
@@ -175,7 +169,7 @@ func (h *Handler) GetByProject(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param orgId path string true "Organisation ID (UUID)"
-// @Success 200 {array} analytics.FundingBreakdown
+// @Success 200 {array} dto.FundingBreakdownResponse
 // @Failure 400 {string} string "invalid org id"
 // @Router /organisations/{orgId}/analytics/by-funding [get]
 func (h *Handler) GetByFunding(w http.ResponseWriter, r *http.Request) {
@@ -191,21 +185,6 @@ func (h *Handler) GetByFunding(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if data == nil {
-		data = []analytics.FundingBreakdown{}
-	}
-
-	_ = httputil.WriteJSON(w, http.StatusOK, data)
-}
-
-// Helper to extract user ID from context
-func getUserIDFromContext(r *http.Request) uuid.UUID {
-	userIDVal := r.Context().Value("user_id")
-	if userIDVal == nil {
-		return uuid.Nil
-	}
-	if id, ok := userIDVal.(uuid.UUID); ok {
-		return id
-	}
-	return uuid.Nil
+	resp := transform.ToDTOs[dto.FundingBreakdownResponse](data)
+	_ = httputil.WriteJSON(w, http.StatusOK, resp)
 }

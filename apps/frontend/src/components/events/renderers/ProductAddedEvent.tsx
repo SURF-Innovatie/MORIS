@@ -1,15 +1,47 @@
 import { FC } from "react";
 import { Badge } from "@/components/ui/badge";
-import { ProjectEvent, ProjectEventType } from "@/api/events";
-import { FileText } from "lucide-react";
+import { ProjectEventType } from "@/api/events";
+import { FileText, Plus } from "lucide-react";
 import { EventMetaInfo } from "./EventMetaInfo";
+import { EventRendererBaseProps } from "../types";
 
-export const ProductAddedEvent: FC<{ event: ProjectEvent }> = ({ event }) => {
+export const ProductAddedEvent: FC<EventRendererBaseProps> = ({
+  event,
+  variant = "normal",
+}) => {
   if (event.type !== ProjectEventType.ProductAdded || !event.product) {
     return <div className="text-sm text-gray-600">{event.details}</div>;
   }
 
   const { name, type, doi } = event.product;
+
+  if (variant === "compact") {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="p-1 bg-blue-50 text-blue-600 rounded border border-blue-100">
+          <Plus className="h-3.5 w-3.5" />
+        </div>
+        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+          <span
+            className="text-sm font-medium text-gray-900 truncate max-w-[200px]"
+            title={name}
+          >
+            {name}
+          </span>
+          {type && (
+            <Badge
+              variant="secondary"
+              className="text-[10px] px-1 h-4 shrink-0"
+            >
+              {type}
+            </Badge>
+          )}
+          <span className="text-gray-300">•</span>
+          <EventMetaInfo event={event} variant="compact" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-1">

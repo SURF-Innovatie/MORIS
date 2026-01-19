@@ -134,6 +134,17 @@ func (r *EntRepo) ListChildren(ctx context.Context, parentID uuid.UUID) ([]entit
 	return transform.ToEntities[entities.OrganisationNode](rows), nil
 }
 
+func (r *EntRepo) ListAll(ctx context.Context) ([]entities.OrganisationNode, error) {
+	rows, err := r.node().
+		Query().
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return transform.ToEntities[entities.OrganisationNode](rows), nil
+}
+
 func (r *EntRepo) InsertClosure(ctx context.Context, ancestorID, descendantID uuid.UUID, depth int) error {
 	_, err := r.closure().
 		Create().

@@ -7,6 +7,8 @@
       "outputs": [
         "dist/**",
         "build/**",
+        "ent/api/openapi.json",
+        "bin/**",
         "apps/backend/ent/api/openapi.json",
         "apps/backend/bin/**",
         "apps/frontend/dist/**"
@@ -32,7 +34,10 @@
     },
     "api:generate": {
       "dependsOn": ["backend#generate:ent"],
-      "outputs": ["apps/frontend/src/api/generated-orval/**"],
+      "outputs": [
+        "src/api/generated-orval/**",
+        "src/api/events.ts"
+      ],
       "inputs": [
         "apps/backend/ent/api/openapi.json",
         "apps/frontend/orval.config.ts"
@@ -46,9 +51,9 @@
         "apps/backend/internal/auth/**"
       ],
       "outputs": [
-        "apps/backend/api/swag-docs/swagger.json",
-        "apps/backend/api/swag-docs/swagger.yaml",
-        "apps/backend/api/swag-docs/docs.go"
+        "api/swag-docs/swagger.json",
+        "api/swag-docs/swagger.yaml",
+        "api/swag-docs/docs.go"
       ]
     },
     "backend#generate:ent": {
@@ -57,11 +62,11 @@
         "apps/backend/ent/**",
         "apps/backend/api/swag-docs/swagger.json"
       ],
-      "outputs": ["apps/backend/ent/api/openapi.json"]
+      "outputs": ["ent/api/openapi.json"]
     },
     "backend#build": {
       "dependsOn": ["backend#generate:ent"],
-      "outputs": ["bin/**", "apps/backend/ent/api/openapi.json"]
+      "outputs": ["bin/**", "ent/api/openapi.json"]
     },
     "backend#dev": {
       "dependsOn": ["backend#generate:ent"],

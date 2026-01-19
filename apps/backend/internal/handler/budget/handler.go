@@ -3,10 +3,9 @@ package budget
 import (
 	"net/http"
 
-	"github.com/SURF-Innovatie/MORIS/ent"
-	"github.com/SURF-Innovatie/MORIS/ent/budget"
-	"github.com/SURF-Innovatie/MORIS/ent/budgetlineitem"
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	"github.com/SURF-Innovatie/MORIS/internal/app/budget"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/go-chi/chi/v5"
@@ -14,12 +13,12 @@ import (
 
 // Handler handles budget-related HTTP requests
 type Handler struct {
-	client *ent.Client
+	service *budget.Service
 }
 
 // NewHandler creates a new budget handler
-func NewHandler(client *ent.Client) *Handler {
-	return &Handler{client: client}
+func NewHandler(service *budget.Service) *Handler {
+	return &Handler{service: service}
 }
 
 // RegisterRoutes registers global budget routes
@@ -66,16 +65,9 @@ func (h *Handler) GetBudget(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err := h.client.Budget.
-		Query().
-		Where(budget.ProjectID(projectID)).
-		WithLineItems(func(q *ent.BudgetLineItemQuery) {
-			q.WithActuals()
-		}).
-		Only(r.Context())
-
+	b, err := h.service.GetBudget(r.Context(), projectID)
 	if err != nil {
-		if ent.IsNotFound(err) {
+		if err == budget.ErrBudgetNotFound {
 			httputil.WriteError(w, r, http.StatusNotFound, "budget not found", nil)
 			return
 		}
@@ -83,7 +75,7 @@ func (h *Handler) GetBudget(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := mapBudgetToResponse(b)
+	resp := transform.ToDTOItem[dto.BudgetResponse](*b)
 	_ = httputil.WriteJSON(w, http.StatusOK, resp)
 }
 
@@ -106,16 +98,9 @@ func (h *Handler) GetBudgetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err := h.client.Budget.
-		Query().
-		Where(budget.ID(budgetID)).
-		WithLineItems(func(q *ent.BudgetLineItemQuery) {
-			q.WithActuals()
-		}).
-		Only(r.Context())
-
+	b, err := h.service.GetBudgetByID(r.Context(), budgetID)
 	if err != nil {
-		if ent.IsNotFound(err) {
+		if err == budget.ErrBudgetNotFound {
 			httputil.WriteError(w, r, http.StatusNotFound, "budget not found", nil)
 			return
 		}
@@ -123,7 +108,7 @@ func (h *Handler) GetBudgetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := mapBudgetToResponse(b)
+	resp := transform.ToDTOItem[dto.BudgetResponse](*b)
 	_ = httputil.WriteJSON(w, http.StatusOK, resp)
 }
 
@@ -152,34 +137,17 @@ func (h *Handler) CreateBudget(w http.ResponseWriter, r *http.Request) {
 		return // ReadJSON already wrote error
 	}
 
-	// Check if budget already exists
-	exists, err := h.client.Budget.
-		Query().
-		Where(budget.ProjectID(projectID)).
-		Exist(r.Context())
+	b, err := h.service.CreateBudget(r.Context(), projectID, req.Title, req.Description)
 	if err != nil {
-		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
-		return
-	}
-	if exists {
-		httputil.WriteError(w, r, http.StatusConflict, "budget already exists for this project", nil)
-		return
-	}
-
-	b, err := h.client.Budget.
-		Create().
-		SetProjectID(projectID).
-		SetTitle(req.Title).
-		SetDescription(req.Description).
-		SetStatus(budget.StatusDraft).
-		Save(r.Context())
-
-	if err != nil {
+		if err == budget.ErrBudgetAlreadyExists {
+			httputil.WriteError(w, r, http.StatusConflict, err.Error(), nil)
+			return
+		}
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
-	resp := mapBudgetToResponse(b)
+	resp := transform.ToDTOItem[dto.BudgetResponse](*b)
 	_ = httputil.WriteJSON(w, http.StatusCreated, resp)
 }
 
@@ -201,18 +169,13 @@ func (h *Handler) GetLineItems(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items, err := h.client.BudgetLineItem.
-		Query().
-		Where(budgetlineitem.BudgetID(budgetID)).
-		WithActuals().
-		All(r.Context())
-
+	items, err := h.service.GetLineItems(r.Context(), budgetID)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
-	resp := mapLineItemsToResponse(items)
+	resp := transform.ToDTOs[dto.BudgetLineItemResponse](items)
 	_ = httputil.WriteJSON(w, http.StatusOK, resp)
 }
 
@@ -240,22 +203,21 @@ func (h *Handler) AddLineItem(w http.ResponseWriter, r *http.Request) {
 		return // ReadJSON already wrote error
 	}
 
-	item, err := h.client.BudgetLineItem.
-		Create().
-		SetBudgetID(budgetID).
-		SetCategory(budgetlineitem.Category(req.Category)).
-		SetDescription(req.Description).
-		SetBudgetedAmount(req.BudgetedAmount).
-		SetYear(req.Year).
-		SetFundingSource(budgetlineitem.FundingSource(req.FundingSource)).
-		Save(r.Context())
+	item := entities.BudgetLineItem{
+		Category:       req.Category,
+		Description:    req.Description,
+		BudgetedAmount: req.BudgetedAmount,
+		Year:           req.Year,
+		FundingSource:  req.FundingSource,
+	}
 
+	created, err := h.service.AddLineItem(r.Context(), budgetID, item)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
-	resp := mapLineItemToResponse(item)
+	resp := transform.ToDTOItem[dto.BudgetLineItemResponse](*created)
 	_ = httputil.WriteJSON(w, http.StatusCreated, resp)
 }
 
@@ -279,12 +241,9 @@ func (h *Handler) RemoveLineItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.client.BudgetLineItem.
-		DeleteOneID(lineItemID).
-		Exec(r.Context())
-
+	err = h.service.RemoveLineItem(r.Context(), lineItemID)
 	if err != nil {
-		if ent.IsNotFound(err) {
+		if err == budget.ErrLineItemNotFound {
 			httputil.WriteError(w, r, http.StatusNotFound, "line item not found", nil)
 			return
 		}
@@ -313,30 +272,14 @@ func (h *Handler) GetActuals(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get all line items for this budget, then get their actuals
-	items, err := h.client.BudgetLineItem.
-		Query().
-		Where(budgetlineitem.BudgetID(budgetID)).
-		WithActuals().
-		All(r.Context())
-
+	actuals, err := h.service.GetActuals(r.Context(), budgetID)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
-	var actuals []dto.BudgetActualResponse
-	for _, item := range items {
-		for _, actual := range item.Edges.Actuals {
-			actuals = append(actuals, mapActualToResponse(actual))
-		}
-	}
-
-	if actuals == nil {
-		actuals = []dto.BudgetActualResponse{}
-	}
-
-	_ = httputil.WriteJSON(w, http.StatusOK, actuals)
+	resp := transform.ToDTOs[dto.BudgetActualResponse](actuals)
+	_ = httputil.WriteJSON(w, http.StatusOK, resp)
 }
 
 // RecordActual godoc
@@ -357,27 +300,23 @@ func (h *Handler) RecordActual(w http.ResponseWriter, r *http.Request) {
 		return // ReadJSON already wrote error
 	}
 
-	builder := h.client.BudgetActual.
-		Create().
-		SetLineItemID(req.LineItemID).
-		SetAmount(req.Amount).
-		SetDescription(req.Description)
-
+	actual := entities.BudgetActual{
+		LineItemID:  req.LineItemID,
+		Amount:      req.Amount,
+		Description: req.Description,
+		Source:      req.Source,
+	}
 	if req.RecordedDate != nil {
-		builder = builder.SetRecordedDate(*req.RecordedDate)
+		actual.RecordedDate = *req.RecordedDate
 	}
 
-	if req.Source != "" {
-		builder = builder.SetSource(req.Source)
-	}
-
-	actual, err := builder.Save(r.Context())
+	created, err := h.service.RecordActual(r.Context(), actual)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
-	resp := mapActualToResponse(actual)
+	resp := transform.ToDTOItem[dto.BudgetActualResponse](*created)
 	_ = httputil.WriteJSON(w, http.StatusCreated, resp)
 }
 
@@ -400,16 +339,9 @@ func (h *Handler) GetAnalytics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err := h.client.Budget.
-		Query().
-		Where(budget.ID(budgetID)).
-		WithLineItems(func(q *ent.BudgetLineItemQuery) {
-			q.WithActuals()
-		}).
-		Only(r.Context())
-
+	analytics, err := h.service.GetAnalytics(r.Context(), budgetID)
 	if err != nil {
-		if ent.IsNotFound(err) {
+		if err == budget.ErrBudgetNotFound {
 			httputil.WriteError(w, r, http.StatusNotFound, "budget not found", nil)
 			return
 		}
@@ -417,188 +349,6 @@ func (h *Handler) GetAnalytics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := computeAnalytics(b)
+	resp := transform.ToDTOItem[dto.BudgetAnalyticsResponse](*analytics)
 	_ = httputil.WriteJSON(w, http.StatusOK, resp)
-}
-
-// Helper functions to map Ent entities to DTOs
-
-func mapBudgetToResponse(b *ent.Budget) dto.BudgetResponse {
-	var lineItems []dto.BudgetLineItemResponse
-	var totalBudgeted, totalActuals float64
-
-	for _, item := range b.Edges.LineItems {
-		li := mapLineItemToResponse(item)
-		lineItems = append(lineItems, li)
-		totalBudgeted += item.BudgetedAmount
-		for _, actual := range item.Edges.Actuals {
-			totalActuals += actual.Amount
-		}
-	}
-
-	if lineItems == nil {
-		lineItems = []dto.BudgetLineItemResponse{}
-	}
-
-	remaining := totalBudgeted - totalActuals
-	var burnRate float64
-	if totalBudgeted > 0 {
-		burnRate = (totalActuals / totalBudgeted) * 100
-	}
-
-	return dto.BudgetResponse{
-		ID:            b.ID,
-		ProjectID:     b.ProjectID,
-		Title:         b.Title,
-		Description:   b.Description,
-		Status:        entities.BudgetStatus(b.Status),
-		TotalAmount:   b.TotalAmount,
-		Currency:      b.Currency,
-		Version:       b.Version,
-		CreatedAt:     b.CreatedAt,
-		UpdatedAt:     b.UpdatedAt,
-		LineItems:     lineItems,
-		TotalBudgeted: totalBudgeted,
-		TotalActuals:  totalActuals,
-		Remaining:     remaining,
-		BurnRate:      burnRate,
-	}
-}
-
-func mapLineItemsToResponse(items []*ent.BudgetLineItem) []dto.BudgetLineItemResponse {
-	resp := make([]dto.BudgetLineItemResponse, len(items))
-	for i, item := range items {
-		resp[i] = mapLineItemToResponse(item)
-	}
-	return resp
-}
-
-func mapLineItemToResponse(item *ent.BudgetLineItem) dto.BudgetLineItemResponse {
-	var actuals []dto.BudgetActualResponse
-	var totalActuals float64
-
-	for _, actual := range item.Edges.Actuals {
-		actuals = append(actuals, mapActualToResponse(actual))
-		totalActuals += actual.Amount
-	}
-
-	if actuals == nil {
-		actuals = []dto.BudgetActualResponse{}
-	}
-
-	return dto.BudgetLineItemResponse{
-		ID:             item.ID,
-		BudgetID:       item.BudgetID,
-		Category:       entities.BudgetCategory(item.Category),
-		Description:    item.Description,
-		BudgetedAmount: item.BudgetedAmount,
-		Year:           item.Year,
-		FundingSource:  entities.FundingSource(item.FundingSource),
-		Actuals:        actuals,
-		TotalActuals:   totalActuals,
-		Remaining:      item.BudgetedAmount - totalActuals,
-	}
-}
-
-func mapActualToResponse(actual *ent.BudgetActual) dto.BudgetActualResponse {
-	return dto.BudgetActualResponse{
-		ID:           actual.ID,
-		LineItemID:   actual.LineItemID,
-		Amount:       actual.Amount,
-		Description:  actual.Description,
-		RecordedDate: actual.RecordedDate,
-		Source:       actual.Source,
-		ExternalRef:  actual.ExternalRef,
-	}
-}
-
-func computeAnalytics(b *ent.Budget) dto.BudgetAnalyticsResponse {
-	categoryMap := make(map[entities.BudgetCategory]*dto.CategoryBreakdown)
-	yearMap := make(map[int]*dto.YearBreakdown)
-	fundingMap := make(map[entities.FundingSource]*dto.FundingBreakdown)
-
-	var totalBudgeted, totalActuals float64
-
-	for _, item := range b.Edges.LineItems {
-		category := entities.BudgetCategory(item.Category)
-		funding := entities.FundingSource(item.FundingSource)
-
-		var itemActuals float64
-		for _, actual := range item.Edges.Actuals {
-			itemActuals += actual.Amount
-		}
-
-		totalBudgeted += item.BudgetedAmount
-		totalActuals += itemActuals
-
-		// Category breakdown
-		if _, ok := categoryMap[category]; !ok {
-			categoryMap[category] = &dto.CategoryBreakdown{Category: category}
-		}
-		categoryMap[category].Budgeted += item.BudgetedAmount
-		categoryMap[category].Actuals += itemActuals
-
-		// Year breakdown
-		if _, ok := yearMap[item.Year]; !ok {
-			yearMap[item.Year] = &dto.YearBreakdown{Year: item.Year}
-		}
-		yearMap[item.Year].Budgeted += item.BudgetedAmount
-		yearMap[item.Year].Actuals += itemActuals
-
-		// Funding breakdown
-		if _, ok := fundingMap[funding]; !ok {
-			fundingMap[funding] = &dto.FundingBreakdown{FundingSource: funding}
-		}
-		fundingMap[funding].Budgeted += item.BudgetedAmount
-		fundingMap[funding].Actuals += itemActuals
-	}
-
-	// Calculate remaining for each breakdown
-	var byCategory []dto.CategoryBreakdown
-	for _, cb := range categoryMap {
-		cb.Remaining = cb.Budgeted - cb.Actuals
-		byCategory = append(byCategory, *cb)
-	}
-	if byCategory == nil {
-		byCategory = []dto.CategoryBreakdown{}
-	}
-
-	var byYear []dto.YearBreakdown
-	for _, yb := range yearMap {
-		yb.Remaining = yb.Budgeted - yb.Actuals
-		byYear = append(byYear, *yb)
-	}
-	if byYear == nil {
-		byYear = []dto.YearBreakdown{}
-	}
-
-	var byFunding []dto.FundingBreakdown
-	for _, fb := range fundingMap {
-		fb.Remaining = fb.Budgeted - fb.Actuals
-		byFunding = append(byFunding, *fb)
-	}
-	if byFunding == nil {
-		byFunding = []dto.FundingBreakdown{}
-	}
-
-	remaining := totalBudgeted - totalActuals
-	var burnRate float64
-	if totalBudgeted > 0 {
-		burnRate = (totalActuals / totalBudgeted) * 100
-	}
-
-	return dto.BudgetAnalyticsResponse{
-		BudgetID:      b.ID,
-		ProjectID:     b.ProjectID,
-		Title:         b.Title,
-		Status:        entities.BudgetStatus(b.Status),
-		TotalBudgeted: totalBudgeted,
-		TotalActuals:  totalActuals,
-		Remaining:     remaining,
-		BurnRate:      burnRate,
-		ByCategory:    byCategory,
-		ByYear:        byYear,
-		ByFunding:     byFunding,
-		BurnRateData:  []dto.BurnRateDataPoint{}, // TODO: Compute time series
-	}
 }

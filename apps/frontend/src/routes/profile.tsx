@@ -3,7 +3,7 @@ import { ProfileInfo } from "@/components/profile/ProfileInfo";
 import { OrcidConnection } from "@/components/profile/OrcidConnection";
 import { ZenodoConnection } from "@/components/profile/ZenodoConnection";
 import { ProfileActivity } from "@/components/profile/ProfileActivity";
-import { APIKeysSettings } from "@/components/profile/APIKeysSettings";
+import { SecuritySettings } from "@/components/profile/SecuritySettings";
 import {
   Card,
   CardContent,
@@ -11,6 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { User, Link as LinkIcon, ShieldAlert } from "lucide-react";
 
 const ProfileRoute = () => {
   const { data: user, isLoading, refetch: refetchProfile } = useGetProfile();
@@ -24,41 +26,58 @@ const ProfileRoute = () => {
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-3">
-      {/* Left Column: Personal Info & Integrations */}
-      <div className="lg:col-span-1 space-y-8">
-        <ProfileInfo user={user} refetchProfile={refetchProfile} />
-        <Card>
-          <CardHeader>
-            <CardTitle>Integrations</CardTitle>
-            <CardDescription>
-              Manage your external account connections
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="px-6 py-0">
-            <div className="divide-y">
-              <OrcidConnection user={user} refetchProfile={refetchProfile} />
-              <ZenodoConnection user={user} refetchProfile={refetchProfile} />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>API Keys</CardTitle>
-            <CardDescription>
-              Manage API keys for Power BI and external tools
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <APIKeysSettings />
-          </CardContent>
-        </Card>
-      </div>
+    <div className="space-y-6">
+      <Tabs defaultValue="profile" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="profile" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            Profile
+          </TabsTrigger>
+          <TabsTrigger value="connections" className="flex items-center gap-2">
+            <LinkIcon className="h-4 w-4" />
+            Connections
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-2">
+            <ShieldAlert className="h-4 w-4" />
+            Security
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Right Column: Recent Activity */}
-      <div className="lg:col-span-2 space-y-8">
-        <ProfileActivity userId={user.id!} />
-      </div>
+        <TabsContent value="profile" className="space-y-6">
+          <div className="grid gap-8 lg:grid-cols-3">
+            {/* Left Column: Personal Info */}
+            <div className="lg:col-span-1 space-y-8">
+              <ProfileInfo user={user} refetchProfile={refetchProfile} />
+            </div>
+
+            {/* Right Column: Recent Activity */}
+            <div className="lg:col-span-2 space-y-8">
+              <ProfileActivity userId={user.id!} />
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="connections">
+          <Card>
+            <CardHeader>
+              <CardTitle>Integrations</CardTitle>
+              <CardDescription>
+                Manage your external account connections
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-6 py-0">
+              <div className="divide-y">
+                <OrcidConnection user={user} refetchProfile={refetchProfile} />
+                <ZenodoConnection user={user} refetchProfile={refetchProfile} />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="security">
+          <SecuritySettings />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

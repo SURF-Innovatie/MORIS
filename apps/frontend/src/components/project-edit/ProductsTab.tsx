@@ -42,6 +42,7 @@ import { ZenodoUploadDialog } from "@/components/products/ZenodoUploadDialog";
 import { useGetZenodoStatus } from "@api/moris";
 import { ProductCard, getProductTypeLabel } from "../products/ProductCard";
 import { useAccess } from "@/context/AccessContext";
+import { UploadType } from "@api/model";
 
 // Schema for the DOI search form
 const doiFormSchema = z.object({
@@ -90,7 +91,7 @@ export function ProductsTab({
         enabled: !!searchDoi,
         retry: false,
       },
-    }
+    },
   );
 
   // Effect to handle search results
@@ -197,7 +198,8 @@ export function ProductsTab({
     doi: string,
     _zenodoUrl: string,
     depositionId: number,
-    title: string
+    title: string,
+    uploadType: UploadType,
   ) {
     try {
       // Create the product in our DB with the DOI from Zenodo
@@ -205,7 +207,7 @@ export function ProductsTab({
         data: {
           name: title, // Use user-provided title from upload dialog
           doi: doi,
-          type: 0, // Dataset type
+          type: mapZenodoType(uploadType),
           language: "en",
           zenodo_deposition_id: depositionId,
         },
@@ -378,15 +380,55 @@ export function ProductsTab({
 }
 
 // Helper to map Crossref types to our ProductType enum
-// This is a simplification. You might need a more robust mapping.
 function mapCrossrefType(type: string | undefined): ProductType {
-  if (!type) return 0; // Default or unknown
-  // Example mapping based on common Crossref types
-  // We need to know what ProductType enum values correspond to.
-  // Assuming 0=Unknown, 1=Article, 2=Book, etc.
-  // Since I don't have the exact enum definition handy in this context,
-  // I'll assume some defaults or map to a generic type.
-  // Let's check the generated model for ProductType.
-  // For now, returning 0 (which usually is a safe default or "Other").
-  return 0;
+  if (!type) return ProductType.Other;
+
+  // Map Crossref work types to ProductType
+  // See: https://api.crossref.org/types
+  const typeMapping: Record<string, ProductType> = {
+    // Publications
+    "journal-article": ProductType.Other, // No direct match, use Other
+    book: ProductType.Other,
+    "book-chapter": ProductType.Other,
+    "proceedings-article": ProductType.Other,
+    dissertation: ProductType.Other,
+    report: ProductType.Other,
+    "posted-content": ProductType.Other, // preprints
+    // Datasets
+    dataset: ProductType.Dataset,
+    // Software
+    software: ProductType.Software,
+    // Images/Graphics
+    graphic: ProductType.Image,
+    // Other types
+    component: ProductType.Other,
+    standard: ProductType.Other,
+    "peer-review": ProductType.Other,
+    "reference-entry": ProductType.Other,
+  };
+
+  return typeMapping[type.toLowerCase()] ?? ProductType.Other;
+}
+
+// Helper to map Zenodo UploadType to ProductType
+function mapZenodoType(uploadType: UploadType): ProductType {
+  switch (uploadType) {
+    case UploadType.UploadTypeDataset:
+      return ProductType.Dataset;
+    case UploadType.UploadTypeSoftware:
+      return ProductType.Software;
+    case UploadType.UploadTypeImage:
+      return ProductType.Image;
+    case UploadType.UploadTypeVideo:
+      return ProductType.Sound; // Closest match, could also be Other
+    case UploadType.UploadTypeLesson:
+      return ProductType.LearningObject;
+    case UploadType.UploadTypePublication:
+    case UploadType.UploadTypePoster:
+    case UploadType.UploadTypePresentation:
+    case UploadType.UploadTypePhysicalObject:
+    case UploadType.UploadTypeOther:
+    default:
+      return ProductType.Other;
+  }
 }

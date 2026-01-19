@@ -83,6 +83,30 @@ type BudgetSummary struct {
 	BurnRate      float64 // Percentage of budget consumed
 }
 
+// YearBreakdown shows spending by year
+type YearBreakdown struct {
+	Year      int
+	Budgeted  float64
+	Actuals   float64
+	Remaining float64
+}
+
+// BudgetAnalytics provides detailed analytics for a budget
+type BudgetAnalytics struct {
+	BudgetID      uuid.UUID
+	ProjectID     uuid.UUID
+	Title         string
+	Status        BudgetStatus
+	CalculatedAt  time.Time
+	TotalBudgeted float64
+	TotalActuals  float64
+	Remaining     float64
+	BurnRate      float64
+	CategoryMap   map[BudgetCategory]CategoryBreakdown
+	YearMap       map[int]YearBreakdown
+	FundingMap    map[FundingSource]FundingBreakdown
+}
+
 // CalculateSummary computes the budget summary from line items
 func (b *Budget) CalculateSummary() BudgetSummary {
 	var totalBudgeted, totalActuals float64

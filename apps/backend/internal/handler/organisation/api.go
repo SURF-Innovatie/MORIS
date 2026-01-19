@@ -6,6 +6,7 @@ func MountOrganisationRoutes(r chi.Router, h *Handler, rbac *RBACHandler) {
 	r.Route("/organisation-nodes", func(r chi.Router) {
 		r.Get("/ror/search", h.SearchROR)
 		r.Get("/search", h.Search)
+		r.Get("/tree", h.GetTree) // Added tree endpoint
 		r.Post("/", h.CreateRoot)
 
 		r.Get("/roots", h.ListRoots)

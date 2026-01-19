@@ -13,7 +13,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 // StatusResponse represents a standard status response
@@ -80,10 +80,9 @@ func WriteError(w http.ResponseWriter, r *http.Request, code int, message string
 	if env.IsProd() {
 		resp.Message = http.StatusText(code) // Default to generic status text
 		resp.Errors = nil                    // Hide detailed errors
-
 	} else {
 		// Log error to console in development
-		logrus.Errorf("Code: %d, Message: %s, Errors: %v\n", code, message, errs)
+		log.Error().Int("code", code).Interface("errors", errs).Msg(message)
 	}
 
 	return WriteJSON(w, code, resp)
