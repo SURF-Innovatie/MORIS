@@ -37,7 +37,8 @@ interface ZenodoUploadDialogProps {
     doi: string,
     zenodoUrl: string,
     depositionId: number,
-    title: string
+    title: string,
+    uploadType: UploadType,
   ) => void;
 }
 
@@ -52,7 +53,7 @@ export function ZenodoUploadDialog({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [uploadType, setUploadType] = useState<UploadType>(
-    UploadType.UploadTypeDataset
+    UploadType.UploadTypeDataset,
   );
   const [creatorName, setCreatorName] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -142,7 +143,7 @@ export function ZenodoUploadDialog({
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       // Step 3: Update metadata
@@ -194,7 +195,8 @@ export function ZenodoUploadDialog({
           resultData.doi,
           resultData.url,
           resultData.depositionId,
-          title
+          title,
+          uploadType,
         );
       }
       resetForm();
