@@ -48,6 +48,8 @@ export default defineConfig({
           ],
           "query-vendor": ["@tanstack/react-query"],
           "utils-vendor": ["axios", "date-fns", "zod", "react-hook-form"],
+          "charts-vendor": ["recharts"],
+          "tree-vendor": ["react-d3-tree"],
         },
       },
     },

@@ -1,40 +1,74 @@
+import { lazy, Suspense } from "react";
 import type { RouteObject } from "react-router-dom";
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 
-import RootLayout from "@/routes/root";
-import DashboardRoute from "@/routes/dashboard";
-import CreateProjectRoute from "@/routes/project-form";
+// Loading component for Suspense fallback
+const PageLoader = () => (
+  <div className="flex h-screen w-full items-center justify-center bg-background">
+    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+  </div>
+);
 
-import ProjectEditRoute from "@/routes/project-edit";
-import ProjectDetailsRoute from "@/routes/project-details";
-import LoginRoute from "@/routes/login";
-import RouteError from "@/routes/route-error";
-import ProfileRoute from "@/routes/profile";
-import OrcidCallbackRoute from "@/routes/orcid-callback";
-import ZenodoCallbackRoute from "@/routes/zenodo-callback";
-import SurfconextCallbackRoute from "@/routes/surfconext-callback";
-import ProtectedRoute from "@/routes/protected-route";
-import InboxRoute from "@/routes/inbox";
-import ProjectsRoute from "@/routes/projects";
-import ProductsRoute from "@/routes/products";
-import AdminUsersRoute from "@/routes/admin-users";
-import AdminUserEditRoute from "@/routes/admin-user-edit";
-import { AdminOrganisationsRoute } from "@/routes/admin-organisations";
-import { UserOrganisationsRoute } from "@/routes/user-organisations";
-import { UserOrganisationRolesRoute } from "@/routes/user-organisation-roles";
-import { MultiRoleManagementRoute } from "@/routes/admin-organisation-roles";
-import OrgAnalyticsRoute from "@/routes/org-analytics";
+// Lazy components
+const RootLayout = lazy(() => import("@/routes/root"));
+const DashboardRoute = lazy(() => import("@/routes/dashboard"));
+const CreateProjectRoute = lazy(() => import("@/routes/project-form"));
+const ProjectEditRoute = lazy(() => import("@/routes/project-edit"));
+const ProjectDetailsRoute = lazy(() => import("@/routes/project-details"));
+const LoginRoute = lazy(() => import("@/routes/login"));
+const RouteError = lazy(() => import("@/routes/route-error"));
+const ProfileRoute = lazy(() => import("@/routes/profile"));
+const OrcidCallbackRoute = lazy(() => import("@/routes/orcid-callback"));
+const ZenodoCallbackRoute = lazy(() => import("@/routes/zenodo-callback"));
+const SurfconextCallbackRoute = lazy(
+  () => import("@/routes/surfconext-callback"),
+);
+const ProtectedRoute = lazy(() => import("@/routes/protected-route"));
+const InboxRoute = lazy(() => import("@/routes/inbox"));
+const ProjectsRoute = lazy(() => import("@/routes/projects"));
+const ProductsRoute = lazy(() => import("@/routes/products"));
+const AdminUsersRoute = lazy(() => import("@/routes/admin-users"));
+const AdminUserEditRoute = lazy(() => import("@/routes/admin-user-edit"));
+const AdminOrganisationsRoute = lazy(() =>
+  import("@/routes/admin-organisations").then((m) => ({
+    default: m.AdminOrganisationsRoute,
+  })),
+);
+const UserOrganisationsRoute = lazy(() =>
+  import("@/routes/user-organisations").then((m) => ({
+    default: m.UserOrganisationsRoute,
+  })),
+);
+const UserOrganisationRolesRoute = lazy(() =>
+  import("@/routes/user-organisation-roles").then((m) => ({
+    default: m.UserOrganisationRolesRoute,
+  })),
+);
+const MultiRoleManagementRoute = lazy(() =>
+  import("@/routes/admin-organisation-roles").then((m) => ({
+    default: m.MultiRoleManagementRoute,
+  })),
+);
+const OrgAnalyticsRoute = lazy(() => import("@/routes/org-analytics"));
 
 export function createAppRouter() {
   const routes: RouteObject[] = [
     {
       path: "/",
-      element: <LoginRoute />,
+      element: (
+        <Suspense fallback={<PageLoader />}>
+          <LoginRoute />
+        </Suspense>
+      ),
       errorElement: <RouteError />,
     },
     {
       path: "/dashboard",
-      element: <ProtectedRoute />,
+      element: (
+        <Suspense fallback={<PageLoader />}>
+          <ProtectedRoute />
+        </Suspense>
+      ),
       errorElement: <RouteError />,
       children: [
         {
@@ -108,7 +142,11 @@ export function createAppRouter() {
     },
     {
       path: "/projects",
-      element: <ProtectedRoute />,
+      element: (
+        <Suspense fallback={<PageLoader />}>
+          <ProtectedRoute />
+        </Suspense>
+      ),
       errorElement: <RouteError />,
       children: [
         {
@@ -123,7 +161,11 @@ export function createAppRouter() {
     },
     {
       path: "/orcid-callback",
-      element: <ProtectedRoute />,
+      element: (
+        <Suspense fallback={<PageLoader />}>
+          <ProtectedRoute />
+        </Suspense>
+      ),
       errorElement: <RouteError />,
       children: [
         {
@@ -134,7 +176,11 @@ export function createAppRouter() {
     },
     {
       path: "/zenodo-callback",
-      element: <ProtectedRoute />,
+      element: (
+        <Suspense fallback={<PageLoader />}>
+          <ProtectedRoute />
+        </Suspense>
+      ),
       errorElement: <RouteError />,
       children: [
         {
@@ -145,7 +191,11 @@ export function createAppRouter() {
     },
     {
       path: "/surfconext-callback",
-      element: <SurfconextCallbackRoute />,
+      element: (
+        <Suspense fallback={<PageLoader />}>
+          <SurfconextCallbackRoute />
+        </Suspense>
+      ),
       errorElement: <RouteError />,
     },
     {
