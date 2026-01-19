@@ -1,21 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGetProjectsIdRoles } from "@api/moris";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import {
@@ -29,6 +25,8 @@ interface EditRoleDialogProps {
   onOpenChange: (open: boolean) => void;
   member: ProjectMemberResponse;
   projectId: string;
+  /** All members for this person (to see all their current roles) */
+  allMembersForPerson?: ProjectMemberResponse[];
   onSuccess?: () => void;
 }
 
@@ -37,43 +35,90 @@ export function EditRoleDialog({
   onOpenChange,
   member,
   projectId,
+  allMembersForPerson,
   onSuccess,
 }: EditRoleDialogProps) {
-  const [role, setRole] = useState(member.role_id || "");
+  // Compute current roles from all member entries for this person
+  const currentRoleIds = useMemo(() => {
+    if (allMembersForPerson && allMembersForPerson.length > 0) {
+      return allMembersForPerson
+        .map((m) => m.role_id)
+        .filter((id): id is string => !!id);
+    }
+    // Fallback to just the current member's role
+    return member.role_id ? [member.role_id] : [];
+  }, [allMembersForPerson, member.role_id]);
+
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(currentRoleIds);
   const [isSaving, setIsSaving] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: roles, isLoading: isLoadingRoles } = useGetProjectsIdRoles(projectId);
+  const { data: roles, isLoading: isLoadingRoles } =
+    useGetProjectsIdRoles(projectId);
+
+  // Reset selected roles when dialog opens or member changes
+  useEffect(() => {
+    if (open) {
+      setSelectedRoles(currentRoleIds);
+    }
+  }, [open, currentRoleIds]);
+
+  const toggleRole = (roleId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedRoles((prev) => [...prev, roleId]);
+    } else {
+      setSelectedRoles((prev) => prev.filter((id) => id !== roleId));
+    }
+  };
 
   const handleSave = async () => {
     if (!member.id) return;
     setIsSaving(true);
+
     try {
-      // 1. Unassign current role if exists
-      if (member.role_id) {
+      // Determine which roles to add and remove
+      const rolesToAdd = selectedRoles.filter(
+        (r) => !currentRoleIds.includes(r),
+      );
+      const rolesToRemove = currentRoleIds.filter(
+        (r) => !selectedRoles.includes(r),
+      );
+
+      // Unassign removed roles
+      for (const roleId of rolesToRemove) {
         await createProjectRoleUnassignedEvent(projectId, {
           person_id: member.id,
-          project_role_id: member.role_id,
+          project_role_id: roleId,
         });
       }
 
-      // 2. Assign new role
-      if (role) {
+      // Assign new roles
+      for (const roleId of rolesToAdd) {
         await createProjectRoleAssignedEvent(projectId, {
           person_id: member.id,
-          project_role_id: role,
+          project_role_id: roleId,
         });
       }
 
       queryClient.invalidateQueries({ queryKey: ["/projects", projectId] });
-      toast({ title: "Role updated" });
+
+      const totalChanges = rolesToAdd.length + rolesToRemove.length;
+      if (totalChanges > 0) {
+        toast({
+          title: "Roles updated",
+          description: `${rolesToAdd.length} role(s) added, ${rolesToRemove.length} role(s) removed.`,
+        });
+      } else {
+        toast({ title: "No changes made" });
+      }
+
       onOpenChange(false);
       onSuccess?.();
     } catch (error) {
       console.error(error);
       toast({
-        title: "Failed to update role",
+        title: "Failed to update roles",
         variant: "destructive",
       });
     } finally {
@@ -81,35 +126,68 @@ export function EditRoleDialog({
     }
   };
 
+  const getRoleNames = (roleIds: string[]) => {
+    return roleIds
+      .map((id) => roles?.find((r) => r.id === id)?.name)
+      .filter(Boolean);
+  };
+
+  const hasChanges = useMemo(() => {
+    if (selectedRoles.length !== currentRoleIds.length) return true;
+    return selectedRoles.some((r) => !currentRoleIds.includes(r));
+  }, [selectedRoles, currentRoleIds]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Role</DialogTitle>
+          <DialogTitle>Edit Roles for {member.name || "Member"}</DialogTitle>
+          <DialogDescription>
+            Select one or more roles for this team member.
+          </DialogDescription>
         </DialogHeader>
         <div className="py-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Role</label>
-            {isLoadingRoles ? (
-              <div className="flex bg-muted h-10 w-full items-center px-3 rounded-md">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mr-2" />
-                <span className="text-sm text-muted-foreground">
+            <label className="text-sm font-medium">Roles</label>
+            <div className="border rounded-md p-3 space-y-2">
+              {isLoadingRoles ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Loading roles...
-                </span>
+                </div>
+              ) : (
+                roles?.map((role) => (
+                  <div key={role.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`edit-role-${role.id}`}
+                      checked={selectedRoles.includes(role.id || "")}
+                      onCheckedChange={(checked) =>
+                        toggleRole(role.id || "", checked === true)
+                      }
+                    />
+                    <label
+                      htmlFor={`edit-role-${role.id}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      {role.name}
+                    </label>
+                  </div>
+                ))
+              )}
+            </div>
+            {selectedRoles.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {getRoleNames(selectedRoles).map((name) => (
+                  <Badge key={name} variant="secondary" className="text-xs">
+                    {name}
+                  </Badge>
+                ))}
               </div>
-            ) : (
-              <Select value={role} onValueChange={setRole}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-                <SelectContent>
-                  {roles?.map((r) => (
-                    <SelectItem key={r.id} value={r.id || ""}>
-                      {r.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            )}
+            {selectedRoles.length === 0 && (
+              <p className="text-sm text-destructive mt-1">
+                At least one role is required.
+              </p>
             )}
           </div>
         </div>
@@ -117,8 +195,23 @@ export function EditRoleDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isSaving || isLoadingRoles}>
-            {isSaving ? "Saving..." : "Save Changes"}
+          <Button
+            onClick={handleSave}
+            disabled={
+              isSaving ||
+              isLoadingRoles ||
+              selectedRoles.length === 0 ||
+              !hasChanges
+            }
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Changes"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

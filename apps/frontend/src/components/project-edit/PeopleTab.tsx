@@ -52,6 +52,7 @@ export function PeopleTab({ projectId, members, onRefresh }: PeopleTabProps) {
             <MemberRow
               key={member.id}
               member={member}
+              allMembers={members}
               projectId={projectId}
               onRefresh={onRefresh}
             />
@@ -64,13 +65,17 @@ export function PeopleTab({ projectId, members, onRefresh }: PeopleTabProps) {
 
 function MemberRow({
   member,
+  allMembers,
   projectId,
   onRefresh,
 }: {
   member: ProjectMemberResponse;
+  allMembers: ProjectMemberResponse[];
   projectId: string;
   onRefresh: () => void;
 }) {
+  // Get all member entries for the same person (to see all their current roles)
+  const allMembersForPerson = allMembers.filter((m) => m.id === member.id);
   const [editOpen, setEditOpen] = useState(false);
   const { hasAccess } = useAccess();
   const canEditRole = hasAccess(ProjectEventType.ProjectRoleAssigned);
@@ -80,7 +85,7 @@ function MemberRow({
   if (pending || (!canEditRole && !canRemove)) {
     return (
       <div className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors">
-        <MemberInfo member={member} />
+        <MemberInfo member={member} allMembersForPerson={allMembersForPerson} />
       </div>
     );
   }
@@ -88,7 +93,7 @@ function MemberRow({
   return (
     <>
       <div className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors">
-        <MemberInfo member={member} />
+        <MemberInfo member={member} allMembersForPerson={allMembersForPerson} />
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -118,6 +123,7 @@ function MemberRow({
         open={editOpen}
         onOpenChange={setEditOpen}
         member={member}
+        allMembersForPerson={allMembersForPerson}
         projectId={projectId}
         onSuccess={onRefresh}
       />
@@ -127,9 +133,25 @@ function MemberRow({
 
 function MemberInfo({
   member,
+  allMembersForPerson,
 }: {
   member: ProjectMemberResponse & { pending?: boolean };
+  allMembersForPerson?: ProjectMemberResponse[];
 }) {
+  // Get all unique roles for this person
+  const roles = allMembersForPerson
+    ? allMembersForPerson
+        .map((m) => ({ id: m.role_id, name: m.role_name || m.role }))
+        .filter(
+          (r, index, self) =>
+            r.id && self.findIndex((s) => s.id === r.id) === index,
+        )
+    : member.role_id
+      ? [{ id: member.role_id, name: member.role_name || member.role }]
+      : [];
+
+  const hasLeadRole = roles.some((r) => r.name?.toLowerCase() === "lead");
+
   return (
     <div
       className={
@@ -150,7 +172,7 @@ function MemberInfo({
         </AvatarFallback>
       </Avatar>
       <div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <p className="font-semibold leading-none">
             {member.name || "Unknown"}
           </p>
@@ -162,15 +184,18 @@ function MemberInfo({
               Pending
             </Badge>
           )}
-          {member.role === "lead" && (
+          {hasLeadRole && (
             <Crown className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
           )}
-          <Badge
-            variant="secondary"
-            className="text-[10px] h-5 px-1.5 font-normal capitalize"
-          >
-            {member.role_name || member.role}
-          </Badge>
+          {roles.map((role) => (
+            <Badge
+              key={role.id}
+              variant="secondary"
+              className="text-[10px] h-5 px-1.5 font-normal capitalize"
+            >
+              {role.name}
+            </Badge>
+          ))}
         </div>
         <p className="text-sm text-muted-foreground mt-1">{member.email}</p>
       </div>
