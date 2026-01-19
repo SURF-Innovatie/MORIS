@@ -64,30 +64,48 @@ func (r *EntRepository) getProjectIDsForOrg(ctx context.Context, orgID uuid.UUID
 		orgIDMap[id] = true
 	}
 
-	// 2. Fetch all ProjectStarted events.
-	// Note: Ideally we'd filter by JSON content in DB, but for POC iterating is acceptable
+	// 2. Fetch all relevant events (Started + OwningOrgNodeChanged).
+	// We need to replay them to know the *current* owning org.
 	evts, err := r.client.Event.Query().
-		Where(event.TypeEQ(events.ProjectStartedType)).
+		Where(
+			event.Or(
+				event.TypeEQ(events.ProjectStartedType),
+				event.TypeEQ(events.OwningOrgNodeChangedType),
+			),
+		).
+		Order(ent.Asc(event.FieldOccurredAt)). // Ensure chronological order
 		All(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var projectIDs []uuid.UUID
+	// 3. Replay events to build current state of project ownership
+	projectOrgMap := make(map[uuid.UUID]uuid.UUID)
+
 	for _, e := range evts {
 		var data struct {
 			OwningOrgNodeID uuid.UUID `json:"owning_org_node_id"`
 		}
-		// Try to parse the event data
-		b, _ := json.Marshal(e.Data) // Convert map back to bytes or use map access
-		if err := json.Unmarshal(b, &data); err == nil {
-			// Check if the project belongs to one of the organizations in the subtree
-			if orgIDMap[data.OwningOrgNodeID] {
-				projectIDs = append(projectIDs, e.ProjectID)
-			}
+
+		// Unmarshal event data to extract org node ID
+		b, _ := json.Marshal(e.Data)
+		if err := json.Unmarshal(b, &data); err != nil {
+			continue // Should not happen if data is valid
+		}
+
+		// Update the mapping for this project
+		if data.OwningOrgNodeID != uuid.Nil {
+			projectOrgMap[e.ProjectID] = data.OwningOrgNodeID
 		}
 	}
 
+	// 4. Filter projects that belong to one of the target organizations
+	var projectIDs []uuid.UUID
+	for projID, ownerID := range projectOrgMap {
+		if orgIDMap[ownerID] {
+			projectIDs = append(projectIDs, projID)
+		}
+	}
 	return projectIDs, nil
 }
 

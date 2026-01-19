@@ -12,4 +12,5 @@ type Service interface {
 	// Used for SSO/OIDC flows where we don't have a local password.
 	LoginByEmail(ctx context.Context, email string) (string, *entities.UserAccount, error)
 	ValidateToken(tokenString string) (*entities.UserAccount, error)
+	ValidateAPIKey(ctx context.Context, key string) (*entities.UserAccount, error)
 }

@@ -11,6 +11,8 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/errorlog"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/cachewarmup"
 	adapterhandler "github.com/SURF-Innovatie/MORIS/internal/handler/adapter"
+	analyticshandler "github.com/SURF-Innovatie/MORIS/internal/handler/analytics"
+	apikeyhandler "github.com/SURF-Innovatie/MORIS/internal/handler/apikey"
 	authhandler "github.com/SURF-Innovatie/MORIS/internal/handler/auth"
 	budgethandler "github.com/SURF-Innovatie/MORIS/internal/handler/budget"
 	crossrefhandler "github.com/SURF-Innovatie/MORIS/internal/handler/crossref"
@@ -18,6 +20,7 @@ import (
 	eventpolicyhandler "github.com/SURF-Innovatie/MORIS/internal/handler/eventpolicy"
 	authmiddleware "github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
 	notificationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/notification"
+	odatahandler "github.com/SURF-Innovatie/MORIS/internal/handler/odata"
 	orcidhandler "github.com/SURF-Innovatie/MORIS/internal/handler/orcid"
 	organisationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/organisation"
 	personhandler "github.com/SURF-Innovatie/MORIS/internal/handler/person"
@@ -30,6 +33,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/samber/do/v2"
@@ -46,6 +50,7 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 	// Get HTTP Handlers from DI Container
 	personHandler := do.MustInvoke[*personhandler.Handler](injector)
 	userHandler := do.MustInvoke[*userhandler.Handler](injector)
+	apiKeyHandler := do.MustInvoke[*apikeyhandler.Handler](injector)
 	authHandler := do.MustInvoke[*authhandler.Handler](injector)
 	orcidHandler := do.MustInvoke[*orcidhandler.Handler](injector)
 	zenodoHandler := do.MustInvoke[*zenodohandler.Handler](injector)
@@ -61,6 +66,8 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 	systemHandler := do.MustInvoke[*systemhandler.Handler](injector)
 	adapterHandler := do.MustInvoke[*adapterhandler.Handler](injector)
 	budgetHandler := do.MustInvoke[*budgethandler.Handler](injector)
+	analyticsHandler := do.MustInvoke[*analyticshandler.Handler](injector)
+	oDataHandler := do.MustInvoke[*odatahandler.Handler](injector)
 
 	// Setup Router
 	r := chi.NewRouter()
@@ -73,10 +80,21 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
+	// Basic CORS
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   env.Global.AllowedOrigins,
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}))
+
 	r.Route(env.Global.APIBasePath, func(r chi.Router) {
 		r.Use(authmiddleware.ErrorLoggingMiddleware(errorLogSvc))
 		authhandler.MountRoutes(r, authSvc, authHandler)
 		systemhandler.MountRoutes(r, systemHandler)
+
 		r.Group(func(r chi.Router) {
 			r.Use(authmiddleware.AuthMiddleware(authSvc))
 			r.Route("/projects", func(r chi.Router) {
@@ -97,6 +115,7 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 			producthandler.MountProductRoutes(r, productHandler)
 			notificationhandler.MountNotificationRoutes(r, notificationHandler)
 			userhandler.MountUserRoutes(r, userHandler)
+			apiKeyHandler.RegisterRoutes(r)
 			crossrefhandler.MountCrossrefRoutes(r, crossrefHandler)
 			adapterhandler.MountRoutes(r, adapterHandler)
 
@@ -108,6 +127,8 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 			})
 
 			budgetHandler.RegisterRoutes(r)
+			analyticsHandler.RegisterRoutes(r)
+			oDataHandler.RegisterRoutes(r)
 		})
 	})
 

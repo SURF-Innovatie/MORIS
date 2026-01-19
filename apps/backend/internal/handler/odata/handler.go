@@ -153,15 +153,11 @@ func (h *Handler) GetBudgetAnalytics(w http.ResponseWriter, r *http.Request) {
 // Helper functions
 
 func getUserIDFromContext(r *http.Request) uuid.UUID {
-	// TODO: Extract from JWT or API key middleware
-	userIDVal := r.Context().Value("user_id")
-	if userIDVal == nil {
+	userIDPtr := httputil.GetUserIDFromContext(r.Context())
+	if userIDPtr == nil {
 		return uuid.Nil
 	}
-	if id, ok := userIDVal.(uuid.UUID); ok {
-		return id
-	}
-	return uuid.Nil
+	return *userIDPtr
 }
 
 func writeODataResponse(w http.ResponseWriter, result any) {

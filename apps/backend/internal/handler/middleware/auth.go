@@ -6,10 +6,11 @@ import (
 	"strings"
 
 	coreauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 )
 
-// AuthMiddleware extracts and validates a JWT token from the Authorization header.
+// AuthMiddleware extracts and validates a JWT token or an API key from the Authorization header.
 func AuthMiddleware(authSvc coreauth.Service) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -20,15 +21,36 @@ func AuthMiddleware(authSvc coreauth.Service) func(http.Handler) http.Handler {
 			}
 
 			parts := strings.SplitN(authHeader, " ", 2)
-			if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-				httputil.WriteError(w, r, http.StatusUnauthorized, "Authorization header must be in 'Bearer <token>' format", nil)
+			if len(parts) != 2 {
+				httputil.WriteError(w, r, http.StatusUnauthorized, "Authorization header must be in '<type> <token>' format", nil)
 				return
 			}
+
+			authType := strings.ToLower(parts[0])
 			token := parts[1]
 
-			user, err := authSvc.ValidateToken(token)
+			var user *entities.UserAccount
+			var err error
+
+			if authType == "bearer" {
+				// Try JWT first
+				user, err = authSvc.ValidateToken(token)
+				if err != nil {
+					// If JWT fails, check if it's an API key (starts with moris_)
+					// TODO: refine api key implementation etc
+					if strings.HasPrefix(token, "moris_") {
+						user, err = authSvc.ValidateAPIKey(r.Context(), token)
+					}
+				}
+			} else if authType == "apikey" {
+				user, err = authSvc.ValidateAPIKey(r.Context(), token)
+			} else {
+				httputil.WriteError(w, r, http.StatusUnauthorized, "Unsupported authorization type", nil)
+				return
+			}
+
 			if err != nil {
-				httputil.WriteError(w, r, http.StatusUnauthorized, "Invalid or expired token", nil)
+				httputil.WriteError(w, r, http.StatusUnauthorized, "Invalid or expired token/key", nil)
 				return
 			}
 

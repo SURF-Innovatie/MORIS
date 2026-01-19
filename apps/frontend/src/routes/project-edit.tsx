@@ -57,7 +57,7 @@ function ProjectEditForm() {
         prev.set("tab", tab);
         return prev;
       },
-      { replace: true }
+      { replace: true },
     );
   };
 
@@ -141,7 +141,7 @@ function ProjectEditForm() {
         promises.push(
           createDescriptionChangedEvent(id!, {
             description: values.description,
-          })
+          }),
         );
       }
 
@@ -152,7 +152,7 @@ function ProjectEditForm() {
         promises.push(
           createStartDateChangedEvent(id!, {
             start_date: values.startDate.toISOString(),
-          })
+          }),
         );
       }
 
@@ -163,7 +163,7 @@ function ProjectEditForm() {
         promises.push(
           createEndDateChangedEvent(id!, {
             end_date: values.endDate.toISOString(),
-          })
+          }),
         );
       }
 
@@ -173,7 +173,7 @@ function ProjectEditForm() {
         promises.push(
           createOwningOrgNodeChangedEvent(id!, {
             owning_org_node_id: values.organisationID,
-          })
+          }),
         );
       }
 
@@ -194,7 +194,7 @@ function ProjectEditForm() {
               createCustomFieldValueSetEvent(id!, {
                 definition_id: defId,
                 value: valStr,
-              })
+              }),
             );
           }
         });
@@ -240,7 +240,17 @@ function ProjectEditForm() {
           description: "Initial budget draft",
         },
       });
+
+      // Invalidate multiple query keys to be safe
+      await queryClient.invalidateQueries({
+        queryKey: [`/projects/${id}/budget`],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["/projects", id, "budget"],
+      });
+      // Also general budget key if used elsewhere
       await queryClient.invalidateQueries({ queryKey: ["budget", id] });
+
       toast({
         title: "Budget Created",
         description: "A new budget has been initialized for this project.",
@@ -372,7 +382,7 @@ function ProjectEditForm() {
 
 function applyPendingEvents(
   project: any, // Using any here to allow augmentation with pending flags easily
-  events: any[]
+  events: any[],
 ): any {
   if (!events || events.length === 0) return project;
 
@@ -422,7 +432,7 @@ function applyPendingEvents(
       case ProjectEventType.ProductRemoved:
         if (e.data?.product_id) {
           p.products = (p.products || []).filter(
-            (prod: any) => prod.id !== e.data.product_id
+            (prod: any) => prod.id !== e.data.product_id,
           );
         }
         break;
@@ -451,7 +461,7 @@ function applyPendingEvents(
               !(
                 m.user_id === e.data.person_id &&
                 m.role_id === e.data.project_role_id
-              )
+              ),
           );
         }
         break;

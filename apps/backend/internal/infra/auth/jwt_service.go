@@ -5,7 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	"crypto/sha256"
+	"encoding/hex"
+	"strings"
+
 	"github.com/SURF-Innovatie/MORIS/ent"
+	"github.com/SURF-Innovatie/MORIS/ent/apikey"
 	userent "github.com/SURF-Innovatie/MORIS/ent/user"
 	coreauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/app/person"
@@ -175,4 +180,44 @@ func (s *service) ValidateToken(tokenString string) (*entities.UserAccount, erro
 	//}
 
 	return usr, nil
+}
+
+// ValidateAPIKey validates an API key and returns the user info
+func (s *service) ValidateAPIKey(ctx context.Context, plainKey string) (*entities.UserAccount, error) {
+	const APIKeyPrefix = "moris_"
+
+	// Remove prefix if present
+	plainKey = strings.TrimPrefix(plainKey, APIKeyPrefix)
+
+	keyHash := s.hashAPIKey(plainKey)
+
+	key, err := s.client.APIKey.
+		Query().
+		Where(
+			apikey.KeyHash(keyHash),
+			apikey.IsActive(true),
+		).
+		Only(ctx)
+
+	if err != nil {
+		return nil, fmt.Errorf("invalid or inactive api key")
+	}
+
+	// Check expiration
+	if key.ExpiresAt != nil && time.Now().After(*key.ExpiresAt) {
+		return nil, fmt.Errorf("api key has expired")
+	}
+
+	// Update last used timestamp
+	_, _ = s.client.APIKey.
+		UpdateOneID(key.ID).
+		SetLastUsedAt(time.Now()).
+		Save(ctx)
+
+	return s.userSvc.GetAccount(ctx, key.UserID)
+}
+
+func (s *service) hashAPIKey(key string) string {
+	hash := sha256.Sum256([]byte(key))
+	return hex.EncodeToString(hash[:])
 }

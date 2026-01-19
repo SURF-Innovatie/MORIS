@@ -27,6 +27,8 @@ var Package = do.Package(
 	do.Lazy(provideProjectQueryRepo),
 	do.Lazy(provideEventPolicyRepo),
 	do.Lazy(provideBudgetRepo),
+	do.Lazy(provideAnalyticsRepo),
+	do.Lazy(provideODataRepo),
 
 	// External Clients
 	do.Lazy(provideORCIDClient),
@@ -64,6 +66,9 @@ var Package = do.Package(
 	do.Lazy(provideProjectQueryService),
 	do.Lazy(provideEntClientProvider),
 	do.Lazy(provideBudgetService),
+	do.Lazy(provideAnalyticsService),
+	do.Lazy(provideODataParser),
+	do.Lazy(provideODataService),
 
 	// Event handlers
 	do.Lazy(provideProjectEventHandler),
@@ -83,6 +88,7 @@ var Package = do.Package(
 	// HTTP Handlers
 	do.Lazy(providePersonHandler),
 	do.Lazy(provideUserHandler),
+	do.Lazy(provideAPIKeyHandler),
 	do.Lazy(provideAuthHandler),
 	do.Lazy(provideORCIDHandler),
 	do.Lazy(provideZenodoHandler),
@@ -97,4 +103,6 @@ var Package = do.Package(
 	do.Lazy(provideProjectCommandHandler),
 	do.Lazy(provideSystemHandler),
 	do.Lazy(provideBudgetHandler),
+	do.Lazy(provideAnalyticsHandler),
+	do.Lazy(provideODataHandler),
 )

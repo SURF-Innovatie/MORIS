@@ -9,20 +9,21 @@ import (
 )
 
 type Config struct {
-	AppEnv        string
-	DBHost        string
-	DBUser        string
-	DBPassword    string
-	DBName        string
-	DBPort        string
-	CacheHost     string
-	CachePort     string
-	CachePassword string
-	CacheUser     string
-	JWTSecret     string
-	Port          string
-	RAiDAPIKey    string
-	APIBasePath   string
+	AppEnv         string
+	DBHost         string
+	DBUser         string
+	DBPassword     string
+	DBName         string
+	DBPort         string
+	CacheHost      string
+	CachePort      string
+	CachePassword  string
+	CacheUser      string
+	JWTSecret      string
+	Port           string
+	RAiDAPIKey     string
+	APIBasePath    string
+	AllowedOrigins []string
 }
 
 var Global Config
@@ -36,20 +37,21 @@ func init() {
 	}
 
 	Global = Config{
-		AppEnv:        getEnv("APP_ENV", false, "dev"),
-		DBHost:        getEnv("DB_HOST", true, ""),
-		DBUser:        getEnv("DB_USER", true, ""),
-		DBPassword:    getEnv("DB_PASSWORD", true, ""),
-		DBName:        getEnv("DB_NAME", true, ""),
-		DBPort:        getEnv("DB_PORT", true, ""),
-		CacheHost:     getEnv("CACHE_HOST", true, ""),
-		CachePort:     getEnv("CACHE_PORT", true, ""),
-		CachePassword: getEnv("CACHE_PASSWORD", false, ""),
-		CacheUser:     getEnv("CACHE_USER", false, ""),
-		JWTSecret:     getEnv("JWT_SECRET", true, ""),
-		Port:          getEnv("PORT", true, ""),
-		RAiDAPIKey:    getEnv("RAID_API_KEY", false, "test-key"),
-		APIBasePath:   getEnv("API_BASE_PATH", false, "/api"),
+		AppEnv:         getEnv("APP_ENV", false, "dev"),
+		DBHost:         getEnv("DB_HOST", true, ""),
+		DBUser:         getEnv("DB_USER", true, ""),
+		DBPassword:     getEnv("DB_PASSWORD", true, ""),
+		DBName:         getEnv("DB_NAME", true, ""),
+		DBPort:         getEnv("DB_PORT", true, ""),
+		CacheHost:      getEnv("CACHE_HOST", true, ""),
+		CachePort:      getEnv("CACHE_PORT", true, ""),
+		CachePassword:  getEnv("CACHE_PASSWORD", false, ""),
+		CacheUser:      getEnv("CACHE_USER", false, ""),
+		JWTSecret:      getEnv("JWT_SECRET", true, ""),
+		Port:           getEnv("PORT", true, ""),
+		RAiDAPIKey:     getEnv("RAID_API_KEY", false, "test-key"),
+		APIBasePath:    getEnv("API_BASE_PATH", false, "/api"),
+		AllowedOrigins: strings.Split(getEnv("ALLOWED_ORIGINS", false, "http://localhost:*,http://127.0.0.1:*"), ","),
 	}
 }
 

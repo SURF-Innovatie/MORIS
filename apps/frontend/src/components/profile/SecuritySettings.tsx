@@ -9,7 +9,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Shield, Lock, Smartphone, Loader2 } from "lucide-react";
+import {
+  Shield,
+  Lock,
+  Smartphone,
+  Loader2,
+  AlertTriangle,
+  Copy,
+  Check,
+} from "lucide-react";
 import { useState } from "react";
 import {
   Table,
@@ -38,6 +46,15 @@ export function SecuritySettings() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newKeyName, setNewKeyName] = useState("");
   const [newlyCreatedKey, setNewlyCreatedKey] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (newlyCreatedKey) {
+      await navigator.clipboard.writeText(newlyCreatedKey);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   // Queries
   const { data: keysData, isLoading: isLoadingKeys } = useGetProfileApiKeys();
@@ -264,35 +281,68 @@ export function SecuritySettings() {
 
       <Dialog
         open={!!newlyCreatedKey}
-        onOpenChange={() => setNewlyCreatedKey(null)}
+        onOpenChange={() => {
+          setNewlyCreatedKey(null);
+          setCopied(false);
+        }}
       >
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>API Key Created</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-green-600" />✨ API Key Created ✨
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="rounded-md bg-yellow-50 p-4">
-              <div className="flex">
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-yellow-800">
+          <div className="space-y-6">
+            <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
+              <div className="flex gap-3">
+                <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
+                <div className="space-y-1">
+                  <h3 className="text-sm font-semibold text-amber-900">
                     Calculated Key Secret
                   </h3>
-                  <div className="mt-2 text-sm text-yellow-700">
-                    <p>
-                      Make sure to copy your API key now. You won&apos;t be able
-                      to see it again!
-                    </p>
-                  </div>
+                  <p className="text-sm text-amber-800 leading-relaxed">
+                    Make sure to copy your API key now. You won&apos;t be able
+                    to see it again! Store it as securely as your password.
+                  </p>
                 </div>
               </div>
             </div>
-            <div className="relative">
-              <pre className="p-4 rounded bg-muted font-mono text-sm break-all">
-                {newlyCreatedKey}
-              </pre>
+
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                Your API Key
+              </Label>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1 group">
+                  <pre className="p-4 pr-12 rounded-lg bg-secondary/50 font-mono text-xs break-all border border-input min-h-12 flex items-center">
+                    {newlyCreatedKey}
+                  </pre>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-background/80"
+                    onClick={handleCopy}
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
             </div>
-            <div className="flex justify-end">
-              <Button onClick={() => setNewlyCreatedKey(null)}>Done</Button>
+
+            <div className="flex justify-end pt-2">
+              <Button
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  setNewlyCreatedKey(null);
+                  setCopied(false);
+                }}
+              >
+                Done
+              </Button>
             </div>
           </div>
         </DialogContent>

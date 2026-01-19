@@ -2,12 +2,14 @@ package di
 
 import (
 	"github.com/SURF-Innovatie/MORIS/ent"
+	"github.com/SURF-Innovatie/MORIS/internal/app/analytics"
 	coreauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/app/budget"
 	"github.com/SURF-Innovatie/MORIS/internal/app/crossref"
 	"github.com/SURF-Innovatie/MORIS/internal/app/customfield"
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
+	"github.com/SURF-Innovatie/MORIS/internal/app/odata"
 	"github.com/SURF-Innovatie/MORIS/internal/app/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
@@ -20,12 +22,15 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/app/zenodo"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
+	analyticshandler "github.com/SURF-Innovatie/MORIS/internal/handler/analytics"
+	apikeyhandler "github.com/SURF-Innovatie/MORIS/internal/handler/apikey"
 	authhandler "github.com/SURF-Innovatie/MORIS/internal/handler/auth"
 	budgethandler "github.com/SURF-Innovatie/MORIS/internal/handler/budget"
 	crossrefhandler "github.com/SURF-Innovatie/MORIS/internal/handler/crossref"
 	eventhandler "github.com/SURF-Innovatie/MORIS/internal/handler/event"
 	eventpolicyhandler "github.com/SURF-Innovatie/MORIS/internal/handler/eventpolicy"
 	notificationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/notification"
+	odatahandler "github.com/SURF-Innovatie/MORIS/internal/handler/odata"
 	orcidhandler "github.com/SURF-Innovatie/MORIS/internal/handler/orcid"
 	organisationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/organisation"
 	personhandler "github.com/SURF-Innovatie/MORIS/internal/handler/person"
@@ -88,6 +93,11 @@ func provideUserHandler(i do.Injector) (*userhandler.Handler, error) {
 	userSvc := do.MustInvoke[user.Service](i)
 	projSvc := do.MustInvoke[queries.Service](i)
 	return userhandler.NewHandler(userSvc, projSvc), nil
+}
+
+func provideAPIKeyHandler(i do.Injector) (*apikeyhandler.Handler, error) {
+	cli := do.MustInvoke[*ent.Client](i)
+	return apikeyhandler.NewHandler(cli), nil
 }
 
 func provideAuthHandler(i do.Injector) (*authhandler.Handler, error) {
@@ -169,4 +179,14 @@ func provideSystemHandler(i do.Injector) (*systemhandler.Handler, error) {
 func provideBudgetHandler(i do.Injector) (*budgethandler.Handler, error) {
 	svc := do.MustInvoke[*budget.Service](i)
 	return budgethandler.NewHandler(svc), nil
+}
+
+func provideAnalyticsHandler(i do.Injector) (*analyticshandler.Handler, error) {
+	svc := do.MustInvoke[*analytics.Service](i)
+	return analyticshandler.NewHandler(svc), nil
+}
+
+func provideODataHandler(i do.Injector) (*odatahandler.Handler, error) {
+	svc := do.MustInvoke[*odata.Service](i)
+	return odatahandler.NewHandler(svc), nil
 }

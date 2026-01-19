@@ -6,6 +6,8 @@ import (
 	exorcid "github.com/SURF-Innovatie/MORIS/external/orcid"
 	exsurfconext "github.com/SURF-Innovatie/MORIS/external/surfconext"
 	exzenodo "github.com/SURF-Innovatie/MORIS/external/zenodo"
+	odataadapter "github.com/SURF-Innovatie/MORIS/internal/adapter/odata"
+	"github.com/SURF-Innovatie/MORIS/internal/app/analytics"
 	coreauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/app/budget"
 	"github.com/SURF-Innovatie/MORIS/internal/app/crossref"
@@ -13,6 +15,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/errorlog"
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
+	"github.com/SURF-Innovatie/MORIS/internal/app/odata"
 	"github.com/SURF-Innovatie/MORIS/internal/app/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
@@ -218,4 +221,19 @@ func provideEventService(i do.Injector) (event.Service, error) {
 func provideBudgetService(i do.Injector) (*budget.Service, error) {
 	repo := do.MustInvoke[budget.Repository](i)
 	return budget.NewService(repo), nil
+}
+
+func provideAnalyticsService(i do.Injector) (*analytics.Service, error) {
+	repo := do.MustInvoke[analytics.Repository](i)
+	return analytics.NewService(repo), nil
+}
+
+func provideODataParser(i do.Injector) (odata.QueryParser, error) {
+	return odataadapter.NewParser(), nil
+}
+
+func provideODataService(i do.Injector) (*odata.Service, error) {
+	repo := do.MustInvoke[odata.Repository](i)
+	parser := do.MustInvoke[odata.QueryParser](i)
+	return odata.NewService(repo, parser), nil
 }
