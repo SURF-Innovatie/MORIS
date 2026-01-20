@@ -1,6 +1,7 @@
 package env
 
 import (
+	"os"
 	"strings"
 
 	"github.com/ilyakaznacheev/cleanenv"
@@ -60,9 +61,17 @@ type CrossrefConfig struct {
 var Global Config
 
 func init() {
-	// cleanenv automatically looks for .env file if it exists
-	if err := cleanenv.ReadEnv(&Global); err != nil {
-		log.Fatal().Err(err).Msg("failed to load environment variables")
+	// Check if .env file exists
+	if _, err := os.Stat(".env"); err == nil {
+		// Load from .env file (and override with env vars)
+		if err := cleanenv.ReadConfig(".env", &Global); err != nil {
+			log.Fatal().Err(err).Msg("failed to load environment variables from .env")
+		}
+	} else {
+		// Load from environment variables only
+		if err := cleanenv.ReadEnv(&Global); err != nil {
+			log.Fatal().Err(err).Msg("failed to load environment variables")
+		}
 	}
 }
 
