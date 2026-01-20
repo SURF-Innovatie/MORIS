@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"context"
+	"encoding/base64"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -44,6 +46,9 @@ func AuthMiddleware(authSvc coreauth.Service) func(http.Handler) http.Handler {
 				}
 			} else if authType == "apikey" {
 				user, err = authSvc.ValidateAPIKey(r.Context(), token)
+			} else if authType == "basic" {
+				// Basic Auth: username is email, password is API key
+				user, err = validateBasicAuth(r.Context(), authSvc, token)
 			} else {
 				httputil.WriteError(w, r, http.StatusUnauthorized, "Unsupported authorization type", nil)
 				return
@@ -87,4 +92,37 @@ func RequireSysAdminMiddleware() func(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+// validateBasicAuth handles Basic Auth where username is email and password is API key.
+// Decodes the base64 credentials, validates the API key, and verifies the email matches.
+func validateBasicAuth(ctx context.Context, authSvc coreauth.Service, encodedCredentials string) (*entities.UserAccount, error) {
+	// Decode base64 credentials
+	decoded, err := base64.StdEncoding.DecodeString(encodedCredentials)
+	if err != nil {
+		return nil, err
+	}
+
+	// Split into username:password
+	credentials := string(decoded)
+	parts := strings.SplitN(credentials, ":", 2)
+	if len(parts) != 2 {
+		return nil, errors.New("invalid basic auth format")
+	}
+
+	email := parts[0]
+	apiKey := parts[1]
+
+	// Validate the API key
+	user, err := authSvc.ValidateAPIKey(ctx, apiKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// Verify the email matches the user who owns the API key
+	if !strings.EqualFold(user.Person.Email, email) {
+		return nil, errors.New("email does not match API key owner")
+	}
+
+	return user, nil
 }
