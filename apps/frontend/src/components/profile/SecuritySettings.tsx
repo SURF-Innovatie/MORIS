@@ -289,7 +289,8 @@ export function SecuritySettings() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-green-600" />✨ API Key Created ✨
+              <Shield className="h-5 w-5 text-green-600" />
+              API Key Created
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-6">
@@ -298,11 +299,11 @@ export function SecuritySettings() {
                 <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
                 <div className="space-y-1">
                   <h3 className="text-sm font-semibold text-amber-900">
-                    Calculated Key Secret
+                    Save your secret key
                   </h3>
                   <p className="text-sm text-amber-800 leading-relaxed">
-                    Make sure to copy your API key now. You won&apos;t be able
-                    to see it again! Store it as securely as your password.
+                    Please copy your API key now. For security reasons, you
+                    won&apos;t be able to see it again.
                   </p>
                 </div>
               </div>
@@ -312,24 +313,22 @@ export function SecuritySettings() {
               <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                 Your API Key
               </Label>
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1 group">
-                  <pre className="p-4 pr-12 rounded-lg bg-secondary/50 font-mono text-xs break-all border border-input min-h-12 flex items-center">
-                    {newlyCreatedKey}
-                  </pre>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-background/80"
-                    onClick={handleCopy}
-                  >
-                    {copied ? (
-                      <Check className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
+              <div className="relative group">
+                <code className="block w-full p-4 pr-12 rounded-lg bg-muted font-mono text-sm break-all border border-input whitespace-pre-wrap">
+                  {newlyCreatedKey}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-background/80"
+                  onClick={handleCopy}
+                >
+                  {copied ? (
+                    <Check className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
               </div>
             </div>
 

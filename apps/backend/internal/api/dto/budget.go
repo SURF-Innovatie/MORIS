@@ -71,6 +71,7 @@ type BudgetLineItemResponse struct {
 	Year           int                     `json:"year"`
 	FundingSource  entities.FundingSource  `json:"fundingSource"`
 	Actuals        []BudgetActualResponse  `json:"actuals,omitempty"`
+	NWOGrantID     *string                 `json:"nwoGrantId,omitempty"` // The ID of the linked NWO grant
 
 	// Computed fields
 	TotalActuals float64 `json:"totalActuals"`
@@ -89,6 +90,7 @@ func (d BudgetLineItemResponse) FromEntity(e entities.BudgetLineItem) BudgetLine
 		FundingSource:  e.FundingSource,
 		Actuals:        transform.ToDTOs[BudgetActualResponse](e.Actuals),
 		TotalActuals:   totalActuals,
+		NWOGrantID:     e.NWOGrantID,
 		Remaining:      e.BudgetedAmount - totalActuals,
 	}
 }
@@ -129,6 +131,7 @@ type AddLineItemRequest struct {
 	BudgetedAmount float64                 `json:"budgetedAmount" binding:"required,gt=0"`
 	Year           int                     `json:"year" binding:"required,gte=2000,lte=2100"`
 	FundingSource  entities.FundingSource  `json:"fundingSource" binding:"required"`
+	NWOGrantID     *string                 `json:"nwoGrantId,omitempty"`
 }
 
 // RecordActualRequest is the input for recording an actual expenditure

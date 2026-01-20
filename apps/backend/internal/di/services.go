@@ -7,7 +7,6 @@ import (
 	exorcid "github.com/SURF-Innovatie/MORIS/external/orcid"
 	exsurfconext "github.com/SURF-Innovatie/MORIS/external/surfconext"
 	exzenodo "github.com/SURF-Innovatie/MORIS/external/zenodo"
-	odataadapter "github.com/SURF-Innovatie/MORIS/internal/adapter/odata"
 	"github.com/SURF-Innovatie/MORIS/internal/app/analytics"
 	coreauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/app/budget"
@@ -40,6 +39,7 @@ import (
 	eventpolicyrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	notificationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/notification"
+	odatarepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/odata"
 	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
 	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation_rbac"
 	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
@@ -244,7 +244,7 @@ func provideAnalyticsService(i do.Injector) (*analytics.Service, error) {
 }
 
 func provideODataParser(i do.Injector) (odata.QueryParser, error) {
-	return odataadapter.NewParser(), nil
+	return odatarepo.NewParser(), nil
 }
 
 func provideODataService(i do.Injector) (*odata.Service, error) {

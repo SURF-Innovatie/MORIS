@@ -121,11 +121,12 @@ var (
 	// BudgetLineItemsColumns holds the columns for the "budget_line_items" table.
 	BudgetLineItemsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
-		{Name: "category", Type: field.TypeEnum, Enums: []string{"personnel", "material", "investment", "travel", "management", "other"}},
+		{Name: "category", Type: field.TypeEnum, Enums: []string{"personnel", "material", "investment", "travel", "management", "grant", "other"}},
 		{Name: "description", Type: field.TypeString},
 		{Name: "budgeted_amount", Type: field.TypeFloat64},
 		{Name: "year", Type: field.TypeInt},
 		{Name: "funding_source", Type: field.TypeEnum, Enums: []string{"subsidy", "cofinancing_cash", "cofinancing_inkind"}},
+		{Name: "nwo_grant_id", Type: field.TypeString, Nullable: true},
 		{Name: "budget_id", Type: field.TypeUUID},
 	}
 	// BudgetLineItemsTable holds the schema information for the "budget_line_items" table.
@@ -136,7 +137,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "budget_line_items_budgets_line_items",
-				Columns:    []*schema.Column{BudgetLineItemsColumns[6]},
+				Columns:    []*schema.Column{BudgetLineItemsColumns[7]},
 				RefColumns: []*schema.Column{BudgetsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -145,7 +146,7 @@ var (
 			{
 				Name:    "budgetlineitem_budget_id",
 				Unique:  false,
-				Columns: []*schema.Column{BudgetLineItemsColumns[6]},
+				Columns: []*schema.Column{BudgetLineItemsColumns[7]},
 			},
 			{
 				Name:    "budgetlineitem_category",

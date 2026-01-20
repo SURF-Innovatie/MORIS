@@ -4,13 +4,15 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Plus, Trash2, ArrowLeft, Save } from "lucide-react";
+import { AddNWOSubsidyDialog } from "./AddNWOSubsidyDialog";
+import NwoIcon from "@/components/icons/nwoIcon";
 
 import {
   useGetProjectsProjectIdBudget,
   usePostBudgetsBudgetIdLineItems,
   useDeleteBudgetsBudgetIdLineItemsLineItemId,
 } from "@api/moris";
-import { BudgetCategory, FundingSource } from "@api/model";
+import { BudgetCategory, FundingSource, Project } from "@api/model";
 import { categoryLabels, fundingSourceLabels } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +40,7 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 interface BudgetEditorProps {
   projectId: string;
@@ -52,6 +55,7 @@ const lineItemSchema = z.object({
     "investment",
     "travel",
     "management",
+    "grant",
     "other",
   ] as const),
   budgetedAmount: z.coerce.number().min(0, "Amount must be positive"),
@@ -61,12 +65,14 @@ const lineItemSchema = z.object({
     "cofinancing_cash",
     "cofinancing_inkind",
   ] as const),
+  nwoGrantId: z.string().optional().nullable(),
 });
 
 export function BudgetEditor({ projectId, onDone }: BudgetEditorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAdding, setIsAdding] = useState(false);
+  const [isAddingNWO, setIsAddingNWO] = useState(false);
 
   const { data: budget } = useGetProjectsProjectIdBudget(projectId);
 
@@ -78,43 +84,41 @@ export function BudgetEditor({ projectId, onDone }: BudgetEditorProps) {
       budgetedAmount: 0 as any, // Cast for input handling
       year: new Date().getFullYear() as any,
       fundingSource: "subsidy",
+      nwoGrantId: null,
     },
   });
 
-  const { mutate: addLineItem } = usePostBudgetsBudgetIdLineItems({
-    mutation: {
-      onSuccess: () => {
-        // Invalidate all possible query key variations to ensure refresh
-        queryClient.invalidateQueries({ queryKey: ["budget", projectId] });
-        queryClient.invalidateQueries({
-          queryKey: ["/projects", projectId, "budget"],
-        });
-        queryClient.invalidateQueries({
-          queryKey: [`/projects/${projectId}/budget`],
-        });
+  const { mutate: addLineItem, isPending: isAddingLineItem } =
+    usePostBudgetsBudgetIdLineItems({
+      mutation: {
+        onSuccess: () => {
+          // Invalidate all possible query key variations to ensure refresh
+          queryClient.invalidateQueries({ queryKey: ["budget", projectId] });
+          queryClient.invalidateQueries({
+            queryKey: [`/projects/${projectId}/budget`],
+          });
 
-        toast({ title: "Line Item Added" });
-        setIsAdding(false);
-        form.reset();
+          toast({ title: "Line Item Added" });
+          setIsAdding(false);
+          setIsAddingNWO(false);
+          form.reset();
+        },
+        onError: () => {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to add line item",
+          });
+          setIsAddingNWO(false);
+        },
       },
-      onError: () => {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to add line item",
-        });
-      },
-    },
-  });
+    });
 
   const { mutate: removeLineItem } =
     useDeleteBudgetsBudgetIdLineItemsLineItemId({
       mutation: {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["budget", projectId] });
-          queryClient.invalidateQueries({
-            queryKey: ["/projects", projectId, "budget"],
-          });
           queryClient.invalidateQueries({
             queryKey: [`/projects/${projectId}/budget`],
           });
@@ -125,7 +129,40 @@ export function BudgetEditor({ projectId, onDone }: BudgetEditorProps) {
 
   const onSubmit = (values: z.infer<typeof lineItemSchema>) => {
     if (!budget?.id) return;
-    addLineItem({ budgetId: budget.id, data: values });
+    addLineItem({
+      budgetId: budget.id,
+      data: {
+        ...values,
+        nwoGrantId: values.nwoGrantId || undefined,
+      },
+    });
+  };
+
+  const handleNWOSelect = (project: Project) => {
+    if (!budget?.id) return;
+    setIsAddingNWO(true);
+
+    let year = new Date().getFullYear();
+    if (project.start_date) {
+      // start_date is likely a string based on generated types for dates
+      const date = new Date(project.start_date as unknown as string);
+      if (!isNaN(date.getFullYear())) {
+        year = date.getFullYear();
+      }
+    }
+
+    console.log(project);
+    addLineItem({
+      budgetId: budget.id,
+      data: {
+        description: project.title || "NWO Grant",
+        category: "grant",
+        budgetedAmount: project.award_amount || 0,
+        year: year,
+        fundingSource: "subsidy",
+        nwoGrantId: project.project_id,
+      },
+    });
   };
 
   if (!budget) return <div>Loading...</div>;
@@ -142,11 +179,20 @@ export function BudgetEditor({ projectId, onDone }: BudgetEditorProps) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Line Items</CardTitle>
-          {!isAdding && (
-            <Button size="sm" onClick={() => setIsAdding(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Add Item
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {!isAdding && (
+              <>
+                <AddNWOSubsidyDialog
+                  onSelect={handleNWOSelect}
+                  isSubmitting={isAddingNWO}
+                  disabled={isAddingLineItem}
+                />
+                <Button size="sm" onClick={() => setIsAdding(true)}>
+                  <Plus className="mr-2 h-4 w-4" /> Add Item
+                </Button>
+              </>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {isAdding && (
@@ -154,7 +200,7 @@ export function BudgetEditor({ projectId, onDone }: BudgetEditorProps) {
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
-                  className="grid gap-4 md:grid-cols-12 items-end"
+                  className="grid gap-4 md:grid-cols-12"
                 >
                   <FormField
                     control={form.control}
@@ -168,6 +214,7 @@ export function BudgetEditor({ projectId, onDone }: BudgetEditorProps) {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="category"
@@ -175,7 +222,7 @@ export function BudgetEditor({ projectId, onDone }: BudgetEditorProps) {
                       <FormItem className="col-span-6 md:col-span-2">
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -184,11 +231,11 @@ export function BudgetEditor({ projectId, onDone }: BudgetEditorProps) {
                           </FormControl>
                           <SelectContent>
                             {Object.entries(categoryLabels).map(
-                              ([key, label]) => (
-                                <SelectItem key={key} value={key}>
+                              ([value, label]) => (
+                                <SelectItem key={value} value={value}>
                                   {label}
                                 </SelectItem>
-                              )
+                              ),
                             )}
                           </SelectContent>
                         </Select>
@@ -196,6 +243,7 @@ export function BudgetEditor({ projectId, onDone }: BudgetEditorProps) {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="fundingSource"
@@ -203,20 +251,20 @@ export function BudgetEditor({ projectId, onDone }: BudgetEditorProps) {
                       <FormItem className="col-span-6 md:col-span-2">
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Funding" />
+                              <SelectValue placeholder="Source" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             {Object.entries(fundingSourceLabels).map(
-                              ([key, label]) => (
-                                <SelectItem key={key} value={key}>
+                              ([value, label]) => (
+                                <SelectItem key={value} value={value}>
                                   {label}
                                 </SelectItem>
-                              )
+                              ),
                             )}
                           </SelectContent>
                         </Select>
@@ -224,11 +272,12 @@ export function BudgetEditor({ projectId, onDone }: BudgetEditorProps) {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="year"
                     render={({ field }) => (
-                      <FormItem className="col-span-6 md:col-span-1">
+                      <FormItem className="col-span-4 md:col-span-1">
                         <FormControl>
                           <Input type="number" placeholder="Year" {...field} />
                         </FormControl>
@@ -236,16 +285,16 @@ export function BudgetEditor({ projectId, onDone }: BudgetEditorProps) {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="budgetedAmount"
                     render={({ field }) => (
-                      <FormItem className="col-span-6 md:col-span-2">
+                      <FormItem className="col-span-4 md:col-span-2">
                         <FormControl>
                           <Input
                             type="number"
                             placeholder="Amount"
-                            className="w-full"
                             {...field}
                           />
                         </FormControl>
@@ -253,7 +302,8 @@ export function BudgetEditor({ projectId, onDone }: BudgetEditorProps) {
                       </FormItem>
                     )}
                   />
-                  <div className="flex gap-2 col-span-12 md:col-span-1">
+
+                  <div className="col-span-4 md:col-span-1 flex gap-2">
                     <Button type="submit" size="icon">
                       <Save className="h-4 w-4" />
                     </Button>
@@ -276,58 +326,81 @@ export function BudgetEditor({ projectId, onDone }: BudgetEditorProps) {
               <TableRow>
                 <TableHead>Description</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead>Funding</TableHead>
+                <TableHead>Source</TableHead>
                 <TableHead>Year</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
+                <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(budget.lineItems || []).map((item) => (
+              {budget.lineItems?.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell>{item.description || ""}</TableCell>
                   <TableCell>
-                    {item.category
-                      ? categoryLabels[item.category as BudgetCategory] ||
-                        item.category
-                      : ""}
+                    <div className="flex items-center gap-2">
+                      {item.description}
+                      {item.nwoGrantId && (
+                        <a // 483.20.036 -> 48320036
+                          href={`https://www.nwo.nl/en/projects/${item.nwoGrantId.replaceAll(".", "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center"
+                          title="View NWO Project"
+                        >
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6 ml-2"
+                          >
+                            <NwoIcon width={16} height={16} />
+                          </Button>
+                        </a>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
-                    {item.fundingSource
-                      ? fundingSourceLabels[
-                          item.fundingSource as FundingSource
-                        ] || item.fundingSource
-                      : ""}
+                    <Badge variant="outline">
+                      {categoryLabels[item.category as BudgetCategory] ||
+                        item.category}
+                    </Badge>
                   </TableCell>
-                  <TableCell>{item.year || ""}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">
+                      {fundingSourceLabels[
+                        item.fundingSource as FundingSource
+                      ] || item.fundingSource}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{item.year}</TableCell>
                   <TableCell className="text-right">
-                    €{(item.budgetedAmount || 0).toLocaleString()}
+                    {new Intl.NumberFormat("nl-NL", {
+                      style: "currency",
+                      currency: "EUR",
+                    }).format(item.budgetedAmount || 0)}
                   </TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() =>
-                        item.id &&
-                        budget?.id &&
                         removeLineItem({
-                          budgetId: budget.id,
-                          lineItemId: item.id,
+                          budgetId: budget.id!,
+                          lineItemId: item.id!,
                         })
                       }
                     >
-                      <Trash2 className="h-4 w-4 text-destructive" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </TableCell>
                 </TableRow>
               ))}
-              {(budget.lineItems || []).length === 0 && (
+              {(!budget.lineItems || budget.lineItems.length === 0) && (
                 <TableRow>
                   <TableCell
                     colSpan={6}
-                    className="text-center text-muted-foreground h-24"
+                    className="text-center text-muted-foreground py-8"
                   >
-                    No items found. Add one to start.
+                    No line items found. Add one manually or link an NWO
+                    subsidy.
                   </TableCell>
                 </TableRow>
               )}

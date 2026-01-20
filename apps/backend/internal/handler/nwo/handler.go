@@ -63,7 +63,7 @@ func (h *Handler) GetProjects(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} httputil.BackendError "project_id is required"
 // @Failure 404 {object} httputil.BackendError "project not found"
 // @Failure 500 {object} httputil.BackendError "internal server error"
-// @Router /nwo/projects/{project_id} [get]
+// @Router /nwo/project [get]
 func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 	projectID := r.URL.Query().Get("project_id")
 	if projectID == "" {

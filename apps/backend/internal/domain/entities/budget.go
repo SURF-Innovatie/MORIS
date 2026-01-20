@@ -3,6 +3,7 @@ package entities
 import (
 	"time"
 
+	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/google/uuid"
 )
 
@@ -25,6 +26,7 @@ const (
 	BudgetCategoryInvestment BudgetCategory = "investment"
 	BudgetCategoryTravel     BudgetCategory = "travel"
 	BudgetCategoryManagement BudgetCategory = "management"
+	BudgetCategoryGrant      BudgetCategory = "grant"
 	BudgetCategoryOther      BudgetCategory = "other"
 )
 
@@ -52,6 +54,25 @@ type Budget struct {
 	LineItems   []BudgetLineItem
 }
 
+func (b *Budget) FromEnt(e *ent.Budget) *Budget {
+	b.ID = e.ID
+	b.ProjectID = e.ProjectID
+	b.Title = e.Title
+	b.Description = e.Description
+	b.Status = BudgetStatus(e.Status)
+	b.TotalAmount = e.TotalAmount
+	b.Currency = e.Currency
+	b.Version = e.Version
+	b.CreatedAt = e.CreatedAt
+	b.UpdatedAt = e.UpdatedAt
+
+	for _, li := range e.Edges.LineItems {
+		b.LineItems = append(b.LineItems, *(&BudgetLineItem{}).FromEnt(li))
+	}
+
+	return b
+}
+
 // BudgetLineItem represents a single line in a budget
 type BudgetLineItem struct {
 	ID             uuid.UUID
@@ -61,7 +82,28 @@ type BudgetLineItem struct {
 	BudgetedAmount float64
 	Year           int
 	FundingSource  FundingSource
+	NWOGrantID     *string
 	Actuals        []BudgetActual
+}
+
+func (bli *BudgetLineItem) FromEnt(e *ent.BudgetLineItem) *BudgetLineItem {
+	bli.ID = e.ID
+	bli.BudgetID = e.BudgetID
+	bli.Category = BudgetCategory(e.Category)
+	bli.Description = e.Description
+	bli.BudgetedAmount = e.BudgetedAmount
+	bli.Year = e.Year
+	bli.FundingSource = FundingSource(e.FundingSource)
+
+	if e.NwoGrantID != nil {
+		bli.NWOGrantID = e.NwoGrantID
+	}
+
+	for _, a := range e.Edges.Actuals {
+		bli.Actuals = append(bli.Actuals, *(&BudgetActual{}).FromEnt(a))
+	}
+
+	return bli
 }
 
 // BudgetActual represents an actual expenditure recorded against a line item
@@ -73,6 +115,18 @@ type BudgetActual struct {
 	RecordedDate time.Time
 	Source       string // "manual" | "erp_sync"
 	ExternalRef  string // For ERP reconciliation
+}
+
+func (ba *BudgetActual) FromEnt(e *ent.BudgetActual) *BudgetActual {
+	ba.ID = e.ID
+	ba.LineItemID = e.LineItemID
+	ba.Amount = e.Amount
+	ba.Description = e.Description
+	ba.RecordedDate = e.RecordedDate
+	ba.Source = e.Source
+	ba.ExternalRef = e.ExternalRef
+
+	return ba
 }
 
 // BudgetSummary provides computed analytics for a budget

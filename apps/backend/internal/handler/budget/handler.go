@@ -209,6 +209,7 @@ func (h *Handler) AddLineItem(w http.ResponseWriter, r *http.Request) {
 		BudgetedAmount: req.BudgetedAmount,
 		Year:           req.Year,
 		FundingSource:  req.FundingSource,
+		NWOGrantID:     req.NWOGrantID,
 	}
 
 	created, err := h.service.AddLineItem(r.Context(), budgetID, item)

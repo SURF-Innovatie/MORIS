@@ -1,4 +1,4 @@
-h1:lcPqJKaZCDAk9pLhbYY51RnbFGhIWGrDWWfOXPthAOQ=
+h1:z7cYuVzjRbvwVhTPBUUdYfpfNKvObMM0c8VkcO5VWfE=
 20260110215341_initial_schema.sql h1:AdC0c2evZQ07zDzysyctP4s0llim7+ESLw52Zx46NLw=
 20260110222105_zenodo_fields.sql h1:soNsj0nlXErkgjxgr+ivifwhCvl0S6KDKMEmbHkXu9A=
 20260111223807_event_policies.sql h1:kLXmX9WQh8PYKHvB+cJrUnUvZZd7AscQzCOgAkRBvyc=
@@ -6,3 +6,4 @@ h1:lcPqJKaZCDAk9pLhbYY51RnbFGhIWGrDWWfOXPthAOQ=
 20260114135829_make_password_optional.sql h1:pEdETo89vbY4MS0uKGOpmuHF4NRrzhAfGkCOkT+bQLI=
 20260116122659_budgeting.sql h1:fuH86B6vGH4L3zKfQOup/fY5ND5rASUv75t5itq8pr0=
 20260120185442_add_portfolio.sql h1:H6aZWZuoqv9004QNu6stIqCHIuOlcQSL9nbHC0cbXjY=
+20260120195946_add_nwo_grant.sql h1:No0WCUq8mMtDlErJKNfNILhPO5fvQyGr9XKA2SEt6qQ=

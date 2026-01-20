@@ -22,13 +22,17 @@ func (BudgetLineItem) Fields() []ent.Field {
 			Unique(),
 		field.UUID("budget_id", uuid.UUID{}),
 		field.Enum("category").
-			Values("personnel", "material", "investment", "travel", "management", "other"),
+			Values("personnel", "material", "investment", "travel", "management", "grant", "other"),
 		field.String("description").
 			NotEmpty(),
 		field.Float("budgeted_amount"),
 		field.Int("year"),
 		field.Enum("funding_source").
 			Values("subsidy", "cofinancing_cash", "cofinancing_inkind"),
+		field.String("nwo_grant_id").
+			Optional().
+			Nillable().
+			Comment("NWO project/grant ID for linking to NWO Open API"),
 	}
 }
 

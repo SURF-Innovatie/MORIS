@@ -1,6 +1,42 @@
 package nwo
 
-import "time"
+import (
+	"strings"
+	"time"
+)
+
+// NWOTime is a custom time type that can parse NWO API date formats
+// which may or may not include timezone info
+type NWOTime struct {
+	time.Time
+}
+
+// UnmarshalJSON parses dates in multiple formats from the NWO API
+func (t *NWOTime) UnmarshalJSON(data []byte) error {
+	// Remove quotes
+	s := strings.Trim(string(data), "\"")
+	if s == "" || s == "null" {
+		return nil
+	}
+
+	// Try multiple date formats
+	formats := []string{
+		time.RFC3339,
+		"2006-01-02T15:04:05",
+		"2006-01-02",
+	}
+
+	var parseErr error
+	for _, format := range formats {
+		parsed, err := time.Parse(format, s)
+		if err == nil {
+			t.Time = parsed
+			return nil
+		}
+		parseErr = err
+	}
+	return parseErr
+}
 
 // ProjectsResponse is the top-level response from the NWO Open API
 type ProjectsResponse struct {
@@ -41,8 +77,8 @@ type Project struct {
 	FundingScheme   string          `json:"funding_scheme,omitempty"`
 	Department      string          `json:"department,omitempty"`
 	SubDepartment   string          `json:"sub_department,omitempty"`
-	StartDate       *time.Time      `json:"start_date,omitempty"`
-	EndDate         *time.Time      `json:"end_date,omitempty"`
+	StartDate       *NWOTime        `json:"start_date,omitempty"`
+	EndDate         *NWOTime        `json:"end_date,omitempty"`
 	ReportingYear   int             `json:"reporting_year,omitempty"`
 	AwardAmount     int             `json:"award_amount,omitempty"`
 	SummaryNL       string          `json:"summary_nl,omitempty"`
@@ -56,20 +92,20 @@ type Project struct {
 
 // ProjectMember represents a member of a project team
 type ProjectMember struct {
-	Role              string `json:"role,omitempty"`
-	MemberID          string `json:"member_id,omitempty"`
-	ORCID             string `json:"orcid,omitempty"`
-	LastName          string `json:"last_name,omitempty"`
-	DegreePreNominal  string `json:"degree_pre_nominal,omitempty"`
-	DegreePostNominal string `json:"degree_post_nominal,omitempty"`
-	Initials          string `json:"initials,omitempty"`
-	FirstName         string `json:"first_name,omitempty"`
-	Prefix            string `json:"prefix,omitempty"`
-	DAI               string `json:"dai,omitempty"`
-	Organisation      string `json:"organisation,omitempty"`
-	OrganisationID    string `json:"organisation_id,omitempty"`
-	ROR               string `json:"ror,omitempty"`
-	Active            string `json:"active,omitempty"`
+	Role              string      `json:"role,omitempty"`
+	MemberID          interface{} `json:"member_id,omitempty"`
+	ORCID             string      `json:"orcid,omitempty"`
+	LastName          string      `json:"last_name,omitempty"`
+	DegreePreNominal  string      `json:"degree_pre_nominal,omitempty"`
+	DegreePostNominal string      `json:"degree_post_nominal,omitempty"`
+	Initials          string      `json:"initials,omitempty"`
+	FirstName         string      `json:"first_name,omitempty"`
+	Prefix            string      `json:"prefix,omitempty"`
+	DAI               string      `json:"dai,omitempty"`
+	Organisation      string      `json:"organisation,omitempty"`
+	OrganisationID    interface{} `json:"organisation_id,omitempty"`
+	ROR               string      `json:"ror,omitempty"`
+	Active            interface{} `json:"active,omitempty"`
 }
 
 // Product represents a publication or output from a project
@@ -105,9 +141,9 @@ type Author struct {
 
 // SummaryUpdate represents an update to the project summary
 type SummaryUpdate struct {
-	SubmissionDate *time.Time `json:"submission_date,omitempty"`
-	UpdateEN       string     `json:"update_en,omitempty"`
-	UpdateNL       string     `json:"update_nl,omitempty"`
+	SubmissionDate *NWOTime `json:"submission_date,omitempty"`
+	UpdateEN       string   `json:"update_en,omitempty"`
+	UpdateNL       string   `json:"update_nl,omitempty"`
 }
 
 // ProjectRole represents the possible roles for project members

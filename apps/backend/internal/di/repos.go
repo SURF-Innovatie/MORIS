@@ -2,9 +2,6 @@ package di
 
 import (
 	"github.com/SURF-Innovatie/MORIS/ent"
-	analyticsadapter "github.com/SURF-Innovatie/MORIS/internal/adapter/analytics"
-	budgetadapter "github.com/SURF-Innovatie/MORIS/internal/adapter/budget"
-	odataadapter "github.com/SURF-Innovatie/MORIS/internal/adapter/odata"
 	"github.com/SURF-Innovatie/MORIS/internal/app/analytics"
 	"github.com/SURF-Innovatie/MORIS/internal/app/budget"
 	"github.com/SURF-Innovatie/MORIS/internal/app/customfield"
@@ -12,10 +9,13 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/odata"
 	"github.com/SURF-Innovatie/MORIS/internal/app/projectrole"
+	analyticsrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/analytics"
+	budgetrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/budget"
 	customfieldrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/customfield"
 	errorlogrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/error_log"
 	eventpolicyrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventpolicy"
 	notificationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/notification"
+	odatarepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/odata"
 	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
 	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation_rbac"
 	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
@@ -95,15 +95,15 @@ func provideEventPolicyRepo(i do.Injector) (eventpolicy.Repository, error) {
 
 func provideBudgetRepo(i do.Injector) (budget.Repository, error) {
 	cli := do.MustInvoke[*ent.Client](i)
-	return budgetadapter.NewEntRepository(cli), nil
+	return budgetrepo.NewEntRepository(cli), nil
 }
 
 func provideAnalyticsRepo(i do.Injector) (analytics.Repository, error) {
 	cli := do.MustInvoke[*ent.Client](i)
-	return analyticsadapter.NewEntRepository(cli), nil
+	return analyticsrepo.NewEntRepository(cli), nil
 }
 
 func provideODataRepo(i do.Injector) (odata.Repository, error) {
 	cli := do.MustInvoke[*ent.Client](i)
-	return odataadapter.NewEntRepository(cli), nil
+	return odatarepo.NewEntRepository(cli), nil
 }

@@ -18,6 +18,7 @@ import {
   DollarSign,
   AlertTriangle,
 } from "lucide-react";
+import NwoIcon from "@/components/icons/nwoIcon";
 
 interface BudgetOverviewProps {
   projectId: string;
@@ -102,7 +103,7 @@ export function BudgetOverview({
           title="Total Budgeted"
           value={formatCurrency(
             budget.totalBudgeted || 0,
-            budget.currency || "EUR"
+            budget.currency || "EUR",
           )}
           icon={<DollarSign className="h-4 w-4" />}
         />
@@ -110,7 +111,7 @@ export function BudgetOverview({
           title="Total Spent"
           value={formatCurrency(
             budget.totalActuals || 0,
-            budget.currency || "EUR"
+            budget.currency || "EUR",
           )}
           icon={<TrendingUp className="h-4 w-4" />}
         />
@@ -118,7 +119,7 @@ export function BudgetOverview({
           title="Remaining"
           value={formatCurrency(
             budget.remaining || 0,
-            budget.currency || "EUR"
+            budget.currency || "EUR",
           )}
           icon={<DollarSign className="h-4 w-4" />}
           variant={(budget.remaining || 0) < 0 ? "destructive" : undefined}
@@ -182,7 +183,26 @@ export function BudgetOverview({
                   className="flex items-center justify-between"
                 >
                   <div>
-                    <p className="font-medium">{item.description}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{item.description}</p>
+                      {item.nwoGrantId && (
+                        <a
+                          href={`https://www.nwo.nl/en/projects/${item.nwoGrantId.replaceAll(".", "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center"
+                          title="View NWO Project"
+                        >
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6"
+                          >
+                            <NwoIcon width={16} height={16} />
+                          </Button>
+                        </a>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       {item.category} • {item.year}
                     </p>

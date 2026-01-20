@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
@@ -25,11 +26,19 @@ func NewService(repo Repository) *Service {
 }
 
 func (s *Service) GetBudget(ctx context.Context, projectID uuid.UUID) (*entities.Budget, error) {
-	return s.repo.GetBudget(ctx, projectID)
+	b, err := s.repo.GetBudget(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+	return transform.ToEntityPtr[entities.Budget](b), nil
 }
 
 func (s *Service) GetBudgetByID(ctx context.Context, budgetID uuid.UUID) (*entities.Budget, error) {
-	return s.repo.GetBudgetByID(ctx, budgetID)
+	b, err := s.repo.GetBudgetByID(ctx, budgetID)
+	if err != nil {
+		return nil, err
+	}
+	return transform.ToEntityPtr[entities.Budget](b), nil
 }
 
 func (s *Service) CreateBudget(ctx context.Context, projectID uuid.UUID, title, description string) (*entities.Budget, error) {
@@ -40,15 +49,27 @@ func (s *Service) CreateBudget(ctx context.Context, projectID uuid.UUID, title, 
 	if exists {
 		return nil, ErrBudgetAlreadyExists
 	}
-	return s.repo.CreateBudget(ctx, projectID, title, description)
+	b, err := s.repo.CreateBudget(ctx, projectID, title, description)
+	if err != nil {
+		return nil, err
+	}
+	return transform.ToEntityPtr[entities.Budget](b), nil
 }
 
 func (s *Service) GetLineItems(ctx context.Context, budgetID uuid.UUID) ([]entities.BudgetLineItem, error) {
-	return s.repo.GetLineItems(ctx, budgetID)
+	items, err := s.repo.GetLineItems(ctx, budgetID)
+	if err != nil {
+		return nil, err
+	}
+	return transform.ToEntities[entities.BudgetLineItem](items), nil
 }
 
 func (s *Service) AddLineItem(ctx context.Context, budgetID uuid.UUID, item entities.BudgetLineItem) (*entities.BudgetLineItem, error) {
-	return s.repo.AddLineItem(ctx, budgetID, item)
+	li, err := s.repo.AddLineItem(ctx, budgetID, item)
+	if err != nil {
+		return nil, err
+	}
+	return transform.ToEntityPtr[entities.BudgetLineItem](li), nil
 }
 
 func (s *Service) RemoveLineItem(ctx context.Context, lineItemID uuid.UUID) error {
@@ -56,19 +77,28 @@ func (s *Service) RemoveLineItem(ctx context.Context, lineItemID uuid.UUID) erro
 }
 
 func (s *Service) GetActuals(ctx context.Context, budgetID uuid.UUID) ([]entities.BudgetActual, error) {
-	return s.repo.GetActuals(ctx, budgetID)
+	actuals, err := s.repo.GetActuals(ctx, budgetID)
+	if err != nil {
+		return nil, err
+	}
+	return transform.ToEntities[entities.BudgetActual](actuals), nil
 }
 
 func (s *Service) RecordActual(ctx context.Context, actual entities.BudgetActual) (*entities.BudgetActual, error) {
-	return s.repo.RecordActual(ctx, actual)
+	a, err := s.repo.RecordActual(ctx, actual)
+	if err != nil {
+		return nil, err
+	}
+	return transform.ToEntityPtr[entities.BudgetActual](a), nil
 }
 
 // GetAnalytics computes analytics for a budget
 func (s *Service) GetAnalytics(ctx context.Context, budgetID uuid.UUID) (*entities.BudgetAnalytics, error) {
-	b, err := s.repo.GetBudgetByID(ctx, budgetID)
+	bEnt, err := s.repo.GetBudgetByID(ctx, budgetID)
 	if err != nil {
 		return nil, err
 	}
+	b := transform.ToEntityPtr[entities.Budget](bEnt)
 
 	analytics := &entities.BudgetAnalytics{
 		BudgetID:     b.ID,

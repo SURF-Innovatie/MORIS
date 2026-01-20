@@ -20,6 +20,7 @@ type BudgetLineItemAdded struct {
 	BudgetedAmount float64                 `json:"budgetedAmount"`
 	Year           int                     `json:"year"`
 	FundingSource  entities.FundingSource  `json:"fundingSource"`
+	NWOGrantID     *string                 `json:"nwoGrantId,omitempty"`
 }
 
 func (BudgetLineItemAdded) isEvent()     {}
@@ -38,6 +39,7 @@ type BudgetLineItemAddedInput struct {
 	BudgetedAmount float64                 `json:"budgetedAmount"`
 	Year           int                     `json:"year"`
 	FundingSource  entities.FundingSource  `json:"fundingSource"`
+	NWOGrantID     *string                 `json:"nwoGrantId,omitempty"`
 }
 
 func DecideBudgetLineItemAdded(
@@ -70,6 +72,7 @@ func DecideBudgetLineItemAdded(
 		BudgetedAmount: in.BudgetedAmount,
 		Year:           in.Year,
 		FundingSource:  in.FundingSource,
+		NWOGrantID:     in.NWOGrantID,
 	}, nil
 }
 

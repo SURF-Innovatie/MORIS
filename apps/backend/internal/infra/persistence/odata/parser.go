@@ -8,6 +8,8 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 )
 
+// TODO: This file has to be moved somewhere else
+
 // Parser implements OData query string parsing
 type Parser struct{}
 
