@@ -7,8 +7,8 @@ import (
 	"os"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	"github.com/google/uuid"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -17,9 +17,6 @@ import (
 
 func main() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-	if err := godotenv.Load(); err != nil {
-		log.Warn().Err(err).Msg("Error loading .env file")
-	}
 
 	email := flag.String("email", "", "Email of the admin user")
 	name := flag.String("name", "", "Name of the admin user")
@@ -30,14 +27,8 @@ func main() {
 		log.Fatal().Msg("email, name, and password are required")
 	}
 
-	dbHost := os.Getenv("DB_HOST")
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-	dbPort := os.Getenv("DB_PORT")
-
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		dbHost, dbPort, dbUser, dbPassword, dbName)
+		env.Global.DBHost, env.Global.DBPort, env.Global.DBUser, env.Global.DBPassword, env.Global.DBName)
 
 	client, err := ent.Open("postgres", dsn)
 	if err != nil {

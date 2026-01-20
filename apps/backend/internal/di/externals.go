@@ -29,9 +29,9 @@ func provideZenodoClient(i do.Injector) (*exzenodo.Client, error) {
 
 func provideCrossrefClient(i do.Injector) (excrossref.Client, error) {
 	cfg := &excrossref.Config{
-		BaseURL:   "https://api.crossref.org",
-		UserAgent: "MORIS/1.0 (mailto:support@moris.org)",
-		Mailto:    "support@moris.org",
+		BaseURL:   env.Global.Crossref.BaseURL,
+		UserAgent: env.Global.Crossref.UserAgent,
+		Mailto:    env.Global.Crossref.Mailto,
 	}
 	return excrossref.NewClient(cfg), nil
 }
