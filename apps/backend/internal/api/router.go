@@ -20,6 +20,7 @@ import (
 	orcidhandler "github.com/SURF-Innovatie/MORIS/internal/handler/orcid"
 	organisationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/organisation"
 	personhandler "github.com/SURF-Innovatie/MORIS/internal/handler/person"
+	portfoliohandler "github.com/SURF-Innovatie/MORIS/internal/handler/portfolio"
 	producthandler "github.com/SURF-Innovatie/MORIS/internal/handler/product"
 	projecthandler "github.com/SURF-Innovatie/MORIS/internal/handler/project"
 	commandHandler "github.com/SURF-Innovatie/MORIS/internal/handler/project/command"
@@ -52,6 +53,7 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 	organisationHandler := do.MustInvoke[*organisationhandler.Handler](injector)
 	rbacHandler := do.MustInvoke[*organisationhandler.RBACHandler](injector)
 	productHandler := do.MustInvoke[*producthandler.Handler](injector)
+	portfolioHandler := do.MustInvoke[*portfoliohandler.Handler](injector)
 	notificationHandler := do.MustInvoke[*notificationhandler.Handler](injector)
 	evtHandler := do.MustInvoke[*eventHandler.Handler](injector)
 	eventPolicyHandler := do.MustInvoke[*eventpolicyhandler.Handler](injector)
@@ -90,6 +92,7 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 			orcidhandler.MountRoutes(r, orcidHandler)
 			zenodohandler.MountRoutes(r, zenodoHandler)
 			producthandler.MountProductRoutes(r, productHandler)
+			portfoliohandler.MountPortfolioRoutes(r, portfolioHandler)
 			notificationhandler.MountNotificationRoutes(r, notificationHandler)
 			userhandler.MountUserRoutes(r, userHandler)
 			crossrefhandler.MountCrossrefRoutes(r, crossrefHandler)

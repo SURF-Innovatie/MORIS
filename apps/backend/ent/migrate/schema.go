@@ -289,6 +289,32 @@ var (
 		Columns:    PersonsColumns,
 		PrimaryKey: []*schema.Column{PersonsColumns[0]},
 	}
+	// PortfoliosColumns holds the columns for the "portfolios" table.
+	PortfoliosColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "headline", Type: field.TypeString, Nullable: true},
+		{Name: "summary", Type: field.TypeString, Nullable: true},
+		{Name: "website", Type: field.TypeString, Nullable: true},
+		{Name: "show_email", Type: field.TypeBool, Default: true},
+		{Name: "show_orcid", Type: field.TypeBool, Default: true},
+		{Name: "pinned_project_ids", Type: field.TypeJSON, Nullable: true},
+		{Name: "pinned_product_ids", Type: field.TypeJSON, Nullable: true},
+		{Name: "person_id", Type: field.TypeUUID, Unique: true},
+	}
+	// PortfoliosTable holds the schema information for the "portfolios" table.
+	PortfoliosTable = &schema.Table{
+		Name:       "portfolios",
+		Columns:    PortfoliosColumns,
+		PrimaryKey: []*schema.Column{PortfoliosColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "portfolios_persons_portfolio",
+				Columns:    []*schema.Column{PortfoliosColumns[8]},
+				RefColumns: []*schema.Column{PersonsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// ProductsColumns holds the columns for the "products" table.
 	ProductsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -420,6 +446,7 @@ var (
 		OrganisationNodeClosuresTable,
 		OrganisationRolesTable,
 		PersonsTable,
+		PortfoliosTable,
 		ProductsTable,
 		ProjectRolesTable,
 		RoleScopesTable,
@@ -439,6 +466,7 @@ func init() {
 	OrganisationNodeClosuresTable.ForeignKeys[0].RefTable = OrganisationNodesTable
 	OrganisationNodeClosuresTable.ForeignKeys[1].RefTable = OrganisationNodesTable
 	OrganisationRolesTable.ForeignKeys[0].RefTable = OrganisationNodesTable
+	PortfoliosTable.ForeignKeys[0].RefTable = PersonsTable
 	ProjectRolesTable.ForeignKeys[0].RefTable = OrganisationNodesTable
 	RoleScopesTable.ForeignKeys[0].RefTable = OrganisationRolesTable
 	RoleScopesTable.ForeignKeys[1].RefTable = OrganisationNodesTable
