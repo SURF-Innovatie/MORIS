@@ -35,6 +35,7 @@ var Package = do.Package(
 	do.Lazy(provideZenodoClient),
 	do.Lazy(provideCrossrefClient),
 	do.Lazy(provideRAiDClient),
+	do.Lazy(provideNWOClient),
 
 	// Adapters
 	do.Lazy(provideOrgClosureAdapter),
@@ -52,6 +53,7 @@ var Package = do.Package(
 	do.Lazy(provideSurfconextService),
 	do.Lazy(provideZenodoService),
 	do.Lazy(provideCrossrefService),
+	do.Lazy(provideNWOService),
 	do.Lazy(provideOrgRBACService),
 	do.Lazy(provideProjectRoleService),
 	do.Lazy(provideCustomFieldService),
@@ -88,6 +90,7 @@ var Package = do.Package(
 	do.Lazy(provideORCIDHandler),
 	do.Lazy(provideZenodoHandler),
 	do.Lazy(provideCrossrefHandler),
+	do.Lazy(provideNWOHandler),
 	do.Lazy(provideOrgRBACHandler),
 	do.Lazy(provideOrganisationHandler),
 	do.Lazy(provideProductHandler),

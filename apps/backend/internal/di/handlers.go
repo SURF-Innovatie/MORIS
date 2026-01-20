@@ -7,6 +7,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/customfield"
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
+	"github.com/SURF-Innovatie/MORIS/internal/app/nwo"
 	"github.com/SURF-Innovatie/MORIS/internal/app/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
@@ -25,6 +26,7 @@ import (
 	eventhandler "github.com/SURF-Innovatie/MORIS/internal/handler/event"
 	eventpolicyhandler "github.com/SURF-Innovatie/MORIS/internal/handler/eventpolicy"
 	notificationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/notification"
+	nwohandler "github.com/SURF-Innovatie/MORIS/internal/handler/nwo"
 	orcidhandler "github.com/SURF-Innovatie/MORIS/internal/handler/orcid"
 	organisationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/organisation"
 	personhandler "github.com/SURF-Innovatie/MORIS/internal/handler/person"
@@ -112,6 +114,11 @@ func provideZenodoHandler(i do.Injector) (*zenodohandler.Handler, error) {
 func provideCrossrefHandler(i do.Injector) (*crossrefhandler.Handler, error) {
 	svc := do.MustInvoke[crossref.Service](i)
 	return crossrefhandler.NewHandler(svc), nil
+}
+
+func provideNWOHandler(i do.Injector) (*nwohandler.Handler, error) {
+	svc := do.MustInvoke[nwo.Service](i)
+	return nwohandler.NewHandler(svc), nil
 }
 
 func provideOrgRBACHandler(i do.Injector) (*organisationhandler.RBACHandler, error) {

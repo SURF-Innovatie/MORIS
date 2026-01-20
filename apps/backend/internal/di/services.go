@@ -3,6 +3,7 @@ package di
 import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	excrossref "github.com/SURF-Innovatie/MORIS/external/crossref"
+	exnwo "github.com/SURF-Innovatie/MORIS/external/nwo"
 	exorcid "github.com/SURF-Innovatie/MORIS/external/orcid"
 	exsurfconext "github.com/SURF-Innovatie/MORIS/external/surfconext"
 	exzenodo "github.com/SURF-Innovatie/MORIS/external/zenodo"
@@ -12,6 +13,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/errorlog"
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
+	"github.com/SURF-Innovatie/MORIS/internal/app/nwo"
 	"github.com/SURF-Innovatie/MORIS/internal/app/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
@@ -93,6 +95,11 @@ func provideZenodoService(i do.Injector) (zenodo.Service, error) {
 func provideCrossrefService(i do.Injector) (crossref.Service, error) {
 	cli := do.MustInvoke[excrossref.Client](i)
 	return crossref.NewService(cli), nil
+}
+
+func provideNWOService(i do.Injector) (nwo.Service, error) {
+	cli := do.MustInvoke[exnwo.Client](i)
+	return nwo.NewService(cli), nil
 }
 
 func provideOrgRBACService(i do.Injector) (organisationrbac.Service, error) {
