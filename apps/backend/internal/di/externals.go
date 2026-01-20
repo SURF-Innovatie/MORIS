@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	excrossref "github.com/SURF-Innovatie/MORIS/external/crossref"
+	exnwo "github.com/SURF-Innovatie/MORIS/external/nwo"
 	exorcid "github.com/SURF-Innovatie/MORIS/external/orcid"
 	"github.com/SURF-Innovatie/MORIS/external/raid"
 	exsurfconext "github.com/SURF-Innovatie/MORIS/external/surfconext"
@@ -39,4 +40,11 @@ func provideCrossrefClient(i do.Injector) (excrossref.Client, error) {
 func provideRAiDClient(i do.Injector) (*raid.Client, error) {
 	opts := raid.DefaultOptions()
 	return raid.NewClient(http.DefaultClient, opts), nil
+}
+
+func provideNWOClient(i do.Injector) (exnwo.Client, error) {
+	cfg := &exnwo.Config{
+		BaseURL: env.Global.NWO.BaseURL,
+	}
+	return exnwo.NewClient(cfg), nil
 }

@@ -13,6 +13,7 @@ import {
   Package,
   Building2,
   Settings,
+  Sparkles,
 } from "lucide-react";
 
 import { Button } from "../ui/button";
@@ -34,6 +35,7 @@ const NAV_GROUPS = [
     label: "My Research",
     items: [
       { to: "/dashboard/projects", label: "Projects", icon: Folder },
+      { to: "/dashboard/portfolio", label: "Portfolio", icon: Sparkles },
       { to: "/dashboard/products", label: "Products", icon: Package },
       {
         to: "/dashboard/organisations",

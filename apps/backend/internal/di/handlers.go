@@ -9,11 +9,13 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/customfield"
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
+	"github.com/SURF-Innovatie/MORIS/internal/app/nwo"
 	"github.com/SURF-Innovatie/MORIS/internal/app/odata"
 	"github.com/SURF-Innovatie/MORIS/internal/app/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	personsvc "github.com/SURF-Innovatie/MORIS/internal/app/person"
+	"github.com/SURF-Innovatie/MORIS/internal/app/portfolio"
 	"github.com/SURF-Innovatie/MORIS/internal/app/product"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/command"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
@@ -30,10 +32,12 @@ import (
 	eventhandler "github.com/SURF-Innovatie/MORIS/internal/handler/event"
 	eventpolicyhandler "github.com/SURF-Innovatie/MORIS/internal/handler/eventpolicy"
 	notificationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/notification"
+	nwohandler "github.com/SURF-Innovatie/MORIS/internal/handler/nwo"
 	odatahandler "github.com/SURF-Innovatie/MORIS/internal/handler/odata"
 	orcidhandler "github.com/SURF-Innovatie/MORIS/internal/handler/orcid"
 	organisationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/organisation"
 	personhandler "github.com/SURF-Innovatie/MORIS/internal/handler/person"
+	portfoliohandler "github.com/SURF-Innovatie/MORIS/internal/handler/portfolio"
 	producthandler "github.com/SURF-Innovatie/MORIS/internal/handler/product"
 	projecthandler "github.com/SURF-Innovatie/MORIS/internal/handler/project"
 	commandhandler "github.com/SURF-Innovatie/MORIS/internal/handler/project/command"
@@ -124,6 +128,11 @@ func provideCrossrefHandler(i do.Injector) (*crossrefhandler.Handler, error) {
 	return crossrefhandler.NewHandler(svc), nil
 }
 
+func provideNWOHandler(i do.Injector) (*nwohandler.Handler, error) {
+	svc := do.MustInvoke[nwo.Service](i)
+	return nwohandler.NewHandler(svc), nil
+}
+
 func provideOrgRBACHandler(i do.Injector) (*organisationhandler.RBACHandler, error) {
 	svc := do.MustInvoke[organisationrbac.Service](i)
 	return organisationhandler.NewRBACHandler(svc), nil
@@ -141,6 +150,12 @@ func provideProductHandler(i do.Injector) (*producthandler.Handler, error) {
 	svc := do.MustInvoke[product.Service](i)
 	curUser := do.MustInvoke[coreauth.CurrentUserProvider](i)
 	return producthandler.NewHandler(svc, curUser), nil
+}
+
+func providePortfolioHandler(i do.Injector) (*portfoliohandler.Handler, error) {
+	svc := do.MustInvoke[portfolio.Service](i)
+	curUser := do.MustInvoke[coreauth.CurrentUserProvider](i)
+	return portfoliohandler.NewHandler(svc, curUser), nil
 }
 
 func provideNotificationHandler(i do.Injector) (*notificationhandler.Handler, error) {

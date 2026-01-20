@@ -29,6 +29,7 @@ type Config struct {
 	Surfconext SurfconextConfig `env-prefix:"SURFCONEXT_"`
 	Zenodo     ZenodoConfig     `env-prefix:"ZENODO_"`
 	Crossref   CrossrefConfig   `env-prefix:"CROSSREF_"`
+	NWO        NWOConfig        `env-prefix:"NWO_"`
 }
 
 type ORCIDConfig struct {
@@ -57,6 +58,10 @@ type CrossrefConfig struct {
 	BaseURL   string `env:"BASE_URL" env-default:"https://api.crossref.org"`
 	UserAgent string `env:"USER_AGENT" env-default:"MORIS/1.0 (https://github.com/SURF-Innovatie/MORIS)"`
 	Mailto    string `env:"MAILTO" env-required:"true"`
+}
+
+type NWOConfig struct {
+	BaseURL string `env:"BASE_URL" env-default:"https://nwopen-api.nwo.nl"`
 }
 
 var Global Config

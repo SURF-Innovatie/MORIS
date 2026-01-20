@@ -20,10 +20,12 @@ import (
 	eventpolicyhandler "github.com/SURF-Innovatie/MORIS/internal/handler/eventpolicy"
 	authmiddleware "github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
 	notificationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/notification"
+	nwohandler "github.com/SURF-Innovatie/MORIS/internal/handler/nwo"
 	odatahandler "github.com/SURF-Innovatie/MORIS/internal/handler/odata"
 	orcidhandler "github.com/SURF-Innovatie/MORIS/internal/handler/orcid"
 	organisationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/organisation"
 	personhandler "github.com/SURF-Innovatie/MORIS/internal/handler/person"
+	portfoliohandler "github.com/SURF-Innovatie/MORIS/internal/handler/portfolio"
 	producthandler "github.com/SURF-Innovatie/MORIS/internal/handler/product"
 	projecthandler "github.com/SURF-Innovatie/MORIS/internal/handler/project"
 	commandHandler "github.com/SURF-Innovatie/MORIS/internal/handler/project/command"
@@ -55,9 +57,11 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 	orcidHandler := do.MustInvoke[*orcidhandler.Handler](injector)
 	zenodoHandler := do.MustInvoke[*zenodohandler.Handler](injector)
 	crossrefHandler := do.MustInvoke[*crossrefhandler.Handler](injector)
+	nwoHandler := do.MustInvoke[*nwohandler.Handler](injector)
 	organisationHandler := do.MustInvoke[*organisationhandler.Handler](injector)
 	rbacHandler := do.MustInvoke[*organisationhandler.RBACHandler](injector)
 	productHandler := do.MustInvoke[*producthandler.Handler](injector)
+	portfolioHandler := do.MustInvoke[*portfoliohandler.Handler](injector)
 	notificationHandler := do.MustInvoke[*notificationhandler.Handler](injector)
 	evtHandler := do.MustInvoke[*eventHandler.Handler](injector)
 	eventPolicyHandler := do.MustInvoke[*eventpolicyhandler.Handler](injector)
@@ -113,10 +117,12 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 			orcidhandler.MountRoutes(r, orcidHandler)
 			zenodohandler.MountRoutes(r, zenodoHandler)
 			producthandler.MountProductRoutes(r, productHandler)
+			portfoliohandler.MountPortfolioRoutes(r, portfolioHandler)
 			notificationhandler.MountNotificationRoutes(r, notificationHandler)
 			userhandler.MountUserRoutes(r, userHandler)
 			apiKeyHandler.RegisterRoutes(r)
 			crossrefhandler.MountCrossrefRoutes(r, crossrefHandler)
+			nwohandler.MountRoutes(r, nwoHandler)
 			adapterhandler.MountRoutes(r, adapterHandler)
 
 			// Event Policies routes (standalone and org-scoped)

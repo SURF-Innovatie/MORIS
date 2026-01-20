@@ -19,6 +19,7 @@ import (
 	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
 	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation_rbac"
 	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
+	portfoliorepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/portfolio"
 	productrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/product"
 	projectmembershiprepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_membership"
 	projectqueryrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_query"
@@ -65,6 +66,11 @@ func provideCustomFieldRepo(i do.Injector) (customfield.Repository, error) {
 func provideProductRepo(i do.Injector) (*productrepo.EntRepo, error) {
 	cli := do.MustInvoke[*ent.Client](i)
 	return productrepo.NewEntRepo(cli), nil
+}
+
+func providePortfolioRepo(i do.Injector) (*portfoliorepo.EntRepo, error) {
+	cli := do.MustInvoke[*ent.Client](i)
+	return portfoliorepo.NewEntRepo(cli), nil
 }
 
 func provideNotificationRepo(i do.Injector) (*notificationrepo.EntRepo, error) {

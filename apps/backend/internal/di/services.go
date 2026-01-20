@@ -3,6 +3,7 @@ package di
 import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	excrossref "github.com/SURF-Innovatie/MORIS/external/crossref"
+	exnwo "github.com/SURF-Innovatie/MORIS/external/nwo"
 	exorcid "github.com/SURF-Innovatie/MORIS/external/orcid"
 	exsurfconext "github.com/SURF-Innovatie/MORIS/external/surfconext"
 	exzenodo "github.com/SURF-Innovatie/MORIS/external/zenodo"
@@ -15,11 +16,13 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/errorlog"
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
+	"github.com/SURF-Innovatie/MORIS/internal/app/nwo"
 	"github.com/SURF-Innovatie/MORIS/internal/app/odata"
 	"github.com/SURF-Innovatie/MORIS/internal/app/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	personsvc "github.com/SURF-Innovatie/MORIS/internal/app/person"
+	"github.com/SURF-Innovatie/MORIS/internal/app/portfolio"
 	"github.com/SURF-Innovatie/MORIS/internal/app/product"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/cachewarmup"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/command"
@@ -40,6 +43,7 @@ import (
 	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
 	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation_rbac"
 	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
+	portfoliorepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/portfolio"
 	productrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/product"
 	projectmembershiprepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_membership"
 	projectqueryrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_query"
@@ -97,6 +101,11 @@ func provideCrossrefService(i do.Injector) (crossref.Service, error) {
 	return crossref.NewService(cli), nil
 }
 
+func provideNWOService(i do.Injector) (nwo.Service, error) {
+	cli := do.MustInvoke[exnwo.Client](i)
+	return nwo.NewService(cli), nil
+}
+
 func provideOrgRBACService(i do.Injector) (organisationrbac.Service, error) {
 	repo := do.MustInvoke[*organisationrbacrepo.EntRepo](i)
 	return organisationrbac.NewService(repo), nil
@@ -123,6 +132,11 @@ func provideOrganisationService(i do.Injector) (organisation.Service, error) {
 func provideProductService(i do.Injector) (product.Service, error) {
 	repo := do.MustInvoke[*productrepo.EntRepo](i)
 	return product.NewService(repo), nil
+}
+
+func providePortfolioService(i do.Injector) (portfolio.Service, error) {
+	repo := do.MustInvoke[*portfoliorepo.EntRepo](i)
+	return portfolio.NewService(repo), nil
 }
 
 func provideNotificationService(i do.Injector) (notification.Service, error) {

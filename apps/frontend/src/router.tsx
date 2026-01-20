@@ -18,6 +18,7 @@ const ProjectDetailsRoute = lazy(() => import("@/routes/project-details"));
 const LoginRoute = lazy(() => import("@/routes/login"));
 const RouteError = lazy(() => import("@/routes/route-error"));
 const ProfileRoute = lazy(() => import("@/routes/profile"));
+const PortfolioRoute = lazy(() => import("@/routes/portfolio"));
 const OrcidCallbackRoute = lazy(() => import("@/routes/orcid-callback"));
 const ZenodoCallbackRoute = lazy(() => import("@/routes/zenodo-callback"));
 const SurfconextCallbackRoute = lazy(
@@ -98,6 +99,10 @@ export function createAppRouter() {
             {
               path: "settings",
               element: <ProfileRoute />,
+            },
+            {
+              path: "portfolio",
+              element: <PortfolioRoute />,
             },
             {
               path: "organisations",
