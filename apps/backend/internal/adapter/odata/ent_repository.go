@@ -207,7 +207,7 @@ func (r *EntRepository) QueryAnalytics(ctx context.Context, userID uuid.UUID, qu
 
 		var burnRate float64
 		if totalBudgeted > 0 {
-			burnRate = (totalActuals / totalBudgeted) * 100
+			burnRate = safeFloat((totalActuals / totalBudgeted) * 100)
 		}
 
 		dtos[i] = appOdata.AnalyticsODataDTO{
@@ -241,7 +241,7 @@ func mapBudgetToODataDTO(b *ent.Budget) appOdata.BudgetODataDTO {
 
 	var burnRate float64
 	if totalBudgeted > 0 {
-		burnRate = (totalActuals / totalBudgeted) * 100
+		burnRate = safeFloat((totalActuals / totalBudgeted) * 100)
 	}
 
 	return appOdata.BudgetODataDTO{
@@ -373,4 +373,17 @@ func applyLineItemOrder(q *ent.BudgetLineItemQuery, order entities.ODataOrderBy)
 		return q.Order(ent.Asc(budgetlineitem.FieldYear))
 	}
 	return q
+}
+
+// safeFloat checks for NaN or Inf and returns 0 if found
+func safeFloat(f float64) float64 {
+	// Check for NaN
+	if f != f {
+		return 0
+	}
+	// Check for Inf (simple range check)
+	if f > 1.79e+308 || f < -1.79e+308 {
+		return 0
+	}
+	return f
 }

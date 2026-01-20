@@ -321,17 +321,23 @@ func writeODataResponseWithContext(w http.ResponseWriter, r *http.Request, entit
 
 	data, err := json.Marshal(result)
 	if err != nil {
+		fmt.Printf("DEBUG: JSON Marshal Error for %s: %v\n", entitySet, err)
 		writeODataError(w, http.StatusInternalServerError, "serialization_error", "Failed to serialize response")
 		return
 	}
 
 	if err := json.Unmarshal(data, &response); err != nil {
+		fmt.Printf("DEBUG: JSON Unmarshal Error for %s: %v\n", entitySet, err)
 		writeODataError(w, http.StatusInternalServerError, "serialization_error", "Failed to prepare response")
 		return
 	}
 
 	// Add context annotation
 	response["@odata.context"] = contextURL
+
+	// Debug logging
+	debugJSON, _ := json.MarshalIndent(response, "", "  ")
+	fmt.Printf("DEBUG OData Response for %s:\n%s\n", entitySet, string(debugJSON))
 
 	_ = httputil.WriteJSON(w, http.StatusOK, response)
 }
