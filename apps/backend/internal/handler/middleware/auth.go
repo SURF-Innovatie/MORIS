@@ -13,116 +13,151 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 )
 
+// Common auth errors.
+var (
+	errMissingAuthHeader  = errors.New("authorization header required")
+	errInvalidAuthFormat  = errors.New("authorization header must be in '<type> <token>' format")
+	errUnsupportedAuth    = errors.New("unsupported authorization type")
+	errInvalidCredentials = errors.New("invalid or expired token/key")
+	errInactiveUser       = errors.New("user account is inactive")
+	errInvalidBasicFormat = errors.New("invalid basic auth format")
+	errEmailMismatch      = errors.New("email does not match API key owner")
+)
+
 // AuthMiddleware extracts and validates a JWT token or an API key from the Authorization header.
 func AuthMiddleware(authSvc coreauth.Service) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			authHeader := r.Header.Get("Authorization")
-			if authHeader == "" {
-				httputil.WriteError(w, r, http.StatusUnauthorized, "Authorization header required", nil)
-				return
-			}
-
-			parts := strings.SplitN(authHeader, " ", 2)
-			if len(parts) != 2 {
-				httputil.WriteError(w, r, http.StatusUnauthorized, "Authorization header must be in '<type> <token>' format", nil)
-				return
-			}
-
-			authType := strings.ToLower(parts[0])
-			token := parts[1]
-
-			var user *entities.UserAccount
-			var err error
-
-			if authType == "bearer" {
-				// Try JWT first
-				user, err = authSvc.ValidateToken(token)
-				if err != nil {
-					// TODO: refine api key implementation etc
-					if strings.HasPrefix(token, apikey.APIKeyPrefix) {
-						user, err = authSvc.ValidateAPIKey(r.Context(), token)
-					}
-				}
-			} else if authType == "apikey" {
-				user, err = authSvc.ValidateAPIKey(r.Context(), token)
-			} else if authType == "basic" {
-				// Basic Auth: username is email, password is API key
-				user, err = validateBasicAuth(r.Context(), authSvc, token)
-			} else {
-				httputil.WriteError(w, r, http.StatusUnauthorized, "Unsupported authorization type", nil)
-				return
-			}
-
+			user, err := authenticate(r, authSvc)
 			if err != nil {
-				httputil.WriteError(w, r, http.StatusUnauthorized, "Invalid or expired token/key", nil)
+				httputil.WriteError(w, r, http.StatusUnauthorized, err.Error(), nil)
 				return
 			}
 
-			// Check if user is active
 			if !user.User.IsActive {
-				httputil.WriteError(w, r, http.StatusUnauthorized, "User account is inactive", nil)
+				httputil.WriteError(w, r, http.StatusUnauthorized, errInactiveUser.Error(), nil)
 				return
 			}
 
-			// Store the authenticated user in the request context
 			ctx := context.WithValue(r.Context(), httputil.ContextKeyUser, user)
-			r = r.WithContext(ctx)
-
-			next.ServeHTTP(w, r)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
 
+// authenticate parses the Authorization header and validates the credentials.
+func authenticate(r *http.Request, authSvc coreauth.Service) (*entities.UserAccount, error) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return nil, errMissingAuthHeader
+	}
+
+	authType, token, err := parseAuthHeader(authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	return validateCredentials(r.Context(), authSvc, authType, token)
+}
+
+// parseAuthHeader splits the Authorization header into type and token.
+func parseAuthHeader(header string) (authType, token string, err error) {
+	parts := strings.SplitN(header, " ", 2)
+	if len(parts) != 2 {
+		return "", "", errInvalidAuthFormat
+	}
+	return strings.ToLower(parts[0]), parts[1], nil
+}
+
+// validateCredentials dispatches to the appropriate validation strategy based on auth type.
+func validateCredentials(ctx context.Context, authSvc coreauth.Service, authType, token string) (*entities.UserAccount, error) {
+	switch authType {
+	case "bearer":
+		return validateBearer(ctx, authSvc, token)
+	case "apikey":
+		return validateAPIKey(ctx, authSvc, token)
+	case "basic":
+		return validateBasicAuth(ctx, authSvc, token)
+	default:
+		return nil, errUnsupportedAuth
+	}
+}
+
+// validateBearer validates a Bearer token (JWT or API key with prefix).
+func validateBearer(ctx context.Context, authSvc coreauth.Service, token string) (*entities.UserAccount, error) {
+	// Try JWT first
+	user, err := authSvc.ValidateToken(token)
+	if err == nil {
+		return user, nil
+	}
+
+	// Fall back to API key if token has the expected prefix
+	if strings.HasPrefix(token, apikey.APIKeyPrefix) {
+		return authSvc.ValidateAPIKey(ctx, token)
+	}
+
+	return nil, errInvalidCredentials
+}
+
+// validateAPIKey validates an API key directly.
+func validateAPIKey(ctx context.Context, authSvc coreauth.Service, token string) (*entities.UserAccount, error) {
+	user, err := authSvc.ValidateAPIKey(ctx, token)
+	if err != nil {
+		return nil, errInvalidCredentials
+	}
+	return user, nil
+}
+
+// validateBasicAuth handles Basic Auth where username is email and password is API key.
+func validateBasicAuth(ctx context.Context, authSvc coreauth.Service, encodedCredentials string) (*entities.UserAccount, error) {
+	email, apiKey, err := decodeBasicCredentials(encodedCredentials)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := authSvc.ValidateAPIKey(ctx, apiKey)
+	if err != nil {
+		return nil, errInvalidCredentials
+	}
+
+	if !strings.EqualFold(user.Person.Email, email) {
+		return nil, errEmailMismatch
+	}
+
+	return user, nil
+}
+
+// decodeBasicCredentials decodes base64 credentials and extracts email and password.
+func decodeBasicCredentials(encoded string) (email, password string, err error) {
+	decoded, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		return "", "", errInvalidBasicFormat
+	}
+
+	parts := strings.SplitN(string(decoded), ":", 2)
+	if len(parts) != 2 {
+		return "", "", errInvalidBasicFormat
+	}
+
+	return parts[0], parts[1], nil
+}
+
 // RequireSysAdminMiddleware checks if the authenticated user is a system administrator.
-func RequireSysAdminMiddleware() func(next http.Handler) http.Handler {
+func RequireSysAdminMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			user, ok := httputil.GetUserFromContext(r.Context())
 			if !ok || user == nil {
-				httputil.WriteError(w, r, http.StatusUnauthorized, "Unauthorized: User not found in context", nil)
+				httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized: user not found in context", nil)
 				return
 			}
 
 			if !user.User.IsSysAdmin {
-				httputil.WriteError(w, r, http.StatusForbidden, "Forbidden: Insufficient permissions", nil)
+				httputil.WriteError(w, r, http.StatusForbidden, "forbidden: insufficient permissions", nil)
 				return
 			}
 
 			next.ServeHTTP(w, r)
 		})
 	}
-}
-
-// validateBasicAuth handles Basic Auth where username is email and password is API key.
-// Decodes the base64 credentials, validates the API key, and verifies the email matches.
-func validateBasicAuth(ctx context.Context, authSvc coreauth.Service, encodedCredentials string) (*entities.UserAccount, error) {
-	// Decode base64 credentials
-	decoded, err := base64.StdEncoding.DecodeString(encodedCredentials)
-	if err != nil {
-		return nil, err
-	}
-
-	// Split into username:password
-	credentials := string(decoded)
-	parts := strings.SplitN(credentials, ":", 2)
-	if len(parts) != 2 {
-		return nil, errors.New("invalid basic auth format")
-	}
-
-	email := parts[0]
-	apiKey := parts[1]
-
-	// Validate the API key
-	user, err := authSvc.ValidateAPIKey(ctx, apiKey)
-	if err != nil {
-		return nil, err
-	}
-
-	// Verify the email matches the user who owns the API key
-	if !strings.EqualFold(user.Person.Email, email) {
-		return nil, errors.New("email does not match API key owner")
-	}
-
-	return user, nil
 }
