@@ -1,6 +1,7 @@
 package odata
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -311,25 +312,26 @@ func writeODataResponseWithContext(w http.ResponseWriter, r *http.Request, entit
 	w.Header().Set("Content-Type", ODataContentType)
 	w.Header().Set("OData-Version", ODataVersion)
 
-	// Add @odata.context to the result
 	baseURL := getBaseURL(r)
 	contextURL := fmt.Sprintf("%s/$metadata#%s", baseURL, entitySet)
 
-	// Wrap the result with context
-	response := map[string]any{
-		"@odata.context": contextURL,
+	// Convert result to map to flatten the structure
+	// This avoids nesting the ODataResult struct inside a "value" field
+	var response map[string]any
+
+	data, err := json.Marshal(result)
+	if err != nil {
+		writeODataError(w, http.StatusInternalServerError, "serialization_error", "Failed to serialize response")
+		return
 	}
 
-	// Merge the original result if it's a map
-	if m, ok := result.(map[string]any); ok {
-		for k, v := range m {
-			response[k] = v
-		}
-	} else {
-		// For structs, use reflection or marshal/unmarshal
-		// For our ODataResult type, we know it has Value and Count fields
-		response["value"] = result
+	if err := json.Unmarshal(data, &response); err != nil {
+		writeODataError(w, http.StatusInternalServerError, "serialization_error", "Failed to prepare response")
+		return
 	}
+
+	// Add context annotation
+	response["@odata.context"] = contextURL
 
 	_ = httputil.WriteJSON(w, http.StatusOK, response)
 }
