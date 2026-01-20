@@ -1,12 +1,21 @@
 package odata
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	appOdata "github.com/SURF-Innovatie/MORIS/internal/app/odata"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+)
+
+// OData constants
+const (
+	ODataVersion     = "4.0"
+	ODataContentType = "application/json;odata.metadata=minimal;odata.streaming=true;charset=utf-8"
+	ODataNamespace   = "MORIS.OData"
 )
 
 // Handler handles OData HTTP requests for Power BI integration
@@ -22,12 +31,149 @@ func NewHandler(service *appOdata.Service) *Handler {
 // RegisterRoutes registers OData routes
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Route("/odata", func(r chi.Router) {
-		// These routes support both JWT and API key authentication
+		// OData discovery endpoints (required by Power BI)
+		r.Get("/", h.GetServiceDocument)
+		r.Get("/$metadata", h.GetMetadata)
+
+		// Entity set endpoints
+		r.Get("/Budgets", h.GetBudgets)
+		r.Get("/BudgetLineItems", h.GetBudgetLineItems)
+		r.Get("/BudgetActuals", h.GetBudgetActuals)
+		r.Get("/BudgetAnalytics", h.GetBudgetAnalytics)
+
+		// Keep old routes for backward compatibility
 		r.Get("/budgets", h.GetBudgets)
 		r.Get("/budget-line-items", h.GetBudgetLineItems)
 		r.Get("/budget-actuals", h.GetBudgetActuals)
 		r.Get("/budget-analytics", h.GetBudgetAnalytics)
 	})
+}
+
+// GetServiceDocument returns the OData service document listing all entity sets
+// This is required by Power BI to discover available data
+// @Summary Get OData service document
+// @Description Returns the OData service document listing all available entity sets
+// @Tags odata
+// @Produce json
+// @Success 200 {object} map[string]any "OData service document"
+// @Router /odata [get]
+func (h *Handler) GetServiceDocument(w http.ResponseWriter, r *http.Request) {
+	baseURL := getBaseURL(r)
+
+	serviceDoc := map[string]any{
+		"@odata.context": baseURL + "/$metadata",
+		"value": []map[string]string{
+			{"name": "Budgets", "kind": "EntitySet", "url": "Budgets"},
+			{"name": "BudgetLineItems", "kind": "EntitySet", "url": "BudgetLineItems"},
+			{"name": "BudgetActuals", "kind": "EntitySet", "url": "BudgetActuals"},
+			{"name": "BudgetAnalytics", "kind": "EntitySet", "url": "BudgetAnalytics"},
+		},
+	}
+
+	w.Header().Set("Content-Type", ODataContentType)
+	w.Header().Set("OData-Version", ODataVersion)
+	_ = httputil.WriteJSON(w, http.StatusOK, serviceDoc)
+}
+
+// GetMetadata returns the OData $metadata document describing entity types
+// This is required by Power BI to understand the data model
+// @Summary Get OData metadata document
+// @Description Returns the CSDL/EDMX metadata document describing entity types
+// @Tags odata
+// @Produce application/xml
+// @Success 200 {string} string "OData CSDL/EDMX metadata"
+// @Router /odata/$metadata [get]
+func (h *Handler) GetMetadata(w http.ResponseWriter, r *http.Request) {
+	metadata := generateMetadataXML()
+	w.Header().Set("Content-Type", "application/xml;charset=utf-8")
+	w.Header().Set("OData-Version", ODataVersion)
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(metadata))
+}
+
+// generateMetadataXML generates the CSDL/EDMX metadata document
+func generateMetadataXML() string {
+	return `<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="` + ODataNamespace + `" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityType Name="Budget">
+        <Key><PropertyRef Name="id"/></Key>
+        <Property Name="id" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="projectId" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="title" Type="Edm.String"/>
+        <Property Name="status" Type="Edm.String"/>
+        <Property Name="totalAmount" Type="Edm.Double"/>
+        <Property Name="totalBudgeted" Type="Edm.Double"/>
+        <Property Name="totalActuals" Type="Edm.Double"/>
+        <Property Name="burnRate" Type="Edm.Double"/>
+        <Property Name="currency" Type="Edm.String"/>
+      </EntityType>
+      <EntityType Name="BudgetLineItem">
+        <Key><PropertyRef Name="id"/></Key>
+        <Property Name="id" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="budgetId" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="category" Type="Edm.String"/>
+        <Property Name="description" Type="Edm.String"/>
+        <Property Name="budgetedAmount" Type="Edm.Double"/>
+        <Property Name="year" Type="Edm.Int32"/>
+        <Property Name="fundingSource" Type="Edm.String"/>
+        <Property Name="totalActuals" Type="Edm.Double"/>
+      </EntityType>
+      <EntityType Name="BudgetActual">
+        <Key><PropertyRef Name="id"/></Key>
+        <Property Name="id" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="lineItemId" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="amount" Type="Edm.Double"/>
+        <Property Name="description" Type="Edm.String"/>
+        <Property Name="recordedDate" Type="Edm.String"/>
+        <Property Name="source" Type="Edm.String"/>
+      </EntityType>
+      <EntityType Name="BudgetAnalytics">
+        <Key><PropertyRef Name="budgetId"/></Key>
+        <Property Name="projectId" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="projectTitle" Type="Edm.String"/>
+        <Property Name="budgetId" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="totalBudgeted" Type="Edm.Double"/>
+        <Property Name="totalActuals" Type="Edm.Double"/>
+        <Property Name="remaining" Type="Edm.Double"/>
+        <Property Name="burnRate" Type="Edm.Double"/>
+        <Property Name="status" Type="Edm.String"/>
+      </EntityType>
+      <EntityContainer Name="Container">
+        <EntitySet Name="Budgets" EntityType="` + ODataNamespace + `.Budget"/>
+        <EntitySet Name="BudgetLineItems" EntityType="` + ODataNamespace + `.BudgetLineItem"/>
+        <EntitySet Name="BudgetActuals" EntityType="` + ODataNamespace + `.BudgetActual"/>
+        <EntitySet Name="BudgetAnalytics" EntityType="` + ODataNamespace + `.BudgetAnalytics"/>
+      </EntityContainer>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>`
+}
+
+// getBaseURL extracts the base URL for the OData service
+func getBaseURL(r *http.Request) string {
+	scheme := "https"
+	if r.TLS == nil {
+		if fwdProto := r.Header.Get("X-Forwarded-Proto"); fwdProto != "" {
+			scheme = fwdProto
+		} else {
+			scheme = "http"
+		}
+	}
+
+	host := r.Host
+	if fwdHost := r.Header.Get("X-Forwarded-Host"); fwdHost != "" {
+		host = fwdHost
+	}
+
+	// Get the path up to /odata
+	path := r.URL.Path
+	if idx := strings.Index(path, "/odata"); idx >= 0 {
+		path = path[:idx+6] // include "/odata"
+	}
+
+	return fmt.Sprintf("%s://%s%s", scheme, host, path)
 }
 
 // GetBudgets godoc
@@ -60,7 +206,7 @@ func (h *Handler) GetBudgets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeODataResponse(w, result)
+	writeODataResponseWithContext(w, r, "Budgets", result)
 }
 
 // GetBudgetLineItems godoc
@@ -91,7 +237,7 @@ func (h *Handler) GetBudgetLineItems(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeODataResponse(w, result)
+	writeODataResponseWithContext(w, r, "BudgetLineItems", result)
 }
 
 // GetBudgetActuals godoc
@@ -121,7 +267,7 @@ func (h *Handler) GetBudgetActuals(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeODataResponse(w, result)
+	writeODataResponseWithContext(w, r, "BudgetActuals", result)
 }
 
 // GetBudgetAnalytics godoc
@@ -147,7 +293,7 @@ func (h *Handler) GetBudgetAnalytics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeODataResponse(w, result)
+	writeODataResponseWithContext(w, r, "BudgetAnalytics", result)
 }
 
 // Helper functions
@@ -160,15 +306,37 @@ func getUserIDFromContext(r *http.Request) uuid.UUID {
 	return *userIDPtr
 }
 
-func writeODataResponse(w http.ResponseWriter, result any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("OData-Version", "4.0")
-	_ = httputil.WriteJSON(w, http.StatusOK, result)
+// writeODataResponseWithContext wraps the result with @odata.context
+func writeODataResponseWithContext(w http.ResponseWriter, r *http.Request, entitySet string, result any) {
+	w.Header().Set("Content-Type", ODataContentType)
+	w.Header().Set("OData-Version", ODataVersion)
+
+	// Add @odata.context to the result
+	baseURL := getBaseURL(r)
+	contextURL := fmt.Sprintf("%s/$metadata#%s", baseURL, entitySet)
+
+	// Wrap the result with context
+	response := map[string]any{
+		"@odata.context": contextURL,
+	}
+
+	// Merge the original result if it's a map
+	if m, ok := result.(map[string]any); ok {
+		for k, v := range m {
+			response[k] = v
+		}
+	} else {
+		// For structs, use reflection or marshal/unmarshal
+		// For our ODataResult type, we know it has Value and Count fields
+		response["value"] = result
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, response)
 }
 
 func writeODataError(w http.ResponseWriter, status int, code, message string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("OData-Version", "4.0")
+	w.Header().Set("Content-Type", ODataContentType)
+	w.Header().Set("OData-Version", ODataVersion)
 	_ = httputil.WriteJSON(w, status, map[string]any{
 		"error": map[string]string{
 			"code":    code,
