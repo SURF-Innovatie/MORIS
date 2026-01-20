@@ -53,7 +53,8 @@ func provideUserService(i do.Injector) (user.Service, error) {
 	personSvc := do.MustInvoke[personsvc.Service](i)
 	es := do.MustInvoke[*eventstore.EntStore](i)
 	membership := do.MustInvoke[*projectmembershiprepo.EntRepo](i)
-	return user.NewService(userRepo, personSvc, es, membership), nil
+	userCache := do.MustInvoke[cache.UserCache](i)
+	return user.NewService(userRepo, personSvc, es, membership, userCache), nil
 }
 
 func provideAuthService(i do.Injector) (coreauth.Service, error) {

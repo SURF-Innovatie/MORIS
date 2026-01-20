@@ -44,6 +44,11 @@ func provideProjectCache(i do.Injector) (cache.ProjectCache, error) {
 	return cache.NewRedisProjectCache(rdb, 24*time.Hour), nil
 }
 
+func provideUserCache(i do.Injector) (cache.UserCache, error) {
+	rdb := do.MustInvoke[*redis.Client](i)
+	return cache.NewRedisUserCache(rdb, 1*time.Hour), nil
+}
+
 func provideCacheRefresher(i do.Injector) (cache.ProjectCacheRefresher, error) {
 	es := do.MustInvoke[*eventstore.EntStore](i)
 	pc := do.MustInvoke[cache.ProjectCache](i)
