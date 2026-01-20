@@ -6,6 +6,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/person"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 )
@@ -32,6 +33,7 @@ type service struct {
 	people     person.Repository
 	es         EventStore
 	membership ProjectMembershipRepository
+	cache      cache.UserCache
 }
 
 func NewService(
@@ -39,32 +41,57 @@ func NewService(
 	people person.Repository,
 	es EventStore,
 	membership ProjectMembershipRepository,
+	cache cache.UserCache,
 ) Service {
-	return &service{users: users, people: people, es: es, membership: membership}
+	return &service{users: users, people: people, es: es, membership: membership, cache: cache}
 }
 
 func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.User, error) {
-	return s.users.Get(ctx, id)
+	if u, err := s.cache.GetUser(ctx, id); err == nil {
+		return u, nil
+	}
+	u, err := s.users.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	_ = s.cache.SetUser(ctx, u)
+	return u, nil
 }
 
 func (s *service) Create(ctx context.Context, user entities.User) (*entities.User, error) {
-	return s.users.Create(ctx, user)
+	u, err := s.users.Create(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	_ = s.cache.SetUser(ctx, u)
+	return u, nil
 }
 
 func (s *service) Update(ctx context.Context, id uuid.UUID, user entities.User) (*entities.User, error) {
-	return s.users.Update(ctx, id, user)
+	u, err := s.users.Update(ctx, id, user)
+	if err != nil {
+		return nil, err
+	}
+	_ = s.cache.SetUser(ctx, u)
+	return u, nil
 }
 
 func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
-	return s.users.Delete(ctx, id)
+	if err := s.users.Delete(ctx, id); err != nil {
+		return err
+	}
+	return s.cache.DeleteUser(ctx, id)
 }
 
 func (s *service) ToggleActive(ctx context.Context, id uuid.UUID, isActive bool) error {
-	return s.users.ToggleActive(ctx, id, isActive)
+	if err := s.users.ToggleActive(ctx, id, isActive); err != nil {
+		return err
+	}
+	return s.cache.DeleteUser(ctx, id)
 }
 
 func (s *service) GetAccount(ctx context.Context, id uuid.UUID) (*entities.UserAccount, error) {
-	u, err := s.users.Get(ctx, id)
+	u, err := s.Get(ctx, id)
 	if err != nil {
 		return nil, err
 	}

@@ -2,19 +2,12 @@ package cache
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
-)
-
-var (
-	ErrCacheNotInitialized = errors.New("redis not initialized")
-	ErrCacheMiss           = errors.New("cache miss")
 )
 
 type ProjectCache interface {
@@ -24,12 +17,13 @@ type ProjectCache interface {
 }
 
 type RedisProjectCache struct {
-	rdb *redis.Client
-	ttl time.Duration
+	*RedisCache[entities.Project]
 }
 
 func NewRedisProjectCache(rdb *redis.Client, ttl time.Duration) *RedisProjectCache {
-	return &RedisProjectCache{rdb: rdb, ttl: ttl}
+	return &RedisProjectCache{
+		RedisCache: NewRedisCache[entities.Project](rdb, ttl),
+	}
 }
 
 func (c *RedisProjectCache) key(id uuid.UUID) string {
@@ -37,45 +31,20 @@ func (c *RedisProjectCache) key(id uuid.UUID) string {
 }
 
 func (c *RedisProjectCache) GetProject(ctx context.Context, id uuid.UUID) (*entities.Project, error) {
-	if c.rdb == nil {
-		return nil, ErrCacheNotInitialized
-	}
-
-	val, err := c.rdb.Get(ctx, c.key(id)).Result()
-	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			return nil, ErrCacheMiss
-		}
-		return nil, err
-	}
-
-	var proj entities.Project
-	if err := json.Unmarshal([]byte(val), &proj); err != nil {
-		return nil, err
-	}
-
-	return &proj, nil
+	return c.Get(ctx, c.key(id))
 }
 
 func (c *RedisProjectCache) SetProject(ctx context.Context, proj *entities.Project) error {
-	if c.rdb == nil {
-		return ErrCacheNotInitialized
-	}
 	if proj == nil {
-		return errors.New("cannot cache nil project")
+		// Preserve original error message if preferred, or rely on generic
+		// Generic says "cannot cache nil value"
+		return fmt.Errorf("cannot cache nil project")
 	}
-
-	b, err := json.Marshal(proj)
-	if err != nil {
-		return err
-	}
-
-	return c.rdb.Set(ctx, c.key(proj.Id), b, c.ttl).Err()
+	// Note: Generic Set checks for nil value too, but we check here for custom message or safety BEFORE key generation (though key generation here is safe if we used proj.Id which would panic if proj is nil).
+	// Actually original code used `proj.Id` effectively.
+	return c.Set(ctx, c.key(proj.Id), proj)
 }
 
 func (c *RedisProjectCache) DeleteProject(ctx context.Context, id uuid.UUID) error {
-	if c.rdb == nil {
-		return nil
-	}
-	return c.rdb.Del(ctx, c.key(id)).Err()
+	return c.Delete(ctx, c.key(id))
 }

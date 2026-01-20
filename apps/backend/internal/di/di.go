@@ -11,6 +11,7 @@ var Package = do.Package(
 	do.Lazy(provideRedisClient),
 	do.Lazy(provideEventStore),
 	do.Lazy(provideProjectCache),
+	do.Lazy(provideUserCache),
 	do.Lazy(provideCacheRefresher),
 
 	// Repositories
