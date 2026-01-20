@@ -7,6 +7,7 @@ import (
 
 	coreauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/handler/apikey"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 )
 
@@ -36,9 +37,8 @@ func AuthMiddleware(authSvc coreauth.Service) func(http.Handler) http.Handler {
 				// Try JWT first
 				user, err = authSvc.ValidateToken(token)
 				if err != nil {
-					// If JWT fails, check if it's an API key (starts with moris_)
 					// TODO: refine api key implementation etc
-					if strings.HasPrefix(token, "moris_") {
+					if strings.HasPrefix(token, apikey.APIKeyPrefix) {
 						user, err = authSvc.ValidateAPIKey(r.Context(), token)
 					}
 				}
