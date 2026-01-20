@@ -1,20 +1,19 @@
 package env
 
 import (
-	"os"
-
 	exorcid "github.com/SURF-Innovatie/MORIS/external/orcid"
 )
 
 func ORCIDOptionsFromEnv() exorcid.Options {
-	clientID := os.Getenv("ORCID_CLIENT_ID")
-	clientSecret := os.Getenv("ORCID_CLIENT_SECRET")
-	redirectURL := os.Getenv("ORCID_REDIRECT_URL")
-
-	sandbox := os.Getenv("ORCID_SANDBOX") == "true"
-	opts := exorcid.DefaultOptions(sandbox)
-	opts.ClientID = clientID
-	opts.ClientSecret = clientSecret
-	opts.RedirectURL = redirectURL
+	opts := exorcid.DefaultOptions(Global.ORCID.Sandbox)
+	if Global.ORCID.ClientID != "" {
+		opts.ClientID = Global.ORCID.ClientID
+	}
+	if Global.ORCID.ClientSecret != "" {
+		opts.ClientSecret = Global.ORCID.ClientSecret
+	}
+	if Global.ORCID.RedirectURL != "" {
+		opts.RedirectURL = Global.ORCID.RedirectURL
+	}
 	return opts
 }

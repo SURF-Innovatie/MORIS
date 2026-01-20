@@ -49,6 +49,7 @@ const MultiRoleManagementRoute = lazy(() =>
     default: m.MultiRoleManagementRoute,
   })),
 );
+
 const OrgAnalyticsRoute = lazy(() => import("@/routes/org-analytics"));
 
 export function createAppRouter() {
@@ -103,12 +104,12 @@ export function createAppRouter() {
               element: <UserOrganisationsRoute />,
             },
             {
-              path: "organisations/:nodeId/members",
-              element: <UserOrganisationRolesRoute />,
-            },
-            {
               path: "organisations/:orgId/analytics",
               element: <OrgAnalyticsRoute />,
+            },
+            {
+              path: "organisations/:nodeId/members",
+              element: <UserOrganisationRolesRoute />,
             },
             {
               path: "admin",

@@ -18,13 +18,13 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
 	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation_rbac"
 	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/projectrole"
 	"github.com/google/uuid"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -51,15 +51,6 @@ type seedProduct struct {
 
 func main() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-	if err := godotenv.Load(); err != nil {
-		log.Warn().Err(err).Msg("Error loading .env file")
-	}
-
-	dbHost := os.Getenv("DB_HOST")
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-	dbPort := os.Getenv("DB_PORT")
 
 	skipSeed := flag.Bool("skip-seed", false, "Skip seeding data, only reset schema and apply migrations")
 	skipMigrations := flag.Bool("skip-migrations", false, "Skip applying database migrations")
@@ -67,7 +58,7 @@ func main() {
 	flag.Parse()
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		dbHost, dbPort, dbUser, dbPassword, dbName)
+		env.Global.DBHost, env.Global.DBPort, env.Global.DBUser, env.Global.DBPassword, env.Global.DBName)
 
 	client, err := ent.Open("postgres", dsn)
 	if err != nil {
@@ -83,7 +74,7 @@ func main() {
 
 	// Hard reset: drop and recreate the public schema
 	if !*noReset {
-		if os.Getenv("ALLOW_DESTRUCTIVE_SEED") != "true" && os.Getenv("NODE_ENV") == "production" {
+		if os.Getenv("ALLOW_DESTRUCTIVE_SEED") != "true" && env.Global.AppEnv == "production" {
 			log.Fatal().Msg("Destructive seed requested in production but ALLOW_DESTRUCTIVE_SEED is not set to true")
 		}
 

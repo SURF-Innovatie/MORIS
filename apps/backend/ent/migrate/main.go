@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
-	"github.com/joho/godotenv"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -20,9 +20,6 @@ import (
 
 func main() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-	// Load environment variables from .env file (backend or root)
-	_ = godotenv.Load()
-	_ = godotenv.Load("../../.env") // Also try root .env
 
 	ctx := context.Background()
 
@@ -51,11 +48,11 @@ func main() {
 	// Build the database URL from environment variables
 	dbURL := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME"),
+		env.Global.DBUser,
+		env.Global.DBPassword,
+		env.Global.DBHost,
+		env.Global.DBPort,
+		env.Global.DBName,
 	)
 
 	// Generate migrations using Atlas support for PostgreSQL
