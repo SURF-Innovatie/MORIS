@@ -1,5 +1,7 @@
 import { UseFormReturn } from "react-hook-form";
-import { Loader2, Save, Building2 } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
+
+import { OrganisationSearchSelect } from "@/components/organisation/OrganisationSearchSelect";
 
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -12,6 +14,13 @@ import {
 } from "@/components/ui/card";
 import { ProjectFormValues } from "@/lib/schemas/project";
 import { ProjectResponse } from "@api/model";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
+import { Badge } from "@/components/ui/badge";
 import { ProjectFields } from "@/components/project-form/ProjectFields";
 import { CustomFieldsRenderer } from "@/components/project-form/CustomFieldsRenderer";
 import { useAccess } from "@/context/AccessContext";
@@ -37,13 +46,16 @@ export function GeneralTab({
   const pendingFields = {
     title: pendingEvents?.some((e) => e.type === ProjectEventType.TitleChanged),
     description: pendingEvents?.some(
-      (e) => e.type === ProjectEventType.DescriptionChanged
+      (e) => e.type === ProjectEventType.DescriptionChanged,
     ),
     startDate: pendingEvents?.some(
-      (e) => e.type === ProjectEventType.StartDateChanged
+      (e) => e.type === ProjectEventType.StartDateChanged,
     ),
     endDate: pendingEvents?.some(
-      (e) => e.type === ProjectEventType.EndDateChanged
+      (e) => e.type === ProjectEventType.EndDateChanged,
+    ),
+    owningOrg: pendingEvents?.some(
+      (e) => e.type === ProjectEventType.OwningOrgNodeChanged,
     ),
   };
 
@@ -56,30 +68,31 @@ export function GeneralTab({
       !hasAccess(ProjectEventType.StartDateChanged) || pendingFields.startDate,
     endDate:
       !hasAccess(ProjectEventType.EndDateChanged) || pendingFields.endDate,
+    owningOrg:
+      !hasAccess(ProjectEventType.OwningOrgNodeChanged) ||
+      pendingFields.owningOrg,
   };
 
   const oneFieldEditable =
     !disabledFields.title ||
     !disabledFields.description ||
     !disabledFields.startDate ||
-    !disabledFields.endDate;
+    !disabledFields.endDate ||
+    !disabledFields.owningOrg;
 
   return (
-    <div className="grid gap-8 lg:grid-cols-3">
-      <div className="lg:col-span-2 space-y-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Project Details</CardTitle>
-            <CardDescription>
-              Update the core information about your project.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-6"
-              >
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <div className="grid gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Project Details</CardTitle>
+                <CardDescription>
+                  Update the core information about your project.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
                 <ProjectFields
                   form={form}
                   disabledFields={disabledFields}
@@ -111,25 +124,46 @@ export function GeneralTab({
                     )}
                   </Button>
                 </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      </div>
+              </CardContent>
+            </Card>
+          </div>
 
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Organization</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Building2 className="h-4 w-4" />
-              <span>{project?.owning_org_node?.name || "N/A"}</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">
+                  Organization
+                  {pendingFields.owningOrg && (
+                    <Badge variant="secondary" className="ml-2 h-5 text-[10px]">
+                      Pending Approval
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <FormField
+                  control={form.control}
+                  name="organisationID"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <OrganisationSearchSelect
+                          value={field.value}
+                          onSelect={(orgId) => {
+                            field.onChange(orgId);
+                          }}
+                          disabled={isUpdating || disabledFields.owningOrg}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </form>
+    </Form>
   );
 }

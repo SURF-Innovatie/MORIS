@@ -134,6 +134,17 @@ func (r *EntRepo) ListChildren(ctx context.Context, parentID uuid.UUID) ([]entit
 	return transform.ToEntities[entities.OrganisationNode](rows), nil
 }
 
+func (r *EntRepo) ListAll(ctx context.Context) ([]entities.OrganisationNode, error) {
+	rows, err := r.node().
+		Query().
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return transform.ToEntities[entities.OrganisationNode](rows), nil
+}
+
 func (r *EntRepo) InsertClosure(ctx context.Context, ancestorID, descendantID uuid.UUID, depth int) error {
 	_, err := r.closure().
 		Create().
@@ -209,4 +220,21 @@ func (r *EntRepo) Search(ctx context.Context, query string, limit int) ([]entiti
 		return nil, err
 	}
 	return transform.ToEntities[entities.OrganisationNode](rows), nil
+}
+
+func (r *EntRepo) OrganisationNodesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.OrganisationNode, error) {
+	if len(ids) == 0 {
+		return map[uuid.UUID]entities.OrganisationNode{}, nil
+	}
+	rows, err := r.node().
+		Query().
+		Where(entorgnode.IDIn(ids...)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	entitiesList := transform.ToEntities[entities.OrganisationNode](rows)
+	return lo.SliceToMap(entitiesList, func(o entities.OrganisationNode) (uuid.UUID, entities.OrganisationNode) {
+		return o.ID, o
+	}), nil
 }

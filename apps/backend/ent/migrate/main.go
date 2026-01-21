@@ -8,8 +8,9 @@ import (
 	"os"
 
 	"github.com/SURF-Innovatie/MORIS/ent/migrate"
-	"github.com/joho/godotenv"
-	"github.com/sirupsen/logrus"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	atlas "ariga.io/atlas/sql/migrate"
 	"entgo.io/ent/dialect"
@@ -18,16 +19,14 @@ import (
 )
 
 func main() {
-	// Load environment variables from .env file (backend or root)
-	_ = godotenv.Load()
-	_ = godotenv.Load("../../.env") // Also try root .env
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
 	ctx := context.Background()
 
 	// Create a local migration directory able to understand Atlas migration file format for replay.
 	dir, err := atlas.NewLocalDir("ent/migrate/migrations")
 	if err != nil {
-		logrus.Fatalf("failed creating atlas migration directory: %v", err)
+		log.Fatal().Err(err).Msg("failed creating atlas migration directory")
 	}
 
 	// Migrate diff options.
@@ -41,7 +40,7 @@ func main() {
 	}
 
 	if len(os.Args) < 2 {
-		logrus.Fatal("migration name is required. Use: 'pnpm run db:migrate:diff <name>'")
+		log.Fatal().Msg("migration name is required. Use: 'pnpm run db:migrate:diff <name>'")
 	}
 
 	migrationName := os.Args[1]
@@ -49,18 +48,18 @@ func main() {
 	// Build the database URL from environment variables
 	dbURL := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME"),
+		env.Global.DBUser,
+		env.Global.DBPassword,
+		env.Global.DBHost,
+		env.Global.DBPort,
+		env.Global.DBName,
 	)
 
 	// Generate migrations using Atlas support for PostgreSQL
 	err = migrate.NamedDiff(ctx, dbURL, migrationName, opts...)
 	if err != nil {
-		logrus.Fatalf("failed generating migration file: %v", err)
+		log.Fatal().Err(err).Msg("failed generating migration file")
 	}
 
-	logrus.Infof("Migration '%s' generated successfully in ent/migrate/migrations/", migrationName)
+	log.Info().Msgf("Migration '%s' generated successfully in ent/migrate/migrations/", migrationName)
 }

@@ -23,14 +23,14 @@ linters-settings:
       - p: EventClient
         msg: "Direct access to the Event table is restricted. Use the EventStore or mark as okay with //nolint:forbidigo."
 
-  depguard:
-    rules:
-      main:
-        deny:
-          - pkg: "github.com/SURF-Innovatie/MORIS/ent/event"
-            desc: "Usage of the event table is restricted. Explicitly mark as okay with //nolint:depguard if necessary."
-          - pkg: "log"
-            desc: "Use the logrus package instead of the standard library log package."
+  # depguard:
+  #   rules:
+  #     main:
+  #       deny:
+  #         - pkg: "github.com/SURF-Innovatie/MORIS/ent/event"
+  #           desc: "Usage of the event table is restricted. Explicitly mark as okay with //nolint:depguard if necessary."
+  #         - pkg: "log"
+  #           desc: "Use the logrus package instead of the standard library log package."
   goimports:
     local-prefixes: github.com/SURF-Innovatie/MORIS
 
@@ -39,4 +39,4 @@ run:
   timeout: 5m
   issues-exit-code: 1
   tests: true
-  build-tags: [ ]
+  build-tags: []

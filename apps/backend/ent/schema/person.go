@@ -44,5 +44,6 @@ func (Person) Edges() []ent.Edge {
 			Ref("person"),
 
 		edge.To("products", Product.Type),
+		edge.To("portfolio", Portfolio.Type).Unique(),
 	}
 }

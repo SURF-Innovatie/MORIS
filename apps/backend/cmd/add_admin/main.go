@@ -7,17 +7,16 @@ import (
 	"os"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	"github.com/google/uuid"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		logrus.Warnf("Error loading .env file: %v", err)
-	}
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
 	email := flag.String("email", "", "Email of the admin user")
 	name := flag.String("name", "", "Name of the admin user")
@@ -25,21 +24,15 @@ func main() {
 	flag.Parse()
 
 	if *email == "" || *name == "" || *password == "" {
-		logrus.Fatal("email, name, and password are required")
+		log.Fatal().Msg("email, name, and password are required")
 	}
 
-	dbHost := os.Getenv("DB_HOST")
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-	dbPort := os.Getenv("DB_PORT")
-
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		dbHost, dbPort, dbUser, dbPassword, dbName)
+		env.Global.DBHost, env.Global.DBPort, env.Global.DBUser, env.Global.DBPassword, env.Global.DBName)
 
 	client, err := ent.Open("postgres", dsn)
 	if err != nil {
-		logrus.Fatalf("failed opening connection to postgres: %v", err)
+		log.Fatal().Err(err).Msg("failed opening connection to postgres")
 	}
 	defer client.Close()
 
@@ -48,13 +41,13 @@ func main() {
 	// Hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(*password), bcrypt.DefaultCost)
 	if err != nil {
-		logrus.Fatalf("failed to hash password: %v", err)
+		log.Fatal().Err(err).Msg("failed to hash password")
 	}
 
 	// Start a transaction
 	tx, err := client.Tx(ctx)
 	if err != nil {
-		logrus.Fatalf("failed to start transaction: %v", err)
+		log.Fatal().Err(err).Msg("failed to start transaction")
 	}
 
 	// Create Person
@@ -67,7 +60,7 @@ func main() {
 		Save(ctx)
 	if err != nil {
 		tx.Rollback()
-		logrus.Fatalf("failed creating person: %v", err)
+		log.Fatal().Err(err).Msg("failed creating person")
 	}
 
 	// Create User
@@ -80,12 +73,12 @@ func main() {
 		Save(ctx)
 	if err != nil {
 		tx.Rollback()
-		logrus.Fatalf("failed creating user: %v", err)
+		log.Fatal().Err(err).Msg("failed creating user")
 	}
 
 	if err := tx.Commit(); err != nil {
-		logrus.Fatalf("failed to commit transaction: %v", err)
+		log.Fatal().Err(err).Msg("failed to commit transaction")
 	}
 
-	logrus.Infof("Successfully created sys_admin user: %s (%s)", *name, *email)
+	log.Info().Msgf("Successfully created sys_admin user: %s (%s)", *name, *email)
 }

@@ -4,64 +4,80 @@ import (
 	"os"
 	"strings"
 
-	"github.com/joho/godotenv"
-	"github.com/sirupsen/logrus"
+	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/rs/zerolog/log"
 )
 
 type Config struct {
-	AppEnv        string
-	DBHost        string
-	DBUser        string
-	DBPassword    string
-	DBName        string
-	DBPort        string
-	CacheHost     string
-	CachePort     string
-	CachePassword string
-	CacheUser     string
-	JWTSecret     string
-	Port          string
-	RAiDAPIKey    string
-	APIBasePath   string
+	AppEnv        string `env:"APP_ENV" env-default:"dev"`
+	DBHost        string `env:"DB_HOST" env-required:"true"`
+	DBUser        string `env:"DB_USER" env-required:"true"`
+	DBPassword    string `env:"DB_PASSWORD" env-required:"true"`
+	DBName        string `env:"DB_NAME" env-required:"true"`
+	DBPort        string `env:"DB_PORT" env-required:"true"`
+	CacheHost     string `env:"CACHE_HOST" env-required:"true"`
+	CachePort     string `env:"CACHE_PORT" env-required:"true"`
+	CachePassword string `env:"CACHE_PASSWORD"`
+	CacheUser     string `env:"CACHE_USER"`
+	JWTSecret     string `env:"JWT_SECRET" env-required:"true"`
+	Port          string `env:"PORT" env-required:"true"`
+	RAiDAPIKey    string `env:"RAID_API_KEY" env-default:"test-key"`
+	APIBasePath   string `env:"API_BASE_PATH" env-default:"/api"`
+
+	ORCID      ORCIDConfig      `env-prefix:"ORCID_"`
+	Surfconext SurfconextConfig `env-prefix:"SURFCONEXT_"`
+	Zenodo     ZenodoConfig     `env-prefix:"ZENODO_"`
+	Crossref   CrossrefConfig   `env-prefix:"CROSSREF_"`
+	NWO        NWOConfig        `env-prefix:"NWO_"`
+}
+
+type ORCIDConfig struct {
+	ClientID     string `env:"CLIENT_ID"`
+	ClientSecret string `env:"CLIENT_SECRET"`
+	RedirectURL  string `env:"REDIRECT_URL"`
+	Sandbox      bool   `env:"SANDBOX" env-default:"false"`
+}
+
+type SurfconextConfig struct {
+	IssuerURL    string `env:"ISSUER_URL"`
+	ClientID     string `env:"CLIENT_ID"`
+	ClientSecret string `env:"CLIENT_SECRET"`
+	RedirectURL  string `env:"REDIRECT_URL"`
+	Scopes       string `env:"SCOPES"`
+}
+
+type ZenodoConfig struct {
+	ClientID     string `env:"CLIENT_ID"`
+	ClientSecret string `env:"CLIENT_SECRET"`
+	RedirectURL  string `env:"REDIRECT_URL"`
+	Sandbox      bool   `env:"SANDBOX" env-default:"false"`
+}
+
+type CrossrefConfig struct {
+	BaseURL   string `env:"BASE_URL" env-default:"https://api.crossref.org"`
+	UserAgent string `env:"USER_AGENT" env-default:"MORIS/1.0 (https://github.com/SURF-Innovatie/MORIS)"`
+	Mailto    string `env:"MAILTO" env-required:"true"`
+}
+
+type NWOConfig struct {
+	BaseURL string `env:"BASE_URL" env-default:"https://nwopen-api.nwo.nl"`
 }
 
 var Global Config
 
 func init() {
-	// Load .env file if it exists
-	if err := godotenv.Load(); err != nil {
-		// It's okay if .env doesn't exist (e.g. in production),
-		// but if it does and fails, we might want to know.
-		// For now, we assume environment variables might be set directly.
-	}
-
-	Global = Config{
-		AppEnv:        getEnv("APP_ENV", false, "dev"),
-		DBHost:        getEnv("DB_HOST", true, ""),
-		DBUser:        getEnv("DB_USER", true, ""),
-		DBPassword:    getEnv("DB_PASSWORD", true, ""),
-		DBName:        getEnv("DB_NAME", true, ""),
-		DBPort:        getEnv("DB_PORT", true, ""),
-		CacheHost:     getEnv("CACHE_HOST", true, ""),
-		CachePort:     getEnv("CACHE_PORT", true, ""),
-		CachePassword: getEnv("CACHE_PASSWORD", false, ""),
-		CacheUser:     getEnv("CACHE_USER", false, ""),
-		JWTSecret:     getEnv("JWT_SECRET", true, ""),
-		Port:          getEnv("PORT", true, ""),
-		RAiDAPIKey:    getEnv("RAID_API_KEY", false, "test-key"),
-		APIBasePath:   getEnv("API_BASE_PATH", false, "/api"),
-	}
-}
-
-func getEnv(key string, required bool, fallback string) string {
-	val := os.Getenv(key)
-	if val == "" {
-		if required {
-			logrus.Fatalf("Missing required environment variable: %s", key)
+	// Check if .env file exists
+	if _, err := os.Stat(".env"); err == nil {
+		// Load from .env file (and override with env vars)
+		if err := cleanenv.ReadConfig(".env", &Global); err != nil {
+			log.Fatal().Err(err).Msg("failed to load environment variables from .env")
 		}
-		return fallback
+	} else {
+		// Load from environment variables only
+		if err := cleanenv.ReadEnv(&Global); err != nil {
+			log.Fatal().Err(err).Msg("failed to load environment variables")
+		}
 	}
-	return val
 }
 
 // IsDev returns true if the environment is development (or not set)

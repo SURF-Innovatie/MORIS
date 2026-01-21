@@ -9,7 +9,7 @@ import (
 )
 
 type ProjectReadRepository interface {
-	PeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.Person, error)
+	GetPeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.Person, error)
 	ProjectRolesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.ProjectRole, error)
 	ProductsByIDs(ctx context.Context, ids []uuid.UUID) ([]entities.Product, error)
 	OrganisationNodeByID(ctx context.Context, id uuid.UUID) (entities.OrganisationNode, error)

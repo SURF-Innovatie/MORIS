@@ -13,7 +13,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -36,6 +37,7 @@ type EventStruct struct {
 }
 
 func main() {
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	flag.StringVar(&sourceDir, "source", ".", "Source directory to parse")
 	flag.StringVar(&outputFile, "output", "events.ts", "Output file path")
 	flag.StringVar(&dtoSourceDir, "dto-source", "", "Directory containing DTO structs")
@@ -46,7 +48,7 @@ func main() {
 		return !strings.HasPrefix(fi.Name(), "_")
 	}, parser.ParseComments)
 	if err != nil {
-		logrus.Fatalf("Failed to parse directory: %v", err)
+		log.Fatal().Err(err).Msg("Failed to parse directory")
 	}
 
 	// 1. Collect all constants
@@ -206,7 +208,7 @@ func main() {
 	if dtoSourceDir != "" {
 		dtoPkgs, err := parser.ParseDir(fset, dtoSourceDir, nil, parser.ParseComments)
 		if err != nil {
-			logrus.Infof("Warning: Failed to parse DTO directory: %v", err)
+			log.Error().Err(err).Msg("Failed to parse DTO directory")
 		} else {
 			for _, pkg := range dtoPkgs {
 				for _, file := range pkg.Files {
@@ -329,7 +331,7 @@ export const create{{.FunctionName}} = (projectId: string, input: {{.Name}}) => 
 `
 	tmpl, err := template.New("ts").Parse(tmplStr)
 	if err != nil {
-		logrus.Fatalf("Failed to parse template: %v", err)
+		log.Fatal().Err(err).Msg("Failed to parse template")
 	}
 
 	data := struct {
@@ -342,17 +344,17 @@ export const create{{.FunctionName}} = (projectId: string, input: {{.Name}}) => 
 
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, data); err != nil {
-		logrus.Fatalf("Failed to execute template: %v", err)
+		log.Fatal().Err(err).Msg("Failed to execute template")
 	}
 
 	// Ensure directory exists
 	dir := filepath.Dir(outputFile)
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		logrus.Fatalf("Failed to create directory: %v", err)
+		log.Fatal().Err(err).Msg("Failed to create directory")
 	}
 
 	if err := os.WriteFile(outputFile, buf.Bytes(), 0644); err != nil {
-		logrus.Fatalf("Failed to write to file: %v", err)
+		log.Fatal().Err(err).Msg("Failed to write to file")
 	}
 
 	fmt.Printf("Generated %s with %d events\n", outputFile, len(structs))

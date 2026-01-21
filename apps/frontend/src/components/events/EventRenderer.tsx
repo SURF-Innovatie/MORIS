@@ -7,14 +7,16 @@ import { ProductRemovedEvent } from "./renderers/ProductRemovedEvent";
 import { DefaultEventRenderer } from "./renderers/DefaultEventRenderer";
 
 import { ProjectEvent, ProjectEventType } from "@/api/events";
+import { EventDisplayVariant, EventRendererBaseProps } from "./types";
 
 interface EventRendererProps {
-  event: ProjectEvent; // Using the strict discriminated union
+  event: ProjectEvent;
   className?: string;
+  variant?: EventDisplayVariant;
 }
 
 const RENDERER_REGISTRY: Partial<
-  Record<ProjectEventType, FC<{ event: ProjectEvent }>>
+  Record<ProjectEventType, FC<EventRendererBaseProps>>
 > = {
   [ProjectEventType.ProjectRoleAssigned]: RoleAssignedEvent,
   [ProjectEventType.ProjectRoleUnassigned]: RoleUnassignedEvent,
@@ -22,14 +24,18 @@ const RENDERER_REGISTRY: Partial<
   [ProjectEventType.ProductRemoved]: ProductRemovedEvent,
 };
 
-export const EventRenderer: FC<EventRendererProps> = ({ event, className }) => {
+export const EventRenderer: FC<EventRendererProps> = ({
+  event,
+  className,
+  variant = "normal",
+}) => {
   const Renderer =
     RENDERER_REGISTRY[event.type as ProjectEventType] || DefaultEventRenderer;
 
   return (
     <div className={className}>
-      <Renderer event={event} />
-      {event.projectTitle && (
+      <Renderer event={event} variant={variant} />
+      {event.projectTitle && variant === "normal" && (
         <div className="mt-2 text-xs text-muted-foreground border-t pt-2 flex items-center gap-1">
           <span className="opacity-70">Project:</span>
           <span className="font-medium">{event.projectTitle}</span>

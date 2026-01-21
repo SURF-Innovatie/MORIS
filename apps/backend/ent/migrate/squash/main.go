@@ -13,7 +13,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 const migrationsDir = "ent/migrate/migrations"
@@ -148,6 +149,7 @@ func (m model) View() string {
 }
 
 func main() {
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	squashName := "squashed"
 	if len(os.Args) >= 2 {
 		squashName = os.Args[1]
@@ -155,7 +157,7 @@ func main() {
 
 	entries, err := os.ReadDir(migrationsDir)
 	if err != nil {
-		logrus.Fatalf("failed to read migrations directory: %v", err)
+		log.Fatal().Err(err).Msg("failed to read migrations directory")
 	}
 
 	var sqlFiles []string
@@ -176,7 +178,7 @@ func main() {
 	p := tea.NewProgram(initialModel(sqlFiles))
 	finalModel, err := p.Run()
 	if err != nil {
-		logrus.Fatalf("error running program: %v", err)
+		log.Fatal().Err(err).Msg("error running program")
 	}
 
 	m := finalModel.(model)
@@ -226,7 +228,7 @@ func main() {
 	for _, f := range selectedFiles {
 		content, err := os.ReadFile(filepath.Join(migrationsDir, f))
 		if err != nil {
-			logrus.Fatalf("failed to read migration file %s: %v", f, err)
+			log.Fatal().Err(err).Msgf("failed to read migration file %s", f)
 		}
 		combinedSQL.WriteString(fmt.Sprintf("-- === From: %s ===\n", f))
 		combinedSQL.WriteString(string(content))
@@ -239,19 +241,19 @@ func main() {
 
 	backupDir := filepath.Join(migrationsDir, fmt.Sprintf(".backup_%s", timestamp))
 	if err := os.MkdirAll(backupDir, 0755); err != nil {
-		logrus.Fatalf("failed to create backup directory: %v", err)
+		log.Fatal().Err(err).Msg("failed to create backup directory")
 	}
 
 	for _, f := range selectedFiles {
 		oldPath := filepath.Join(migrationsDir, f)
 		backupPath := filepath.Join(backupDir, f)
 		if err := os.Rename(oldPath, backupPath); err != nil {
-			logrus.Fatalf("failed to backup migration %s: %v", f, err)
+			log.Fatal().Err(err).Msgf("failed to backup migration %s", f)
 		}
 	}
 
 	if err := os.WriteFile(newPath, []byte(combinedSQL.String()), 0644); err != nil {
-		logrus.Fatalf("failed to write squashed migration: %v", err)
+		log.Fatal().Err(err).Msg("failed to write squashed migration")
 	}
 
 	fmt.Printf("\n✅ Created squashed migration: %s\n", newFilename)
@@ -262,7 +264,7 @@ func main() {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		logrus.Fatalf("failed to regenerate atlas.sum: %v", err)
+		log.Fatal().Err(err).Msg("failed to regenerate atlas.sum")
 	}
 
 	fmt.Println("\n🎉 Squash complete!")

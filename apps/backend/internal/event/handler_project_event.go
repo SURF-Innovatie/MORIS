@@ -13,13 +13,18 @@ import (
 )
 
 type ProjectEventNotificationHandler struct {
-	Cli *ent.Client
-	ES  eventstore.Store
+	cli *ent.Client
+	es  eventstore.Store
+}
+
+func NewProjectEventHandler(cli *ent.Client, es eventstore.Store) *ProjectEventNotificationHandler {
+	return &ProjectEventNotificationHandler{cli: cli, es: es}
 }
 
 func (h *ProjectEventNotificationHandler) Handle(ctx context.Context, e events.Event) error {
-	// Legacy notification logic removed. Policies now handle this.
-	return nil
+	if e.GetStatus() == events.StatusPending {
+		return nil
+	}
 
 	msg, err := h.buildMessage(ctx, e)
 	if err != nil || msg == "" {
@@ -28,7 +33,7 @@ func (h *ProjectEventNotificationHandler) Handle(ctx context.Context, e events.E
 
 	// Reconstruct project state to get current members
 	projectID := e.AggregateID()
-	evts, _, err := h.ES.Load(ctx, projectID)
+	evts, _, err := h.es.Load(ctx, projectID)
 	if err != nil {
 		return err
 	}
@@ -42,7 +47,7 @@ func (h *ProjectEventNotificationHandler) Handle(ctx context.Context, e events.E
 	// Notify all current members
 	for _, member := range proj.Members {
 		// Find user for this person
-		u, err := h.Cli.User.Query().
+		u, err := h.cli.User.Query().
 			Where(user.PersonIDEQ(member.PersonID)).
 			Only(ctx)
 		if err != nil {
@@ -50,7 +55,7 @@ func (h *ProjectEventNotificationHandler) Handle(ctx context.Context, e events.E
 			continue
 		}
 
-		_, err = h.Cli.Notification.
+		_, err = h.cli.Notification.
 			Create().
 			SetMessage(msg).
 			SetUser(u).
@@ -73,7 +78,7 @@ func (h *ProjectEventNotificationHandler) buildMessage(ctx context.Context, e ev
 	// Fallback for events requiring DB or special logic (e.g. OwningOrgNodeChanged)
 	switch v := e.(type) {
 	case *events.OwningOrgNodeChanged:
-		n, err := h.Cli.OrganisationNode.
+		n, err := h.cli.OrganisationNode.
 			Query().
 			Where(organisationnode.IDEQ(v.OwningOrgNodeID)).
 			Only(ctx)

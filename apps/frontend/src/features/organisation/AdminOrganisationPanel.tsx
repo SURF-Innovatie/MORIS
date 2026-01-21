@@ -14,13 +14,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
-import { Plus, Settings } from "lucide-react";
+import { Plus, Settings, Network } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { OrganisationNode } from "./components/OrganisationNode";
 import { CreateChildDialog } from "./components/CreateChildDialog";
 import { RorSearchSelect } from "@/components/organisation/RorSearchSelect";
 import { EditOrganisationDialog } from "./components/EditOrganisationDialog";
 import { OrganisationListLayout } from "./components/OrganisationListLayout";
+import { OrganisationTreeView } from "./components/OrganisationTreeView";
 
 export const AdminOrganisationPanel = () => {
   const { data: roots, isLoading } = useGetOrganisationNodesRoots();
@@ -54,7 +55,12 @@ export const AdminOrganisationPanel = () => {
   return (
     <OrganisationListLayout
       title="Organisation Management"
-      headerActions={<CreateRootDialog />}
+      headerActions={
+        <div className="flex gap-2">
+          <ViewTreeDialog />
+          <CreateRootDialog />
+        </div>
+      }
       isLoading={isLoading}
       isEmpty={roots?.length === 0}
     >
@@ -69,6 +75,32 @@ export const AdminOrganisationPanel = () => {
     </OrganisationListLayout>
   );
 };
+
+const ViewTreeDialog = () => {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <Network size={16} className="mr-2" /> View Tree
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-[90vw] h-[90vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Organisation Structure</DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 min-h-0">
+          <OrganisationTreeView height={window.innerHeight * 0.8} />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}; // End ViewTreeDialog
+
+// Add imports for ViewTreeDialog dependencies
+// The user imports are handled at the top, I will add them in a separate step or try to merge imports if multi replace works better.
+// But for now I'm replacing the body of AdminOrganisationPanel + ViewTreeDialog definition.
+// Wait, I should not define ViewTreeDialog inside AdminOrganisationPanel or duplicate it if I'm not careful.
+// I'll place ViewTreeDialog at the bottom or imported. But since I'm editing the file, I can define it in the same file for simplicity as CreateRootDialog is there.
 
 const CreateRootDialog = () => {
   const [open, setOpen] = useState(false);

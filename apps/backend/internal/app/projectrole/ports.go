@@ -19,4 +19,5 @@ type Repository interface {
 	ListByOrgIDs(ctx context.Context, orgIDs []uuid.UUID) ([]entities.ProjectRole, error)
 	List(ctx context.Context) ([]entities.ProjectRole, error)
 	UpdateAllowedEventTypes(ctx context.Context, id uuid.UUID, eventTypes []string) (*entities.ProjectRole, error)
+	ProjectRolesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.ProjectRole, error)
 }

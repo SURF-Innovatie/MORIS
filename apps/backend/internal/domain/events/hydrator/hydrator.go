@@ -13,7 +13,7 @@ import (
 
 // Loaders define the repository interfaces needed for hydration
 type PersonLoader interface {
-	PeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.Person, error)
+	GetPeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.Person, error)
 }
 
 type ProductLoader interface {
@@ -132,7 +132,7 @@ func (h *Hydrator) loadPersons(ctx context.Context, ids []uuid.UUID) map[uuid.UU
 	if len(ids) == 0 {
 		return nil
 	}
-	m, err := h.persons.PeopleByIDs(ctx, lo.Uniq(ids))
+	m, err := h.persons.GetPeopleByIDs(ctx, lo.Uniq(ids))
 	if err != nil {
 		return nil
 	}

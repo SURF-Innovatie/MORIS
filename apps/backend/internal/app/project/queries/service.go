@@ -22,7 +22,7 @@ var ErrNotFound = errors.New("project not found")
 type Service interface {
 	GetProject(ctx context.Context, id uuid.UUID) (*ProjectDetails, error)
 	GetAllProjects(ctx context.Context) ([]*ProjectDetails, error)
-	GetChangeLog(ctx context.Context, id uuid.UUID) (*entities.ChangeLog, error)
+	GetChangeLog(ctx context.Context, id uuid.UUID) ([]events.DetailedEvent, error)
 	GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.DetailedEvent, error)
 	GetProjectRoles(ctx context.Context) ([]entities.ProjectRole, error)
 	ListAvailableRoles(ctx context.Context, projectID uuid.UUID) ([]entities.ProjectRole, error)
@@ -136,7 +136,7 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Projec
 		return m.ProjectRoleID
 	}))
 
-	peopleMap, err := s.repo.PeopleByIDs(ctx, personIDs)
+	peopleMap, err := s.repo.GetPeopleByIDs(ctx, personIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Projec
 	}, nil
 }
 
-func (s *service) GetChangeLog(ctx context.Context, id uuid.UUID) (*entities.ChangeLog, error) {
+func (s *service) GetChangeLog(ctx context.Context, id uuid.UUID) ([]events.DetailedEvent, error) {
 	evts, _, err := s.es.Load(ctx, id)
 	if err != nil {
 		return nil, err
@@ -185,19 +185,103 @@ func (s *service) GetChangeLog(ctx context.Context, id uuid.UUID) (*entities.Cha
 		return nil, ErrNotFound
 	}
 
-	var log entities.ChangeLog
-	log.Entries = lo.Map(evts, func(evt events.Event, _ int) entities.ChangeLogEntry {
-		return entities.ChangeLogEntry{
-			Event: evt.String(),
-			At:    evt.OccurredAt(),
+	// Filter to only approved events for changelog
+	approvedEvts := lo.Filter(evts, func(e events.Event, _ int) bool {
+		return e.GetStatus() == "approved"
+	})
+
+	// Hydration - collect IDs
+	var personIDs []uuid.UUID
+	var roleIDs []uuid.UUID
+	var productIDs []uuid.UUID
+	var creatorUserIDs []uuid.UUID
+
+	for _, e := range approvedEvts {
+		if r, ok := e.(events.HasRelatedIDs); ok {
+			ids := r.RelatedIDs()
+			if ids.PersonID != nil {
+				personIDs = append(personIDs, *ids.PersonID)
+			}
+			if ids.ProjectRoleID != nil {
+				roleIDs = append(roleIDs, *ids.ProjectRoleID)
+			}
+			if ids.ProductID != nil {
+				productIDs = append(productIDs, *ids.ProductID)
+			}
 		}
+		creatorUserIDs = append(creatorUserIDs, e.CreatedByID())
+	}
+
+	personMap := make(map[uuid.UUID]entities.Person)
+	if len(personIDs) > 0 {
+		pm, err := s.repo.GetPeopleByIDs(ctx, personIDs)
+		if err == nil {
+			personMap = pm
+		}
+	}
+
+	roleMap := make(map[uuid.UUID]entities.ProjectRole)
+	if len(roleIDs) > 0 {
+		rm, err := s.repo.ProjectRolesByIDs(ctx, roleIDs)
+		if err == nil {
+			roleMap = rm
+		}
+	}
+
+	productMap := make(map[uuid.UUID]entities.Product)
+	if len(productIDs) > 0 {
+		pm, err := s.repo.ProductsByIDs(ctx, productIDs)
+		if err == nil {
+			productMap = make(map[uuid.UUID]entities.Product)
+			for _, p := range pm {
+				productMap[p.Id] = p
+			}
+		}
+	}
+
+	creatorMap := make(map[uuid.UUID]entities.Person)
+	if len(creatorUserIDs) > 0 {
+		cm, err := s.userSvc.GetPeopleByUserIDs(ctx, lo.Uniq(creatorUserIDs))
+		if err == nil {
+			creatorMap = cm
+		}
+	}
+
+	detailedEvents := lo.Map(approvedEvts, func(e events.Event, _ int) events.DetailedEvent {
+		de := events.DetailedEvent{Event: e}
+
+		if r, ok := e.(events.HasRelatedIDs); ok {
+			ids := r.RelatedIDs()
+			if ids.PersonID != nil {
+				if p, ok := personMap[*ids.PersonID]; ok {
+					de.Person = &p
+				}
+			}
+			if ids.ProjectRoleID != nil {
+				if r, ok := roleMap[*ids.ProjectRoleID]; ok {
+					de.ProjectRole = &r
+				}
+			}
+			if ids.ProductID != nil {
+				if p, ok := productMap[*ids.ProductID]; ok {
+					de.Product = &p
+				}
+			}
+		}
+
+		if p, ok := creatorMap[e.CreatedByID()]; ok {
+			de.Creator = &p
+		}
+
+		return de
 	})
 
-	sort.Slice(log.Entries, func(i, j int) bool {
-		return log.Entries[i].At.After(log.Entries[j].At)
+	// Sort by time descending (most recent first)
+	sort.Slice(detailedEvents, func(i, j int) bool {
+		return detailedEvents[i].Event.OccurredAt().After(detailedEvents[j].Event.OccurredAt())
 	})
 
-	return &log, nil
+	return detailedEvents, nil
 }
 
 func (s *service) GetProjectRoles(ctx context.Context) ([]entities.ProjectRole, error) {
@@ -283,5 +367,5 @@ func (s *service) GetProductsByIDs(ctx context.Context, ids []uuid.UUID) (map[uu
 }
 
 func (s *service) GetPeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.Person, error) {
-	return s.repo.PeopleByIDs(ctx, ids)
+	return s.repo.GetPeopleByIDs(ctx, ids)
 }

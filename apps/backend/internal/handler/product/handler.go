@@ -43,6 +43,13 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get the current user to attribute the product to them
+	u, err := h.currentUser.Current(r.Context())
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
+		return
+	}
+
 	var zenodoID int
 	if req.ZenodoDepositionID != nil {
 		zenodoID = *req.ZenodoDepositionID
@@ -54,6 +61,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		Type:               entities.ProductType(req.Type),
 		DOI:                req.DOI,
 		ZenodoDepositionID: zenodoID,
+		AuthorPersonID:     u.PersonID(),
 	})
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)

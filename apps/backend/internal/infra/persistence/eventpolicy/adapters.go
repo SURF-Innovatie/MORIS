@@ -8,14 +8,14 @@ import (
 	en "github.com/SURF-Innovatie/MORIS/ent/event"
 	"github.com/SURF-Innovatie/MORIS/ent/membership"
 	"github.com/SURF-Innovatie/MORIS/ent/notification"
-	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/ent/rolescope"
+	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"github.com/samber/lo"
-	"github.com/sirupsen/logrus"
 )
 
 // OrgClosureAdapter implements eventpolicy.OrgClosureProvider using the org repository
@@ -206,7 +206,7 @@ func (r *RecipientAdapter) ResolveDynamic(ctx context.Context, dynType string, p
 			).
 			All(ctx)
 		if err != nil {
-			logrus.Infof("ResolveDynamic project_members error: %v", err)
+			log.Error().Err(err).Msg("ResolveDynamic project_members error")
 			return nil, err
 		}
 
@@ -243,7 +243,7 @@ func (r *RecipientAdapter) ResolveDynamic(ctx context.Context, dynType string, p
 			).
 			First(ctx)
 		if err != nil {
-			logrus.Infof("ResolveDynamic project_owner error: %v", err)
+			log.Error().Err(err).Msg("ResolveDynamic project_owner error")
 			return nil, nil
 		}
 		// CreatedBy is the actor UUID (a User ID)

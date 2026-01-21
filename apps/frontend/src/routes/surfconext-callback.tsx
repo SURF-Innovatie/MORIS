@@ -56,7 +56,7 @@ const SurfconextCallbackRoute = () => {
       try {
         const response = await AXIOS_INSTANCE.post<SurfconextLoginResponse>(
           "/auth/surfconext/login",
-          { code }
+          { code },
         );
         const { token, user } = response.data;
 
@@ -66,7 +66,13 @@ const SurfconextCallbackRoute = () => {
             title: "Welcome",
             description: `Logged in as ${user.name || user.email}`,
           });
-          navigate("/dashboard", { replace: true });
+          const returnUrl = sessionStorage.getItem("auth_return_url");
+          if (returnUrl) {
+            sessionStorage.removeItem("auth_return_url");
+            navigate(returnUrl, { replace: true });
+          } else {
+            navigate("/dashboard", { replace: true });
+          }
         } else {
           throw new Error("Invalid response from server");
         }

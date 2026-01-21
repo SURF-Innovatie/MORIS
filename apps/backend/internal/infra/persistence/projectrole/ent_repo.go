@@ -12,6 +12,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 type entRepo struct {
@@ -190,4 +191,21 @@ func (e *entRepo) UpdateAllowedEventTypes(ctx context.Context, id uuid.UUID, eve
 	}
 
 	return transform.ToEntityPtr[entities.ProjectRole](r), nil
+}
+
+func (e *entRepo) ProjectRolesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.ProjectRole, error) {
+	if len(ids) == 0 {
+		return map[uuid.UUID]entities.ProjectRole{}, nil
+	}
+	rows, err := e.cli.ProjectRole.Query().
+		Where(entprojectrole.IDIn(ids...)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	entitiesList := transform.ToEntities[entities.ProjectRole](rows)
+	return lo.SliceToMap(entitiesList, func(r entities.ProjectRole) (uuid.UUID, entities.ProjectRole) {
+		return r.ID, r
+	}), nil
 }
