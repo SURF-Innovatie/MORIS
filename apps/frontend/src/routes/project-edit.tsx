@@ -151,7 +151,7 @@ function ProjectEditForm() {
       if (values.startDate.toISOString() !== currentStartDate) {
         promises.push(
           createStartDateChangedEvent(id!, {
-            start_date: values.startDate.toISOString(),
+            startDate: values.startDate.toISOString(),
           }),
         );
       }
@@ -162,7 +162,7 @@ function ProjectEditForm() {
       if (values.endDate.toISOString() !== currentEndDate) {
         promises.push(
           createEndDateChangedEvent(id!, {
-            end_date: values.endDate.toISOString(),
+            endDate: values.endDate.toISOString(),
           }),
         );
       }
