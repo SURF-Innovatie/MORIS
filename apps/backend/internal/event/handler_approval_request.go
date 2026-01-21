@@ -29,11 +29,6 @@ func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e event
 		return nil
 	}
 
-	meta := events.GetMeta(e.Type())
-	if !meta.NeedsApproval(ctx, e, h.cli) {
-		return nil
-	}
-
 	projectID := e.AggregateID()
 
 	evts, _, err := h.es.Load(ctx, projectID)

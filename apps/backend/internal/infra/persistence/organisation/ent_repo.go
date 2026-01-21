@@ -221,3 +221,20 @@ func (r *EntRepo) Search(ctx context.Context, query string, limit int) ([]entiti
 	}
 	return transform.ToEntities[entities.OrganisationNode](rows), nil
 }
+
+func (r *EntRepo) OrganisationNodesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.OrganisationNode, error) {
+	if len(ids) == 0 {
+		return map[uuid.UUID]entities.OrganisationNode{}, nil
+	}
+	rows, err := r.node().
+		Query().
+		Where(entorgnode.IDIn(ids...)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	entitiesList := transform.ToEntities[entities.OrganisationNode](rows)
+	return lo.SliceToMap(entitiesList, func(o entities.OrganisationNode) (uuid.UUID, entities.OrganisationNode) {
+		return o.ID, o
+	}), nil
+}

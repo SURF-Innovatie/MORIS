@@ -23,6 +23,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/surfconext"
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/app/zenodo"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/events/hydrator"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
 	analyticshandler "github.com/SURF-Innovatie/MORIS/internal/handler/analytics"
 	apikeyhandler "github.com/SURF-Innovatie/MORIS/internal/handler/apikey"
@@ -168,7 +169,8 @@ func provideEventHandler(i do.Injector) (*eventhandler.Handler, error) {
 	projSvc := do.MustInvoke[queries.Service](i)
 	userSvc := do.MustInvoke[user.Service](i)
 	cli := do.MustInvoke[*ent.Client](i)
-	return eventhandler.NewHandler(evtSvc, projSvc, userSvc, cli), nil
+	hydrator := do.MustInvoke[*hydrator.Hydrator](i)
+	return eventhandler.NewHandler(evtSvc, projSvc, userSvc, cli, hydrator), nil
 }
 
 func provideEventPolicyHTTPHandler(i do.Injector) (*eventpolicyhandler.Handler, error) {

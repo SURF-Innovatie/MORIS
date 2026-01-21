@@ -48,6 +48,7 @@ var Package = do.Package(
 	do.Lazy(provideAdapterHandler),
 
 	// Services
+	do.Lazy(provideHydrator),
 	do.Lazy(providePersonService),
 	do.Lazy(provideUserService),
 	do.Lazy(provideAuthService),

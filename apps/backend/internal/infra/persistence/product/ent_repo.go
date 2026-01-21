@@ -9,6 +9,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 type EntRepo struct {
@@ -84,4 +85,21 @@ func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, p entities.Product) 
 
 func (r *EntRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return r.cli.Product.DeleteOneID(id).Exec(ctx)
+}
+
+func (r *EntRepo) ProductsByIDs(ctx context.Context, ids []uuid.UUID) ([]entities.Product, error) {
+	if len(ids) == 0 {
+		return []entities.Product{}, nil
+	}
+	rows, err := r.cli.Product.Query().
+		Where(entproduct.IDIn(ids...)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	entitiesList := transform.ToEntitiesPtr[entities.Product](rows)
+	// Dereference pointers to match interface
+	return lo.Map(entitiesList, func(p *entities.Product, _ int) entities.Product {
+		return *p
+	}), nil
 }

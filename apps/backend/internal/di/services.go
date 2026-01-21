@@ -31,6 +31,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/surfconext"
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/app/zenodo"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/events/hydrator"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
@@ -50,6 +51,14 @@ import (
 	userrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/user"
 	"github.com/samber/do/v2"
 )
+
+func provideHydrator(i do.Injector) (*hydrator.Hydrator, error) {
+	userService := do.MustInvoke[user.Service](i)
+	productRepo := do.MustInvoke[*productrepo.EntRepo](i)
+	rolesRepo := do.MustInvoke[projectrole.Repository](i)
+	organisationRepo := do.MustInvoke[*organisationrepo.EntRepo](i)
+	return hydrator.New(userService, productRepo, rolesRepo, organisationRepo, userService), nil
+}
 
 func providePersonService(i do.Injector) (personsvc.Service, error) {
 	repo := do.MustInvoke[*personrepo.EntRepo](i)
@@ -160,7 +169,8 @@ func providePolicyEvaluator(i do.Injector) (eventpolicy.Evaluator, error) {
 	closure := do.MustInvoke[*eventpolicyrepo.OrgClosureAdapter](i)
 	recipient := do.MustInvoke[*eventpolicyrepo.RecipientAdapter](i)
 	notif := do.MustInvoke[*eventpolicyrepo.NotificationAdapter](i)
-	return eventpolicy.NewEvaluator(repo, closure, recipient, notif), nil
+	hydrator := do.MustInvoke[*hydrator.Hydrator](i)
+	return eventpolicy.NewEvaluator(repo, closure, recipient, notif, hydrator), nil
 }
 
 func provideProjectLoader(i do.Injector) (*load.Loader, error) {
