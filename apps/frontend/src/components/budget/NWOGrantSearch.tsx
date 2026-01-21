@@ -13,7 +13,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useGetNwoProjects, useGetNwoProject } from "@api/moris";
+import { useGetNwoProjects, useGetNwoProjectProjectId } from "@api/moris";
 import type { Project } from "@api/model";
 
 interface NWOGrantSearchProps {
@@ -51,14 +51,11 @@ export function NWOGrantSearch({
   );
 
   // Load project details when value is set
-  const { data: projectDetails } = useGetNwoProject(
-    { project_id: value || "" },
-    {
-      query: {
-        enabled: !!value && !selectedProject,
-      },
+  const { data: projectDetails } = useGetNwoProjectProjectId(value || "", {
+    query: {
+      enabled: !!value && !selectedProject,
     },
-  );
+  });
 
   // Update selected project when details are loaded
   useEffect(() => {
