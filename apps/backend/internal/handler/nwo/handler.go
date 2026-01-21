@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-chi/chi/v5"
+
 	ex "github.com/SURF-Innovatie/MORIS/external/nwo"
 	app "github.com/SURF-Innovatie/MORIS/internal/app/nwo"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
@@ -58,14 +60,14 @@ func (h *Handler) GetProjects(w http.ResponseWriter, r *http.Request) {
 // @Tags nwo
 // @Accept json
 // @Produce json
-// @Param project_id query string true "Project ID (dossiernummer)"
+// @Param project_id path string true "Project ID (dossiernummer)"
 // @Success 200 {object} ex.Project
 // @Failure 400 {object} httputil.BackendError "project_id is required"
 // @Failure 404 {object} httputil.BackendError "project not found"
 // @Failure 500 {object} httputil.BackendError "internal server error"
 // @Router /nwo/projects/{project_id} [get]
 func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
-	projectID := r.URL.Query().Get("project_id")
+	projectID := chi.URLParam(r, "project_id")
 	if projectID == "" {
 		httputil.WriteError(w, r, http.StatusBadRequest, "project_id is required", nil)
 		return

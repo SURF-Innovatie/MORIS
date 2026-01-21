@@ -6,23 +6,19 @@ export type Datetime = string;
 
 export enum ProjectEventType {
 
-  OwningOrgNodeChanged = 'project.owning_org_node_changed',
-
-  ProjectRoleAssigned = 'project.project_role_assigned',
-
-  ProjectStarted = 'project.started',
-
   StartDateChanged = 'project.start_date_changed',
 
   DescriptionChanged = 'project.description_changed',
 
   EndDateChanged = 'project.end_date_changed',
 
-  ProductAdded = 'project.product_added',
+  ProjectRoleAssigned = 'project.project_role_assigned',
 
-  ProductRemoved = 'project.product_removed',
+  ProjectStarted = 'project.started',
 
-  ProjectRoleUnassigned = 'project.role_unassigned',
+  TitleChanged = 'project.title_changed',
+
+  OwningOrgNodeChanged = 'project.owning_org_node_changed',
 
   CustomFieldValueSet = 'project.custom_field_value_set',
 
@@ -32,7 +28,11 @@ export enum ProjectEventType {
 
   EventPolicyUpdated = 'project.event_policy_updated',
 
-  TitleChanged = 'project.title_changed',
+  ProductAdded = 'project.product_added',
+
+  ProductRemoved = 'project.product_removed',
+
+  ProjectRoleUnassigned = 'project.role_unassigned',
 
 }
 
@@ -60,21 +60,6 @@ export interface BaseEvent {
 
 // Specific Event Interfaces
 
-export interface OwningOrgNodeChangedEvent extends BaseEvent {
-  type: ProjectEventType.OwningOrgNodeChanged;
-  data: OwningOrgNodeChangedInput;
-}
-
-export interface ProjectRoleAssignedEvent extends BaseEvent {
-  type: ProjectEventType.ProjectRoleAssigned;
-  data: ProjectRoleAssignedInput;
-}
-
-export interface ProjectStartedEvent extends BaseEvent {
-  type: ProjectEventType.ProjectStarted;
-  data: ProjectStartedInput;
-}
-
 export interface StartDateChangedEvent extends BaseEvent {
   type: ProjectEventType.StartDateChanged;
   data: StartDateChangedInput;
@@ -90,19 +75,24 @@ export interface EndDateChangedEvent extends BaseEvent {
   data: EndDateChangedInput;
 }
 
-export interface ProductAddedEvent extends BaseEvent {
-  type: ProjectEventType.ProductAdded;
-  data: ProductAddedInput;
+export interface ProjectRoleAssignedEvent extends BaseEvent {
+  type: ProjectEventType.ProjectRoleAssigned;
+  data: ProjectRoleAssignedInput;
 }
 
-export interface ProductRemovedEvent extends BaseEvent {
-  type: ProjectEventType.ProductRemoved;
-  data: ProductRemovedInput;
+export interface ProjectStartedEvent extends BaseEvent {
+  type: ProjectEventType.ProjectStarted;
+  data: ProjectStartedInput;
 }
 
-export interface ProjectRoleUnassignedEvent extends BaseEvent {
-  type: ProjectEventType.ProjectRoleUnassigned;
-  data: ProjectRoleUnassignedInput;
+export interface TitleChangedEvent extends BaseEvent {
+  type: ProjectEventType.TitleChanged;
+  data: TitleChangedInput;
+}
+
+export interface OwningOrgNodeChangedEvent extends BaseEvent {
+  type: ProjectEventType.OwningOrgNodeChanged;
+  data: OwningOrgNodeChangedInput;
 }
 
 export interface CustomFieldValueSetEvent extends BaseEvent {
@@ -125,84 +115,40 @@ export interface EventPolicyUpdatedEvent extends BaseEvent {
   data: EventPolicyUpdatedInput;
 }
 
-export interface TitleChangedEvent extends BaseEvent {
-  type: ProjectEventType.TitleChanged;
-  data: TitleChangedInput;
+export interface ProductAddedEvent extends BaseEvent {
+  type: ProjectEventType.ProductAdded;
+  data: ProductAddedInput;
+}
+
+export interface ProductRemovedEvent extends BaseEvent {
+  type: ProjectEventType.ProductRemoved;
+  data: ProductRemovedInput;
+}
+
+export interface ProjectRoleUnassignedEvent extends BaseEvent {
+  type: ProjectEventType.ProjectRoleUnassigned;
+  data: ProjectRoleUnassignedInput;
 }
 
 
 // Union Type
 export type ProjectEvent =
-  | OwningOrgNodeChangedEvent
-  | ProjectRoleAssignedEvent
-  | ProjectStartedEvent
   | StartDateChangedEvent
   | DescriptionChangedEvent
   | EndDateChangedEvent
-  | ProductAddedEvent
-  | ProductRemovedEvent
-  | ProjectRoleUnassignedEvent
+  | ProjectRoleAssignedEvent
+  | ProjectStartedEvent
+  | TitleChangedEvent
+  | OwningOrgNodeChangedEvent
   | CustomFieldValueSetEvent
   | EventPolicyAddedEvent
   | EventPolicyRemovedEvent
   | EventPolicyUpdatedEvent
-  | TitleChangedEvent;
+  | ProductAddedEvent
+  | ProductRemovedEvent
+  | ProjectRoleUnassignedEvent;
 
 // Input Interfaces
-
-export interface OwningOrgNodeChangedInput {
-  owning_org_node_id: string;
-}
-
-export const createOwningOrgNodeChangedEvent = (projectId: string, input: OwningOrgNodeChangedInput) => {
-  return customInstance<any>({
-    url: `/projects/${projectId}/events`,
-    method: 'POST',
-    data: {
-      projectId,
-      type: 'project.owning_org_node_changed',
-      input
-    }
-  });
-};
-
-export interface ProjectRoleAssignedInput {
-  person_id: string;
-  project_role_id: string;
-}
-
-export const createProjectRoleAssignedEvent = (projectId: string, input: ProjectRoleAssignedInput) => {
-  return customInstance<any>({
-    url: `/projects/${projectId}/events`,
-    method: 'POST',
-    data: {
-      projectId,
-      type: 'project.project_role_assigned',
-      input
-    }
-  });
-};
-
-export interface ProjectStartedInput {
-  title: string;
-  description: string;
-  start_date: Datetime;
-  end_date: Datetime;
-  members_ids: any[];
-  owning_org_node_id: string;
-}
-
-export const createProjectStartedEvent = (projectId: string, input: ProjectStartedInput) => {
-  return customInstance<any>({
-    url: `/projects/${projectId}/events`,
-    method: 'POST',
-    data: {
-      projectId,
-      type: 'project.started',
-      input
-    }
-  });
-};
 
 export interface StartDateChangedInput {
   start_date: Datetime;
@@ -252,50 +198,71 @@ export const createEndDateChangedEvent = (projectId: string, input: EndDateChang
   });
 };
 
-export interface ProductAddedInput {
-  product_id: string;
-}
-
-export const createProductAddedEvent = (projectId: string, input: ProductAddedInput) => {
-  return customInstance<any>({
-    url: `/projects/${projectId}/events`,
-    method: 'POST',
-    data: {
-      projectId,
-      type: 'project.product_added',
-      input
-    }
-  });
-};
-
-export interface ProductRemovedInput {
-  product_id: string;
-}
-
-export const createProductRemovedEvent = (projectId: string, input: ProductRemovedInput) => {
-  return customInstance<any>({
-    url: `/projects/${projectId}/events`,
-    method: 'POST',
-    data: {
-      projectId,
-      type: 'project.product_removed',
-      input
-    }
-  });
-};
-
-export interface ProjectRoleUnassignedInput {
+export interface ProjectRoleAssignedInput {
   person_id: string;
   project_role_id: string;
 }
 
-export const createProjectRoleUnassignedEvent = (projectId: string, input: ProjectRoleUnassignedInput) => {
+export const createProjectRoleAssignedEvent = (projectId: string, input: ProjectRoleAssignedInput) => {
   return customInstance<any>({
     url: `/projects/${projectId}/events`,
     method: 'POST',
     data: {
       projectId,
-      type: 'project.role_unassigned',
+      type: 'project.project_role_assigned',
+      input
+    }
+  });
+};
+
+export interface ProjectStartedInput {
+  title: string;
+  description: string;
+  start_date: Datetime;
+  end_date: Datetime;
+  members_ids: any[];
+  owning_org_node_id: string;
+}
+
+export const createProjectStartedEvent = (projectId: string, input: ProjectStartedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'project.started',
+      input
+    }
+  });
+};
+
+export interface TitleChangedInput {
+  title: string;
+}
+
+export const createTitleChangedEvent = (projectId: string, input: TitleChangedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'project.title_changed',
+      input
+    }
+  });
+};
+
+export interface OwningOrgNodeChangedInput {
+  owning_org_node_id: string;
+}
+
+export const createOwningOrgNodeChangedEvent = (projectId: string, input: OwningOrgNodeChangedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'project.owning_org_node_changed',
       input
     }
   });
@@ -384,17 +351,50 @@ export const createEventPolicyUpdatedEvent = (projectId: string, input: EventPol
   });
 };
 
-export interface TitleChangedInput {
-  title: string;
+export interface ProductAddedInput {
+  product_id: string;
 }
 
-export const createTitleChangedEvent = (projectId: string, input: TitleChangedInput) => {
+export const createProductAddedEvent = (projectId: string, input: ProductAddedInput) => {
   return customInstance<any>({
     url: `/projects/${projectId}/events`,
     method: 'POST',
     data: {
       projectId,
-      type: 'project.title_changed',
+      type: 'project.product_added',
+      input
+    }
+  });
+};
+
+export interface ProductRemovedInput {
+  product_id: string;
+}
+
+export const createProductRemovedEvent = (projectId: string, input: ProductRemovedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'project.product_removed',
+      input
+    }
+  });
+};
+
+export interface ProjectRoleUnassignedInput {
+  person_id: string;
+  project_role_id: string;
+}
+
+export const createProjectRoleUnassignedEvent = (projectId: string, input: ProjectRoleUnassignedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'project.role_unassigned',
       input
     }
   });

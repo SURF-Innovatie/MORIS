@@ -29,24 +29,33 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useGetCrossrefWorks, usePostProducts } from "@api/moris";
+import {
+  useGetDoiResolve,
+  usePostProducts,
+  useGetZenodoStatus,
+} from "@api/moris";
 import {
   createProductAddedEvent,
   createProductRemovedEvent,
 } from "@/api/events";
-import { ProductResponse, ProductType } from "@api/model";
+import { ProductResponse, ProductType, UploadType, Work } from "@api/model";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Allowed } from "@/components/auth/Allowed";
 import { ProjectEventType } from "@/api/events";
 import { ZenodoUploadDialog } from "@/components/products/ZenodoUploadDialog";
-import { useGetZenodoStatus } from "@api/moris";
 import { ProductCard, getProductTypeLabel } from "../products/ProductCard";
 import { useAccess } from "@/context/AccessContext";
-import { UploadType } from "@api/model";
+import { Doi } from "@/lib/doi";
 
 // Schema for the DOI search form
 const doiFormSchema = z.object({
-  doi: z.string().min(1, "DOI is required"),
+  doi: z
+    .string()
+    .min(1, "DOI is required")
+    .refine((val) => Doi.tryParse(val) !== null, {
+      message: "Invalid DOI format",
+    })
+    .transform((val) => Doi.tryParse(val)?.toString() ?? val),
 });
 
 interface ProductsTabProps {
@@ -65,7 +74,7 @@ export function ProductsTab({
   const { mutateAsync: addProduct } = usePostProducts();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isZenodoDialogOpen, setIsZenodoDialogOpen] = useState(false);
-  const [searchedProduct, setSearchedProduct] = useState<any>(null); // TODO: Type properly based on Crossref response
+  const [searchedProduct, setSearchedProduct] = useState<Work | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
 
@@ -81,10 +90,10 @@ export function ProductsTab({
   const [searchDoi, setSearchDoi] = useState<string | null>(null);
 
   const {
-    data: crossrefData,
-    isLoading: isLoadingCrossref,
-    isError: isCrossrefError,
-  } = useGetCrossrefWorks(
+    data: doiData,
+    isLoading: isLoadingDoi,
+    isError: isDoiError,
+  } = useGetDoiResolve(
     { doi: searchDoi! },
     {
       query: {
@@ -96,23 +105,17 @@ export function ProductsTab({
 
   // Effect to handle search results
   if (
-    crossrefData &&
+    doiData &&
     searchDoi &&
-    !isLoadingCrossref &&
-    searchedProduct?.doi !== crossrefData.DOI
+    !isLoadingDoi &&
+    searchedProduct?.doi !== doiData.doi
   ) {
-    // Map crossref data to our product structure for preview
-    setSearchedProduct({
-      title: crossrefData.title?.[0] || "Unknown Title",
-      doi: crossrefData.DOI,
-      type: mapCrossrefType(crossrefData.type),
-      language: crossrefData.language || "en", // Default to en if missing
-    });
+    setSearchedProduct(doiData);
     setSearchDoi(null); // Reset search trigger
     setIsSearching(false);
   }
 
-  if (isCrossrefError && searchDoi && !isLoadingCrossref) {
+  if (isDoiError && searchDoi && !isLoadingDoi) {
     toast({
       variant: "destructive",
       title: "Error",
@@ -140,7 +143,7 @@ export function ProductsTab({
           name: searchedProduct.title,
           doi: searchedProduct.doi,
           type: searchedProduct.type,
-          language: searchedProduct.language,
+          language: "en",
         },
       });
 
@@ -299,9 +302,9 @@ export function ProductsTab({
                           </FormControl>
                           <Button
                             type="submit"
-                            disabled={isSearching || isLoadingCrossref}
+                            disabled={isSearching || isLoadingDoi}
                           >
-                            {isSearching || isLoadingCrossref ? (
+                            {isSearching || isLoadingDoi ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
                               <Search className="h-4 w-4" />
@@ -377,37 +380,6 @@ export function ProductsTab({
       />
     </div>
   );
-}
-
-// Helper to map Crossref types to our ProductType enum
-function mapCrossrefType(type: string | undefined): ProductType {
-  if (!type) return ProductType.Other;
-
-  // Map Crossref work types to ProductType
-  // See: https://api.crossref.org/types
-  const typeMapping: Record<string, ProductType> = {
-    // Publications
-    "journal-article": ProductType.Other, // No direct match, use Other
-    book: ProductType.Other,
-    "book-chapter": ProductType.Other,
-    "proceedings-article": ProductType.Other,
-    dissertation: ProductType.Other,
-    report: ProductType.Other,
-    "posted-content": ProductType.Other, // preprints
-    // Datasets
-    dataset: ProductType.Dataset,
-    // Software
-    software: ProductType.Software,
-    // Images/Graphics
-    graphic: ProductType.Image,
-    // Other types
-    component: ProductType.Other,
-    standard: ProductType.Other,
-    "peer-review": ProductType.Other,
-    "reference-entry": ProductType.Other,
-  };
-
-  return typeMapping[type.toLowerCase()] ?? ProductType.Other;
 }
 
 // Helper to map Zenodo UploadType to ProductType
