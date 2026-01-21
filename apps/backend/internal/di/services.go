@@ -12,6 +12,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/budget"
 	"github.com/SURF-Innovatie/MORIS/internal/app/crossref"
 	"github.com/SURF-Innovatie/MORIS/internal/app/customfield"
+	"github.com/SURF-Innovatie/MORIS/internal/app/doi"
 	"github.com/SURF-Innovatie/MORIS/internal/app/errorlog"
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
@@ -113,6 +114,10 @@ func provideCrossrefService(i do.Injector) (crossref.Service, error) {
 func provideNWOService(i do.Injector) (nwo.Service, error) {
 	cli := do.MustInvoke[exnwo.Client](i)
 	return nwo.NewService(cli), nil
+}
+
+func provideDoiService(i do.Injector) (doi.Service, error) {
+	return doi.NewService(), nil
 }
 
 func provideOrgRBACService(i do.Injector) (organisationrbac.Service, error) {

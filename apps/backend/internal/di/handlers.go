@@ -7,6 +7,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/budget"
 	"github.com/SURF-Innovatie/MORIS/internal/app/crossref"
 	"github.com/SURF-Innovatie/MORIS/internal/app/customfield"
+	"github.com/SURF-Innovatie/MORIS/internal/app/doi"
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/app/nwo"
@@ -30,6 +31,7 @@ import (
 	authhandler "github.com/SURF-Innovatie/MORIS/internal/handler/auth"
 	budgethandler "github.com/SURF-Innovatie/MORIS/internal/handler/budget"
 	crossrefhandler "github.com/SURF-Innovatie/MORIS/internal/handler/crossref"
+	doihandler "github.com/SURF-Innovatie/MORIS/internal/handler/doi"
 	eventhandler "github.com/SURF-Innovatie/MORIS/internal/handler/event"
 	eventpolicyhandler "github.com/SURF-Innovatie/MORIS/internal/handler/eventpolicy"
 	notificationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/notification"
@@ -113,6 +115,11 @@ func provideCrossrefHandler(i do.Injector) (*crossrefhandler.Handler, error) {
 func provideNWOHandler(i do.Injector) (*nwohandler.Handler, error) {
 	svc := do.MustInvoke[nwo.Service](i)
 	return nwohandler.NewHandler(svc), nil
+}
+
+func provideDoiHandler(i do.Injector) (*doihandler.Handler, error) {
+	svc := do.MustInvoke[doi.Service](i)
+	return doihandler.NewHandler(svc), nil
 }
 
 func provideOrgRBACHandler(i do.Injector) (*organisationhandler.RBACHandler, error) {

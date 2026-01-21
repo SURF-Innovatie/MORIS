@@ -2,7 +2,7 @@ package dto
 
 import ex "github.com/SURF-Innovatie/MORIS/external/crossref"
 
-type Work = ex.Work
+type CrossrefWork = ex.Work
 type Author = ex.Author
 type AuthorAffiliation = ex.AuthorAffiliation
 type License = ex.License

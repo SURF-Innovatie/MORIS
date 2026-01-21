@@ -16,6 +16,7 @@ import (
 	authhandler "github.com/SURF-Innovatie/MORIS/internal/handler/auth"
 	budgethandler "github.com/SURF-Innovatie/MORIS/internal/handler/budget"
 	crossrefhandler "github.com/SURF-Innovatie/MORIS/internal/handler/crossref"
+	doihandler "github.com/SURF-Innovatie/MORIS/internal/handler/doi"
 	eventHandler "github.com/SURF-Innovatie/MORIS/internal/handler/event"
 	eventpolicyhandler "github.com/SURF-Innovatie/MORIS/internal/handler/eventpolicy"
 	authmiddleware "github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
@@ -68,6 +69,7 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 	projHandler := do.MustInvoke[*projecthandler.Handler](injector)
 	projCmdHandler := do.MustInvoke[*commandHandler.Handler](injector)
 	systemHandler := do.MustInvoke[*systemhandler.Handler](injector)
+	doiHandler := do.MustInvoke[*doihandler.Handler](injector)
 	adapterHandler := do.MustInvoke[*adapterhandler.Handler](injector)
 	budgetHandler := do.MustInvoke[*budgethandler.Handler](injector)
 	analyticsHandler := do.MustInvoke[*analyticshandler.Handler](injector)
@@ -122,6 +124,7 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 			userhandler.MountUserRoutes(r, userHandler)
 			apiKeyHandler.RegisterRoutes(r)
 			crossrefhandler.MountCrossrefRoutes(r, crossrefHandler)
+			doihandler.MountRoutes(r, doiHandler)
 			nwohandler.MountRoutes(r, nwoHandler)
 			adapterhandler.MountRoutes(r, adapterHandler)
 
