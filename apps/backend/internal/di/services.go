@@ -220,23 +220,17 @@ func provideEventService(i do.Injector) (event.Service, error) {
 	cli := do.MustInvoke[*ent.Client](i)
 	notifSvc := do.MustInvoke[notification.Service](i)
 
-	projHandler := do.MustInvoke[*event.ProjectEventNotificationHandler](i)
-	approvalHandler := do.MustInvoke[*event.ApprovalRequestNotificationHandler](i)
 	policyHandler := do.MustInvoke[*event.EventPolicyHandler](i)
 	execHandler := do.MustInvoke[*event.PolicyExecutionHandler](i)
 
 	notificationHandlers := []event.NotificationHandler{
-		projHandler,
-		approvalHandler,
 		policyHandler,
 		execHandler,
 	}
 
-	statusHandler := do.MustInvoke[*event.StatusUpdateNotificationHandler](i)
 	cacheHandler := do.MustInvoke[*event.CacheRefreshHandler](i)
 
 	statusChangeHandlers := []event.StatusChangeHandler{
-		statusHandler.Handle,
 		cacheHandler.Handle,
 	}
 

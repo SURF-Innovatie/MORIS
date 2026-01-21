@@ -63,22 +63,22 @@ export function PolicyFormDialog({
   const [name, setName] = useState(policy?.name || "");
   const [description, setDescription] = useState(policy?.description || "");
   const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>(
-    policy?.event_types || []
+    policy?.event_types || [],
   );
   const [actionType, setActionType] = useState<"notify" | "request_approval">(
-    (policy?.action_type as "notify" | "request_approval") || "notify"
+    (policy?.action_type as "notify" | "request_approval") || "notify",
   );
   const [dynamicRecipients, setDynamicRecipients] = useState<string[]>(
-    policy?.recipient_dynamic || []
+    policy?.recipient_dynamic || [],
   );
   const [specificUsers, setSpecificUsers] = useState<string[]>(
-    policy?.recipient_user_ids || []
+    policy?.recipient_user_ids || [],
   );
   const [selectedOrgRoles, setSelectedOrgRoles] = useState<string[]>(
-    policy?.recipient_org_role_ids || []
+    policy?.recipient_org_role_ids || [],
   );
   const [selectedProjectRoles, setSelectedProjectRoles] = useState<string[]>(
-    policy?.recipient_project_role_ids || []
+    policy?.recipient_project_role_ids || [],
   );
   const [enabled, setEnabled] = useState(policy?.enabled ?? true);
 
@@ -141,13 +141,13 @@ export function PolicyFormDialog({
 
   const toggleEventType = (type: string) => {
     setSelectedEventTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
     );
   };
 
   const toggleDynamicRecipient = (type: string) => {
     setDynamicRecipients((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
     );
   };
 
@@ -155,7 +155,7 @@ export function PolicyFormDialog({
     setSelectedOrgRoles((prev) =>
       prev.includes(roleId)
         ? prev.filter((r) => r !== roleId)
-        : [...prev, roleId]
+        : [...prev, roleId],
     );
   };
 
@@ -163,7 +163,7 @@ export function PolicyFormDialog({
     setSelectedProjectRoles((prev) =>
       prev.includes(roleId)
         ? prev.filter((r) => r !== roleId)
-        : [...prev, roleId]
+        : [...prev, roleId],
     );
   };
 
@@ -206,20 +206,22 @@ export function PolicyFormDialog({
           <div className="space-y-2 flex-1 flex flex-col">
             <Label>Trigger on Events</Label>
             <div className="flex flex-wrap gap-2 flex-1 min-h-[400px] max-h-[60vh] overflow-y-auto p-2 border rounded-md content-start">
-              {eventTypes.map((type) => (
-                <Badge
-                  key={type.type}
-                  variant={
-                    selectedEventTypes.includes(type.type!)
-                      ? "default"
-                      : "outline"
-                  }
-                  className="cursor-pointer hover:bg-primary/90 h-fit"
-                  onClick={() => toggleEventType(type.type!)}
-                >
-                  {type.friendlyName || type.type}
-                </Badge>
-              ))}
+              {eventTypes
+                .sort((a, b) => a.type!.localeCompare(b.type!))
+                .map((type) => (
+                  <Badge
+                    key={type.type}
+                    variant={
+                      selectedEventTypes.includes(type.type!)
+                        ? "default"
+                        : "outline"
+                    }
+                    className="cursor-pointer hover:bg-primary/90 h-fit"
+                    onClick={() => toggleEventType(type.type!)}
+                  >
+                    {type.friendlyName || type.type}
+                  </Badge>
+                ))}
             </div>
           </div>
         </div>

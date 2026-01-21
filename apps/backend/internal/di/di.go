@@ -77,11 +77,8 @@ var Package = do.Package(
 	do.Lazy(provideODataService),
 
 	// Event handlers
-	do.Lazy(provideProjectEventHandler),
-	do.Lazy(provideApprovalRequestHandler),
 	do.Lazy(provideEventPolicyHandler),
 	do.Lazy(providePolicyExecutionHandler),
-	do.Lazy(provideStatusUpdateHandler),
 	do.Lazy(provideCacheRefreshHandler),
 
 	// Event Service (depends on handlers)

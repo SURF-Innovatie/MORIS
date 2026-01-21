@@ -439,8 +439,6 @@ func (e *evaluator) buildMessage(ctx context.Context, policy entities.EventPolic
 			vars["creator.Name"] = detailed.Creator.Name
 		}
 		if detailed.Product != nil {
-			// Assuming Product has a Name/Title field. Using Name based on common patterns.
-			// If compilation fails, will adjust.
 			vars["product.Name"] = detailed.Product.Name
 		}
 		if detailed.Person != nil {

@@ -46,24 +46,10 @@ import (
 	userhandler "github.com/SURF-Innovatie/MORIS/internal/handler/user"
 	zenodohandler "github.com/SURF-Innovatie/MORIS/internal/handler/zenodo"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
-	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	"github.com/samber/do/v2"
 )
 
 // Event Handler Providers
-
-func provideProjectEventHandler(i do.Injector) (*event.ProjectEventNotificationHandler, error) {
-	cli := do.MustInvoke[*ent.Client](i)
-	es := do.MustInvoke[*eventstore.EntStore](i)
-	return event.NewProjectEventHandler(cli, es), nil
-}
-
-func provideApprovalRequestHandler(i do.Injector) (*event.ApprovalRequestNotificationHandler, error) {
-	cli := do.MustInvoke[*ent.Client](i)
-	es := do.MustInvoke[*eventstore.EntStore](i)
-	rbac := do.MustInvoke[organisationrbac.Service](i)
-	return event.NewApprovalRequestHandler(cli, es, rbac), nil
-}
 
 func provideEventPolicyHandler(i do.Injector) (*event.EventPolicyHandler, error) {
 	repo := do.MustInvoke[eventpolicy.Repository](i)
@@ -75,11 +61,6 @@ func providePolicyExecutionHandler(i do.Injector) (*event.PolicyExecutionHandler
 	evaluator := do.MustInvoke[eventpolicy.Evaluator](i)
 	projSvc := do.MustInvoke[queries.Service](i)
 	return event.NewPolicyExecutionHandler(evaluator, projSvc), nil
-}
-
-func provideStatusUpdateHandler(i do.Injector) (*event.StatusUpdateNotificationHandler, error) {
-	cli := do.MustInvoke[*ent.Client](i)
-	return event.NewStatusUpdateHandler(cli), nil
 }
 
 func provideCacheRefreshHandler(i do.Injector) (*event.CacheRefreshHandler, error) {
