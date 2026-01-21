@@ -46,8 +46,8 @@ type EntityRefEvent struct {
 
 type EntityCollectionEvent struct {
 	Entity                        string `yaml:"entity"`
-	IDField                       string `yaml:"id_field"`
-	SliceField                    string `yaml:"slice_field"`
+	IDField                       string `yaml:"id_field,omitempty"`
+	SliceField                    string `yaml:"slice_field,omitempty"`
 	JSONKey                       string `yaml:"json_key"`
 	AddFriendlyName               string `yaml:"add_friendly_name"`
 	RemoveFriendlyName            string `yaml:"remove_friendly_name"`
@@ -415,22 +415,24 @@ const {{.Entity}}RemovedType = "project.{{.Entity | lower}}_removed"
 
 type {{.Entity}}Added struct {
 	Base
-	{{.IDField}} uuid.UUID ` + "`json:\"{{.JSONKey}}\"`" + `
+{{if .IDField}}	{{.IDField}} uuid.UUID ` + "`json:\"{{.JSONKey}}\"`" + `{{end}}
 }
 
 func ({{.Entity}}Added) isEvent()     {}
 func ({{.Entity}}Added) Type() string { return {{.Entity}}AddedType }
 func (e {{.Entity}}Added) String() string {
-	return fmt.Sprintf("{{.Entity}} added: %s", e.{{.IDField}})
-}
+{{if .IDField}}	return fmt.Sprintf("{{.Entity}} added: %s", e.{{.IDField}})
+{{else}}	return "{{.Entity}} added"
+{{end}}}
 
 func (e *{{.Entity}}Added) Apply(project *entities.Project) {
-	project.{{.SliceField}} = append(project.{{.SliceField}}, e.{{.IDField}})
-}
+{{if and .SliceField .IDField}}	project.{{.SliceField}} = append(project.{{.SliceField}}, e.{{.IDField}})
+{{end}}}
 
 func (e *{{.Entity}}Added) RelatedIDs() RelatedIDs {
-	return RelatedIDs{ {{.RelatedID}}: &e.{{.IDField}} }
-}
+{{if and .RelatedID .IDField}}	return RelatedIDs{ {{.RelatedID}}: &e.{{.IDField}} }
+{{else}}	return RelatedIDs{}
+{{end}}}
 
 func (e *{{.Entity}}Added) NotificationMessage() string {
 	return "A new {{.Entity | lower}} has been added to the project."
@@ -453,14 +455,15 @@ func (e *{{.Entity}}Added) RejectedTemplate() string {
 }
 
 func (e *{{.Entity}}Added) NotificationVariables() map[string]string {
-	return map[string]string{
+{{if .IDField}}	return map[string]string{
 		"event.{{.IDField}}": e.{{.IDField}}.String(),
 	}
-}
+{{else}}	return map[string]string{}
+{{end}}}
 {{end}}
 
 type {{.Entity}}AddedInput struct {
-	{{.IDField}} uuid.UUID ` + "`json:\"{{.JSONKey}}\"`" + `
+{{if .IDField}}	{{.IDField}} uuid.UUID ` + "`json:\"{{.JSONKey}}\"`" + `{{end}}
 }
 
 func Decide{{.Entity}}Added(
@@ -473,24 +476,24 @@ func Decide{{.Entity}}Added(
 	if projectID == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
-	if in.{{.IDField}} == uuid.Nil {
+{{if .IDField}}	if in.{{.IDField}} == uuid.Nil {
 		return nil, errors.New("{{.JSONKey}} is required")
 	}
-	if cur == nil {
+{{end}}	if cur == nil {
 		return nil, errors.New("current project is required")
 	}
-	for _, x := range cur.{{.SliceField}} {
+{{if and .SliceField .IDField}}	for _, x := range cur.{{.SliceField}} {
 		if x == in.{{.IDField}} {
 			return nil, fmt.Errorf("{{.Entity | lower}} %s already exists", in.{{.IDField}})
 		}
 	}
-	base := NewBase(projectID, actor, status)
+{{end}}	base := NewBase(projectID, actor, status)
 	base.FriendlyNameStr = {{.Entity}}AddedMeta.FriendlyName
 
 	return &{{.Entity}}Added{
 		Base:      base,
-		{{.IDField}}: in.{{.IDField}},
-	}, nil
+{{if .IDField}}		{{.IDField}}: in.{{.IDField}},
+{{end}}	}, nil
 }
 
 var {{.Entity}}AddedMeta = EventMeta{
@@ -502,27 +505,29 @@ var {{.Entity}}AddedMeta = EventMeta{
 
 type {{.Entity}}Removed struct {
 	Base
-	{{.IDField}} uuid.UUID ` + "`json:\"{{.JSONKey}}\"`" + `
+{{if .IDField}}	{{.IDField}} uuid.UUID ` + "`json:\"{{.JSONKey}}\"`" + `{{end}}
 }
 
 func ({{.Entity}}Removed) isEvent()     {}
 func ({{.Entity}}Removed) Type() string { return {{.Entity}}RemovedType }
 func (e {{.Entity}}Removed) String() string {
-	return fmt.Sprintf("{{.Entity}} removed: %s", e.{{.IDField}})
-}
+{{if .IDField}}	return fmt.Sprintf("{{.Entity}} removed: %s", e.{{.IDField}})
+{{else}}	return "{{.Entity}} removed"
+{{end}}}
 
 func (e *{{.Entity}}Removed) Apply(project *entities.Project) {
-	for i, x := range project.{{.SliceField}} {
+{{if and .SliceField .IDField}}	for i, x := range project.{{.SliceField}} {
 		if x == e.{{.IDField}} {
 			project.{{.SliceField}} = append(project.{{.SliceField}}[:i], project.{{.SliceField}}[i+1:]...)
 			return
 		}
 	}
-}
+{{end}}}
 
 func (e *{{.Entity}}Removed) RelatedIDs() RelatedIDs {
-	return RelatedIDs{ {{.RelatedID}}: &e.{{.IDField}} }
-}
+{{if and .RelatedID .IDField}}	return RelatedIDs{ {{.RelatedID}}: &e.{{.IDField}} }
+{{else}}	return RelatedIDs{}
+{{end}}}
 {{if .RemoveNotificationTemplate}}
 func (e *{{.Entity}}Removed) NotificationMessage() string {
 	return "A {{.Entity | lower}} has been removed from the project."
@@ -545,14 +550,15 @@ func (e *{{.Entity}}Removed) RejectedTemplate() string {
 }
 
 func (e *{{.Entity}}Removed) NotificationVariables() map[string]string {
-	return map[string]string{
+{{if .IDField}}	return map[string]string{
 		"event.{{.IDField}}": e.{{.IDField}}.String(),
 	}
-}
+{{else}}	return map[string]string{}
+{{end}}}
 {{end}}
 
 type {{.Entity}}RemovedInput struct {
-	{{.IDField}} uuid.UUID ` + "`json:\"{{.JSONKey}}\"`" + `
+{{if .IDField}}	{{.IDField}} uuid.UUID ` + "`json:\"{{.JSONKey}}\"`" + `{{end}}
 }
 
 func Decide{{.Entity}}Removed(
@@ -565,13 +571,13 @@ func Decide{{.Entity}}Removed(
 	if projectID == uuid.Nil {
 		return nil, errors.New("project id is required")
 	}
-	if in.{{.IDField}} == uuid.Nil {
+{{if .IDField}}	if in.{{.IDField}} == uuid.Nil {
 		return nil, errors.New("{{.JSONKey}} is required")
 	}
-	if cur == nil {
+{{end}}	if cur == nil {
 		return nil, errors.New("current project is required")
 	}
-	found := false
+{{if and .SliceField .IDField}}	found := false
 	for _, x := range cur.{{.SliceField}} {
 		if x == in.{{.IDField}} {
 			found = true
@@ -581,13 +587,13 @@ func Decide{{.Entity}}Removed(
 	if !found {
 		return nil, fmt.Errorf("{{.Entity | lower}} %s not found", in.{{.IDField}})
 	}
-	base := NewBase(projectID, actor, status)
+{{end}}	base := NewBase(projectID, actor, status)
 	base.FriendlyNameStr = {{.Entity}}RemovedMeta.FriendlyName
 
 	return &{{.Entity}}Removed{
 		Base:      base,
-		{{.IDField}}: in.{{.IDField}},
-	}, nil
+{{if .IDField}}		{{.IDField}}: in.{{.IDField}},
+{{end}}	}, nil
 }
 
 var {{.Entity}}RemovedMeta = EventMeta{

@@ -6,15 +6,19 @@ export type Datetime = string;
 
 export enum ProjectEventType {
 
-  BudgetApproved = 'budget.approved',
-
-  BudgetLineItemAdded = 'budget.line_item_added',
-
   CustomFieldValueSet = 'project.custom_field_value_set',
 
   ProductAdded = 'project.product_added',
 
   ProductRemoved = 'project.product_removed',
+
+  BudgetLineItemAdded = 'project.budgetlineitem_added',
+
+  BudgetLineItemRemoved = 'project.budgetlineitem_removed',
+
+  ActualRecorded = 'budget.actual_recorded',
+
+  BudgetCreated = 'budget.created',
 
   TitleChanged = 'project.title_changed',
 
@@ -26,13 +30,9 @@ export enum ProjectEventType {
 
   OwningOrgNodeChanged = 'project.owning_org_node_changed',
 
-  ProjectStarted = 'project.started',
+  ProjectRoleAssigned = 'project.project_role_assigned',
 
-  ActualRecorded = 'budget.actual_recorded',
-
-  BudgetCreated = 'budget.created',
-
-  BudgetLineItemRemoved = 'budget.line_item_removed',
+  BudgetApproved = 'budget.approved',
 
   EventPolicyAdded = 'project.event_policy_added',
 
@@ -42,7 +42,7 @@ export enum ProjectEventType {
 
   ProjectRoleUnassigned = 'project.role_unassigned',
 
-  ProjectRoleAssigned = 'project.project_role_assigned',
+  ProjectStarted = 'project.started',
 
 }
 
@@ -70,16 +70,6 @@ export interface BaseEvent {
 
 // Specific Event Interfaces
 
-export interface BudgetApprovedEvent extends BaseEvent {
-  type: ProjectEventType.BudgetApproved;
-  data: BudgetApprovedInput;
-}
-
-export interface BudgetLineItemAddedEvent extends BaseEvent {
-  type: ProjectEventType.BudgetLineItemAdded;
-  data: BudgetLineItemAddedInput;
-}
-
 export interface CustomFieldValueSetEvent extends BaseEvent {
   type: ProjectEventType.CustomFieldValueSet;
   data: CustomFieldValueSetInput;
@@ -93,6 +83,26 @@ export interface ProductAddedEvent extends BaseEvent {
 export interface ProductRemovedEvent extends BaseEvent {
   type: ProjectEventType.ProductRemoved;
   data: ProductRemovedInput;
+}
+
+export interface BudgetLineItemAddedEvent extends BaseEvent {
+  type: ProjectEventType.BudgetLineItemAdded;
+  data: BudgetLineItemAddedInput;
+}
+
+export interface BudgetLineItemRemovedEvent extends BaseEvent {
+  type: ProjectEventType.BudgetLineItemRemoved;
+  data: BudgetLineItemRemovedInput;
+}
+
+export interface ActualRecordedEvent extends BaseEvent {
+  type: ProjectEventType.ActualRecorded;
+  data: ActualRecordedInput;
+}
+
+export interface BudgetCreatedEvent extends BaseEvent {
+  type: ProjectEventType.BudgetCreated;
+  data: BudgetCreatedInput;
 }
 
 export interface TitleChangedEvent extends BaseEvent {
@@ -120,24 +130,14 @@ export interface OwningOrgNodeChangedEvent extends BaseEvent {
   data: OwningOrgNodeChangedInput;
 }
 
-export interface ProjectStartedEvent extends BaseEvent {
-  type: ProjectEventType.ProjectStarted;
-  data: ProjectStartedInput;
+export interface ProjectRoleAssignedEvent extends BaseEvent {
+  type: ProjectEventType.ProjectRoleAssigned;
+  data: ProjectRoleAssignedInput;
 }
 
-export interface ActualRecordedEvent extends BaseEvent {
-  type: ProjectEventType.ActualRecorded;
-  data: ActualRecordedInput;
-}
-
-export interface BudgetCreatedEvent extends BaseEvent {
-  type: ProjectEventType.BudgetCreated;
-  data: BudgetCreatedInput;
-}
-
-export interface BudgetLineItemRemovedEvent extends BaseEvent {
-  type: ProjectEventType.BudgetLineItemRemoved;
-  data: BudgetLineItemRemovedInput;
+export interface BudgetApprovedEvent extends BaseEvent {
+  type: ProjectEventType.BudgetApproved;
+  data: BudgetApprovedInput;
 }
 
 export interface EventPolicyAddedEvent extends BaseEvent {
@@ -160,73 +160,35 @@ export interface ProjectRoleUnassignedEvent extends BaseEvent {
   data: ProjectRoleUnassignedInput;
 }
 
-export interface ProjectRoleAssignedEvent extends BaseEvent {
-  type: ProjectEventType.ProjectRoleAssigned;
-  data: ProjectRoleAssignedInput;
+export interface ProjectStartedEvent extends BaseEvent {
+  type: ProjectEventType.ProjectStarted;
+  data: ProjectStartedInput;
 }
 
 
 // Union Type
 export type ProjectEvent =
-  | BudgetApprovedEvent
-  | BudgetLineItemAddedEvent
   | CustomFieldValueSetEvent
   | ProductAddedEvent
   | ProductRemovedEvent
+  | BudgetLineItemAddedEvent
+  | BudgetLineItemRemovedEvent
+  | ActualRecordedEvent
+  | BudgetCreatedEvent
   | TitleChangedEvent
   | DescriptionChangedEvent
   | StartDateChangedEvent
   | EndDateChangedEvent
   | OwningOrgNodeChangedEvent
-  | ProjectStartedEvent
-  | ActualRecordedEvent
-  | BudgetCreatedEvent
-  | BudgetLineItemRemovedEvent
+  | ProjectRoleAssignedEvent
+  | BudgetApprovedEvent
   | EventPolicyAddedEvent
   | EventPolicyRemovedEvent
   | EventPolicyUpdatedEvent
   | ProjectRoleUnassignedEvent
-  | ProjectRoleAssignedEvent;
+  | ProjectStartedEvent;
 
 // Input Interfaces
-
-export interface BudgetApprovedInput {
-  title: string;
-  totalAmount: number;
-}
-
-export const createBudgetApprovedEvent = (projectId: string, input: BudgetApprovedInput) => {
-  return customInstance<any>({
-    url: `/projects/${projectId}/events`,
-    method: 'POST',
-    data: {
-      projectId,
-      type: 'budget.approved',
-      input
-    }
-  });
-};
-
-export interface BudgetLineItemAddedInput {
-  category: BudgetCategory;
-  description: string;
-  budgetedAmount: number;
-  year: number;
-  fundingSource: FundingSource;
-  nwoGrantId: string;
-}
-
-export const createBudgetLineItemAddedEvent = (projectId: string, input: BudgetLineItemAddedInput) => {
-  return customInstance<any>({
-    url: `/projects/${projectId}/events`,
-    method: 'POST',
-    data: {
-      projectId,
-      type: 'budget.line_item_added',
-      input
-    }
-  });
-};
 
 export interface CustomFieldValueSetInput {
   definition_id: string;
@@ -272,6 +234,73 @@ export const createProductRemovedEvent = (projectId: string, input: ProductRemov
     data: {
       projectId,
       type: 'project.product_removed',
+      input
+    }
+  });
+};
+
+export interface BudgetLineItemAddedInput {
+}
+
+export const createBudgetLineItemAddedEvent = (projectId: string, input: BudgetLineItemAddedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'project.budgetlineitem_added',
+      input
+    }
+  });
+};
+
+export interface BudgetLineItemRemovedInput {
+}
+
+export const createBudgetLineItemRemovedEvent = (projectId: string, input: BudgetLineItemRemovedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'project.budgetlineitem_removed',
+      input
+    }
+  });
+};
+
+export interface ActualRecordedInput {
+  lineItemId: string;
+  amount: number;
+  description: string;
+  recordedDate: Datetime;
+  source: string;
+}
+
+export const createActualRecordedEvent = (projectId: string, input: ActualRecordedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'budget.actual_recorded',
+      input
+    }
+  });
+};
+
+export interface BudgetCreatedInput {
+  title: string;
+  description: string;
+}
+
+export const createBudgetCreatedEvent = (projectId: string, input: BudgetCreatedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'budget.created',
       input
     }
   });
@@ -357,76 +386,35 @@ export const createOwningOrgNodeChangedEvent = (projectId: string, input: Owning
   });
 };
 
-export interface ProjectStartedInput {
+export interface ProjectRoleAssignedInput {
+  person_id: string;
+  project_role_id: string;
+}
+
+export const createProjectRoleAssignedEvent = (projectId: string, input: ProjectRoleAssignedInput) => {
+  return customInstance<any>({
+    url: `/projects/${projectId}/events`,
+    method: 'POST',
+    data: {
+      projectId,
+      type: 'project.project_role_assigned',
+      input
+    }
+  });
+};
+
+export interface BudgetApprovedInput {
   title: string;
-  description: string;
-  start_date: Datetime;
-  end_date: Datetime;
-  members_ids: any[];
-  owning_org_node_id: string;
+  totalAmount: number;
 }
 
-export const createProjectStartedEvent = (projectId: string, input: ProjectStartedInput) => {
+export const createBudgetApprovedEvent = (projectId: string, input: BudgetApprovedInput) => {
   return customInstance<any>({
     url: `/projects/${projectId}/events`,
     method: 'POST',
     data: {
       projectId,
-      type: 'project.started',
-      input
-    }
-  });
-};
-
-export interface ActualRecordedInput {
-  lineItemId: string;
-  amount: number;
-  description: string;
-  recordedDate: Datetime;
-  source: string;
-}
-
-export const createActualRecordedEvent = (projectId: string, input: ActualRecordedInput) => {
-  return customInstance<any>({
-    url: `/projects/${projectId}/events`,
-    method: 'POST',
-    data: {
-      projectId,
-      type: 'budget.actual_recorded',
-      input
-    }
-  });
-};
-
-export interface BudgetCreatedInput {
-  title: string;
-  description: string;
-}
-
-export const createBudgetCreatedEvent = (projectId: string, input: BudgetCreatedInput) => {
-  return customInstance<any>({
-    url: `/projects/${projectId}/events`,
-    method: 'POST',
-    data: {
-      projectId,
-      type: 'budget.created',
-      input
-    }
-  });
-};
-
-export interface BudgetLineItemRemovedInput {
-  lineItemId: string;
-  description: string;
-}
-
-export const createBudgetLineItemRemovedEvent = (projectId: string, input: BudgetLineItemRemovedInput) => {
-  return customInstance<any>({
-    url: `/projects/${projectId}/events`,
-    method: 'POST',
-    data: {
-      projectId,
-      type: 'budget.line_item_removed',
+      type: 'budget.approved',
       input
     }
   });
@@ -515,18 +503,22 @@ export const createProjectRoleUnassignedEvent = (projectId: string, input: Proje
   });
 };
 
-export interface ProjectRoleAssignedInput {
-  person_id: string;
-  project_role_id: string;
+export interface ProjectStartedInput {
+  title: string;
+  description: string;
+  start_date: Datetime;
+  end_date: Datetime;
+  members_ids: any[];
+  owning_org_node_id: string;
 }
 
-export const createProjectRoleAssignedEvent = (projectId: string, input: ProjectRoleAssignedInput) => {
+export const createProjectStartedEvent = (projectId: string, input: ProjectStartedInput) => {
   return customInstance<any>({
     url: `/projects/${projectId}/events`,
     method: 'POST',
     data: {
       projectId,
-      type: 'project.project_role_assigned',
+      type: 'project.started',
       input
     }
   });

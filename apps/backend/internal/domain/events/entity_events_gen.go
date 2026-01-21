@@ -196,6 +196,153 @@ var ProductRemovedMeta = EventMeta{
 	FriendlyName: "Product Removal",
 }
 
+// --- BudgetLineItemAdded / BudgetLineItemRemoved ---
+
+const BudgetLineItemAddedType = "project.budgetlineitem_added"
+const BudgetLineItemRemovedType = "project.budgetlineitem_removed"
+
+type BudgetLineItemAdded struct {
+	Base
+}
+
+func (BudgetLineItemAdded) isEvent()     {}
+func (BudgetLineItemAdded) Type() string { return BudgetLineItemAddedType }
+func (e BudgetLineItemAdded) String() string {
+	return "BudgetLineItem added"
+}
+
+func (e *BudgetLineItemAdded) Apply(project *entities.Project) {
+}
+
+func (e *BudgetLineItemAdded) RelatedIDs() RelatedIDs {
+	return RelatedIDs{}
+}
+
+func (e *BudgetLineItemAdded) NotificationMessage() string {
+	return "A new budgetlineitem has been added to the project."
+}
+
+func (e *BudgetLineItemAdded) NotificationTemplate() string {
+	return "Budget line item '{{line_item.Description}}' was added to project '{{project.Title}}'"
+}
+
+func (e *BudgetLineItemAdded) ApprovalRequestTemplate() string {
+	return "Request to add budget line item '{{line_item.Description}}' requires approval"
+}
+
+func (e *BudgetLineItemAdded) ApprovedTemplate() string {
+	return "Addition of budget line item '{{line_item.Description}}' approved"
+}
+
+func (e *BudgetLineItemAdded) RejectedTemplate() string {
+	return "Addition of budget line item '{{line_item.Description}}' rejected"
+}
+
+func (e *BudgetLineItemAdded) NotificationVariables() map[string]string {
+	return map[string]string{}
+}
+
+type BudgetLineItemAddedInput struct {
+}
+
+func DecideBudgetLineItemAdded(
+	projectID uuid.UUID,
+	actor uuid.UUID,
+	cur *entities.Project,
+	in BudgetLineItemAddedInput,
+	status Status,
+) (Event, error) {
+	if projectID == uuid.Nil {
+		return nil, errors.New("project id is required")
+	}
+	if cur == nil {
+		return nil, errors.New("current project is required")
+	}
+	base := NewBase(projectID, actor, status)
+	base.FriendlyNameStr = BudgetLineItemAddedMeta.FriendlyName
+
+	return &BudgetLineItemAdded{
+		Base: base,
+	}, nil
+}
+
+var BudgetLineItemAddedMeta = EventMeta{
+	Type:         BudgetLineItemAddedType,
+	FriendlyName: "Budget Line Item Addition",
+}
+
+// --- BudgetLineItemRemoved ---
+
+type BudgetLineItemRemoved struct {
+	Base
+}
+
+func (BudgetLineItemRemoved) isEvent()     {}
+func (BudgetLineItemRemoved) Type() string { return BudgetLineItemRemovedType }
+func (e BudgetLineItemRemoved) String() string {
+	return "BudgetLineItem removed"
+}
+
+func (e *BudgetLineItemRemoved) Apply(project *entities.Project) {
+}
+
+func (e *BudgetLineItemRemoved) RelatedIDs() RelatedIDs {
+	return RelatedIDs{}
+}
+
+func (e *BudgetLineItemRemoved) NotificationMessage() string {
+	return "A budgetlineitem has been removed from the project."
+}
+
+func (e *BudgetLineItemRemoved) NotificationTemplate() string {
+	return "Budget line item '{{line_item.Description}}' was removed from project '{{project.Title}}'"
+}
+
+func (e *BudgetLineItemRemoved) ApprovalRequestTemplate() string {
+	return "Request to remove budget line item '{{line_item.Description}}' requires approval"
+}
+
+func (e *BudgetLineItemRemoved) ApprovedTemplate() string {
+	return "Removal of budget line item '{{line_item.Description}}' approved"
+}
+
+func (e *BudgetLineItemRemoved) RejectedTemplate() string {
+	return "Removal of budget line item '{{line_item.Description}}' rejected"
+}
+
+func (e *BudgetLineItemRemoved) NotificationVariables() map[string]string {
+	return map[string]string{}
+}
+
+type BudgetLineItemRemovedInput struct {
+}
+
+func DecideBudgetLineItemRemoved(
+	projectID uuid.UUID,
+	actor uuid.UUID,
+	cur *entities.Project,
+	in BudgetLineItemRemovedInput,
+	status Status,
+) (Event, error) {
+	if projectID == uuid.Nil {
+		return nil, errors.New("project id is required")
+	}
+	if cur == nil {
+		return nil, errors.New("current project is required")
+	}
+	base := NewBase(projectID, actor, status)
+	base.FriendlyNameStr = BudgetLineItemRemovedMeta.FriendlyName
+
+	return &BudgetLineItemRemoved{
+		Base: base,
+	}, nil
+}
+
+var BudgetLineItemRemovedMeta = EventMeta{
+	Type:         BudgetLineItemRemovedType,
+	FriendlyName: "Budget Line Item Removal",
+}
+
 func init() {
 	RegisterMeta(ProductAddedMeta, func() Event {
 		return &ProductAdded{Base: Base{FriendlyNameStr: ProductAddedMeta.FriendlyName}}
@@ -214,4 +361,21 @@ func init() {
 			return DecideProductRemoved(projectID, actor, cur, in, status)
 		})
 	RegisterInputType(ProductRemovedType, ProductRemovedInput{})
+	RegisterMeta(BudgetLineItemAddedMeta, func() Event {
+		return &BudgetLineItemAdded{Base: Base{FriendlyNameStr: BudgetLineItemAddedMeta.FriendlyName}}
+	})
+	RegisterDecider[BudgetLineItemAddedInput](BudgetLineItemAddedType,
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in BudgetLineItemAddedInput, status Status) (Event, error) {
+			return DecideBudgetLineItemAdded(projectID, actor, cur, in, status)
+		})
+	RegisterInputType(BudgetLineItemAddedType, BudgetLineItemAddedInput{})
+
+	RegisterMeta(BudgetLineItemRemovedMeta, func() Event {
+		return &BudgetLineItemRemoved{Base: Base{FriendlyNameStr: BudgetLineItemRemovedMeta.FriendlyName}}
+	})
+	RegisterDecider[BudgetLineItemRemovedInput](BudgetLineItemRemovedType,
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *entities.Project, in BudgetLineItemRemovedInput, status Status) (Event, error) {
+			return DecideBudgetLineItemRemoved(projectID, actor, cur, in, status)
+		})
+	RegisterInputType(BudgetLineItemRemovedType, BudgetLineItemRemovedInput{})
 }

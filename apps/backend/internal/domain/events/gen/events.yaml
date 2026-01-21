@@ -87,3 +87,18 @@ entity_collection_events:
     remove_approval_request_template: "Request to remove product '{{product.Name}}' requires approval"
     remove_approved_template: "Removal of product '{{product.Name}}' approved"
     remove_rejected_template: "Removal of product '{{product.Name}}' rejected"
+  - entity: BudgetLineItem
+    # id_field: LineItemID
+    # slice_field: LineItemIDs
+    json_key: line_item_id
+    add_friendly_name: "Budget Line Item Addition"
+    remove_friendly_name: "Budget Line Item Removal"
+    related_id: LineItemID
+    add_notification_template: "Budget line item '{{line_item.Description}}' was added to project '{{project.Title}}'"
+    add_approval_request_template: "Request to add budget line item '{{line_item.Description}}' requires approval"
+    add_approved_template: "Addition of budget line item '{{line_item.Description}}' approved"
+    add_rejected_template: "Addition of budget line item '{{line_item.Description}}' rejected"
+    remove_notification_template: "Budget line item '{{line_item.Description}}' was removed from project '{{project.Title}}'"
+    remove_approval_request_template: "Request to remove budget line item '{{line_item.Description}}' requires approval"
+    remove_approved_template: "Removal of budget line item '{{line_item.Description}}' approved"
+    remove_rejected_template: "Removal of budget line item '{{line_item.Description}}' rejected"
