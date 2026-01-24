@@ -31,6 +31,7 @@ var Package = do.Package(
 	do.Lazy(provideBudgetRepo),
 	do.Lazy(provideAnalyticsRepo),
 	do.Lazy(provideODataRepo),
+	do.Lazy(provideAffiliatedOrganisationRepo),
 
 	// External Clients
 	do.Lazy(provideORCIDClient),
@@ -39,6 +40,9 @@ var Package = do.Package(
 	do.Lazy(provideCrossrefClient),
 	do.Lazy(provideRAiDClient),
 	do.Lazy(provideNWOClient),
+	do.Lazy(provideKVKClient),
+	do.Lazy(provideRORClient),
+	do.Lazy(provideVIESClient),
 
 	// Adapters
 	do.Lazy(provideOrgClosureAdapter),
@@ -76,6 +80,7 @@ var Package = do.Package(
 	do.Lazy(provideAnalyticsService),
 	do.Lazy(provideODataParser),
 	do.Lazy(provideODataService),
+	do.Lazy(provideAffiliatedOrganisationService),
 
 	// Event handlers
 	do.Lazy(provideEventPolicyHandler),
@@ -112,4 +117,5 @@ var Package = do.Package(
 	do.Lazy(provideBudgetHandler),
 	do.Lazy(provideAnalyticsHandler),
 	do.Lazy(provideODataHandler),
+	do.Lazy(provideAffiliatedOrganisationHandler),
 )

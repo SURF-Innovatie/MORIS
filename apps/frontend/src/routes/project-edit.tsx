@@ -28,6 +28,7 @@ import { GeneralTab } from "@/components/project-edit/GeneralTab";
 import { PeopleTab } from "@/components/project-edit/PeopleTab";
 import { ChangelogTab } from "@/components/project-edit/ChangelogTab";
 import { ProductsTab } from "@/components/project-edit/ProductsTab";
+import { AffiliatedOrganisationsTab } from "@/components/project-edit/AffiliatedOrganisationsTab";
 import { ProjectEventPoliciesTab } from "@/components/project-edit/ProjectEventPoliciesTab";
 import { BudgetOverview } from "@/components/budget/BudgetOverview";
 import { BudgetEditor } from "@/components/budget/BudgetEditor";
@@ -313,10 +314,11 @@ function ProjectEditForm() {
           className="space-y-8"
         >
           <div className="flex items-center justify-between">
-            <TabsList className="grid w-full max-w-2xl grid-cols-6">
+            <TabsList className="grid w-full max-w-3xl grid-cols-7">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="people">People</TabsTrigger>
               <TabsTrigger value="products">Products</TabsTrigger>
+              <TabsTrigger value="affiliations">Affiliations</TabsTrigger>
               <TabsTrigger value="budget">Budget</TabsTrigger>
               <TabsTrigger value="policies">Policies</TabsTrigger>
               <TabsTrigger value="changelog">Changelog</TabsTrigger>
@@ -345,6 +347,16 @@ function ProjectEditForm() {
             <ProductsTab
               projectId={id!}
               products={projectedProject?.products || []}
+              onRefresh={refetchProject}
+            />
+          </TabsContent>
+
+          <TabsContent value="affiliations">
+            <AffiliatedOrganisationsTab
+              projectId={id!}
+              affiliatedOrganisations={
+                (projectedProject as any)?.affiliated_organisations || []
+              }
               onRefresh={refetchProject}
             />
           </TabsContent>

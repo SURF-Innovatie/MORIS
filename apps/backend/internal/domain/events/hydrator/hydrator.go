@@ -1,5 +1,5 @@
 // Package hydrator provides centralized event enrichment logic.
-// It hydrates events with related entities (Person, Product, ProjectRole, OrgNode, etc.)
+// It hydrates events with related entities (Person, Product, ProjectRole, OrgNode, AffiliatedOrganisation, etc.)
 package hydrator
 
 import (
@@ -28,27 +28,33 @@ type OrgNodeLoader interface {
 	OrganisationNodesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.OrganisationNode, error)
 }
 
+type AffiliatedOrganisationLoader interface {
+	GetByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.AffiliatedOrganisation, error)
+}
+
 type UserPersonResolver interface {
 	GetPeopleByUserIDs(ctx context.Context, userIDs []uuid.UUID) (map[uuid.UUID]entities.Person, error)
 }
 
 // Hydrator enriches events with related entities
 type Hydrator struct {
-	persons  PersonLoader
-	products ProductLoader
-	roles    RoleLoader
-	orgNodes OrgNodeLoader
-	users    UserPersonResolver
+	persons        PersonLoader
+	products       ProductLoader
+	roles          RoleLoader
+	orgNodes       OrgNodeLoader
+	affiliatedOrgs AffiliatedOrganisationLoader
+	users          UserPersonResolver
 }
 
 // New creates a new Hydrator
-func New(persons PersonLoader, products ProductLoader, roles RoleLoader, orgNodes OrgNodeLoader, users UserPersonResolver) *Hydrator {
+func New(persons PersonLoader, products ProductLoader, roles RoleLoader, orgNodes OrgNodeLoader, affiliatedOrgs AffiliatedOrganisationLoader, users UserPersonResolver) *Hydrator {
 	return &Hydrator{
-		persons:  persons,
-		products: products,
-		roles:    roles,
-		orgNodes: orgNodes,
-		users:    users,
+		persons:        persons,
+		products:       products,
+		roles:          roles,
+		orgNodes:       orgNodes,
+		affiliatedOrgs: affiliatedOrgs,
+		users:          users,
 	}
 }
 
@@ -64,7 +70,7 @@ func (h *Hydrator) HydrateMany(ctx context.Context, evts []events.Event) []event
 	}
 
 	// Collect all IDs to batch load
-	var personIDs, roleIDs, productIDs, orgNodeIDs, creatorUserIDs []uuid.UUID
+	var personIDs, roleIDs, productIDs, orgNodeIDs, affiliatedOrgIDs, creatorUserIDs []uuid.UUID
 
 	for _, e := range evts {
 		if r, ok := e.(events.HasRelatedIDs); ok {
@@ -81,6 +87,9 @@ func (h *Hydrator) HydrateMany(ctx context.Context, evts []events.Event) []event
 			if ids.OrgNodeID != nil {
 				orgNodeIDs = append(orgNodeIDs, *ids.OrgNodeID)
 			}
+			if ids.AffiliatedOrganisationID != nil {
+				affiliatedOrgIDs = append(affiliatedOrgIDs, *ids.AffiliatedOrganisationID)
+			}
 		}
 		creatorUserIDs = append(creatorUserIDs, e.CreatedByID())
 	}
@@ -90,6 +99,7 @@ func (h *Hydrator) HydrateMany(ctx context.Context, evts []events.Event) []event
 	roleMap := h.loadRoles(ctx, roleIDs)
 	productMap := h.loadProducts(ctx, productIDs)
 	orgNodeMap := h.loadOrgNodes(ctx, orgNodeIDs)
+	affiliatedOrgMap := h.loadAffiliatedOrgs(ctx, affiliatedOrgIDs)
 	creatorMap := h.loadCreators(ctx, creatorUserIDs)
 
 	// Build detailed events
@@ -116,6 +126,11 @@ func (h *Hydrator) HydrateMany(ctx context.Context, evts []events.Event) []event
 			if ids.OrgNodeID != nil {
 				if o, ok := orgNodeMap[*ids.OrgNodeID]; ok {
 					de.OrgNode = &o
+				}
+			}
+			if ids.AffiliatedOrganisationID != nil {
+				if a, ok := affiliatedOrgMap[*ids.AffiliatedOrganisationID]; ok {
+					de.AffiliatedOrganisation = &a
 				}
 			}
 		}
@@ -168,6 +183,17 @@ func (h *Hydrator) loadOrgNodes(ctx context.Context, ids []uuid.UUID) map[uuid.U
 		return nil
 	}
 	m, err := h.orgNodes.OrganisationNodesByIDs(ctx, lo.Uniq(ids))
+	if err != nil {
+		return nil
+	}
+	return m
+}
+
+func (h *Hydrator) loadAffiliatedOrgs(ctx context.Context, ids []uuid.UUID) map[uuid.UUID]entities.AffiliatedOrganisation {
+	if len(ids) == 0 {
+		return nil
+	}
+	m, err := h.affiliatedOrgs.GetByIDs(ctx, lo.Uniq(ids))
 	if err != nil {
 		return nil
 	}

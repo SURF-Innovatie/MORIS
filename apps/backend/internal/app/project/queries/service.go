@@ -58,7 +58,7 @@ func NewService(
 		roleRepo:    roleRepo,
 		currentUser: currentUser,
 		userSvc:     userSvc,
-		hydrator:    hydrator.New(repo, repo, repo, repo, userSvc),
+		hydrator:    hydrator.New(repo, repo, repo, repo, repo, userSvc),
 	}
 }
 
@@ -168,11 +168,22 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Projec
 		return nil, err
 	}
 
+	// Load affiliated organisations
+	affiliatedOrgsMap, err := s.repo.GetByIDs(ctx, proj.AffiliatedOrganisationIDs)
+	if err != nil {
+		return nil, err
+	}
+	affiliatedOrgs := make([]entities.AffiliatedOrganisation, 0, len(affiliatedOrgsMap))
+	for _, org := range affiliatedOrgsMap {
+		affiliatedOrgs = append(affiliatedOrgs, org)
+	}
+
 	return &ProjectDetails{
-		Project:       *proj,
-		OwningOrgNode: org,
-		Members:       members,
-		Products:      products,
+		Project:                 *proj,
+		OwningOrgNode:           org,
+		Members:                 members,
+		Products:                products,
+		AffiliatedOrganisations: affiliatedOrgs,
 	}, nil
 }
 

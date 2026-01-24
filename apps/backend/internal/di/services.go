@@ -7,6 +7,7 @@ import (
 	exorcid "github.com/SURF-Innovatie/MORIS/external/orcid"
 	exsurfconext "github.com/SURF-Innovatie/MORIS/external/surfconext"
 	exzenodo "github.com/SURF-Innovatie/MORIS/external/zenodo"
+	"github.com/SURF-Innovatie/MORIS/internal/app/affiliatedorganisation"
 	"github.com/SURF-Innovatie/MORIS/internal/app/analytics"
 	coreauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/app/budget"
@@ -37,6 +38,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
+	affiliatedorgpersistence "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/affiliatedorganisation"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/entclient"
 	eventpolicyrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
@@ -58,7 +60,8 @@ func provideHydrator(i do.Injector) (*hydrator.Hydrator, error) {
 	productRepo := do.MustInvoke[*productrepo.EntRepo](i)
 	rolesRepo := do.MustInvoke[projectrole.Repository](i)
 	organisationRepo := do.MustInvoke[*organisationrepo.EntRepo](i)
-	return hydrator.New(userService, productRepo, rolesRepo, organisationRepo, userService), nil
+	affiliatedOrgRepo := do.MustInvoke[*affiliatedorgpersistence.EntRepo](i)
+	return hydrator.New(userService, productRepo, rolesRepo, organisationRepo, affiliatedOrgRepo, userService), nil
 }
 
 func providePersonService(i do.Injector) (personsvc.Service, error) {
@@ -260,4 +263,9 @@ func provideODataService(i do.Injector) (*odata.Service, error) {
 	repo := do.MustInvoke[odata.Repository](i)
 	parser := do.MustInvoke[odata.QueryParser](i)
 	return odata.NewService(repo, parser), nil
+}
+
+func provideAffiliatedOrganisationService(i do.Injector) (affiliatedorganisation.Service, error) {
+	repo := do.MustInvoke[*affiliatedorgpersistence.EntRepo](i)
+	return affiliatedorganisation.NewService(repo), nil
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
+	affiliatedorgent "github.com/SURF-Innovatie/MORIS/ent/affiliatedorganisation"
 	en "github.com/SURF-Innovatie/MORIS/ent/event"
 	organisationent "github.com/SURF-Innovatie/MORIS/ent/organisationnode"
 	personent "github.com/SURF-Innovatie/MORIS/ent/person"
@@ -158,5 +159,24 @@ func (r *EntRepo) ListAncestors(ctx context.Context, orgID uuid.UUID) ([]uuid.UU
 			return row.AncestorID, true
 		}
 		return uuid.Nil, false
+	}), nil
+}
+
+func (r *EntRepo) GetByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.AffiliatedOrganisation, error) {
+	out := make(map[uuid.UUID]entities.AffiliatedOrganisation)
+	if len(ids) == 0 {
+		return out, nil
+	}
+
+	rows, err := r.cli.AffiliatedOrganisation.
+		Query().
+		Where(affiliatedorgent.IDIn(ids...)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return lo.Associate(rows, func(a *ent.AffiliatedOrganisation) (uuid.UUID, entities.AffiliatedOrganisation) {
+		return a.ID, transform.ToEntity[entities.AffiliatedOrganisation](a)
 	}), nil
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/odata"
 	"github.com/SURF-Innovatie/MORIS/internal/app/projectrole"
+	affiliatedorgpersistence "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/affiliatedorganisation"
 	analyticsrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/analytics"
 	budgetrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/budget"
 	customfieldrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/customfield"
@@ -106,4 +107,9 @@ func provideAnalyticsRepo(i do.Injector) (analytics.Repository, error) {
 func provideODataRepo(i do.Injector) (odata.Repository, error) {
 	cli := do.MustInvoke[*ent.Client](i)
 	return odatarepo.NewEntRepository(cli), nil
+}
+
+func provideAffiliatedOrganisationRepo(i do.Injector) (*affiliatedorgpersistence.EntRepo, error) {
+	cli := do.MustInvoke[*ent.Client](i)
+	return affiliatedorgpersistence.NewEntRepo(cli), nil
 }

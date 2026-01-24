@@ -65,29 +65,31 @@ func (r ProjectMemberResponse) FromEntity(e entities.ProjectMemberDetail) Projec
 }
 
 type ProjectResponse struct {
-	Id            uuid.UUID               `json:"id"`
-	Version       int                     `json:"version"`
-	Title         string                  `json:"title" example:"NewService Project"`
-	Description   string                  `json:"description" example:"This is a new project"`
-	StartDate     time.Time               `json:"start_date" example:"2025-01-01T00:00:00Z"`
-	EndDate       time.Time               `json:"end_date" example:"2025-12-31T23:59:59Z"`
-	OwningOrgNode OrganisationResponse    `json:"owning_org_node"`
-	Members       []ProjectMemberResponse `json:"members"`
-	Products      []ProductResponse       `json:"products"`
-	CustomFields  map[string]interface{}  `json:"custom_fields"`
+	Id                      uuid.UUID                        `json:"id"`
+	Version                 int                              `json:"version"`
+	Title                   string                           `json:"title" example:"NewService Project"`
+	Description             string                           `json:"description" example:"This is a new project"`
+	StartDate               time.Time                        `json:"start_date" example:"2025-01-01T00:00:00Z"`
+	EndDate                 time.Time                        `json:"end_date" example:"2025-12-31T23:59:59Z"`
+	OwningOrgNode           OrganisationResponse             `json:"owning_org_node"`
+	Members                 []ProjectMemberResponse          `json:"members"`
+	Products                []ProductResponse                `json:"products"`
+	AffiliatedOrganisations []AffiliatedOrganisationResponse `json:"affiliated_organisations"`
+	CustomFields            map[string]interface{}           `json:"custom_fields"`
 }
 
 func (r ProjectResponse) FromEntity(d *queries.ProjectDetails) ProjectResponse {
 	return ProjectResponse{
-		Id:            d.Project.Id,
-		Version:       d.Project.Version,
-		Title:         d.Project.Title,
-		Description:   d.Project.Description,
-		StartDate:     d.Project.StartDate,
-		EndDate:       d.Project.EndDate,
-		OwningOrgNode: transform.ToDTOItem[OrganisationResponse](d.OwningOrgNode),
-		Members:       transform.ToDTOs[ProjectMemberResponse](d.Members),
-		Products:      transform.ToDTOs[ProductResponse](d.Products),
-		CustomFields:  d.Project.CustomFields,
+		Id:                      d.Project.Id,
+		Version:                 d.Project.Version,
+		Title:                   d.Project.Title,
+		Description:             d.Project.Description,
+		StartDate:               d.Project.StartDate,
+		EndDate:                 d.Project.EndDate,
+		OwningOrgNode:           transform.ToDTOItem[OrganisationResponse](d.OwningOrgNode),
+		Members:                 transform.ToDTOs[ProjectMemberResponse](d.Members),
+		Products:                transform.ToDTOs[ProductResponse](d.Products),
+		AffiliatedOrganisations: transform.ToDTOs[AffiliatedOrganisationResponse](d.AffiliatedOrganisations),
+		CustomFields:            d.Project.CustomFields,
 	}
 }

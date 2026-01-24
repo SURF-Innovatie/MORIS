@@ -10,9 +10,10 @@ type DetailedEvent struct {
 	Event Event
 
 	// Optional related entities
-	Person      *entities.Person
-	Product     *entities.Product
-	ProjectRole *entities.ProjectRole
-	OrgNode     *entities.OrganisationNode
-	Creator     *entities.Person
+	Person                 *entities.Person
+	Product                *entities.Product
+	ProjectRole            *entities.ProjectRole
+	OrgNode                *entities.OrganisationNode
+	AffiliatedOrganisation *entities.AffiliatedOrganisation
+	Creator                *entities.Person
 }

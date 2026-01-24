@@ -8,7 +8,7 @@
 #
 # Notification Templates:
 # - Use {{variable}} syntax for placeholders
-# - Available: {{project.Title}}, {{creator.Name}}, {{product.Name}}, {{person.Name}}, 
+# - Available: {{project.Title}}, {{creator.Name}}, {{product.Name}}, {{person.Name}},
 #              {{org_node.Name}}, {{role.Name}}, {{event.FieldName}}
 
 # Tier 1: Simple field changes (no entity relation)
@@ -102,3 +102,18 @@ entity_collection_events:
     remove_approval_request_template: "Request to remove budget line item '{{line_item.Description}}' requires approval"
     remove_approved_template: "Removal of budget line item '{{line_item.Description}}' approved"
     remove_rejected_template: "Removal of budget line item '{{line_item.Description}}' rejected"
+  - entity: AffiliatedOrganisation
+    id_field: AffiliatedOrganisationID
+    slice_field: AffiliatedOrganisationIDs
+    json_key: affiliated_organisation_id
+    add_friendly_name: "Affiliated Organisation Addition"
+    remove_friendly_name: "Affiliated Organisation Removal"
+    related_id: AffiliatedOrganisationID
+    add_notification_template: "Organisation '{{affiliated_organisation.Name}}' was affiliated with project '{{project.Title}}'"
+    add_approval_request_template: "Request to affiliate organisation '{{affiliated_organisation.Name}}' requires approval"
+    add_approved_template: "Affiliation of organisation '{{affiliated_organisation.Name}}' approved"
+    add_rejected_template: "Affiliation of organisation '{{affiliated_organisation.Name}}' rejected"
+    remove_notification_template: "Organisation '{{affiliated_organisation.Name}}' was removed from project '{{project.Title}}'"
+    remove_approval_request_template: "Request to remove organisation '{{affiliated_organisation.Name}}' requires approval"
+    remove_approved_template: "Removal of organisation '{{affiliated_organisation.Name}}' approved"
+    remove_rejected_template: "Removal of organisation '{{affiliated_organisation.Name}}' rejected"

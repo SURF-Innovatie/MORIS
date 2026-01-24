@@ -4,10 +4,13 @@ import (
 	"net/http"
 
 	excrossref "github.com/SURF-Innovatie/MORIS/external/crossref"
+	exkvk "github.com/SURF-Innovatie/MORIS/external/kvk"
 	exnwo "github.com/SURF-Innovatie/MORIS/external/nwo"
 	exorcid "github.com/SURF-Innovatie/MORIS/external/orcid"
 	"github.com/SURF-Innovatie/MORIS/external/raid"
+	exror "github.com/SURF-Innovatie/MORIS/external/ror"
 	exsurfconext "github.com/SURF-Innovatie/MORIS/external/surfconext"
+	exvies "github.com/SURF-Innovatie/MORIS/external/vies"
 	exzenodo "github.com/SURF-Innovatie/MORIS/external/zenodo"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	"github.com/samber/do/v2"
@@ -47,4 +50,20 @@ func provideNWOClient(i do.Injector) (exnwo.Client, error) {
 		BaseURL: env.Global.NWO.BaseURL,
 	}
 	return exnwo.NewClient(cfg), nil
+}
+
+func provideKVKClient(i do.Injector) (exkvk.Client, error) {
+	cfg := &exkvk.Config{
+		BaseURL: env.Global.KVK.BaseURL,
+		APIKey:  env.Global.KVK.APIKey,
+	}
+	return exkvk.NewClient(cfg), nil
+}
+
+func provideRORClient(i do.Injector) (*exror.Client, error) {
+	return exror.NewClient(http.DefaultClient), nil
+}
+
+func provideVIESClient(i do.Injector) (*exvies.Client, error) {
+	return exvies.NewClient(http.DefaultClient), nil
 }

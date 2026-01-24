@@ -51,6 +51,22 @@ var (
 			},
 		},
 	}
+	// AffiliatedOrganisationsColumns holds the columns for the "affiliated_organisations" table.
+	AffiliatedOrganisationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "name", Type: field.TypeString},
+		{Name: "kvk_number", Type: field.TypeString, Nullable: true},
+		{Name: "ror_id", Type: field.TypeString, Nullable: true},
+		{Name: "vat_number", Type: field.TypeString, Nullable: true},
+		{Name: "city", Type: field.TypeString, Nullable: true},
+		{Name: "country", Type: field.TypeString, Nullable: true},
+	}
+	// AffiliatedOrganisationsTable holds the schema information for the "affiliated_organisations" table.
+	AffiliatedOrganisationsTable = &schema.Table{
+		Name:       "affiliated_organisations",
+		Columns:    AffiliatedOrganisationsColumns,
+		PrimaryKey: []*schema.Column{AffiliatedOrganisationsColumns[0]},
+	}
 	// BudgetsColumns holds the columns for the "budgets" table.
 	BudgetsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -594,6 +610,7 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		APIKeysTable,
+		AffiliatedOrganisationsTable,
 		BudgetsTable,
 		BudgetActualsTable,
 		BudgetLineItemsTable,

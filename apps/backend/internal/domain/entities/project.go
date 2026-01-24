@@ -12,16 +12,17 @@ type ProjectMember struct {
 }
 
 type Project struct {
-	Id              uuid.UUID
-	Version         int
-	StartDate       time.Time
-	EndDate         time.Time
-	Title           string
-	Description     string
-	Members         []ProjectMember
-	OwningOrgNodeID uuid.UUID
-	ProductIDs      []uuid.UUID
-	CustomFields    map[string]interface{}
+	Id                        uuid.UUID
+	Version                   int
+	StartDate                 time.Time
+	EndDate                   time.Time
+	Title                     string
+	Description               string
+	Members                   []ProjectMember
+	OwningOrgNodeID           uuid.UUID
+	ProductIDs                []uuid.UUID
+	AffiliatedOrganisationIDs []uuid.UUID
+	CustomFields              map[string]interface{}
 }
 
 type ProjectMemberDetail struct {

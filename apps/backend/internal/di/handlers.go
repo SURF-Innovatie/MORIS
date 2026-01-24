@@ -2,6 +2,8 @@ package di
 
 import (
 	"github.com/SURF-Innovatie/MORIS/ent"
+	exvies "github.com/SURF-Innovatie/MORIS/external/vies"
+	"github.com/SURF-Innovatie/MORIS/internal/app/affiliatedorganisation"
 	"github.com/SURF-Innovatie/MORIS/internal/app/analytics"
 	coreauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/app/budget"
@@ -26,6 +28,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/zenodo"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events/hydrator"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
+	affiliatedorganisationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/affiliatedorganisation"
 	analyticshandler "github.com/SURF-Innovatie/MORIS/internal/handler/analytics"
 	apikeyhandler "github.com/SURF-Innovatie/MORIS/internal/handler/apikey"
 	authhandler "github.com/SURF-Innovatie/MORIS/internal/handler/auth"
@@ -194,4 +197,10 @@ func provideAnalyticsHandler(i do.Injector) (*analyticshandler.Handler, error) {
 func provideODataHandler(i do.Injector) (*odatahandler.Handler, error) {
 	svc := do.MustInvoke[*odata.Service](i)
 	return odatahandler.NewHandler(svc), nil
+}
+
+func provideAffiliatedOrganisationHandler(i do.Injector) (*affiliatedorganisationhandler.Handler, error) {
+	svc := do.MustInvoke[affiliatedorganisation.Service](i)
+	viesClient := do.MustInvoke[*exvies.Client](i)
+	return affiliatedorganisationhandler.NewHandler(svc, viesClient), nil
 }
