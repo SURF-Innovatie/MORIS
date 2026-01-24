@@ -29,6 +29,7 @@ type Config struct {
 	Zenodo     ZenodoConfig     `env-prefix:"ZENODO_"`
 	Crossref   CrossrefConfig   `env-prefix:"CROSSREF_"`
 	NWO        NWOConfig        `env-prefix:"NWO_"`
+	KVK        KVKConfig        `env-prefix:"KVK_"`
 }
 
 type ORCIDConfig struct {
@@ -61,6 +62,11 @@ type CrossrefConfig struct {
 
 type NWOConfig struct {
 	BaseURL string `env:"BASE_URL" env-default:"https://nwopen-api.nwo.nl"`
+}
+
+type KVKConfig struct {
+	BaseURL string `env:"BASE_URL" env-default:"https://api.kvk.nl/test/api"`
+	APIKey  string `env:"API_KEY"`
 }
 
 var Global Config

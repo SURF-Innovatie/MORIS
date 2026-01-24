@@ -8,6 +8,7 @@ import (
 	surfconextclientdi "github.com/SURF-Innovatie/MORIS/external/surfconext/di"
 	zenodoclientdi "github.com/SURF-Innovatie/MORIS/external/zenodo/di"
 	adapterinternaldi "github.com/SURF-Innovatie/MORIS/internal/adapter/di"
+	affiliatedorganisationappdi "github.com/SURF-Innovatie/MORIS/internal/app/affiliatedorganisation/di"
 	authappdi "github.com/SURF-Innovatie/MORIS/internal/app/auth/di"
 	crossrefappdi "github.com/SURF-Innovatie/MORIS/internal/app/crossref/di"
 	customfieldappdi "github.com/SURF-Innovatie/MORIS/internal/app/customfield/di"
@@ -27,6 +28,7 @@ import (
 	userappdi "github.com/SURF-Innovatie/MORIS/internal/app/user/di"
 	zenodoappdi "github.com/SURF-Innovatie/MORIS/internal/app/zenodo/di"
 	adapterhandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/adapter/di"
+	affiliatedorganisationhandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/affiliatedorganisation/di"
 	authhandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/auth/di"
 	crossrefhandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/crossref/di"
 	doihandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/doi/di"
@@ -68,6 +70,9 @@ var Package = do.Package(
 	adapterinternaldi.Package,
 
 	adapterhandlerdi.Package,
+
+	affiliatedorganisationappdi.Package,
+	affiliatedorganisationhandlerdi.Package,
 
 	authappdi.Package,
 	authhandlerdi.Package,

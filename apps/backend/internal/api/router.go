@@ -11,6 +11,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/errorlog"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/cachewarmup"
 	adapterhandler "github.com/SURF-Innovatie/MORIS/internal/handler/adapter"
+	affiliatedorganisationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/affiliatedorganisation"
 	authhandler "github.com/SURF-Innovatie/MORIS/internal/handler/auth"
 	crossrefhandler "github.com/SURF-Innovatie/MORIS/internal/handler/crossref"
 	doihandler "github.com/SURF-Innovatie/MORIS/internal/handler/doi"
@@ -66,6 +67,7 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 	systemHandler := do.MustInvoke[*systemhandler.Handler](injector)
 	doiHandler := do.MustInvoke[*doihandler.Handler](injector)
 	adapterHandler := do.MustInvoke[*adapterhandler.Handler](injector)
+	affiliatedOrgHandler := do.MustInvoke[*affiliatedorganisationhandler.Handler](injector)
 
 	// Setup Router
 	r := chi.NewRouter()
@@ -111,6 +113,7 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 				r.Get("/", eventPolicyHandler.ListForOrgNode)
 				r.Post("/", eventPolicyHandler.CreateForOrgNode)
 			})
+			affiliatedorganisationhandler.MountRoutes(r, affiliatedOrgHandler)
 		})
 	})
 
