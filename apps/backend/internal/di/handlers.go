@@ -12,6 +12,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
+	organisationrole "github.com/SURF-Innovatie/MORIS/internal/app/organisation/role"
 	personsvc "github.com/SURF-Innovatie/MORIS/internal/app/person"
 	"github.com/SURF-Innovatie/MORIS/internal/app/portfolio"
 	"github.com/SURF-Innovatie/MORIS/internal/app/product"
@@ -131,6 +132,12 @@ func provideDoiHandler(i do.Injector) (*doihandler.Handler, error) {
 func provideOrgRBACHandler(i do.Injector) (*organisationhandler.RBACHandler, error) {
 	svc := do.MustInvoke[organisationrbac.Service](i)
 	return organisationhandler.NewRBACHandler(svc), nil
+}
+
+func provideOrgRoleHandler(i do.Injector) (*organisationhandler.RoleHandler, error) {
+	roleSvc := do.MustInvoke[organisationrole.Service](i)
+	rbacSvc := do.MustInvoke[organisationrbac.Service](i)
+	return organisationhandler.NewRoleHandler(roleSvc, rbacSvc), nil
 }
 
 func provideOrganisationHandler(i do.Injector) (*organisationhandler.Handler, error) {

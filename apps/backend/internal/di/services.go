@@ -20,6 +20,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation/hierarchy"
 	organisationhierarchy "github.com/SURF-Innovatie/MORIS/internal/app/organisation/hierarchy"
 	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
+	organisationrole "github.com/SURF-Innovatie/MORIS/internal/app/organisation/role"
 	personsvc "github.com/SURF-Innovatie/MORIS/internal/app/person"
 	"github.com/SURF-Innovatie/MORIS/internal/app/portfolio"
 	"github.com/SURF-Innovatie/MORIS/internal/app/product"
@@ -44,6 +45,7 @@ import (
 	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
 	organisationhierarchyrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation/hierarchy"
 	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation/rbac"
+	organisationrolerepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation/role"
 	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
 	portfoliorepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/portfolio"
 	productrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/product"
@@ -115,6 +117,11 @@ func provideDoiService(i do.Injector) (doi.Service, error) {
 func provideOrgRBACService(i do.Injector) (organisationrbac.Service, error) {
 	repo := do.MustInvoke[*organisationrbacrepo.EntRepo](i)
 	return organisationrbac.NewService(repo), nil
+}
+
+func provideOrgRoleService(i do.Injector) (organisationrole.Service, error) {
+	repo := do.MustInvoke[*organisationrolerepo.EntRepo](i)
+	return organisationrole.NewService(repo), nil
 }
 
 func provideOrgHierarchyService(i do.Injector) (hierarchy.Service, error) {

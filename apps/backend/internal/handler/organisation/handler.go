@@ -7,7 +7,6 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/customfield"
 	organisationsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
-	orgrole "github.com/SURF-Innovatie/MORIS/internal/app/organisation/role"
 	"github.com/SURF-Innovatie/MORIS/internal/app/projectrole"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
@@ -393,7 +392,7 @@ func (h *Handler) CreateProjectRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, id, orgrole.PermissionManageProjectRoles)
+	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, id, entities.PermissionManageProjectRoles)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -457,7 +456,7 @@ func (h *Handler) DeleteProjectRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, orgID, orgrole.PermissionManageProjectRoles)
+	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, orgID, entities.PermissionManageProjectRoles)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -540,7 +539,7 @@ func (h *Handler) UpdateProjectRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, orgID, orgrole.PermissionManageProjectRoles)
+	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, orgID, entities.PermissionManageProjectRoles)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -592,7 +591,7 @@ func (h *Handler) CreateCustomField(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, id, orgrole.PermissionManageCustomFields)
+	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, id, entities.PermissionManageCustomFields)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -652,7 +651,7 @@ func (h *Handler) DeleteCustomField(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, orgID, orgrole.PermissionManageCustomFields)
+	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, orgID, entities.PermissionManageCustomFields)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -743,7 +742,7 @@ func (h *Handler) UpdateMemberCustomFields(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Check Admin Access (Manage Members)
-	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, orgID, orgrole.PermissionManageMembers)
+	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, orgID, entities.PermissionManageMembers)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return

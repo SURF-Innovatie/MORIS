@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
-	orgrole "github.com/SURF-Innovatie/MORIS/internal/app/organisation/role"
 	"github.com/SURF-Innovatie/MORIS/internal/app/person"
 	"github.com/SURF-Innovatie/MORIS/internal/app/tx"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
@@ -127,7 +126,7 @@ func (s *service) SearchForProjectCreation(ctx context.Context, query string, ac
 	// HasPermission checks for direct or inherited permission (via ancestry)
 	filtered := make([]entities.OrganisationNode, 0, len(nodes))
 	for _, node := range nodes {
-		ok, err := s.rbac.HasPermission(ctx, actorID, node.ID, orgrole.PermissionCreateProject)
+		ok, err := s.rbac.HasPermission(ctx, actorID, node.ID, entities.PermissionCreateProject)
 		if err == nil && ok {
 			filtered = append(filtered, node)
 		}

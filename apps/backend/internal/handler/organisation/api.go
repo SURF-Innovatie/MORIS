@@ -2,7 +2,7 @@ package organisation
 
 import "github.com/go-chi/chi/v5"
 
-func MountOrganisationRoutes(r chi.Router, h *Handler, rbac *RBACHandler) {
+func MountOrganisationRoutes(r chi.Router, h *Handler, rbac *RBACHandler, role *RoleHandler) {
 	r.Route("/organisation-nodes", func(r chi.Router) {
 		r.Get("/ror/search", h.SearchROR)
 		r.Get("/search", h.Search)
@@ -27,7 +27,7 @@ func MountOrganisationRoutes(r chi.Router, h *Handler, rbac *RBACHandler) {
 		r.Patch("/{id}/roles/{roleId}", h.UpdateProjectRole)
 		r.Delete("/{id}/roles/{roleId}", h.DeleteProjectRole)
 
-		// Custom Custom Fields
+		// Custom Fields
 		r.Post("/{id}/custom-fields", h.CreateCustomField)
 		r.Get("/{id}/custom-fields", h.ListCustomFields)
 		r.Delete("/{id}/custom-fields/{fieldId}", h.DeleteCustomField)
@@ -35,25 +35,25 @@ func MountOrganisationRoutes(r chi.Router, h *Handler, rbac *RBACHandler) {
 		r.Put("/{id}/members/{personId}/custom-fields", h.UpdateMemberCustomFields)
 
 		// Organisation Roles (RBAC)
-		r.Get("/{id}/organisation-roles", rbac.ListRoles)
-		r.Post("/{id}/organisation-roles", rbac.CreateRole)
+		r.Get("/{id}/organisation-roles", role.ListRoles)
+		r.Post("/{id}/organisation-roles", role.CreateRole)
 	})
 
 	r.Route("/organisation-roles", func(r chi.Router) {
-		r.Post("/ensure-defaults", rbac.EnsureDefaultRoles)
-		r.Put("/{id}", rbac.UpdateRole)
-		r.Delete("/{id}", rbac.DeleteRole)
+		r.Post("/ensure-defaults", role.EnsureDefaultRoles)
+		r.Put("/{id}", role.UpdateRole)
+		r.Delete("/{id}", role.DeleteRole)
 	})
 
-	r.Get("/organisation-permissions", rbac.ListPermissions)
+	r.Get("/organisation-permissions", role.ListPermissions)
 
 	r.Route("/organisation-scopes", func(r chi.Router) {
-		r.Post("/", rbac.CreateScope)
+		r.Post("/", role.CreateScope)
 	})
 
 	r.Route("/organisation-memberships", func(r chi.Router) {
-		r.Post("/", rbac.AddMembership)
-		r.Delete("/{id}", rbac.RemoveMembership)
+		r.Post("/", role.AddMembership)
+		r.Delete("/{id}", role.RemoveMembership)
 		r.Get("/mine", rbac.ListMyMemberships)
 	})
 }

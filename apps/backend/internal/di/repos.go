@@ -12,6 +12,7 @@ import (
 	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
 	organisationhierarchyrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation/hierarchy"
 	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation/rbac"
+	organisationrolerepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation/role"
 	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
 	portfoliorepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/portfolio"
 	productrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/product"
@@ -50,6 +51,11 @@ func provideOrgRBACRepo(i do.Injector) (*organisationrbacrepo.EntRepo, error) {
 func provideOrgHierarchyRepo(i do.Injector) (*organisationhierarchyrepo.EntRepo, error) {
 	cli := do.MustInvoke[*ent.Client](i)
 	return organisationhierarchyrepo.NewEntRepo(cli), nil
+}
+
+func provideOrgRoleRepo(i do.Injector) (*organisationrolerepo.EntRepo, error) {
+	cli := do.MustInvoke[*ent.Client](i)
+	return organisationrolerepo.NewEntRepo(cli), nil
 }
 
 func provideProjectRoleRepo(i do.Injector) (projectrole.Repository, error) {

@@ -10,7 +10,6 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
-	orgrole "github.com/SURF-Innovatie/MORIS/internal/app/organisation/role"
 	"github.com/SURF-Innovatie/MORIS/internal/app/projectrole"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
@@ -128,7 +127,7 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*e
 			if strID, ok := inputMap["owning_org_node_id"].(string); ok {
 				orgID, err := uuid.Parse(strID)
 				if err == nil {
-					has, err := s.rbacSvc.HasPermission(ctx, u.PersonID(), orgID, orgrole.PermissionCreateProject)
+					has, err := s.rbacSvc.HasPermission(ctx, u.PersonID(), orgID, entities.PermissionCreateProject)
 					if err != nil {
 						return nil, err
 					}

@@ -55,6 +55,7 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 	nwoHandler := do.MustInvoke[*nwohandler.Handler](injector)
 	organisationHandler := do.MustInvoke[*organisationhandler.Handler](injector)
 	rbacHandler := do.MustInvoke[*organisationhandler.RBACHandler](injector)
+	roleHandler := do.MustInvoke[*organisationhandler.RoleHandler](injector)
 	productHandler := do.MustInvoke[*producthandler.Handler](injector)
 	portfolioHandler := do.MustInvoke[*portfoliohandler.Handler](injector)
 	notificationHandler := do.MustInvoke[*notificationhandler.Handler](injector)
@@ -90,7 +91,7 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 				// Event policy routes for projects
 				eventPolicyHandler.RegisterProjectRoutes(r)
 			})
-			organisationhandler.MountOrganisationRoutes(r, organisationHandler, rbacHandler)
+			organisationhandler.MountOrganisationRoutes(r, organisationHandler, rbacHandler, roleHandler)
 			eventHandler.MountEventRoutes(r, evtHandler)
 			personhandler.MountPersonRoutes(r, personHandler)
 			orcidhandler.MountRoutes(r, orcidHandler)
