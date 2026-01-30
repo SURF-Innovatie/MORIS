@@ -40,7 +40,6 @@ var Package = do.Package(
 	// Adapters
 	do.Lazy(provideOrgClosureAdapter),
 	do.Lazy(provideRecipientAdapter),
-	do.Lazy(provideNotificationAdapter),
 	do.Lazy(provideAdapterRegistry),
 	do.Lazy(provideAdapterHandler),
 

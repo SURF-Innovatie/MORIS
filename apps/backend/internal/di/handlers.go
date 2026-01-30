@@ -59,8 +59,8 @@ func provideApprovalRequestHandler(i do.Injector) (*event.ApprovalRequestNotific
 	return event.NewApprovalRequestHandler(cli, es, rbac), nil
 }
 
-func provideEventPolicyHandler(i do.Injector) (*event.EventPolicyHandler, error) {
-	repo := do.MustInvoke[eventpolicy.Repository](i)
+func provideEventPolicyHandler(i do.Injector) (*event.Handler, error) {
+	repo := do.MustInvoke[eventpolicy.Service](i)
 	cli := do.MustInvoke[*ent.Client](i)
 	return event.NewEventPolicyHandler(repo, cli), nil
 }

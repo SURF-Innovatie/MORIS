@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
@@ -23,24 +24,24 @@ type Evaluator interface {
 }
 
 type evaluator struct {
-	repo               Repository
-	closureProvider    OrgClosureProvider
-	recipientResolver  RecipientResolver
-	notificationSender NotificationSender
+	repo              repository
+	closureProvider   OrgClosureProvider
+	recipientResolver RecipientResolver
+	notificationSvc   notification.Service
 }
 
 // NewEvaluator creates a new policy evaluator
 func NewEvaluator(
-	repo Repository,
+	repo repository,
 	closureProvider OrgClosureProvider,
 	recipientResolver RecipientResolver,
-	notificationSender NotificationSender,
+	notificationSvc notification.Service,
 ) Evaluator {
 	return &evaluator{
-		repo:               repo,
-		closureProvider:    closureProvider,
-		recipientResolver:  recipientResolver,
-		notificationSender: notificationSender,
+		repo:              repo,
+		closureProvider:   closureProvider,
+		recipientResolver: recipientResolver,
+		notificationSvc:   notificationSvc,
 	}
 }
 
@@ -337,9 +338,9 @@ func (e *evaluator) executeAction(ctx context.Context, policy entities.EventPoli
 
 	switch policy.ActionType {
 	case entities.ActionTypeNotify:
-		return e.notificationSender.SendNotification(ctx, userIDs, event.GetID(), message)
+		return e.notificationSvc.Send(ctx, userIDs, event.GetID(), message, entities.NotificationInfo)
 	case entities.ActionTypeRequestApproval:
-		return e.notificationSender.SendApprovalRequest(ctx, userIDs, event.GetID(), message)
+		return e.notificationSvc.Send(ctx, userIDs, event.GetID(), message, entities.NotificationApprovalRequest)
 	default:
 		return fmt.Errorf("unknown action type: %s", policy.ActionType)
 	}

@@ -23,7 +23,8 @@ func NewEntRepo(cli *ent.Client) *EntRepo {
 func (r *EntRepo) Create(ctx context.Context, n entities.Notification) (*entities.Notification, error) {
 	create := r.cli.Notification.Create().
 		SetMessage(n.Message).
-		SetUserID(n.UserID)
+		SetUserID(n.UserID).
+		SetType(entnotification.Type(n.Type))
 
 	if n.EventID != nil && *n.EventID != uuid.Nil {
 		create.SetEventID(*n.EventID)

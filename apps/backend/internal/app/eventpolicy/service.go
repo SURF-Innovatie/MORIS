@@ -21,12 +21,12 @@ type Service interface {
 }
 
 type service struct {
-	repo            Repository
+	repo            repository
 	closureProvider OrgClosureProvider
 }
 
 // NewService creates a new event policy service
-func NewService(repo Repository, closureProvider OrgClosureProvider) Service {
+func NewService(repo repository, closureProvider OrgClosureProvider) Service {
 	return &service{
 		repo:            repo,
 		closureProvider: closureProvider,

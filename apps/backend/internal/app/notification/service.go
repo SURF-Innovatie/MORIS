@@ -9,6 +9,7 @@ import (
 
 type Service interface {
 	Create(ctx context.Context, n entities.Notification) (*entities.Notification, error)
+	Send(ctx context.Context, userIDs []uuid.UUID, eventID uuid.UUID, message string, notificationType entities.NotificationType) error
 	Get(ctx context.Context, id uuid.UUID) (*entities.Notification, error)
 	Update(ctx context.Context, id uuid.UUID, n entities.Notification) (*entities.Notification, error)
 	List(ctx context.Context) ([]entities.Notification, error)
@@ -27,6 +28,26 @@ func NewService(repo NotificationRepository) Service {
 
 func (s *service) Create(ctx context.Context, n entities.Notification) (*entities.Notification, error) {
 	return s.repo.Create(ctx, n)
+}
+
+func (s *service) Send(ctx context.Context, userIDs []uuid.UUID, eventID uuid.UUID, message string, notificationType entities.NotificationType) error {
+	if len(userIDs) == 0 {
+		return nil
+	}
+
+	for _, userID := range userIDs {
+		n := entities.Notification{
+			UserID:  userID,
+			Message: message,
+			EventID: &eventID,
+			Type:    notificationType,
+		}
+
+		if _, err := s.repo.Create(ctx, n); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.Notification, error) {

@@ -4,7 +4,6 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/internal/app/customfield"
 	"github.com/SURF-Innovatie/MORIS/internal/app/errorlog"
-	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/projectrole"
 	customfieldrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/customfield"
 	errorlogrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/error_log"
@@ -82,7 +81,7 @@ func provideProjectQueryRepo(i do.Injector) (*projectqueryrepo.EntRepo, error) {
 	return projectqueryrepo.NewEntRepo(cli), nil
 }
 
-func provideEventPolicyRepo(i do.Injector) (eventpolicy.Repository, error) {
+func provideEventPolicyRepo(i do.Injector) (*eventpolicyrepo.EntRepo, error) {
 	cli := do.MustInvoke[*ent.Client](i)
 	return eventpolicyrepo.NewEntRepository(cli), nil
 }

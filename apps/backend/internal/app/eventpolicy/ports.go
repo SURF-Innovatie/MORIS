@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// Repository defines the persistence interface for event policies
-type Repository interface {
+// repository defines the persistence interface for event policies
+type repository interface {
 	Create(ctx context.Context, policy entities.EventPolicy) (*entities.EventPolicy, error)
 	Update(ctx context.Context, id uuid.UUID, policy entities.EventPolicy) (*entities.EventPolicy, error)
 	Delete(ctx context.Context, id uuid.UUID) error
@@ -42,13 +42,4 @@ type RecipientResolver interface {
 	// ResolveDynamic returns user IDs for dynamic recipient types
 	// dynType can be: "project_members", "project_owner", "org_admins"
 	ResolveDynamic(ctx context.Context, dynType string, projectID uuid.UUID, orgNodeID uuid.UUID) ([]uuid.UUID, error)
-}
-
-// NotificationSender creates notifications for users
-type NotificationSender interface {
-	// SendNotification creates an info notification for users about an event
-	SendNotification(ctx context.Context, userIDs []uuid.UUID, eventID uuid.UUID, message string) error
-
-	// SendApprovalRequest creates an approval request notification for users
-	SendApprovalRequest(ctx context.Context, userIDs []uuid.UUID, eventID uuid.UUID, message string) error
 }

@@ -30,6 +30,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/app/zenodo"
 	"github.com/SURF-Innovatie/MORIS/internal/event"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/adapters/event_policy"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
@@ -153,17 +154,17 @@ func provideErrorLogService(i do.Injector) (errorlog.Service, error) {
 }
 
 func provideEventPolicyService(i do.Injector) (eventpolicy.Service, error) {
-	repo := do.MustInvoke[eventpolicy.Repository](i)
-	closure := do.MustInvoke[*eventpolicyrepo.OrgClosureAdapter](i)
+	repo := do.MustInvoke[*eventpolicyrepo.EntRepo](i)
+	closure := do.MustInvoke[*event_policy.OrgClosureAdapter](i)
 	return eventpolicy.NewService(repo, closure), nil
 }
 
 func providePolicyEvaluator(i do.Injector) (eventpolicy.Evaluator, error) {
-	repo := do.MustInvoke[eventpolicy.Repository](i)
-	closure := do.MustInvoke[*eventpolicyrepo.OrgClosureAdapter](i)
-	recipient := do.MustInvoke[*eventpolicyrepo.RecipientAdapter](i)
-	notif := do.MustInvoke[*eventpolicyrepo.NotificationAdapter](i)
-	return eventpolicy.NewEvaluator(repo, closure, recipient, notif), nil
+	repo := do.MustInvoke[*eventpolicyrepo.EntRepo](i)
+	closure := do.MustInvoke[*event_policy.OrgClosureAdapter](i)
+	recipient := do.MustInvoke[*event_policy.RecipientAdapter](i)
+	notifSvc := do.MustInvoke[notification.Service](i)
+	return eventpolicy.NewEvaluator(repo, closure, recipient, notifSvc), nil
 }
 
 func provideProjectLoader(i do.Injector) (*load.Loader, error) {
@@ -220,7 +221,7 @@ func provideEventService(i do.Injector) (event.Service, error) {
 
 	projHandler := do.MustInvoke[*event.ProjectEventNotificationHandler](i)
 	approvalHandler := do.MustInvoke[*event.ApprovalRequestNotificationHandler](i)
-	policyHandler := do.MustInvoke[*event.EventPolicyHandler](i)
+	policyHandler := do.MustInvoke[*event.Handler](i)
 	execHandler := do.MustInvoke[*event.PolicyExecutionHandler](i)
 
 	notificationHandlers := []event.NotificationHandler{
