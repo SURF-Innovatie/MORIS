@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
+	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
-	"github.com/samber/lo"
 )
 
 type Service interface {
@@ -22,15 +22,16 @@ type Service interface {
 
 type service struct {
 	repo    Repository
-	orgRepo organisation.Repository
+	orgSvc  organisation.Service
+	orgRbac organisationrbac.Service
 }
 
-func NewService(repo Repository, orgRepo organisation.Repository) Service {
-	return &service{repo: repo, orgRepo: orgRepo}
+func NewService(repo Repository, orgSvc organisation.Service) Service {
+	return &service{repo: repo, orgSvc: orgSvc}
 }
 
 func (s *service) EnsureDefaults(ctx context.Context) error {
-	roots, err := s.orgRepo.ListRoots(ctx)
+	roots, err := s.orgSvc.ListRoots(ctx)
 	if err != nil {
 		return fmt.Errorf("listing root nodes: %w", err)
 	}
@@ -80,14 +81,10 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID, orgNodeID uuid.UUID)
 }
 
 func (s *service) ListAvailableForNode(ctx context.Context, orgNodeID uuid.UUID) ([]entities.ProjectRole, error) {
-	closures, err := s.orgRepo.ListClosuresByDescendant(ctx, orgNodeID)
+	ids, err := s.orgRbac.AncestorIDs(ctx, orgNodeID)
 	if err != nil {
 		return nil, err
 	}
-
-	ids := lo.Map(closures, func(c entities.OrganisationNodeClosure, _ int) uuid.UUID {
-		return c.AncestorID
-	})
 
 	return s.repo.ListByOrgIDs(ctx, ids)
 }

@@ -19,6 +19,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/enttx"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
 	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation_rbac"
@@ -200,7 +201,8 @@ func main() {
 	personRepo := personrepo.NewEntRepo(client)
 	rbacRepo := organisationrbacrepo.NewEntRepo(client)
 	rbacSvc := organisationrbac.NewService(rbacRepo)
-	orgSvc := organisation.NewService(orgRepo, personRepo, rbacSvc)
+	txManager := enttx.NewManager(client)
+	orgSvc := organisation.NewService(orgRepo, personRepo, rbacSvc, txManager)
 
 	orgRoot, err := orgSvc.CreateRoot(ctx, "Nederland", nil, nil, nil)
 	if err != nil {

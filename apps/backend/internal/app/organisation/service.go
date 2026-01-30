@@ -7,6 +7,7 @@ import (
 	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	orgrole "github.com/SURF-Innovatie/MORIS/internal/app/organisation/role"
 	"github.com/SURF-Innovatie/MORIS/internal/app/person"
+	"github.com/SURF-Innovatie/MORIS/internal/app/tx"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -28,23 +29,24 @@ type Service interface {
 }
 
 type service struct {
-	repo       Repository
-	personRepo person.Repository
-	rbac       rbacsvc.Service
+	repo      repository
+	personSvc person.Service
+	rbac      rbacsvc.Service
+	tx        tx.Manager
 }
 
-func NewService(repo Repository, personRepo person.Repository, rbac rbacsvc.Service) Service {
-	return &service{repo: repo, personRepo: personRepo, rbac: rbac}
+func NewService(repo repository, personRepo person.Service, rbac rbacsvc.Service, tx tx.Manager) Service {
+	return &service{repo: repo, personSvc: personRepo, rbac: rbac, tx: tx}
 }
 
 func (s *service) CreateRoot(ctx context.Context, name string, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error) {
 	var out *entities.OrganisationNode
-	err := s.repo.WithTx(ctx, func(ctx context.Context, tx Repository) error {
-		row, err := tx.CreateNode(ctx, name, nil, rorID, description, avatarURL)
+	err := s.tx.WithTx(ctx, func(ctx context.Context) error {
+		row, err := s.repo.CreateNode(ctx, name, nil, rorID, description, avatarURL)
 		if err != nil {
 			return err
 		}
-		if err := tx.InsertClosure(ctx, row.ID, row.ID, 0); err != nil {
+		if err := s.repo.InsertClosure(ctx, row.ID, row.ID, 0); err != nil {
 			return err
 		}
 		out = row
@@ -55,24 +57,24 @@ func (s *service) CreateRoot(ctx context.Context, name string, rorID *string, de
 
 func (s *service) CreateChild(ctx context.Context, parentID uuid.UUID, name string, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error) {
 	var out *entities.OrganisationNode
-	err := s.repo.WithTx(ctx, func(ctx context.Context, tx Repository) error {
+	err := s.tx.WithTx(ctx, func(ctx context.Context) error {
 		// ensure parent exists
-		if _, err := tx.GetNode(ctx, parentID); err != nil {
+		if _, err := s.repo.GetNode(ctx, parentID); err != nil {
 			return err
 		}
 
-		row, err := tx.CreateNode(ctx, name, &parentID, rorID, description, avatarURL)
+		row, err := s.repo.CreateNode(ctx, name, &parentID, rorID, description, avatarURL)
 		if err != nil {
 			return err
 		}
 
 		// self closure
-		if err := tx.InsertClosure(ctx, row.ID, row.ID, 0); err != nil {
+		if err := s.repo.InsertClosure(ctx, row.ID, row.ID, 0); err != nil {
 			return err
 		}
 
 		// ancestor closures from parent's ancestors
-		ancRows, err := tx.ListClosuresByDescendant(ctx, parentID)
+		ancRows, err := s.repo.ListClosuresByDescendant(ctx, parentID)
 		if err != nil {
 			return err
 		}
@@ -84,7 +86,7 @@ func (s *service) CreateChild(ctx context.Context, parentID uuid.UUID, name stri
 			}
 		})
 		if len(bulk) > 0 {
-			if err := tx.CreateClosuresBulk(ctx, bulk); err != nil {
+			if err := s.repo.CreateClosuresBulk(ctx, bulk); err != nil {
 				return err
 			}
 		}
@@ -134,7 +136,7 @@ func (s *service) SearchForProjectCreation(ctx context.Context, query string, ac
 }
 
 func (s *service) UpdateMemberCustomFields(ctx context.Context, orgID uuid.UUID, personID uuid.UUID, values map[string]interface{}) error {
-	p, err := s.personRepo.Get(ctx, personID)
+	p, err := s.personSvc.Get(ctx, personID)
 	if err != nil {
 		return err
 	}
@@ -145,14 +147,14 @@ func (s *service) UpdateMemberCustomFields(ctx context.Context, orgID uuid.UUID,
 
 	p.OrgCustomFields[orgID.String()] = values
 
-	_, err = s.personRepo.Update(ctx, personID, *p)
+	_, err = s.personSvc.Update(ctx, personID, *p)
 	return err
 }
 
 func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error) {
 	var out *entities.OrganisationNode
-	err := s.repo.WithTx(ctx, func(ctx context.Context, tx Repository) error {
-		cur, err := tx.GetNode(ctx, id)
+	err := s.tx.WithTx(ctx, func(ctx context.Context) error {
+		cur, err := s.repo.GetNode(ctx, id)
 		if err != nil {
 			return err
 		}
@@ -160,7 +162,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentI
 			return fmt.Errorf("node cannot be its own parent")
 		}
 
-		row, err := tx.UpdateNode(ctx, id, name, parentID, rorID, description, avatarURL)
+		row, err := s.repo.UpdateNode(ctx, id, name, parentID, rorID, description, avatarURL)
 		if err != nil {
 			return err
 		}
@@ -178,7 +180,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentI
 		}
 
 		// subtree: closures where ancestor=id
-		subRows, err := tx.ListClosuresByAncestor(ctx, id)
+		subRows, err := s.repo.ListClosuresByAncestor(ctx, id)
 		if err != nil {
 			return err
 		}
@@ -195,7 +197,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentI
 		}
 
 		// old external ancestors: closures where descendant=id AND ancestor NOT IN subtree
-		oldAncRows, err := tx.ListClosuresByDescendant(ctx, id)
+		oldAncRows, err := s.repo.ListClosuresByDescendant(ctx, id)
 		if err != nil {
 			return err
 		}
@@ -211,7 +213,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentI
 
 		// delete: (old external ancestors) -> (subtree descendants)
 		if len(oldAncIDs) > 0 && len(subIDs) > 0 {
-			if err := tx.DeleteClosures(ctx, oldAncIDs, subIDs); err != nil {
+			if err := s.repo.DeleteClosures(ctx, oldAncIDs, subIDs); err != nil {
 				return err
 			}
 		}
@@ -223,7 +225,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentI
 		}
 
 		// new external ancestors: closures where descendant=newParent
-		newAncRows, err := tx.ListClosuresByDescendant(ctx, *newParentID)
+		newAncRows, err := s.repo.ListClosuresByDescendant(ctx, *newParentID)
 		if err != nil {
 			return err
 		}
@@ -238,7 +240,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentI
 			})
 		})
 		if len(bulk) > 0 {
-			if err := tx.CreateClosuresBulk(ctx, bulk); err != nil {
+			if err := s.repo.CreateClosuresBulk(ctx, bulk); err != nil {
 				return err
 			}
 		}

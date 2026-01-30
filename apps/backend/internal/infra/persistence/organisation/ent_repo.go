@@ -6,9 +6,9 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	entorgnode "github.com/SURF-Innovatie/MORIS/ent/organisationnode"
 	entclosure "github.com/SURF-Innovatie/MORIS/ent/organisationnodeclosure"
-	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/enttx"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 )
@@ -26,43 +26,25 @@ func newTxRepo(tx *ent.Tx) *EntRepo {
 	return &EntRepo{tx: tx}
 }
 
-func (r *EntRepo) node() *ent.OrganisationNodeClient {
-	if r.tx != nil {
-		return r.tx.OrganisationNode
+func (r *EntRepo) node(ctx context.Context) *ent.OrganisationNodeClient {
+	if tx, ok := enttx.TxFromContext(ctx); ok {
+		return tx.OrganisationNode
 	}
 	return r.cli.OrganisationNode
 }
 
-func (r *EntRepo) closure() *ent.OrganisationNodeClosureClient {
-	if r.tx != nil {
-		return r.tx.OrganisationNodeClosure
+func (r *EntRepo) closure(ctx context.Context) *ent.OrganisationNodeClosureClient {
+	if tx, ok := enttx.TxFromContext(ctx); ok {
+		return tx.OrganisationNodeClosure
 	}
 	return r.cli.OrganisationNodeClosure
 }
 
-func (r *EntRepo) WithTx(ctx context.Context, fn func(ctx context.Context, tx organisation.Repository) error) error {
-	if r.cli == nil {
-		// already in tx repo; just run
-		return fn(ctx, r)
-	}
-
-	tx, err := r.cli.Tx(ctx)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = tx.Rollback() }()
-
-	if err := fn(ctx, newTxRepo(tx)); err != nil {
-		return err
-	}
-	return tx.Commit()
-}
-
 func (r *EntRepo) CreateNode(ctx context.Context, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error) {
-	create := r.node().Create().SetName(name).SetNillableRorID(rorID).SetNillableDescription(description).SetNillableAvatarURL(avatarURL)
+	create := r.node(ctx).Create().SetName(name).SetNillableRorID(rorID).SetNillableDescription(description).SetNillableAvatarURL(avatarURL)
 
 	if parentID != nil {
-		parent, err := r.node().Get(ctx, *parentID)
+		parent, err := r.node(ctx).Get(ctx, *parentID)
 		if err != nil {
 			return nil, err
 		}
@@ -78,7 +60,7 @@ func (r *EntRepo) CreateNode(ctx context.Context, name string, parentID *uuid.UU
 }
 
 func (r *EntRepo) GetNode(ctx context.Context, id uuid.UUID) (*entities.OrganisationNode, error) {
-	row, err := r.node().
+	row, err := r.node(ctx).
 		Query().
 		Where(entorgnode.IDEQ(id)).
 		Only(ctx)
@@ -90,12 +72,12 @@ func (r *EntRepo) GetNode(ctx context.Context, id uuid.UUID) (*entities.Organisa
 }
 
 func (r *EntRepo) UpdateNode(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error) {
-	upd := r.node().UpdateOneID(id).SetName(name).SetNillableRorID(rorID).SetNillableDescription(description).SetNillableAvatarURL(avatarURL)
+	upd := r.node(ctx).UpdateOneID(id).SetName(name).SetNillableRorID(rorID).SetNillableDescription(description).SetNillableAvatarURL(avatarURL)
 
 	if parentID == nil {
 		upd = upd.ClearParent()
 	} else {
-		parent, err := r.node().Get(ctx, *parentID)
+		parent, err := r.node(ctx).Get(ctx, *parentID)
 		if err != nil {
 			return nil, err
 		}
@@ -111,7 +93,7 @@ func (r *EntRepo) UpdateNode(ctx context.Context, id uuid.UUID, name string, par
 }
 
 func (r *EntRepo) ListRoots(ctx context.Context) ([]entities.OrganisationNode, error) {
-	rows, err := r.node().
+	rows, err := r.node(ctx).
 		Query().
 		Where(entorgnode.Not(entorgnode.HasParent())).
 		All(ctx)
@@ -123,7 +105,7 @@ func (r *EntRepo) ListRoots(ctx context.Context) ([]entities.OrganisationNode, e
 }
 
 func (r *EntRepo) ListChildren(ctx context.Context, parentID uuid.UUID) ([]entities.OrganisationNode, error) {
-	rows, err := r.node().
+	rows, err := r.node(ctx).
 		Query().
 		Where(entorgnode.HasParentWith(entorgnode.IDEQ(parentID))).
 		All(ctx)
@@ -135,7 +117,7 @@ func (r *EntRepo) ListChildren(ctx context.Context, parentID uuid.UUID) ([]entit
 }
 
 func (r *EntRepo) ListAll(ctx context.Context) ([]entities.OrganisationNode, error) {
-	rows, err := r.node().
+	rows, err := r.node(ctx).
 		Query().
 		All(ctx)
 	if err != nil {
@@ -146,7 +128,7 @@ func (r *EntRepo) ListAll(ctx context.Context) ([]entities.OrganisationNode, err
 }
 
 func (r *EntRepo) InsertClosure(ctx context.Context, ancestorID, descendantID uuid.UUID, depth int) error {
-	_, err := r.closure().
+	_, err := r.closure(ctx).
 		Create().
 		SetAncestorID(ancestorID).
 		SetDescendantID(descendantID).
@@ -156,7 +138,7 @@ func (r *EntRepo) InsertClosure(ctx context.Context, ancestorID, descendantID uu
 }
 
 func (r *EntRepo) ListClosuresByDescendant(ctx context.Context, descendantID uuid.UUID) ([]entities.OrganisationNodeClosure, error) {
-	rows, err := r.closure().
+	rows, err := r.closure(ctx).
 		Query().
 		Where(entclosure.DescendantIDEQ(descendantID)).
 		All(ctx)
@@ -168,7 +150,7 @@ func (r *EntRepo) ListClosuresByDescendant(ctx context.Context, descendantID uui
 }
 
 func (r *EntRepo) ListClosuresByAncestor(ctx context.Context, ancestorID uuid.UUID) ([]entities.OrganisationNodeClosure, error) {
-	rows, err := r.closure().
+	rows, err := r.closure(ctx).
 		Query().
 		Where(entclosure.AncestorIDEQ(ancestorID)).
 		All(ctx)
@@ -184,7 +166,7 @@ func (r *EntRepo) DeleteClosures(ctx context.Context, ancestorIDs, descendantIDs
 		return nil
 	}
 
-	_, err := r.closure().
+	_, err := r.closure(ctx).
 		Delete().
 		Where(
 			entclosure.AncestorIDIn(ancestorIDs...),
@@ -200,18 +182,18 @@ func (r *EntRepo) CreateClosuresBulk(ctx context.Context, rows []entities.Organi
 	}
 
 	bulk := lo.Map(rows, func(c entities.OrganisationNodeClosure, _ int) *ent.OrganisationNodeClosureCreate {
-		return r.closure().
+		return r.closure(ctx).
 			Create().
 			SetAncestorID(c.AncestorID).
 			SetDescendantID(c.DescendantID).
 			SetDepth(c.Depth)
 	})
-	_, err := r.closure().CreateBulk(bulk...).Save(ctx)
+	_, err := r.closure(ctx).CreateBulk(bulk...).Save(ctx)
 	return err
 }
 
 func (r *EntRepo) Search(ctx context.Context, query string, limit int) ([]entities.OrganisationNode, error) {
-	rows, err := r.node().
+	rows, err := r.node(ctx).
 		Query().
 		Where(entorgnode.NameContainsFold(query)).
 		Limit(limit).

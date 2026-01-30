@@ -34,6 +34,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/entclient"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/enttx"
 	eventpolicyrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	notificationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/notification"
@@ -114,8 +115,8 @@ func provideOrgRBACService(i do.Injector) (organisationrbac.Service, error) {
 
 func provideProjectRoleService(i do.Injector) (projectrole.Service, error) {
 	repo := do.MustInvoke[projectrole.Repository](i)
-	orgRepo := do.MustInvoke[*organisationrepo.EntRepo](i)
-	return projectrole.NewService(repo, orgRepo), nil
+	orgSvc := do.MustInvoke[organisation.Service](i)
+	return projectrole.NewService(repo, orgSvc), nil
 }
 
 func provideCustomFieldService(i do.Injector) (customfield.Service, error) {
@@ -125,9 +126,10 @@ func provideCustomFieldService(i do.Injector) (customfield.Service, error) {
 
 func provideOrganisationService(i do.Injector) (organisation.Service, error) {
 	orgRepo := do.MustInvoke[*organisationrepo.EntRepo](i)
-	personRepo := do.MustInvoke[*personrepo.EntRepo](i)
+	personSvc := do.MustInvoke[*personrepo.EntRepo](i)
 	rbacSvc := do.MustInvoke[organisationrbac.Service](i)
-	return organisation.NewService(orgRepo, personRepo, rbacSvc), nil
+	txManager := do.MustInvoke[*enttx.Manager](i)
+	return organisation.NewService(orgRepo, personSvc, rbacSvc, txManager), nil
 }
 
 func provideProductService(i do.Injector) (product.Service, error) {
@@ -183,6 +185,11 @@ func provideProjectQueryService(i do.Injector) (queries.Service, error) {
 func provideEntClientProvider(i do.Injector) (command.EntClientProvider, error) {
 	cli := do.MustInvoke[*ent.Client](i)
 	return entclient.New(cli), nil
+}
+
+func provideTxManager(i do.Injector) (*enttx.Manager, error) {
+	cli := do.MustInvoke[*ent.Client](i)
+	return enttx.NewManager(cli), nil
 }
 
 func provideProjectCommandService(i do.Injector) (command.Service, error) {

@@ -11,7 +11,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/rolescope"
 	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -20,28 +20,29 @@ import (
 
 // OrgClosureAdapter implements eventpolicy.OrgClosureProvider using the org repository
 type OrgClosureAdapter struct {
-	orgRepo organisation.Repository
+	orgSvc  organisation.Service
+	orgRbac organisationrbac.Service
 }
 
 // NewOrgClosureAdapter creates a new OrgClosureAdapter
-func NewOrgClosureAdapter(orgRepo organisation.Repository) *OrgClosureAdapter {
-	return &OrgClosureAdapter{orgRepo: orgRepo}
+func NewOrgClosureAdapter(orgSvc organisation.Service) *OrgClosureAdapter {
+	return &OrgClosureAdapter{orgSvc: orgSvc}
 }
 
 // GetAncestorIDs returns all ancestor org node IDs for a given node (excluding self)
 func (a *OrgClosureAdapter) GetAncestorIDs(ctx context.Context, orgNodeID uuid.UUID) ([]uuid.UUID, error) {
-	closures, err := a.orgRepo.ListClosuresByDescendant(ctx, orgNodeID)
+	ids, err := a.orgRbac.AncestorIDs(ctx, orgNodeID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Filter out self-reference (depth 0) and return ancestor IDs
-	return lo.FilterMap(closures, func(c entities.OrganisationNodeClosure, _ int) (uuid.UUID, bool) {
-		if c.Depth == 0 {
-			return uuid.Nil, false // Skip self
+	out := make([]uuid.UUID, 0, len(ids))
+	for _, id := range ids {
+		if id != orgNodeID {
+			out = append(out, id)
 		}
-		return c.AncestorID, true
-	}), nil
+	}
+	return out, nil
 }
 
 // NotificationAdapter implements eventpolicy.NotificationSender

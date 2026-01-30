@@ -30,7 +30,7 @@ type Service interface {
 
 type service struct {
 	users      Repository
-	people     person.Repository
+	people     person.Service
 	es         EventStore
 	membership ProjectMembershipRepository
 	cache      cache.UserCache
@@ -38,7 +38,7 @@ type service struct {
 
 func NewService(
 	users Repository,
-	people person.Repository,
+	people person.Service,
 	es EventStore,
 	membership ProjectMembershipRepository,
 	cache cache.UserCache,

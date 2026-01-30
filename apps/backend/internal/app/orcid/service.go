@@ -25,11 +25,11 @@ type Service interface {
 
 type service struct {
 	users  user.Repository
-	people person.Repository
+	people person.Service
 	client OrcidClient
 }
 
-func NewService(users user.Repository, people person.Repository, client OrcidClient) Service {
+func NewService(users user.Repository, people person.Service, client OrcidClient) Service {
 	return &service{users: users, people: people, client: client}
 }
 

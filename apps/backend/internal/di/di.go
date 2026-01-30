@@ -68,6 +68,7 @@ var Package = do.Package(
 	do.Lazy(provideProjectLoader),
 	do.Lazy(provideProjectQueryService),
 	do.Lazy(provideEntClientProvider),
+	do.Lazy(provideTxManager),
 
 	// Event handlers
 	do.Lazy(provideProjectEventHandler),

@@ -6,16 +6,16 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/adapter"
 	raidsink "github.com/SURF-Innovatie/MORIS/internal/adapter/sinks/raid"
 	csvsource "github.com/SURF-Innovatie/MORIS/internal/adapter/sources/csv"
+	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	adapterhandler "github.com/SURF-Innovatie/MORIS/internal/handler/adapter"
 	eventpolicyrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventpolicy"
-	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
 	"github.com/samber/do/v2"
 )
 
 func provideOrgClosureAdapter(i do.Injector) (*eventpolicyrepo.OrgClosureAdapter, error) {
-	orgRepo := do.MustInvoke[*organisationrepo.EntRepo](i)
-	return eventpolicyrepo.NewOrgClosureAdapter(orgRepo), nil
+	orgSvc := do.MustInvoke[organisation.Service](i)
+	return eventpolicyrepo.NewOrgClosureAdapter(orgSvc), nil
 }
 
 func provideRecipientAdapter(i do.Injector) (*eventpolicyrepo.RecipientAdapter, error) {
