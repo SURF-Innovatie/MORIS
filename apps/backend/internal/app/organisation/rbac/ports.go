@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type Repository interface {
+type repository interface {
 	EnsureDefaultRoles(ctx context.Context) error
 
 	// Roles
