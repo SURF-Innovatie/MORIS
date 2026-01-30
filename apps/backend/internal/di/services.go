@@ -155,16 +155,16 @@ func provideErrorLogService(i do.Injector) (errorlog.Service, error) {
 
 func provideEventPolicyService(i do.Injector) (eventpolicy.Service, error) {
 	repo := do.MustInvoke[*eventpolicyrepo.EntRepo](i)
-	closure := do.MustInvoke[*event_policy.OrgClosureAdapter](i)
+	closure := do.MustInvoke[organisationrbac.Service](i)
 	return eventpolicy.NewService(repo, closure), nil
 }
 
 func providePolicyEvaluator(i do.Injector) (eventpolicy.Evaluator, error) {
 	repo := do.MustInvoke[*eventpolicyrepo.EntRepo](i)
-	closure := do.MustInvoke[*event_policy.OrgClosureAdapter](i)
+	orgRbacSvc := do.MustInvoke[organisationrbac.Service](i)
 	recipient := do.MustInvoke[*event_policy.RecipientAdapter](i)
 	notifSvc := do.MustInvoke[notification.Service](i)
-	return eventpolicy.NewEvaluator(repo, closure, recipient, notifSvc), nil
+	return eventpolicy.NewEvaluator(repo, orgRbacSvc, recipient, notifSvc), nil
 }
 
 func provideProjectLoader(i do.Injector) (*load.Loader, error) {

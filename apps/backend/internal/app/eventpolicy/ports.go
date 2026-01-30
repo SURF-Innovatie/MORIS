@@ -22,12 +22,6 @@ type repository interface {
 	ListForProject(ctx context.Context, projectID uuid.UUID) ([]entities.EventPolicy, error)
 }
 
-// OrgClosureProvider provides org node ancestry information
-type OrgClosureProvider interface {
-	// GetAncestorIDs returns all ancestor org node IDs for a given node (closest to root last)
-	GetAncestorIDs(ctx context.Context, orgNodeID uuid.UUID) ([]uuid.UUID, error)
-}
-
 // RecipientResolver resolves recipient specifications to actual user IDs
 type RecipientResolver interface {
 	// ResolveUsers converts person IDs to user IDs (since policies store person IDs as "user IDs")

@@ -113,8 +113,23 @@ func (s *service) GetMyPermissions(ctx context.Context, userID, nodeID uuid.UUID
 	return s.repo.GetMyPermissions(ctx, userID, nodeID)
 }
 
+func (s *service) AncestorIDsInclusive(ctx context.Context, nodeID uuid.UUID) ([]uuid.UUID, error) {
+	return s.repo.AncestorIDs(ctx, nodeID) // repo returns inclusive
+}
+
 func (s *service) AncestorIDs(ctx context.Context, nodeID uuid.UUID) ([]uuid.UUID, error) {
-	return s.repo.AncestorIDs(ctx, nodeID)
+	ids, err := s.repo.AncestorIDs(ctx, nodeID)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]uuid.UUID, 0, len(ids))
+	for _, id := range ids {
+		if id != nodeID {
+			out = append(out, id)
+		}
+	}
+	return out, nil
 }
 
 func (s *service) IsAncestor(ctx context.Context, ancestorID, descendantID uuid.UUID) (bool, error) {

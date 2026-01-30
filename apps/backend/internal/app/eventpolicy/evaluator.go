@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
+	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
@@ -25,7 +26,7 @@ type Evaluator interface {
 
 type evaluator struct {
 	repo              repository
-	closureProvider   OrgClosureProvider
+	orgRbacSvc        organisationrbac.Service
 	recipientResolver RecipientResolver
 	notificationSvc   notification.Service
 }
@@ -33,13 +34,13 @@ type evaluator struct {
 // NewEvaluator creates a new policy evaluator
 func NewEvaluator(
 	repo repository,
-	closureProvider OrgClosureProvider,
+	orgRbacSvc organisationrbac.Service,
 	recipientResolver RecipientResolver,
 	notificationSvc notification.Service,
 ) Evaluator {
 	return &evaluator{
 		repo:              repo,
-		closureProvider:   closureProvider,
+		orgRbacSvc:        orgRbacSvc,
 		recipientResolver: recipientResolver,
 		notificationSvc:   notificationSvc,
 	}
@@ -168,7 +169,7 @@ func (e *evaluator) getApplicablePolicies(ctx context.Context, projectID uuid.UU
 	}
 
 	// Get org hierarchy policies
-	ancestorIDs, err := e.closureProvider.GetAncestorIDs(ctx, orgNodeID)
+	ancestorIDs, err := e.orgRbacSvc.AncestorIDs(ctx, orgNodeID)
 	if err != nil {
 		return nil, err
 	}

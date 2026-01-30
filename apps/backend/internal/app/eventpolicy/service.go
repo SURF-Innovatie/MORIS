@@ -3,6 +3,7 @@ package eventpolicy
 import (
 	"context"
 
+	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
@@ -21,15 +22,15 @@ type Service interface {
 }
 
 type service struct {
-	repo            repository
-	closureProvider OrgClosureProvider
+	repo       repository
+	orgRbacSvc organisationrbac.Service
 }
 
 // NewService creates a new event policy service
-func NewService(repo repository, closureProvider OrgClosureProvider) Service {
+func NewService(repo repository, orgRbacSvc organisationrbac.Service) Service {
 	return &service{
-		repo:            repo,
-		closureProvider: closureProvider,
+		repo:       repo,
+		orgRbacSvc: orgRbacSvc,
 	}
 }
 
@@ -54,7 +55,7 @@ func (s *service) ListForOrgNode(ctx context.Context, orgNodeID uuid.UUID, inclu
 	var ancestorIDs []uuid.UUID
 	if includeInherited {
 		var err error
-		ancestorIDs, err = s.closureProvider.GetAncestorIDs(ctx, orgNodeID)
+		ancestorIDs, err = s.orgRbacSvc.AncestorIDs(ctx, orgNodeID)
 		if err != nil {
 			return nil, err
 		}
@@ -89,7 +90,7 @@ func (s *service) ListForProject(ctx context.Context, projectID uuid.UUID, ownin
 	}
 
 	// Get inherited org node policies (including all ancestors)
-	ancestorIDs, err := s.closureProvider.GetAncestorIDs(ctx, owningOrgNodeID)
+	ancestorIDs, err := s.orgRbacSvc.AncestorIDs(ctx, owningOrgNodeID)
 	if err != nil {
 		return nil, err
 	}

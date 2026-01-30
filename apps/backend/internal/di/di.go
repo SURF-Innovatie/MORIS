@@ -38,7 +38,6 @@ var Package = do.Package(
 	do.Lazy(provideNWOClient),
 
 	// Adapters
-	do.Lazy(provideOrgClosureAdapter),
 	do.Lazy(provideRecipientAdapter),
 	do.Lazy(provideAdapterRegistry),
 	do.Lazy(provideAdapterHandler),
