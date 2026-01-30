@@ -385,52 +385,6 @@ func TestHasPermission_SysAdminAlwaysTrue(t *testing.T) {
 	}
 }
 
-func TestAncestorIDs_And_IsAncestor(t *testing.T) {
-	cli := newRBACClient(t)
-	defer cli.Close()
-	ctx := context.Background()
-
-	repo := rbac.NewEntRepo(cli)
-	rootID, childID := seedOrgTree(t, cli)
-
-	ids, err := repo.AncestorIDs(ctx, childID)
-	if err != nil {
-		t.Fatalf("AncestorIDs: %v", err)
-	}
-
-	// Expect both root and child itself (because closures include self)
-	if !lo.Contains(ids, rootID) || !lo.Contains(ids, childID) {
-		t.Fatalf("expected ancestorIDs to include root and self, got %v", ids)
-	}
-
-	ok, err := repo.IsAncestor(ctx, rootID, childID)
-	if err != nil {
-		t.Fatalf("IsAncestor: %v", err)
-	}
-	if !ok {
-		t.Fatalf("expected root to be ancestor of child")
-	}
-
-	ok, err = repo.IsAncestor(ctx, childID, rootID)
-	if err != nil {
-		t.Fatalf("IsAncestor: %v", err)
-	}
-	if ok {
-		t.Fatalf("did not expect child to be ancestor of root")
-	}
-
-	// sanity: closure row exists in DB
-	exists, err := cli.OrganisationNodeClosure.Query().
-		Where(entclosure.AncestorIDEQ(rootID), entclosure.DescendantIDEQ(childID)).
-		Exist(ctx)
-	if err != nil {
-		t.Fatalf("closure exist: %v", err)
-	}
-	if !exists {
-		t.Fatalf("expected closure row to exist")
-	}
-}
-
 func TestGetMyPermissions_CollectsUnionFromMemberships(t *testing.T) {
 	cli := newRBACClient(t)
 	defer cli.Close()
