@@ -11,7 +11,6 @@ import (
 type repository interface {
 	EnsureDefaultRoles(ctx context.Context) error
 
-	// Roles
 	ListRoles(ctx context.Context, orgID *uuid.UUID) ([]*entities.OrganisationRole, error)
 	CreateRole(ctx context.Context, orgID uuid.UUID, key, displayName string, permissions []role.Permission) (*entities.OrganisationRole, error)
 	GetRole(ctx context.Context, roleID uuid.UUID) (*entities.OrganisationRole, error) // Added GetRole
@@ -32,9 +31,6 @@ type repository interface {
 	GetApprovalNode(ctx context.Context, nodeID uuid.UUID) (*entities.OrganisationNode, error)
 	HasAdminAccess(ctx context.Context, personID uuid.UUID, nodeID uuid.UUID) (bool, error)
 	HasPermission(ctx context.Context, personID uuid.UUID, nodeID uuid.UUID, permission role.Permission) (bool, error)
-
-	AncestorIDs(ctx context.Context, nodeID uuid.UUID) ([]uuid.UUID, error)
-	IsAncestor(ctx context.Context, ancestorID, descendantID uuid.UUID) (bool, error)
 }
 
 type EffectiveMembership struct {

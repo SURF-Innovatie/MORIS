@@ -1,4 +1,4 @@
-package organisation_rbac_test
+package rbac_test
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	entrolescope "github.com/SURF-Innovatie/MORIS/ent/rolescope"
 	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation/role"
-	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation_rbac"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation/rbac"
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/samber/lo"
@@ -81,7 +81,7 @@ func TestListRoles_FiltersAndOrders(t *testing.T) {
 	defer cli.Close()
 	ctx := context.Background()
 
-	repo := organisation_rbac.NewEntRepo(cli)
+	repo := rbac.NewEntRepo(cli)
 
 	rootID, childID := seedOrgTree(t, cli)
 
@@ -144,7 +144,7 @@ func TestCreateGetUpdateRole(t *testing.T) {
 	defer cli.Close()
 	ctx := context.Background()
 
-	repo := organisation_rbac.NewEntRepo(cli)
+	repo := rbac.NewEntRepo(cli)
 	rootID, _ := seedOrgTree(t, cli)
 
 	created, err := repo.CreateRole(ctx, rootID, "lead", "Lead", []role.Permission{role.PermissionCreateProject})
@@ -186,7 +186,7 @@ func TestDeleteRole_BlockedWhenScopeExists(t *testing.T) {
 	defer cli.Close()
 	ctx := context.Background()
 
-	repo := organisation_rbac.NewEntRepo(cli)
+	repo := rbac.NewEntRepo(cli)
 	rootID, _ := seedOrgTree(t, cli)
 
 	// role
@@ -226,7 +226,7 @@ func TestCreateScope_IdempotentAndRequiresRoleForOrg(t *testing.T) {
 	defer cli.Close()
 	ctx := context.Background()
 
-	repo := organisation_rbac.NewEntRepo(cli)
+	repo := rbac.NewEntRepo(cli)
 	rootID, _ := seedOrgTree(t, cli)
 
 	// Create role with key on root
@@ -269,7 +269,7 @@ func TestAddMembership_DeduplicatesAndRemoveMembership(t *testing.T) {
 	defer cli.Close()
 	ctx := context.Background()
 
-	repo := organisation_rbac.NewEntRepo(cli)
+	repo := rbac.NewEntRepo(cli)
 	rootID, _ := seedOrgTree(t, cli)
 	personID, _ := seedPersonUser(t, cli, false)
 
@@ -317,7 +317,7 @@ func TestHasPermission_TrueViaAncestorScope_FalseOtherwise(t *testing.T) {
 	defer cli.Close()
 	ctx := context.Background()
 
-	repo := organisation_rbac.NewEntRepo(cli)
+	repo := rbac.NewEntRepo(cli)
 	rootID, childID := seedOrgTree(t, cli)
 	personID, _ := seedPersonUser(t, cli, false)
 
@@ -364,7 +364,7 @@ func TestHasPermission_SysAdminAlwaysTrue(t *testing.T) {
 	defer cli.Close()
 	ctx := context.Background()
 
-	repo := organisation_rbac.NewEntRepo(cli)
+	repo := rbac.NewEntRepo(cli)
 	_, childID := seedOrgTree(t, cli)
 	personID, _ := seedPersonUser(t, cli, true)
 
@@ -390,7 +390,7 @@ func TestAncestorIDs_And_IsAncestor(t *testing.T) {
 	defer cli.Close()
 	ctx := context.Background()
 
-	repo := organisation_rbac.NewEntRepo(cli)
+	repo := rbac.NewEntRepo(cli)
 	rootID, childID := seedOrgTree(t, cli)
 
 	ids, err := repo.AncestorIDs(ctx, childID)
@@ -436,7 +436,7 @@ func TestGetMyPermissions_CollectsUnionFromMemberships(t *testing.T) {
 	defer cli.Close()
 	ctx := context.Background()
 
-	repo := organisation_rbac.NewEntRepo(cli)
+	repo := rbac.NewEntRepo(cli)
 	rootID, childID := seedOrgTree(t, cli)
 	personID, _ := seedPersonUser(t, cli, false)
 
@@ -500,7 +500,7 @@ func TestListEffectiveMemberships_ReturnsMembershipsForAncestorScopes(t *testing
 	defer cli.Close()
 	ctx := context.Background()
 
-	repo := organisation_rbac.NewEntRepo(cli)
+	repo := rbac.NewEntRepo(cli)
 	rootID, childID := seedOrgTree(t, cli)
 	personID, _ := seedPersonUser(t, cli, false)
 
@@ -544,7 +544,7 @@ func TestListMyMemberships_SetsHasAdminRightsForSysAdmin(t *testing.T) {
 	defer cli.Close()
 	ctx := context.Background()
 
-	repo := organisation_rbac.NewEntRepo(cli)
+	repo := rbac.NewEntRepo(cli)
 	rootID, _ := seedOrgTree(t, cli)
 	personID, _ := seedPersonUser(t, cli, true)
 
@@ -593,7 +593,7 @@ func TestGetApprovalNode_FindsNearestAncestorWithAdminMembership(t *testing.T) {
 	defer cli.Close()
 	ctx := context.Background()
 
-	repo := organisation_rbac.NewEntRepo(cli)
+	repo := rbac.NewEntRepo(cli)
 	rootID, childID := seedOrgTree(t, cli)
 	personID, _ := seedPersonUser(t, cli, false)
 
@@ -639,7 +639,7 @@ func TestGetApprovalNode_ErrorsWhenNoAdminMembershipAnywhere(t *testing.T) {
 	defer cli.Close()
 	ctx := context.Background()
 
-	repo := organisation_rbac.NewEntRepo(cli)
+	repo := rbac.NewEntRepo(cli)
 	_, childID := seedOrgTree(t, cli)
 
 	_, err := repo.GetApprovalNode(ctx, childID)
@@ -653,7 +653,7 @@ func TestCreateScope_UsesRoleKeyScopedToOrg(t *testing.T) {
 	defer cli.Close()
 	ctx := context.Background()
 
-	repo := organisation_rbac.NewEntRepo(cli)
+	repo := rbac.NewEntRepo(cli)
 	rootID, childID := seedOrgTree(t, cli)
 
 	// Same key in two orgs is allowed; CreateScope must pick correct orgID.

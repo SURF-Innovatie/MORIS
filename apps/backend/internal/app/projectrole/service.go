@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
-	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
+	organisationhierarchy "github.com/SURF-Innovatie/MORIS/internal/app/organisation/hierarchy"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
@@ -21,13 +21,13 @@ type Service interface {
 }
 
 type service struct {
-	repo    Repository
-	orgSvc  organisation.Service
-	orgRbac organisationrbac.Service
+	repo            Repository
+	orgSvc          organisation.Service
+	orgHierarchySvc organisationhierarchy.Service
 }
 
-func NewService(repo Repository, orgSvc organisation.Service) Service {
-	return &service{repo: repo, orgSvc: orgSvc}
+func NewService(repo Repository, orgSvc organisation.Service, orgHierarchySvc organisationhierarchy.Service) Service {
+	return &service{repo: repo, orgSvc: orgSvc, orgHierarchySvc: orgHierarchySvc}
 }
 
 func (s *service) EnsureDefaults(ctx context.Context) error {
@@ -81,7 +81,7 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID, orgNodeID uuid.UUID)
 }
 
 func (s *service) ListAvailableForNode(ctx context.Context, orgNodeID uuid.UUID) ([]entities.ProjectRole, error) {
-	ids, err := s.orgRbac.AncestorIDs(ctx, orgNodeID)
+	ids, err := s.orgHierarchySvc.AncestorIDs(ctx, orgNodeID)
 	if err != nil {
 		return nil, err
 	}

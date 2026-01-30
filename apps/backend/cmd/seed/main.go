@@ -22,7 +22,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/enttx"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
-	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation_rbac"
+	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation/rbac"
 	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/projectrole"
 	"github.com/google/uuid"

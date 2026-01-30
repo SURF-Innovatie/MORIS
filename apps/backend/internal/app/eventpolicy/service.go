@@ -3,34 +3,32 @@ package eventpolicy
 import (
 	"context"
 
-	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
+	organisationhierarchy "github.com/SURF-Innovatie/MORIS/internal/app/organisation/hierarchy"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/google/uuid"
 )
 
 // Service provides event policy management and evaluation
 type Service interface {
-	// CRUD operations
 	Create(ctx context.Context, policy entities.EventPolicy) (*entities.EventPolicy, error)
 	Update(ctx context.Context, id uuid.UUID, policy entities.EventPolicy) (*entities.EventPolicy, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (*entities.EventPolicy, error)
 
-	// List with inheritance
 	ListForOrgNode(ctx context.Context, orgNodeID uuid.UUID, includeInherited bool) ([]entities.EventPolicy, error)
 	ListForProject(ctx context.Context, projectID uuid.UUID, owningOrgNodeID uuid.UUID, includeInherited bool) ([]entities.EventPolicy, error)
 }
 
 type service struct {
-	repo       repository
-	orgRbacSvc organisationrbac.Service
+	repo            repository
+	orgHierarchySvc organisationhierarchy.Service
 }
 
 // NewService creates a new event policy service
-func NewService(repo repository, orgRbacSvc organisationrbac.Service) Service {
+func NewService(repo repository, orgRbacSvc organisationhierarchy.Service) Service {
 	return &service{
-		repo:       repo,
-		orgRbacSvc: orgRbacSvc,
+		repo:            repo,
+		orgHierarchySvc: orgRbacSvc,
 	}
 }
 
@@ -55,7 +53,7 @@ func (s *service) ListForOrgNode(ctx context.Context, orgNodeID uuid.UUID, inclu
 	var ancestorIDs []uuid.UUID
 	if includeInherited {
 		var err error
-		ancestorIDs, err = s.orgRbacSvc.AncestorIDs(ctx, orgNodeID)
+		ancestorIDs, err = s.orgHierarchySvc.AncestorIDs(ctx, orgNodeID)
 		if err != nil {
 			return nil, err
 		}
@@ -90,7 +88,7 @@ func (s *service) ListForProject(ctx context.Context, projectID uuid.UUID, ownin
 	}
 
 	// Get inherited org node policies (including all ancestors)
-	ancestorIDs, err := s.orgRbacSvc.AncestorIDs(ctx, owningOrgNodeID)
+	ancestorIDs, err := s.orgHierarchySvc.AncestorIDs(ctx, owningOrgNodeID)
 	if err != nil {
 		return nil, err
 	}

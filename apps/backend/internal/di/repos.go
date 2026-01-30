@@ -10,7 +10,8 @@ import (
 	eventpolicyrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventpolicy"
 	notificationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/notification"
 	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
-	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation_rbac"
+	organisationhierarchyrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation/hierarchy"
+	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation/rbac"
 	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
 	portfoliorepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/portfolio"
 	productrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/product"
@@ -44,6 +45,11 @@ func provideOrgRepo(i do.Injector) (*organisationrepo.EntRepo, error) {
 func provideOrgRBACRepo(i do.Injector) (*organisationrbacrepo.EntRepo, error) {
 	cli := do.MustInvoke[*ent.Client](i)
 	return organisationrbacrepo.NewEntRepo(cli), nil
+}
+
+func provideOrgHierarchyRepo(i do.Injector) (*organisationhierarchyrepo.EntRepo, error) {
+	cli := do.MustInvoke[*ent.Client](i)
+	return organisationhierarchyrepo.NewEntRepo(cli), nil
 }
 
 func provideProjectRoleRepo(i do.Injector) (projectrole.Repository, error) {

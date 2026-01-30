@@ -17,6 +17,8 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/nwo"
 	"github.com/SURF-Innovatie/MORIS/internal/app/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
+	"github.com/SURF-Innovatie/MORIS/internal/app/organisation/hierarchy"
+	organisationhierarchy "github.com/SURF-Innovatie/MORIS/internal/app/organisation/hierarchy"
 	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	personsvc "github.com/SURF-Innovatie/MORIS/internal/app/person"
 	"github.com/SURF-Innovatie/MORIS/internal/app/portfolio"
@@ -40,7 +42,8 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	notificationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/notification"
 	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
-	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation_rbac"
+	organisationhierarchyrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation/hierarchy"
+	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation/rbac"
 	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
 	portfoliorepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/portfolio"
 	productrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/product"
@@ -114,10 +117,16 @@ func provideOrgRBACService(i do.Injector) (organisationrbac.Service, error) {
 	return organisationrbac.NewService(repo), nil
 }
 
+func provideOrgHierarchyService(i do.Injector) (hierarchy.Service, error) {
+	repo := do.MustInvoke[*organisationhierarchyrepo.EntRepo](i)
+	return organisationhierarchy.NewService(repo), nil
+}
+
 func provideProjectRoleService(i do.Injector) (projectrole.Service, error) {
 	repo := do.MustInvoke[projectrole.Repository](i)
 	orgSvc := do.MustInvoke[organisation.Service](i)
-	return projectrole.NewService(repo, orgSvc), nil
+	orgHierarchySvc := do.MustInvoke[organisationhierarchy.Service](i)
+	return projectrole.NewService(repo, orgSvc, orgHierarchySvc), nil
 }
 
 func provideCustomFieldService(i do.Injector) (customfield.Service, error) {
@@ -155,16 +164,16 @@ func provideErrorLogService(i do.Injector) (errorlog.Service, error) {
 
 func provideEventPolicyService(i do.Injector) (eventpolicy.Service, error) {
 	repo := do.MustInvoke[*eventpolicyrepo.EntRepo](i)
-	closure := do.MustInvoke[organisationrbac.Service](i)
-	return eventpolicy.NewService(repo, closure), nil
+	orgHierarchySvc := do.MustInvoke[organisationhierarchy.Service](i)
+	return eventpolicy.NewService(repo, orgHierarchySvc), nil
 }
 
 func providePolicyEvaluator(i do.Injector) (eventpolicy.Evaluator, error) {
 	repo := do.MustInvoke[*eventpolicyrepo.EntRepo](i)
-	orgRbacSvc := do.MustInvoke[organisationrbac.Service](i)
+	orgHierarchySvc := do.MustInvoke[organisationhierarchy.Service](i)
 	recipient := do.MustInvoke[*event_policy.RecipientAdapter](i)
 	notifSvc := do.MustInvoke[notification.Service](i)
-	return eventpolicy.NewEvaluator(repo, orgRbacSvc, recipient, notifSvc), nil
+	return eventpolicy.NewEvaluator(repo, orgHierarchySvc, recipient, notifSvc), nil
 }
 
 func provideProjectLoader(i do.Injector) (*load.Loader, error) {
