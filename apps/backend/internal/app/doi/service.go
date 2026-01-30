@@ -38,7 +38,6 @@ func NewService() Service {
 func (s *service) Resolve(ctx context.Context, doi string) (*dto.Work, error) {
 	// Clean DOI
 	doi = strings.TrimPrefix(doi, "https://doi.org/")
-	doi = strings.TrimPrefix(doi, "http://doi.org/")
 
 	url := fmt.Sprintf("https://doi.org/%s", doi)
 
