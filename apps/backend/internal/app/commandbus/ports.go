@@ -13,8 +13,8 @@ type EventStore interface {
 	Append(ctx context.Context, id uuid.UUID, expectedVersion int, evts ...events.Event) error
 }
 
-type Publisher interface {
-	HandleEvents(ctx context.Context, evts ...events.Event) error
+type EventPublisher interface {
+	Publish(ctx context.Context, evts ...events.Event) error
 }
 
 type Reducer[T any] interface {

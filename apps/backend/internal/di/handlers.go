@@ -6,6 +6,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/crossref"
 	"github.com/SURF-Innovatie/MORIS/internal/app/customfield"
 	"github.com/SURF-Innovatie/MORIS/internal/app/doi"
+	event2 "github.com/SURF-Innovatie/MORIS/internal/app/event"
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/app/nwo"
@@ -22,7 +23,6 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/surfconext"
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/app/zenodo"
-	"github.com/SURF-Innovatie/MORIS/internal/event"
 	authhandler "github.com/SURF-Innovatie/MORIS/internal/handler/auth"
 	crossrefhandler "github.com/SURF-Innovatie/MORIS/internal/handler/crossref"
 	doihandler "github.com/SURF-Innovatie/MORIS/internal/handler/doi"
@@ -41,45 +41,46 @@ import (
 	userhandler "github.com/SURF-Innovatie/MORIS/internal/handler/user"
 	zenodohandler "github.com/SURF-Innovatie/MORIS/internal/handler/zenodo"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
-	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/handlers/events"
+	eventrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/event"
 	"github.com/samber/do/v2"
 )
 
 // Event Handler Providers
 
-func provideProjectEventHandler(i do.Injector) (*event.ProjectEventNotificationHandler, error) {
+func provideProjectEventHandler(i do.Injector) (*events.ProjectEventNotificationHandler, error) {
 	cli := do.MustInvoke[*ent.Client](i)
-	es := do.MustInvoke[*eventstore.EntStore](i)
-	return event.NewProjectEventHandler(cli, es), nil
+	eventRepo := do.MustInvoke[*eventrepo.EntRepo](i)
+	return events.NewProjectEventHandler(cli, eventRepo), nil
 }
 
-func provideApprovalRequestHandler(i do.Injector) (*event.ApprovalRequestNotificationHandler, error) {
+func provideApprovalRequestHandler(i do.Injector) (*events.ApprovalRequestNotificationHandler, error) {
 	cli := do.MustInvoke[*ent.Client](i)
-	es := do.MustInvoke[*eventstore.EntStore](i)
+	eventRepo := do.MustInvoke[*eventrepo.EntRepo](i)
 	rbac := do.MustInvoke[organisationrbac.Service](i)
-	return event.NewApprovalRequestHandler(cli, es, rbac), nil
+	return events.NewApprovalRequestHandler(cli, eventRepo, rbac), nil
 }
 
-func provideEventPolicyHandler(i do.Injector) (*event.Handler, error) {
+func providePolicyExecutionHandler(i do.Injector) (*events.PolicyExecutionHandler, error) {
+	evaluator := do.MustInvoke[eventpolicy.Evaluator](i)
+	entRepo := do.MustInvoke[*eventrepo.EntRepo](i)
+	return events.NewPolicyExecutionHandler(evaluator, entRepo), nil
+}
+
+func provideEventPolicyHandler(i do.Injector) (*events.Handler, error) {
 	repo := do.MustInvoke[eventpolicy.Service](i)
 	cli := do.MustInvoke[*ent.Client](i)
-	return event.NewEventPolicyHandler(repo, cli), nil
+	return events.NewEventPolicyHandler(repo, cli), nil
 }
 
-func providePolicyExecutionHandler(i do.Injector) (*event.PolicyExecutionHandler, error) {
-	evaluator := do.MustInvoke[eventpolicy.Evaluator](i)
-	projSvc := do.MustInvoke[queries.Service](i)
-	return event.NewPolicyExecutionHandler(evaluator, projSvc), nil
-}
-
-func provideStatusUpdateHandler(i do.Injector) (*event.StatusUpdateNotificationHandler, error) {
+func provideStatusUpdateHandler(i do.Injector) (*events.StatusUpdateNotificationHandler, error) {
 	cli := do.MustInvoke[*ent.Client](i)
-	return event.NewStatusUpdateHandler(cli), nil
+	return events.NewStatusUpdateHandler(cli), nil
 }
 
-func provideCacheRefreshHandler(i do.Injector) (*event.CacheRefreshHandler, error) {
+func provideCacheRefreshHandler(i do.Injector) (*events.CacheRefreshHandler, error) {
 	refresher := do.MustInvoke[cache.ProjectCacheRefresher](i)
-	return event.NewCacheRefreshHandler(refresher), nil
+	return events.NewCacheRefreshHandler(refresher), nil
 }
 
 // HTTP Handler Providers
@@ -166,7 +167,7 @@ func provideNotificationHandler(i do.Injector) (*notificationhandler.Handler, er
 }
 
 func provideEventHandler(i do.Injector) (*eventhandler.Handler, error) {
-	evtSvc := do.MustInvoke[event.Service](i)
+	evtSvc := do.MustInvoke[event2.Service](i)
 	projSvc := do.MustInvoke[queries.Service](i)
 	userSvc := do.MustInvoke[user.Service](i)
 	cli := do.MustInvoke[*ent.Client](i)

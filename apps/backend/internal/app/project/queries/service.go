@@ -6,11 +6,11 @@ import (
 	"sort"
 
 	appauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
+	"github.com/SURF-Innovatie/MORIS/internal/app/event"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/load"
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
-	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 )
@@ -34,7 +34,7 @@ type Service interface {
 
 type service struct {
 	repo        ProjectReadRepository
-	es          eventstore.Store
+	eventSvc    event.Service
 	loader      *load.Loader
 	currentUser appauth.CurrentUserProvider
 	roleRepo    ProjectRoleRepository
@@ -42,7 +42,7 @@ type service struct {
 }
 
 func NewService(
-	es eventstore.Store,
+	eventSvc event.Service,
 	loader *load.Loader,
 	repo ProjectReadRepository,
 	roleRepo ProjectRoleRepository,
@@ -50,7 +50,7 @@ func NewService(
 	userSvc user.Service,
 ) Service {
 	return &service{
-		es:          es,
+		eventSvc:    eventSvc,
 		loader:      loader,
 		repo:        repo,
 		roleRepo:    roleRepo,
@@ -109,7 +109,7 @@ func (s *service) GetAllProjects(ctx context.Context) ([]*ProjectDetails, error)
 }
 
 func (s *service) GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]events.DetailedEvent, error) {
-	evts, _, err := s.es.Load(ctx, projectID)
+	evts, _, err := s.eventSvc.Load(ctx, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +258,7 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *entities.Projec
 }
 
 func (s *service) GetChangeLog(ctx context.Context, id uuid.UUID) ([]events.DetailedEvent, error) {
-	evts, _, err := s.es.Load(ctx, id)
+	evts, _, err := s.eventSvc.Load(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -384,7 +384,7 @@ func (s *service) ListAvailableRoles(ctx context.Context, projectID uuid.UUID) (
 }
 
 func (s *service) GetEvents(ctx context.Context, id uuid.UUID) ([]events.Event, error) {
-	evts, _, err := s.es.Load(ctx, id)
+	evts, _, err := s.eventSvc.Load(ctx, id)
 	return evts, err
 }
 

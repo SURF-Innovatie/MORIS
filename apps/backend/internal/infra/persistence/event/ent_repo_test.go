@@ -1,4 +1,4 @@
-package eventstore_test
+package event_test
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
-	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/event"
 	"github.com/google/uuid"
 
 	"github.com/SURF-Innovatie/MORIS/ent/enttest"
@@ -17,7 +17,7 @@ func TestEntStore_AppendAndLoad(t *testing.T) {
 	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 	defer client.Close()
 
-	store := eventstore.NewEntStore(client)
+	store := event.NewEntRepo(client)
 	ctx := context.Background()
 
 	projectID := uuid.New()

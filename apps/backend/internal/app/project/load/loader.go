@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/SURF-Innovatie/MORIS/internal/app/event"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
 	"github.com/google/uuid"
@@ -12,12 +13,12 @@ import (
 var ErrNotFound = errors.New("project not found")
 
 type Loader struct {
-	es    EventStore
-	cache Cache
+	eventSvc event.Service
+	cache    Cache
 }
 
-func New(es EventStore, cache Cache) *Loader {
-	return &Loader{es: es, cache: cache}
+func New(eventSvc event.Service, cache Cache) *Loader {
+	return &Loader{eventSvc: eventSvc, cache: cache}
 }
 
 func (l *Loader) Load(ctx context.Context, projectID uuid.UUID) (*entities.Project, error) {
@@ -27,7 +28,7 @@ func (l *Loader) Load(ctx context.Context, projectID uuid.UUID) (*entities.Proje
 		}
 	}
 
-	evts, version, err := l.es.Load(ctx, projectID)
+	evts, version, err := l.eventSvc.Load(ctx, projectID)
 	if err != nil {
 		return nil, err
 	}

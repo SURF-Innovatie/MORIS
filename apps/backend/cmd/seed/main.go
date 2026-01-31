@@ -20,7 +20,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/enttx"
-	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/event"
 	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
 	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation/rbac"
 	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
@@ -193,7 +193,7 @@ func main() {
 		log.Info().Msgf("Created admin user for person %s", admin.Name)
 	}
 
-	es := eventstore.NewEntStore(client)
+	es := event.NewEntRepo(client)
 
 	// --- Seed Roles / Scopes / Memberships for org tree ---
 

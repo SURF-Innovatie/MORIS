@@ -1,4 +1,4 @@
-package projectquery
+package project
 
 import (
 	"context"

@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SURF-Innovatie/MORIS/internal/app/commandbus"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
-	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	"github.com/alicebob/miniredis/v2"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -19,18 +19,6 @@ type fakeEventStore struct {
 	err     error
 }
 
-func (f fakeEventStore) UpdateEventStatus(ctx context.Context, eventID uuid.UUID, status string) error {
-	panic("implement me")
-}
-
-func (f fakeEventStore) LoadEvent(ctx context.Context, eventID uuid.UUID) (events.Event, error) {
-	panic("implement me")
-}
-
-func (f fakeEventStore) LoadUserApprovedEvents(ctx context.Context, userID uuid.UUID) ([]events.Event, error) {
-	panic("implement me")
-}
-
 func (f fakeEventStore) Load(ctx context.Context, id uuid.UUID) ([]events.Event, int, error) {
 	return f.evts, f.version, f.err
 }
@@ -39,7 +27,7 @@ func (f fakeEventStore) Append(ctx context.Context, id uuid.UUID, expectedVersio
 	return nil
 }
 
-func TestEventstoreProjectCacheRefresher_Refresh_WritesToCache(t *testing.T) {
+func TestEventStoreProjectCacheRefresher_Refresh_WritesToCache(t *testing.T) {
 	ctx := context.Background()
 
 	mr := miniredis.RunT(t)
@@ -63,9 +51,10 @@ func TestEventstoreProjectCacheRefresher_Refresh_WritesToCache(t *testing.T) {
 		err:     nil,
 	}
 
-	var _ eventstore.Store = es
+	// Compile-time assertion: fake implements the port we actually need
+	var _ commandbus.EventStore = es
 
-	ref := cache.NewEventstoreProjectCacheRefresher(es, pc)
+	ref := cache.NewEventStoreProjectCacheRefresher(es, pc)
 
 	proj, err := ref.Refresh(ctx, projectID)
 	if err != nil {
@@ -96,7 +85,7 @@ func TestEventstoreProjectCacheRefresher_Refresh_WritesToCache(t *testing.T) {
 	}
 }
 
-func TestEventstoreProjectCacheRefresher_Refresh_NoEvents_ReturnsNil(t *testing.T) {
+func TestEventStoreProjectCacheRefresher_Refresh_NoEvents_ReturnsNil(t *testing.T) {
 	ctx := context.Background()
 
 	mr := miniredis.RunT(t)
@@ -107,7 +96,8 @@ func TestEventstoreProjectCacheRefresher_Refresh_NoEvents_ReturnsNil(t *testing.
 
 	projectID := uuid.New()
 	es := fakeEventStore{evts: nil, version: 0, err: nil}
-	ref := cache.NewEventstoreProjectCacheRefresher(es, pc)
+
+	ref := cache.NewEventStoreProjectCacheRefresher(es, pc)
 
 	proj, err := ref.Refresh(ctx, projectID)
 	if err != nil {

@@ -9,7 +9,7 @@ var Package = do.Package(
 	// Infrastructure
 	do.Lazy(provideEntClient),
 	do.Lazy(provideRedisClient),
-	do.Lazy(provideEventStore),
+	do.Lazy(ProvideEventRepo),
 	do.Lazy(provideProjectCache),
 	do.Lazy(provideUserCache),
 	do.Lazy(provideCacheRefresher),
@@ -28,8 +28,11 @@ var Package = do.Package(
 	do.Lazy(providePortfolioRepo),
 	do.Lazy(provideNotificationRepo),
 	do.Lazy(provideErrorLogRepo),
-	do.Lazy(provideProjectQueryRepo),
+	do.Lazy(provideProjectRepo),
 	do.Lazy(provideEventPolicyRepo),
+
+	// Event Publisher
+	do.Lazy(provideEventPublisher),
 
 	// External Clients
 	do.Lazy(provideORCIDClient),

@@ -16,8 +16,8 @@ import (
 	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
 	portfoliorepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/portfolio"
 	productrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/product"
+	projectrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project"
 	projectmembershiprepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_membership"
-	projectqueryrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_query"
 	projectrolerepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/projectrole"
 	userrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/user"
 	"github.com/samber/do/v2"
@@ -88,9 +88,9 @@ func provideErrorLogRepo(i do.Injector) (errorlog.Repository, error) {
 	return errorlogrepo.NewRepository(cli), nil
 }
 
-func provideProjectQueryRepo(i do.Injector) (*projectqueryrepo.EntRepo, error) {
+func provideProjectRepo(i do.Injector) (*projectrepo.EntRepo, error) {
 	cli := do.MustInvoke[*ent.Client](i)
-	return projectqueryrepo.NewEntRepo(cli), nil
+	return projectrepo.NewEntRepo(cli), nil
 }
 
 func provideEventPolicyRepo(i do.Injector) (*eventpolicyrepo.EntRepo, error) {

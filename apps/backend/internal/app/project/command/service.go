@@ -7,15 +7,14 @@ import (
 
 	appauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/app/commandbus"
+	"github.com/SURF-Innovatie/MORIS/internal/app/event"
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/app/projectrole"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
-	"github.com/SURF-Innovatie/MORIS/internal/event"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
-	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/samber/lo"
@@ -27,11 +26,9 @@ type Service interface {
 }
 
 type service struct {
-	es          eventstore.Store
 	evtSvc      event.Service
 	exec        *commandbus.Executor[entities.Project]
 	cache       cache.ProjectCache
-	refresher   cache.ProjectCacheRefresher
 	currentUser appauth.CurrentUserProvider
 	entClient   EntClientProvider
 	roleSvc     projectrole.Service
@@ -41,22 +38,19 @@ type service struct {
 }
 
 func NewService(
-	es eventstore.Store,
 	evtSvc event.Service,
 	pc cache.ProjectCache,
-	ref cache.ProjectCacheRefresher,
 	currentUser appauth.CurrentUserProvider,
 	entClient EntClientProvider,
 	roleSvc projectrole.Service,
 	evaluator eventpolicy.Evaluator,
 	orgSvc organisation.Service,
 	rbacSvc rbacsvc.Service,
+	evtPub event.Publisher,
 ) Service {
-	s := &service{
-		es:          es,
+	return &service{
 		evtSvc:      evtSvc,
 		cache:       pc,
-		refresher:   ref,
 		currentUser: currentUser,
 		entClient:   entClient,
 		roleSvc:     roleSvc,
@@ -64,15 +58,12 @@ func NewService(
 		orgSvc:      orgSvc,
 		rbacSvc:     rbacSvc,
 		exec: commandbus.NewExecutor[entities.Project](
-			es,
 			evtSvc,
+			evtPub,
 			Reducer{},
 			NewReducer{},
 		),
 	}
-
-	evtSvc.RegisterStatusChangeHandler(s.onStatusChange)
-	return s
 }
 
 func (s *service) ListAvailableEvents(ctx context.Context, projectID *uuid.UUID) ([]AvailableEvent, error) {
@@ -283,12 +274,4 @@ func (s *service) findPermissiveRole(ctx context.Context, orgID uuid.UUID) (*ent
 	}
 
 	return nil, fmt.Errorf("no permissive role found for organisation %s", orgID)
-}
-
-func (s *service) onStatusChange(ctx context.Context, e events.Event) error {
-	if s.refresher == nil {
-		return nil
-	}
-	_, err := s.refresher.Refresh(ctx, e.AggregateID())
-	return err
 }

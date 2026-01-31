@@ -1,4 +1,4 @@
-package event
+package events
 
 import (
 	"context"
@@ -9,16 +9,16 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
-	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/event"
 )
 
 type ProjectEventNotificationHandler struct {
-	cli *ent.Client
-	es  eventstore.Store
+	cli       *ent.Client
+	eventRepo *event.EntRepo
 }
 
-func NewProjectEventHandler(cli *ent.Client, es eventstore.Store) *ProjectEventNotificationHandler {
-	return &ProjectEventNotificationHandler{cli: cli, es: es}
+func NewProjectEventHandler(cli *ent.Client, eventRepo *event.EntRepo) *ProjectEventNotificationHandler {
+	return &ProjectEventNotificationHandler{cli: cli, eventRepo: eventRepo}
 }
 
 func (h *ProjectEventNotificationHandler) Handle(ctx context.Context, e events.Event) error {
@@ -38,7 +38,7 @@ func (h *ProjectEventNotificationHandler) Handle(ctx context.Context, e events.E
 
 	// Reconstruct project state to get current members
 	projectID := e.AggregateID()
-	evts, _, err := h.es.Load(ctx, projectID)
+	evts, _, err := h.eventRepo.Load(ctx, projectID)
 	if err != nil {
 		return err
 	}

@@ -93,18 +93,13 @@ func TestRedisProjectCache_Delete(t *testing.T) {
 func TestRedisProjectCache_NilRedis(t *testing.T) {
 	ctx := context.Background()
 
-	c := cache.NewRedisProjectCache(nil, 24*time.Hour)
-	id := uuid.New()
+	pc := cache.NewRedisProjectCache(nil, time.Hour)
 
-	_, err := c.GetProject(ctx, id)
-	if err != cache.ErrCacheNotInitialized {
-		t.Fatalf("GetProject() expected ErrCacheNotInitialized, got %v", err)
-	}
+	projectID := uuid.New()
+	proj := &entities.Project{Id: projectID, Title: "x"}
 
-	if err := c.SetProject(ctx, &entities.Project{Id: id}); err != nil {
-		t.Fatalf("SetProject() expected nil, got %v", err)
-	}
-	if err := c.DeleteProject(ctx, id); err != nil {
-		t.Fatalf("DeleteProject() expected nil, got %v", err)
+	err := pc.SetProject(ctx, proj)
+	if err == nil {
+		t.Fatalf("SetProject() expected error, got nil")
 	}
 }

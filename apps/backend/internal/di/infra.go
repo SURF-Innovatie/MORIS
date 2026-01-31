@@ -8,7 +8,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
-	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
+	eventrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/event"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 	"github.com/samber/do/v2"
@@ -34,9 +34,9 @@ func provideRedisClient(i do.Injector) (*redis.Client, error) {
 	return rdb, nil
 }
 
-func provideEventStore(i do.Injector) (*eventstore.EntStore, error) {
+func ProvideEventRepo(i do.Injector) (*eventrepo.EntRepo, error) {
 	cli := do.MustInvoke[*ent.Client](i)
-	return eventstore.NewEntStore(cli), nil
+	return eventrepo.NewEntRepo(cli), nil
 }
 
 func provideProjectCache(i do.Injector) (cache.ProjectCache, error) {
@@ -50,7 +50,7 @@ func provideUserCache(i do.Injector) (cache.UserCache, error) {
 }
 
 func provideCacheRefresher(i do.Injector) (cache.ProjectCacheRefresher, error) {
-	es := do.MustInvoke[*eventstore.EntStore](i)
+	eventRepo := do.MustInvoke[*eventrepo.EntRepo](i)
 	pc := do.MustInvoke[cache.ProjectCache](i)
-	return cache.NewEventstoreProjectCacheRefresher(es, pc), nil
+	return cache.NewEventStoreProjectCacheRefresher(eventRepo, pc), nil
 }

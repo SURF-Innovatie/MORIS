@@ -3,9 +3,9 @@ package cache
 import (
 	"context"
 
+	"github.com/SURF-Innovatie/MORIS/internal/app/commandbus"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
-	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	"github.com/google/uuid"
 )
 
@@ -13,17 +13,17 @@ type ProjectCacheRefresher interface {
 	Refresh(ctx context.Context, projectID uuid.UUID) (*entities.Project, error)
 }
 
-type EventstoreProjectCacheRefresher struct {
-	es    eventstore.Store
-	cache ProjectCache
+type EventStoreProjectCacheRefresher struct {
+	eventStore commandbus.EventStore
+	cache      ProjectCache
 }
 
-func NewEventstoreProjectCacheRefresher(es eventstore.Store, cache ProjectCache) *EventstoreProjectCacheRefresher {
-	return &EventstoreProjectCacheRefresher{es: es, cache: cache}
+func NewEventStoreProjectCacheRefresher(eventStore commandbus.EventStore, cache ProjectCache) *EventStoreProjectCacheRefresher {
+	return &EventStoreProjectCacheRefresher{eventStore: eventStore, cache: cache}
 }
 
-func (r *EventstoreProjectCacheRefresher) Refresh(ctx context.Context, projectID uuid.UUID) (*entities.Project, error) {
-	evts, version, err := r.es.Load(ctx, projectID)
+func (r *EventStoreProjectCacheRefresher) Refresh(ctx context.Context, projectID uuid.UUID) (*entities.Project, error) {
+	evts, version, err := r.eventStore.Load(ctx, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -32,6 +32,9 @@ func (r *EventstoreProjectCacheRefresher) Refresh(ctx context.Context, projectID
 	}
 
 	proj := projection.Reduce(projectID, evts)
+	if proj == nil {
+		return nil, nil
+	}
 	proj.Version = version
 
 	_ = r.cache.SetProject(ctx, proj)

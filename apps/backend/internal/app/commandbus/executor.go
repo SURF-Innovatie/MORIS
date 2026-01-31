@@ -8,18 +8,18 @@ import (
 )
 
 type Executor[T any] struct {
-	es  EventStore
-	pub Publisher
-	red Reducer[T]
-	new NewReducer[T]
+	store EventStore
+	pub   EventPublisher
+	red   Reducer[T]
+	new   NewReducer[T]
 }
 
-func NewExecutor[T any](es EventStore, pub Publisher, red Reducer[T], newOpt NewReducer[T]) *Executor[T] {
-	return &Executor[T]{es: es, pub: pub, red: red, new: newOpt}
+func NewExecutor[T any](store EventStore, pub EventPublisher, red Reducer[T], newOpt NewReducer[T]) *Executor[T] {
+	return &Executor[T]{store: store, pub: pub, red: red, new: newOpt}
 }
 
 func (x *Executor[T]) Execute(ctx context.Context, id uuid.UUID, decide Decision[T]) (*T, error) {
-	history, version, err := x.es.Load(ctx, id)
+	history, version, err := x.store.Load(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -46,18 +46,23 @@ func (x *Executor[T]) Execute(ctx context.Context, id uuid.UUID, decide Decision
 		return cur, nil
 	}
 
-	for _, e := range newEvents {
-		if err := x.es.Append(ctx, id, version, e); err != nil {
-			return nil, fmt.Errorf("append %s: %w", e.Type(), err)
-		}
-		version++
+	// Prefer ONE append with expectedVersion for the whole batch if your store supports it.
+	// If not, keep the loop; but note that optimistic concurrency is typically per-stream.
+	if err := x.store.Append(ctx, id, version, newEvents...); err != nil {
+		return nil, fmt.Errorf("append: %w", err)
+	}
 
+	// Update in-memory state
+	for _, e := range newEvents {
 		if err := x.red.Apply(cur, e); err != nil {
 			return nil, fmt.Errorf("apply %s: %w", e.Type(), err)
 		}
 	}
 
-	_ = x.pub.HandleEvents(ctx, newEvents...)
+	// Publish side effects (infra dispatcher). No longer HandleEvents on event service.
+	if x.pub != nil {
+		_ = x.pub.Publish(ctx, newEvents...)
+	}
 
 	return cur, nil
 }

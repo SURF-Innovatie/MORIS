@@ -44,6 +44,7 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	return s.repo.Delete(ctx, id)
 }
 
+/**/
 func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*entities.EventPolicy, error) {
 	return s.repo.GetByID(ctx, id)
 }

@@ -1,8 +1,9 @@
-package eventstore
+package event
 
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -14,14 +15,16 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 )
 
-type EntStore struct {
+var ErrConcurrency = errors.New("concurrency conflict")
+
+type EntRepo struct {
 	cli *ent.Client
 }
 
-func NewEntStore(cli *ent.Client) *EntStore { return &EntStore{cli: cli} }
+func NewEntRepo(cli *ent.Client) *EntRepo { return &EntRepo{cli: cli} }
 
 // Append appends events with optimistic concurrency on (project_id, version).
-func (s *EntStore) Append(
+func (s *EntRepo) Append(
 	ctx context.Context,
 	projectID uuid.UUID,
 	expectedVersion int,
@@ -120,7 +123,7 @@ func (s *EntStore) Append(
 	return nil
 }
 
-func (s *EntStore) UpdateEventStatus(ctx context.Context, eventID uuid.UUID, status string) error {
+func (s *EntRepo) UpdateStatus(ctx context.Context, eventID uuid.UUID, status string) error {
 	// Validate status enum
 	switch status {
 	case "pending", "approved", "rejected":
@@ -134,7 +137,7 @@ func (s *EntStore) UpdateEventStatus(ctx context.Context, eventID uuid.UUID, sta
 		Exec(ctx)
 }
 
-func (s *EntStore) Load(
+func (s *EntRepo) Load(
 	ctx context.Context,
 	projectID uuid.UUID,
 ) ([]events.Event, int, error) {
@@ -167,7 +170,7 @@ func (s *EntStore) Load(
 	return out, curVersion, nil
 }
 
-func (s *EntStore) LoadEvent(ctx context.Context, eventID uuid.UUID) (events.Event, error) {
+func (s *EntRepo) LoadEvent(ctx context.Context, eventID uuid.UUID) (events.Event, error) {
 	r, err := s.cli.Event.
 		Query().
 		Where(en.IDEQ(eventID)).
@@ -179,7 +182,7 @@ func (s *EntStore) LoadEvent(ctx context.Context, eventID uuid.UUID) (events.Eve
 	return s.mapEventRow(r)
 }
 
-func (s *EntStore) LoadUserApprovedEvents(ctx context.Context, userID uuid.UUID) ([]events.Event, error) {
+func (s *EntRepo) LoadUserApprovedEvents(ctx context.Context, userID uuid.UUID) ([]events.Event, error) {
 	rows, err := s.cli.Event.
 		Query().
 		Where(
@@ -206,7 +209,7 @@ func (s *EntStore) LoadUserApprovedEvents(ctx context.Context, userID uuid.UUID)
 	return out, nil
 }
 
-func (s *EntStore) mapEventRow(r *ent.Event) (events.Event, error) {
+func (s *EntRepo) mapEventRow(r *ent.Event) (events.Event, error) {
 	base := events.Base{
 		ID:        r.ID,
 		ProjectID: r.ProjectID,

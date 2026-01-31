@@ -12,6 +12,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/customfield"
 	"github.com/SURF-Innovatie/MORIS/internal/app/doi"
 	"github.com/SURF-Innovatie/MORIS/internal/app/errorlog"
+	"github.com/SURF-Innovatie/MORIS/internal/app/event"
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/app/nwo"
@@ -32,15 +33,14 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/surfconext"
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/app/zenodo"
-	"github.com/SURF-Innovatie/MORIS/internal/event"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/adapters/event_policy"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/entclient"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/enttx"
+	eventrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/event"
 	eventpolicyrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventpolicy"
-	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
 	notificationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/notification"
 	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
 	organisationhierarchyrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation/hierarchy"
@@ -49,8 +49,8 @@ import (
 	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
 	portfoliorepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/portfolio"
 	productrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/product"
+	projectrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project"
 	projectmembershiprepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_membership"
-	projectqueryrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project_query"
 	userrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/user"
 	"github.com/samber/do/v2"
 )
@@ -63,10 +63,10 @@ func providePersonService(i do.Injector) (personsvc.Service, error) {
 func provideUserService(i do.Injector) (user.Service, error) {
 	userRepo := do.MustInvoke[*userrepo.EntRepo](i)
 	personSvc := do.MustInvoke[personsvc.Service](i)
-	es := do.MustInvoke[*eventstore.EntStore](i)
+	eventSvc := do.MustInvoke[event.Service](i)
 	membership := do.MustInvoke[*projectmembershiprepo.EntRepo](i)
 	userCache := do.MustInvoke[cache.UserCache](i)
-	return user.NewService(userRepo, personSvc, es, membership, userCache), nil
+	return user.NewService(userRepo, personSvc, eventSvc, membership, userCache), nil
 }
 
 func provideAuthService(i do.Injector) (coreauth.Service, error) {
@@ -184,19 +184,19 @@ func providePolicyEvaluator(i do.Injector) (eventpolicy.Evaluator, error) {
 }
 
 func provideProjectLoader(i do.Injector) (*load.Loader, error) {
-	es := do.MustInvoke[*eventstore.EntStore](i)
+	eventSvc := do.MustInvoke[event.Service](i)
 	pc := do.MustInvoke[cache.ProjectCache](i)
-	return load.New(es, pc), nil
+	return load.New(eventSvc, pc), nil
 }
 
 func provideProjectQueryService(i do.Injector) (queries.Service, error) {
-	es := do.MustInvoke[*eventstore.EntStore](i)
+	eventSvc := do.MustInvoke[event.Service](i)
 	ldr := do.MustInvoke[*load.Loader](i)
-	repo := do.MustInvoke[*projectqueryrepo.EntRepo](i)
+	repo := do.MustInvoke[*projectrepo.EntRepo](i)
 	roleRepo := do.MustInvoke[projectrole.Repository](i)
 	curUser := do.MustInvoke[coreauth.CurrentUserProvider](i)
 	userSvc := do.MustInvoke[user.Service](i)
-	return queries.NewService(es, ldr, repo, roleRepo, curUser, userSvc), nil
+	return queries.NewService(eventSvc, ldr, repo, roleRepo, curUser, userSvc), nil
 }
 
 func provideEntClientProvider(i do.Injector) (command.EntClientProvider, error) {
@@ -210,50 +210,30 @@ func provideTxManager(i do.Injector) (*enttx.Manager, error) {
 }
 
 func provideProjectCommandService(i do.Injector) (command.Service, error) {
-	es := do.MustInvoke[*eventstore.EntStore](i)
-	evtSvc := do.MustInvoke[event.Service](i)
+	eventSvc := do.MustInvoke[event.Service](i)
 	pc := do.MustInvoke[cache.ProjectCache](i)
-	ref := do.MustInvoke[cache.ProjectCacheRefresher](i)
 	curUser := do.MustInvoke[coreauth.CurrentUserProvider](i)
 	entProv := do.MustInvoke[command.EntClientProvider](i)
 	roleSvc := do.MustInvoke[projectrole.Service](i)
 	evaluator := do.MustInvoke[eventpolicy.Evaluator](i)
 	orgSvc := do.MustInvoke[organisation.Service](i)
 	rbacSvc := do.MustInvoke[organisationrbac.Service](i)
-	return command.NewService(es, evtSvc, pc, ref, curUser, entProv, roleSvc, evaluator, orgSvc, rbacSvc), nil
+	evtPub := do.MustInvoke[event.Publisher](i)
+	return command.NewService(eventSvc, pc, curUser, entProv, roleSvc, evaluator, orgSvc, rbacSvc, evtPub), nil
 }
 
 func provideCacheWarmupService(i do.Injector) (cachewarmup.Service, error) {
-	repo := do.MustInvoke[*projectqueryrepo.EntRepo](i)
+	repo := do.MustInvoke[*projectrepo.EntRepo](i)
 	ldr := do.MustInvoke[*load.Loader](i)
 	pc := do.MustInvoke[cache.ProjectCache](i)
 	return cachewarmup.NewService(repo, ldr, pc), nil
 }
 
 func provideEventService(i do.Injector) (event.Service, error) {
-	es := do.MustInvoke[*eventstore.EntStore](i)
-	cli := do.MustInvoke[*ent.Client](i)
 	notifSvc := do.MustInvoke[notification.Service](i)
+	repo := do.MustInvoke[*eventrepo.EntRepo](i)
 
-	projHandler := do.MustInvoke[*event.ProjectEventNotificationHandler](i)
-	approvalHandler := do.MustInvoke[*event.ApprovalRequestNotificationHandler](i)
-	policyHandler := do.MustInvoke[*event.Handler](i)
-	execHandler := do.MustInvoke[*event.PolicyExecutionHandler](i)
+	evtPub := do.MustInvoke[event.Publisher](i)
 
-	notificationHandlers := []event.NotificationHandler{
-		projHandler,
-		approvalHandler,
-		policyHandler,
-		execHandler,
-	}
-
-	statusHandler := do.MustInvoke[*event.StatusUpdateNotificationHandler](i)
-	cacheHandler := do.MustInvoke[*event.CacheRefreshHandler](i)
-
-	statusChangeHandlers := []event.StatusChangeHandler{
-		statusHandler.Handle,
-		cacheHandler.Handle,
-	}
-
-	return event.NewService(es, cli, notifSvc, notificationHandlers, statusChangeHandlers), nil
+	return event.NewService(repo, notifSvc, evtPub), nil
 }

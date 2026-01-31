@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/google/uuid"
 )
 
@@ -19,17 +18,6 @@ type Repository interface {
 	GetByPersonID(ctx context.Context, personID uuid.UUID) (*entities.User, error)
 	SetZenodoTokens(ctx context.Context, userID uuid.UUID, access, refresh string) error
 	ClearZenodoTokens(ctx context.Context, userID uuid.UUID) error
-}
-
-type PersonRepository interface {
-	Get(ctx context.Context, id uuid.UUID) (*entities.Person, error)
-	GetByEmail(ctx context.Context, email string) (*entities.Person, error)
-	Search(ctx context.Context, query string, limit int) ([]entities.Person, error)
-	GetByIDs(ctx context.Context, ids []uuid.UUID) ([]entities.Person, error)
-}
-
-type EventStore interface {
-	LoadUserApprovedEvents(ctx context.Context, userID uuid.UUID) ([]events.Event, error)
 }
 
 type ProjectMembershipRepository interface {

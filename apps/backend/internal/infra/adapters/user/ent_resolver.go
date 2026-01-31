@@ -1,4 +1,4 @@
-package event
+package user
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// ResolveUser tries to load a user by ID and, if not found, falls back to matching the ID against a person's ID.
 func ResolveUser(ctx context.Context, cli *ent.Client, creatorID uuid.UUID) (*ent.User, error) {
 	if creatorID == uuid.Nil {
 		return nil, nil

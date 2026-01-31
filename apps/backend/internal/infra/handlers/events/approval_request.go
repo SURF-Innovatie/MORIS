@@ -1,4 +1,4 @@
-package event
+package events
 
 import (
 	"context"
@@ -9,19 +9,19 @@ import (
 	orgsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
-	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/eventstore"
+	eventrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/event"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
 
 type ApprovalRequestNotificationHandler struct {
-	cli  *ent.Client
-	es   eventstore.Store
-	rbac orgsvc.Service
+	cli       *ent.Client
+	eventRepo *eventrepo.EntRepo
+	rbac      orgsvc.Service
 }
 
-func NewApprovalRequestHandler(cli *ent.Client, es eventstore.Store, rbac orgsvc.Service) *ApprovalRequestNotificationHandler {
-	return &ApprovalRequestNotificationHandler{cli: cli, es: es, rbac: rbac}
+func NewApprovalRequestHandler(cli *ent.Client, eventRepo *eventrepo.EntRepo, rbac orgsvc.Service) *ApprovalRequestNotificationHandler {
+	return &ApprovalRequestNotificationHandler{cli: cli, eventRepo: eventRepo, rbac: rbac}
 }
 
 func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e events.Event) error {
@@ -36,7 +36,7 @@ func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e event
 
 	projectID := e.AggregateID()
 
-	evts, _, err := h.es.Load(ctx, projectID)
+	evts, _, err := h.eventRepo.Load(ctx, projectID)
 	if err != nil || len(evts) == 0 {
 		return err
 	}

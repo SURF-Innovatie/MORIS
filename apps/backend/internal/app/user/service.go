@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 
+	"github.com/SURF-Innovatie/MORIS/internal/app/event"
 	"github.com/SURF-Innovatie/MORIS/internal/app/person"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
@@ -31,7 +32,7 @@ type Service interface {
 type service struct {
 	users      Repository
 	people     person.Service
-	es         EventStore
+	eventSvc   event.Service
 	membership ProjectMembershipRepository
 	cache      cache.UserCache
 }
@@ -39,11 +40,11 @@ type service struct {
 func NewService(
 	users Repository,
 	people person.Service,
-	es EventStore,
+	eventSvc event.Service,
 	membership ProjectMembershipRepository,
 	cache cache.UserCache,
 ) Service {
-	return &service{users: users, people: people, es: es, membership: membership, cache: cache}
+	return &service{users: users, people: people, eventSvc: eventSvc, membership: membership, cache: cache}
 }
 
 func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.User, error) {
@@ -115,7 +116,7 @@ func (s *service) GetAccountByEmail(ctx context.Context, email string) (*entitie
 }
 
 func (s *service) GetApprovedEvents(ctx context.Context, userID uuid.UUID) ([]events.Event, error) {
-	return s.es.LoadUserApprovedEvents(ctx, userID)
+	return s.eventSvc.LoadUserApprovedEvents(ctx, userID)
 }
 
 func (s *service) ListAll(ctx context.Context, limit, offset int) ([]*entities.UserAccount, int, error) {

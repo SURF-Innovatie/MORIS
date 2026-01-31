@@ -1,4 +1,4 @@
-package event
+package events
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/notification"
 	notifservice "github.com/SURF-Innovatie/MORIS/internal/app/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/adapters/user"
 )
 
 type StatusUpdateNotificationHandler struct {
@@ -25,7 +26,7 @@ func (h *StatusUpdateNotificationHandler) Handle(ctx context.Context, e events.E
 		return nil
 	}
 
-	u, err := ResolveUser(ctx, h.cli, e.CreatedByID())
+	u, err := user.ResolveUser(ctx, h.cli, e.CreatedByID())
 	if err != nil || u == nil {
 		return err
 	}
