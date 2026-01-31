@@ -11,7 +11,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
-	"github.com/SURF-Innovatie/MORIS/internal/app/projectrole"
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/role"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
@@ -31,7 +31,7 @@ type service struct {
 	cache       cache.ProjectCache
 	currentUser appauth.CurrentUserProvider
 	entClient   EntClientProvider
-	roleSvc     projectrole.Service
+	roleSvc     role.Service
 	evaluator   eventpolicy.Evaluator
 	orgSvc      organisation.Service
 	rbacSvc     rbacsvc.Service
@@ -42,7 +42,7 @@ func NewService(
 	pc cache.ProjectCache,
 	currentUser appauth.CurrentUserProvider,
 	entClient EntClientProvider,
-	roleSvc projectrole.Service,
+	roleSvc role.Service,
 	evaluator eventpolicy.Evaluator,
 	orgSvc organisation.Service,
 	rbacSvc rbacsvc.Service,

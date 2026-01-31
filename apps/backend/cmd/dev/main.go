@@ -8,9 +8,9 @@ import (
 	"os/exec"
 
 	_ "github.com/SURF-Innovatie/MORIS/api/swag-docs"
+	"github.com/SURF-Innovatie/MORIS/cmd/dev/wire"
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/internal/api"
-	"github.com/SURF-Innovatie/MORIS/internal/di"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	_ "github.com/lib/pq"
@@ -68,7 +68,7 @@ func main() {
 		log.Fatal().Err(err).Msg("event registration invalid")
 	}
 
-	injector := do.New(di.Package)
+	injector := do.New(wire.Package)
 	defer injector.Shutdown() //nolint:errcheck
 
 	// Get ent client to defer close

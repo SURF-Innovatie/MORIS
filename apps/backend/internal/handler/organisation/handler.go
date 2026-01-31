@@ -7,7 +7,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/customfield"
 	organisationsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
-	"github.com/SURF-Innovatie/MORIS/internal/app/projectrole"
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/role"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
@@ -18,11 +18,11 @@ import (
 type Handler struct {
 	svc            organisationsvc.Service
 	rbac           rbacsvc.Service
-	roleSvc        projectrole.Service
+	roleSvc        role.Service
 	customFieldSvc customfield.Service
 }
 
-func NewHandler(s organisationsvc.Service, r rbacsvc.Service, rs projectrole.Service, cfs customfield.Service) *Handler {
+func NewHandler(s organisationsvc.Service, r rbacsvc.Service, rs role.Service, cfs customfield.Service) *Handler {
 	return &Handler{svc: s, rbac: r, roleSvc: rs, customFieldSvc: cfs}
 }
 
