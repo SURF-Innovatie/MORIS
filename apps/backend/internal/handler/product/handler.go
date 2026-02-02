@@ -61,7 +61,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		Type:               entities.ProductType(req.Type),
 		DOI:                req.DOI,
 		ZenodoDepositionID: zenodoID,
-		AuthorPersonID:     u.PersonID(),
+		AuthorPersonID:     u.PersonID,
 	})
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
@@ -111,7 +111,7 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	products, err := h.svc.GetAllForUser(r.Context(), u.PersonID())
+	products, err := h.svc.GetAllForUser(r.Context(), u.PersonID)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return

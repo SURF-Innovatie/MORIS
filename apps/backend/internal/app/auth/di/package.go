@@ -1,22 +1,18 @@
 package di
 
 import (
-	"github.com/SURF-Innovatie/MORIS/ent"
-	coreauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
-	personsvc "github.com/SURF-Innovatie/MORIS/internal/app/person"
-	"github.com/SURF-Innovatie/MORIS/internal/app/user"
-	"github.com/SURF-Innovatie/MORIS/internal/infra/auth"
+	authapp "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	"github.com/samber/do/v2"
 )
 
 var Package = do.Package(
-	do.Lazy(provideAuthService),
+	do.Lazy(ProvideService),
 )
 
-func provideAuthService(i do.Injector) (coreauth.Service, error) {
-	cli := do.MustInvoke[*ent.Client](i)
-	userSvc := do.MustInvoke[user.Service](i)
-	personSvc := do.MustInvoke[personsvc.Service](i)
-	return auth.NewJWTService(cli, userSvc, personSvc, env.Global.JWTSecret), nil
+func ProvideService(i do.Injector) (authapp.Service, error) {
+	repo := do.MustInvoke[authapp.Repository](i)
+	return authapp.NewService(repo, authapp.Options{
+		JWTSecret: env.Global.JWTSecret,
+	}), nil
 }

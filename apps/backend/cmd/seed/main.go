@@ -24,7 +24,7 @@ import (
 	organisationrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation"
 	organisationrbacrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation/rbac"
 	personrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/person"
-	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project/projectrole"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project/role"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog"
@@ -210,7 +210,7 @@ func main() {
 	}
 	orgNodeIDs["Nederland"] = orgRoot.ID
 
-	roleRepo := role.NewRepository(client)
+	roleRepo := role.NewEntRepo(client)
 
 	if _, err := roleRepo.Create(ctx, "contributor", "Contributor", orgRoot.ID); err != nil {
 		log.Fatal().Err(err).Msg("create project role contributor")

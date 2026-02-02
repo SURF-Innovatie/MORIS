@@ -127,6 +127,10 @@ type fakePersonRepo struct {
 	byID map[uuid.UUID]entities.Person
 }
 
+func (r *fakePersonRepo) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]entities.Person, error) {
+	panic("not implemented")
+}
+
 func (r *fakePersonRepo) Get(_ context.Context, id uuid.UUID) (*entities.Person, error) {
 	p, ok := r.byID[id]
 	if !ok {

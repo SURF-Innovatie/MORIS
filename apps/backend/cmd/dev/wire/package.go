@@ -44,10 +44,11 @@ import (
 	userhandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/user/di"
 	zenodohandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/zenodo/di"
 	recipientadapterinfradi "github.com/SURF-Innovatie/MORIS/internal/infra/adapters/eventpolicy/di"
-	authinfradi "github.com/SURF-Innovatie/MORIS/internal/infra/auth/di"
 	infradi "github.com/SURF-Innovatie/MORIS/internal/infra/di"
 	eventpublisherinfradi "github.com/SURF-Innovatie/MORIS/internal/infra/eventdispatch/di"
 	eventinfrahandlerdi "github.com/SURF-Innovatie/MORIS/internal/infra/handlers/events/di"
+	identityinfradi "github.com/SURF-Innovatie/MORIS/internal/infra/identity/di"
+	authrepodi "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/auth/di"
 	customfieldrepodi "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/customfield/di"
 	errorlogrepodi "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/errorlog/di"
 	eventrepodi "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/event/di"
@@ -69,8 +70,8 @@ var Package = do.Package(
 	adapterhandlerdi.Package,
 
 	authappdi.Package,
-	authinfradi.Package,
 	authhandlerdi.Package,
+	authrepodi.Package,
 
 	crossrefappdi.Package,
 	crossrefhandlerdi.Package,
@@ -95,6 +96,8 @@ var Package = do.Package(
 	eventpolicyhandlerdi.Package,
 
 	eventpublisherinfradi.Package,
+
+	identityinfradi.Package,
 
 	notificaionappdi.Package,
 	notificationrepodi.Package,

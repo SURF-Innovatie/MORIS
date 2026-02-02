@@ -60,7 +60,7 @@ func (h *Handler) GetAuthURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authURL, err := h.zenodoService.GetAuthURL(r.Context(), u.UserID())
+	authURL, err := h.zenodoService.GetAuthURL(r.Context(), u.UserID)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -103,7 +103,7 @@ func (h *Handler) Link(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.zenodoService.Link(r.Context(), u.UserID(), req.Code); err != nil {
+	if err := h.zenodoService.Link(r.Context(), u.UserID, req.Code); err != nil {
 		if err == appzenodo.ErrAlreadyLinked {
 			httputil.WriteError(w, r, http.StatusBadRequest, "Zenodo account already linked", nil)
 			return
@@ -136,7 +136,7 @@ func (h *Handler) Unlink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.zenodoService.Unlink(r.Context(), u.UserID()); err != nil {
+	if err := h.zenodoService.Unlink(r.Context(), u.UserID); err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
@@ -166,7 +166,7 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	linked, err := h.zenodoService.IsLinked(r.Context(), u.UserID())
+	linked, err := h.zenodoService.IsLinked(r.Context(), u.UserID)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -192,7 +192,7 @@ func (h *Handler) ListDepositions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deps, err := h.zenodoService.ListDepositions(r.Context(), u.UserID())
+	deps, err := h.zenodoService.ListDepositions(r.Context(), u.UserID)
 	if err != nil {
 		if err == appzenodo.ErrNotLinked {
 			httputil.WriteError(w, r, http.StatusBadRequest, "Zenodo account not linked", nil)
@@ -222,7 +222,7 @@ func (h *Handler) CreateDeposition(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dep, err := h.zenodoService.CreateDeposition(r.Context(), u.UserID())
+	dep, err := h.zenodoService.CreateDeposition(r.Context(), u.UserID)
 	if err != nil {
 		if err == appzenodo.ErrNotLinked {
 			httputil.WriteError(w, r, http.StatusBadRequest, "Zenodo account not linked", nil)
@@ -260,7 +260,7 @@ func (h *Handler) GetDeposition(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dep, err := h.zenodoService.GetDeposition(r.Context(), u.UserID(), id)
+	dep, err := h.zenodoService.GetDeposition(r.Context(), u.UserID, id)
 	if err != nil {
 		if err == appzenodo.ErrNotLinked {
 			httputil.WriteError(w, r, http.StatusBadRequest, "Zenodo account not linked", nil)
@@ -307,7 +307,7 @@ func (h *Handler) UpdateDeposition(w http.ResponseWriter, r *http.Request) {
 
 	md := toExternalDepositionMetadata(req)
 
-	dep, err := h.zenodoService.UpdateDeposition(r.Context(), u.UserID(), id, &md)
+	dep, err := h.zenodoService.UpdateDeposition(r.Context(), u.UserID, id, &md)
 	if err != nil {
 		if err == appzenodo.ErrNotLinked {
 			httputil.WriteError(w, r, http.StatusBadRequest, "Zenodo account not linked", nil)
@@ -345,7 +345,7 @@ func (h *Handler) DeleteDeposition(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.zenodoService.DeleteDeposition(r.Context(), u.UserID(), id); err != nil {
+	if err := h.zenodoService.DeleteDeposition(r.Context(), u.UserID, id); err != nil {
 		if err == appzenodo.ErrNotLinked {
 			httputil.WriteError(w, r, http.StatusBadRequest, "Zenodo account not linked", nil)
 			return
@@ -396,7 +396,7 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	depFile, err := h.zenodoService.UploadFile(r.Context(), u.UserID(), id, header.Filename, io.Reader(file))
+	depFile, err := h.zenodoService.UploadFile(r.Context(), u.UserID, id, header.Filename, io.Reader(file))
 	if err != nil {
 		if err == appzenodo.ErrNotLinked {
 			httputil.WriteError(w, r, http.StatusBadRequest, "Zenodo account not linked", nil)
@@ -434,7 +434,7 @@ func (h *Handler) Publish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dep, err := h.zenodoService.Publish(r.Context(), u.UserID(), id)
+	dep, err := h.zenodoService.Publish(r.Context(), u.UserID, id)
 	if err != nil {
 		if err == appzenodo.ErrNotLinked {
 			httputil.WriteError(w, r, http.StatusBadRequest, "Zenodo account not linked", nil)

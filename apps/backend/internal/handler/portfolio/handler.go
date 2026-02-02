@@ -37,14 +37,14 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	portfolioSettings, err := h.svc.GetForPerson(r.Context(), u.PersonID())
+	portfolioSettings, err := h.svc.GetForPerson(r.Context(), u.PersonID)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
 	if portfolioSettings == nil {
-		defaults := defaultPortfolio(u.PersonID())
+		defaults := defaultPortfolio(u.PersonID)
 		_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.PortfolioResponse](defaults))
 		return
 	}
@@ -76,13 +76,13 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	existing, err := h.svc.GetForPerson(r.Context(), u.PersonID())
+	existing, err := h.svc.GetForPerson(r.Context(), u.PersonID)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
-	merged := defaultPortfolio(u.PersonID())
+	merged := defaultPortfolio(u.PersonID)
 	if existing != nil {
 		merged = *existing
 	}
@@ -116,7 +116,7 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		merged.PinnedProductIDs = []uuid.UUID{}
 	}
 
-	updated, err := h.svc.UpdateForPerson(r.Context(), u.PersonID(), merged)
+	updated, err := h.svc.UpdateForPerson(r.Context(), u.PersonID, merged)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return

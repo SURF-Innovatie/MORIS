@@ -77,10 +77,10 @@ func (s *service) GetAllProjects(ctx context.Context) ([]*ProjectDetails, error)
 	var ids []uuid.UUID
 
 	// Sysadmins can see all projects
-	if u.IsSysAdmin() {
+	if u.IsSysAdmin {
 		ids, err = s.repo.ProjectIDsStarted(ctx)
 	} else {
-		ids, err = s.repo.ProjectIDsForPerson(ctx, u.PersonID())
+		ids, err = s.repo.ProjectIDsForPerson(ctx, u.PersonID)
 	}
 	if err != nil {
 		return nil, err
@@ -394,7 +394,7 @@ func (s *service) GetAllowedEventTypes(ctx context.Context, projectID uuid.UUID)
 		return nil, err
 	}
 
-	if u.IsSysAdmin() {
+	if u.IsSysAdmin {
 		return events.GetRegisteredEventTypes(), nil
 	}
 
@@ -407,7 +407,7 @@ func (s *service) GetAllowedEventTypes(ctx context.Context, projectID uuid.UUID)
 	// Find user's role in this project
 	var userRoleID *uuid.UUID
 	for _, m := range proj.Members {
-		if m.PersonID == u.PersonID() {
+		if m.PersonID == u.PersonID {
 			userRoleID = &m.ProjectRoleID
 			break
 		}

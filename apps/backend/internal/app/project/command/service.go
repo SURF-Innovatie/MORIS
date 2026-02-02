@@ -77,7 +77,7 @@ func (s *service) ListAvailableEvents(ctx context.Context, projectID *uuid.UUID)
 	// If projectID provided, get user's role and filter based on allowed events
 	var userRole *entities.ProjectRole
 	if projectID != nil && *projectID != uuid.Nil {
-		userRole = s.getUserProjectRole(ctx, *projectID, u.PersonID())
+		userRole = s.getUserProjectRole(ctx, *projectID, u.PersonID)
 	}
 
 	out := lo.Map(metas, func(m events.EventMeta, _ int) AvailableEvent {
@@ -118,7 +118,7 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*e
 			if strID, ok := inputMap["owning_org_node_id"].(string); ok {
 				orgID, err := uuid.Parse(strID)
 				if err == nil {
-					has, err := s.rbacSvc.HasPermission(ctx, u.PersonID(), orgID, entities.PermissionCreateProject)
+					has, err := s.rbacSvc.HasPermission(ctx, u.PersonID, orgID, entities.PermissionCreateProject)
 					if err != nil {
 						return nil, err
 					}
@@ -143,7 +143,7 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*e
 	proj, err := s.exec.Execute(ctx, req.ProjectID, func(ctx context.Context, cur *entities.Project) ([]events.Event, error) {
 		meta := events.GetMeta(req.Type)
 
-		e, err := decider(ctx, req.ProjectID, u.UserID(), cur, req.Input, status)
+		e, err := decider(ctx, req.ProjectID, u.UserID, cur, req.Input, status)
 		if err != nil {
 			return nil, err
 		}
@@ -163,8 +163,8 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*e
 				// Manually construct ProjectRoleAssigned event since we are in genesis block
 				// and don't have a valid 'cur' project state for the standard decider.
 				assignEvt := &events.ProjectRoleAssigned{
-					Base:          events.NewBase(started.ProjectID, u.UserID(), events.StatusApproved),
-					PersonID:      u.PersonID(),
+					Base:          events.NewBase(started.ProjectID, u.UserID, events.StatusApproved),
+					PersonID:      u.PersonID,
 					ProjectRoleID: role.ID,
 				}
 
@@ -174,8 +174,8 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*e
 
 		// Check role-based permissions (EBAC)
 		if cur != nil {
-			userRole := s.getUserProjectRole(ctx, req.ProjectID, u.PersonID())
-			if userRole != nil && !userRole.CanUseEventType(req.Type) && !u.IsSysAdmin() {
+			userRole := s.getUserProjectRole(ctx, req.ProjectID, u.PersonID)
+			if userRole != nil && !userRole.CanUseEventType(req.Type) && !u.IsSysAdmin {
 				return nil, fmt.Errorf("your role does not allow executing %s events", req.Type)
 			}
 		}

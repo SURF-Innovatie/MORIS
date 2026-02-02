@@ -240,5 +240,5 @@ func getFormattedDateRange(from *time.Time, until *time.Time) string {
 		u = "9999-12-31"
 	}
 
-	return fmt.Sprintf("%%5B%s%%20TO%20%s%%5D", f, u)
+	return url.QueryEscape("[" + f + " TO " + u + "]")
 }
