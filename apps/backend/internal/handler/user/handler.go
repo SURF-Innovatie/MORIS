@@ -7,8 +7,8 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -75,7 +75,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		hashedPassword = string(hash)
 	}
 
-	u, err := h.svc.Create(r.Context(), entities.User{
+	u, err := h.svc.Create(r.Context(), identity.User{
 		PersonID:   req.PersonID,
 		Password:   hashedPassword,
 		IsSysAdmin: isSysAdmin,

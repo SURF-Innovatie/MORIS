@@ -3,23 +3,23 @@ package eventpolicy
 import (
 	"context"
 
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/policy"
 	"github.com/google/uuid"
 )
 
 // repository defines the persistence interface for event policies
 type repository interface {
-	Create(ctx context.Context, policy entities.EventPolicy) (*entities.EventPolicy, error)
-	Update(ctx context.Context, id uuid.UUID, policy entities.EventPolicy) (*entities.EventPolicy, error)
+	Create(ctx context.Context, policy policy.EventPolicy) (*policy.EventPolicy, error)
+	Update(ctx context.Context, id uuid.UUID, policy policy.EventPolicy) (*policy.EventPolicy, error)
 	Delete(ctx context.Context, id uuid.UUID) error
-	GetByID(ctx context.Context, id uuid.UUID) (*entities.EventPolicy, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*policy.EventPolicy, error)
 
 	// ListForOrgNode returns policies for an org node.
 	// If ancestorNodeIDs is provided, also returns policies from those ancestors (for inheritance).
-	ListForOrgNode(ctx context.Context, orgNodeID uuid.UUID, ancestorNodeIDs []uuid.UUID) ([]entities.EventPolicy, error)
+	ListForOrgNode(ctx context.Context, orgNodeID uuid.UUID, ancestorNodeIDs []uuid.UUID) ([]policy.EventPolicy, error)
 
 	// ListForProject returns policies directly attached to a project.
-	ListForProject(ctx context.Context, projectID uuid.UUID) ([]entities.EventPolicy, error)
+	ListForProject(ctx context.Context, projectID uuid.UUID) ([]policy.EventPolicy, error)
 }
 
 // RecipientResolver resolves recipient specifications to actual user IDs

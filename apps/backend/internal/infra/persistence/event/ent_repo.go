@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"time"
 
+	events2 "github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	en "github.com/SURF-Innovatie/MORIS/ent/event" //nolint:depguard
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 )
 
 var ErrConcurrency = errors.New("concurrency conflict")
@@ -28,7 +28,7 @@ func (s *EntRepo) Append(
 	ctx context.Context,
 	projectID uuid.UUID,
 	expectedVersion int,
-	list ...events.Event,
+	list ...events2.Event,
 ) error {
 	if len(list) == 0 {
 		return nil
@@ -109,7 +109,7 @@ func (s *EntRepo) Append(
 
 	// Update event IDs in the original event objects so handlers can use them
 	for i, e := range list {
-		base := events.Base{
+		base := events2.Base{
 			ID:              eventIDs[i],
 			ProjectID:       projectID,
 			At:              now,
@@ -140,7 +140,7 @@ func (s *EntRepo) UpdateStatus(ctx context.Context, eventID uuid.UUID, status st
 func (s *EntRepo) Load(
 	ctx context.Context,
 	projectID uuid.UUID,
-) ([]events.Event, int, error) {
+) ([]events2.Event, int, error) {
 	rows, err := s.cli.Event.
 		Query().
 		Where(en.ProjectIDEQ(projectID)).
@@ -150,7 +150,7 @@ func (s *EntRepo) Load(
 		return nil, 0, err
 	}
 
-	out := make([]events.Event, 0, len(rows))
+	out := make([]events2.Event, 0, len(rows))
 	for _, r := range rows {
 		evt, err := s.mapEventRow(r)
 		if err != nil {
@@ -170,7 +170,7 @@ func (s *EntRepo) Load(
 	return out, curVersion, nil
 }
 
-func (s *EntRepo) LoadEvent(ctx context.Context, eventID uuid.UUID) (events.Event, error) {
+func (s *EntRepo) LoadEvent(ctx context.Context, eventID uuid.UUID) (events2.Event, error) {
 	r, err := s.cli.Event.
 		Query().
 		Where(en.IDEQ(eventID)).
@@ -182,7 +182,7 @@ func (s *EntRepo) LoadEvent(ctx context.Context, eventID uuid.UUID) (events.Even
 	return s.mapEventRow(r)
 }
 
-func (s *EntRepo) LoadUserApprovedEvents(ctx context.Context, userID uuid.UUID) ([]events.Event, error) {
+func (s *EntRepo) LoadUserApprovedEvents(ctx context.Context, userID uuid.UUID) ([]events2.Event, error) {
 	rows, err := s.cli.Event.
 		Query().
 		Where(
@@ -195,7 +195,7 @@ func (s *EntRepo) LoadUserApprovedEvents(ctx context.Context, userID uuid.UUID) 
 		return nil, err
 	}
 
-	out := make([]events.Event, 0, len(rows))
+	out := make([]events2.Event, 0, len(rows))
 	for _, r := range rows {
 		evt, err := s.mapEventRow(r)
 		if err != nil {
@@ -209,16 +209,16 @@ func (s *EntRepo) LoadUserApprovedEvents(ctx context.Context, userID uuid.UUID) 
 	return out, nil
 }
 
-func (s *EntRepo) mapEventRow(r *ent.Event) (events.Event, error) {
-	base := events.Base{
+func (s *EntRepo) mapEventRow(r *ent.Event) (events2.Event, error) {
+	base := events2.Base{
 		ID:        r.ID,
 		ProjectID: r.ProjectID,
 		At:        r.OccurredAt,
 		CreatedBy: r.CreatedBy,
-		Status:    events.Status(r.Status),
+		Status:    events2.Status(r.Status),
 	}
 
-	evt, err := events.Create(r.Type)
+	evt, err := events2.Create(r.Type)
 	if err != nil {
 		log.Info().Msgf("unknown event type %s", r.Type)
 		return nil, nil
@@ -239,7 +239,7 @@ func (s *EntRepo) mapEventRow(r *ent.Event) (events.Event, error) {
 	return evt, nil
 }
 
-func eventToMap(e events.Event) (map[string]any, error) {
+func eventToMap(e events2.Event) (map[string]any, error) {
 	b, err := json.Marshal(e)
 	if err != nil {
 		return nil, err

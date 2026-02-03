@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
+	events2 "github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/projection"
 	eventrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/event"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -22,9 +22,9 @@ func NewPolicyExecutionHandler(evaluator eventpolicy.Evaluator, eventRepo *event
 	return &PolicyExecutionHandler{evaluator: evaluator, eventRepo: eventRepo}
 }
 
-func (h *PolicyExecutionHandler) Handle(ctx context.Context, evt events.Event) error {
+func (h *PolicyExecutionHandler) Handle(ctx context.Context, evt events2.Event) error {
 	// If you want this rule, it belongs here (or inside evaluator). Keeping it here is fine.
-	if evt.GetStatus() == events.StatusRejected {
+	if evt.GetStatus() == events2.StatusRejected {
 		return nil
 	}
 
@@ -44,7 +44,7 @@ func (h *PolicyExecutionHandler) Handle(ctx context.Context, evt events.Event) e
 	return h.evaluator.EvaluateAndExecute(ctx, evt, project)
 }
 
-func (h *PolicyExecutionHandler) loadProject(ctx context.Context, projectID uuid.UUID) (*entities.Project, error) {
+func (h *PolicyExecutionHandler) loadProject(ctx context.Context, projectID uuid.UUID) (*project.Project, error) {
 	evts, version, err := h.eventRepo.Load(ctx, projectID)
 	if err != nil {
 		log.Error().Err(err).Msgf("PolicyExecutionHandler: failed to load events for project %s", projectID)

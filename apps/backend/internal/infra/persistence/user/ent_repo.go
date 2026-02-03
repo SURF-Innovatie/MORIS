@@ -6,7 +6,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
 	"github.com/google/uuid"
 )
 
@@ -18,23 +18,23 @@ func NewEntRepo(cli *ent.Client) *EntRepo {
 	return &EntRepo{cli: cli}
 }
 
-func (r *EntRepo) Get(ctx context.Context, id uuid.UUID) (*entities.User, error) {
+func (r *EntRepo) Get(ctx context.Context, id uuid.UUID) (*identity.User, error) {
 	row, err := r.cli.User.Query().Where(entuser.IDEQ(id)).Only(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntityPtr[entities.User](row), nil
+	return transform.ToEntityPtr[identity.User](row), nil
 }
 
-func (r *EntRepo) GetByPersonID(ctx context.Context, personID uuid.UUID) (*entities.User, error) {
+func (r *EntRepo) GetByPersonID(ctx context.Context, personID uuid.UUID) (*identity.User, error) {
 	row, err := r.cli.User.Query().Where(entuser.PersonIDEQ(personID)).Only(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntityPtr[entities.User](row), nil
+	return transform.ToEntityPtr[identity.User](row), nil
 }
 
-func (r *EntRepo) Create(ctx context.Context, u entities.User) (*entities.User, error) {
+func (r *EntRepo) Create(ctx context.Context, u identity.User) (*identity.User, error) {
 	builder := r.cli.User.Create().
 		SetPersonID(u.PersonID).
 		SetIsSysAdmin(u.IsSysAdmin)
@@ -48,10 +48,10 @@ func (r *EntRepo) Create(ctx context.Context, u entities.User) (*entities.User, 
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntityPtr[entities.User](row), nil
+	return transform.ToEntityPtr[identity.User](row), nil
 }
 
-func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, u entities.User) (*entities.User, error) {
+func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, u identity.User) (*identity.User, error) {
 	row, err := r.cli.User.UpdateOneID(id).
 		SetPersonID(u.PersonID).
 		SetPassword(u.Password).
@@ -60,7 +60,7 @@ func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, u entities.User) (*e
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntityPtr[entities.User](row), nil
+	return transform.ToEntityPtr[identity.User](row), nil
 }
 
 func (r *EntRepo) Delete(ctx context.Context, id uuid.UUID) error {
@@ -71,7 +71,7 @@ func (r *EntRepo) ToggleActive(ctx context.Context, id uuid.UUID, isActive bool)
 	return r.cli.User.UpdateOneID(id).SetIsActive(isActive).Exec(ctx)
 }
 
-func (r *EntRepo) ListUsers(ctx context.Context, limit, offset int) ([]entities.User, int, error) {
+func (r *EntRepo) ListUsers(ctx context.Context, limit, offset int) ([]identity.User, int, error) {
 	total, err := r.cli.User.Query().Count(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -81,7 +81,7 @@ func (r *EntRepo) ListUsers(ctx context.Context, limit, offset int) ([]entities.
 		return nil, 0, err
 	}
 
-	return transform.ToEntities[entities.User](rows), total, nil
+	return transform.ToEntities[identity.User](rows), total, nil
 }
 
 func (r *EntRepo) SetZenodoTokens(ctx context.Context, userID uuid.UUID, access, refresh string) error {

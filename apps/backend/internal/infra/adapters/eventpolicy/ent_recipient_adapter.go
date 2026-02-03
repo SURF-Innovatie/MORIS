@@ -9,7 +9,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/membership"
 	"github.com/SURF-Innovatie/MORIS/ent/rolescope"
 	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	events2 "github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/samber/lo"
@@ -71,7 +71,7 @@ func (r *RecipientAdapter) ResolveDynamic(ctx context.Context, dynType string, p
 
 	case "project_owner":
 		createdEvt, err := r.client.Event.Query().
-			Where(en.TypeEQ(events.ProjectStartedType), en.ProjectIDEQ(projectID)).
+			Where(en.TypeEQ(events2.ProjectStartedType), en.ProjectIDEQ(projectID)).
 			First(ctx)
 		if err != nil {
 			log.Error().Err(err).Msg("ResolveDynamic project_owner error")
@@ -88,14 +88,14 @@ func (r *RecipientAdapter) ResolveDynamic(ctx context.Context, dynType string, p
 
 func (r *RecipientAdapter) projectMembers(ctx context.Context, projectID uuid.UUID) ([]uuid.UUID, error) {
 	evts, err := r.client.Event.Query().
-		Where(en.TypeEQ(events.ProjectRoleAssignedType), en.ProjectIDEQ(projectID)).
+		Where(en.TypeEQ(events2.ProjectRoleAssignedType), en.ProjectIDEQ(projectID)).
 		All(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	personIDs := lo.FilterMap(evts, func(e *ent.Event, _ int) (uuid.UUID, bool) {
-		var payload events.ProjectRoleAssigned
+		var payload events2.ProjectRoleAssigned
 		b, _ := json.Marshal(e.Data)
 		if json.Unmarshal(b, &payload) == nil && payload.PersonID != uuid.Nil {
 			return payload.PersonID, true
@@ -107,14 +107,14 @@ func (r *RecipientAdapter) projectMembers(ctx context.Context, projectID uuid.UU
 
 func (r *RecipientAdapter) projectMembersWithRole(ctx context.Context, roleID, projectID uuid.UUID) ([]uuid.UUID, error) {
 	evts, err := r.client.Event.Query().
-		Where(en.TypeEQ(events.ProjectRoleAssignedType), en.ProjectIDEQ(projectID)).
+		Where(en.TypeEQ(events2.ProjectRoleAssignedType), en.ProjectIDEQ(projectID)).
 		All(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	personIDs := lo.FilterMap(evts, func(e *ent.Event, _ int) (uuid.UUID, bool) {
-		var payload events.ProjectRoleAssigned
+		var payload events2.ProjectRoleAssigned
 		b, _ := json.Marshal(e.Data)
 		if json.Unmarshal(b, &payload) == nil && payload.ProjectRoleID == roleID && payload.PersonID != uuid.Nil {
 			return payload.PersonID, true

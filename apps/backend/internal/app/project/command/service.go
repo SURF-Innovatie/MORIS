@@ -12,8 +12,10 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/role"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation/rbac"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
+	events2 "github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
+	role2 "github.com/SURF-Innovatie/MORIS/internal/domain/project/role"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -22,12 +24,12 @@ import (
 
 type Service interface {
 	ListAvailableEvents(ctx context.Context, projectID *uuid.UUID) ([]AvailableEvent, error)
-	ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*entities.Project, error)
+	ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*project.Project, error)
 }
 
 type service struct {
 	evtSvc      event.Service
-	exec        *commandbus.Executor[entities.Project]
+	exec        *commandbus.Executor[project.Project]
 	cache       cache.ProjectCache
 	currentUser appauth.CurrentUserProvider
 	entClient   EntClientProvider
@@ -57,7 +59,7 @@ func NewService(
 		evaluator:   evaluator,
 		orgSvc:      orgSvc,
 		rbacSvc:     rbacSvc,
-		exec: commandbus.NewExecutor[entities.Project](
+		exec: commandbus.NewExecutor[project.Project](
 			evtSvc,
 			evtPub,
 			Reducer{},
@@ -72,15 +74,15 @@ func (s *service) ListAvailableEvents(ctx context.Context, projectID *uuid.UUID)
 		return nil, err
 	}
 
-	metas := events.GetAllMetas()
+	metas := events2.GetAllMetas()
 
 	// If projectID provided, get user's role and filter based on allowed events
-	var userRole *entities.ProjectRole
+	var userRole *role2.ProjectRole
 	if projectID != nil && *projectID != uuid.Nil {
 		userRole = s.getUserProjectRole(ctx, *projectID, u.PersonID)
 	}
 
-	out := lo.Map(metas, func(m events.EventMeta, _ int) AvailableEvent {
+	out := lo.Map(metas, func(m events2.EventMeta, _ int) AvailableEvent {
 		allowed := true
 		if userRole != nil {
 			allowed = userRole.CanUseEventType(m.Type)
@@ -90,14 +92,14 @@ func (s *service) ListAvailableEvents(ctx context.Context, projectID *uuid.UUID)
 			FriendlyName:  m.FriendlyName,
 			NeedsApproval: false,
 			Allowed:       allowed,
-			InputSchema:   events.GetInputSchema(m.Type),
+			InputSchema:   events2.GetInputSchema(m.Type),
 		}
 	})
 
 	return out, nil
 }
 
-func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*entities.Project, error) {
+func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*project.Project, error) {
 	if req.ProjectID == uuid.Nil {
 		return nil, fmt.Errorf("projectId is required")
 	}
@@ -111,14 +113,14 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*e
 	}
 	cli := s.entClient.Client()
 
-	if req.Type == events.ProjectStartedType {
+	if req.Type == events2.ProjectStartedType {
 		// Parse input safely using json encoding
 		var inputMap map[string]interface{}
 		if err := json.Unmarshal(req.Input, &inputMap); err == nil {
 			if strID, ok := inputMap["owning_org_node_id"].(string); ok {
 				orgID, err := uuid.Parse(strID)
 				if err == nil {
-					has, err := s.rbacSvc.HasPermission(ctx, u.PersonID, orgID, entities.PermissionCreateProject)
+					has, err := s.rbacSvc.HasPermission(ctx, u.PersonID, orgID, rbac.PermissionCreateProject)
 					if err != nil {
 						return nil, err
 					}
@@ -130,18 +132,18 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*e
 		}
 	}
 
-	decider, ok := events.GetDecider(req.Type)
+	decider, ok := events2.GetDecider(req.Type)
 	if !ok {
 		return nil, fmt.Errorf("unknown event type: %s", req.Type)
 	}
 
 	status := req.Status
 	if status == "" {
-		status = events.StatusApproved
+		status = events2.StatusApproved
 	}
 
-	proj, err := s.exec.Execute(ctx, req.ProjectID, func(ctx context.Context, cur *entities.Project) ([]events.Event, error) {
-		meta := events.GetMeta(req.Type)
+	proj, err := s.exec.Execute(ctx, req.ProjectID, func(ctx context.Context, cur *project.Project) ([]events2.Event, error) {
+		meta := events2.GetMeta(req.Type)
 
 		e, err := decider(ctx, req.ProjectID, u.UserID, cur, req.Input, status)
 		if err != nil {
@@ -152,8 +154,8 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*e
 		}
 
 		// Auto-role assignment for ProjectStarted
-		if e.Type() == events.ProjectStartedType {
-			if started, ok := e.(*events.ProjectStarted); ok {
+		if e.Type() == events2.ProjectStartedType {
+			if started, ok := e.(*events2.ProjectStarted); ok {
 				// Find a role that allows all events
 				role, err := s.findPermissiveRole(ctx, started.OwningOrgNodeID)
 				if err != nil {
@@ -162,13 +164,13 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*e
 
 				// Manually construct ProjectRoleAssigned event since we are in genesis block
 				// and don't have a valid 'cur' project state for the standard decider.
-				assignEvt := &events.ProjectRoleAssigned{
-					Base:          events.NewBase(started.ProjectID, u.UserID, events.StatusApproved),
+				assignEvt := &events2.ProjectRoleAssigned{
+					Base:          events2.NewBase(started.ProjectID, u.UserID, events2.StatusApproved),
 					PersonID:      u.PersonID,
 					ProjectRoleID: role.ID,
 				}
 
-				return []events.Event{e, assignEvt}, nil
+				return []events2.Event{e, assignEvt}, nil
 			}
 		}
 
@@ -194,31 +196,31 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*e
 
 		if needsApproval {
 			// Update the event status to Pending
-			base := events.Base{
+			base := events2.Base{
 				ID:              e.GetID(),
 				ProjectID:       e.AggregateID(),
 				At:              e.OccurredAt(),
 				CreatedBy:       e.CreatedByID(),
-				Status:          events.StatusPending,
+				Status:          events2.StatusPending,
 				FriendlyNameStr: e.FriendlyName(),
 			}
 			e.SetBase(base)
 		} else {
 			// Check legacy approval mechanism if no policy triggered it
 			if meta.NeedsApproval(ctx, e, cli) {
-				base := events.Base{
+				base := events2.Base{
 					ID:              e.GetID(),
 					ProjectID:       e.AggregateID(),
 					At:              e.OccurredAt(),
 					CreatedBy:       e.CreatedByID(),
-					Status:          events.StatusPending,
+					Status:          events2.StatusPending,
 					FriendlyNameStr: e.FriendlyName(),
 				}
 				e.SetBase(base)
 			}
 		}
 
-		return []events.Event{e}, nil
+		return []events2.Event{e}, nil
 	})
 
 	if err != nil {
@@ -231,7 +233,7 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*e
 }
 
 // getUserProjectRole returns the user's role on the project, if any
-func (s *service) getUserProjectRole(ctx context.Context, projectID, personID uuid.UUID) *entities.ProjectRole {
+func (s *service) getUserProjectRole(ctx context.Context, projectID, personID uuid.UUID) *role2.ProjectRole {
 	// Get project from cache to find user's role
 	proj, err := s.cache.GetProject(ctx, projectID)
 	if err != nil || proj == nil {
@@ -239,7 +241,7 @@ func (s *service) getUserProjectRole(ctx context.Context, projectID, personID uu
 	}
 
 	// Find user's membership and role
-	m, ok := lo.Find(proj.Members, func(m entities.ProjectMember) bool {
+	m, ok := lo.Find(proj.Members, func(m project.Member) bool {
 		return m.PersonID == personID
 	})
 	if ok {
@@ -252,14 +254,14 @@ func (s *service) getUserProjectRole(ctx context.Context, projectID, personID uu
 	return nil
 }
 
-func (s *service) findPermissiveRole(ctx context.Context, orgID uuid.UUID) (*entities.ProjectRole, error) {
+func (s *service) findPermissiveRole(ctx context.Context, orgID uuid.UUID) (*role2.ProjectRole, error) {
 	roles, err := s.roleSvc.ListAvailableForNode(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Strategy: Check if role has all known event types.
-	allEvents := events.GetRegisteredEventTypes()
+	allEvents := events2.GetRegisteredEventTypes()
 
 	for _, r := range roles {
 

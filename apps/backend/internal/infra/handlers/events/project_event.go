@@ -7,8 +7,8 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/organisationnode"
 	"github.com/SURF-Innovatie/MORIS/ent/user"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
+	events2 "github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/projection"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/event"
 )
 
@@ -21,12 +21,12 @@ func NewProjectEventHandler(cli *ent.Client, eventRepo *event.EntRepo) *ProjectE
 	return &ProjectEventNotificationHandler{cli: cli, eventRepo: eventRepo}
 }
 
-func (h *ProjectEventNotificationHandler) Handle(ctx context.Context, e events.Event) error {
-	if e.GetStatus() == events.StatusPending {
+func (h *ProjectEventNotificationHandler) Handle(ctx context.Context, e events2.Event) error {
+	if e.GetStatus() == events2.StatusPending {
 		return nil
 	}
 	// First check metadata policy
-	meta := events.GetMeta(e.Type())
+	meta := events2.GetMeta(e.Type())
 	if !meta.ShouldNotify(ctx, e, h.cli) {
 		return nil
 	}
@@ -74,15 +74,15 @@ func (h *ProjectEventNotificationHandler) Handle(ctx context.Context, e events.E
 	return nil
 }
 
-func (h *ProjectEventNotificationHandler) buildMessage(ctx context.Context, e events.Event) (string, error) {
+func (h *ProjectEventNotificationHandler) buildMessage(ctx context.Context, e events2.Event) (string, error) {
 	// Check if event implements Notifier
-	if n, ok := e.(events.Notifier); ok {
+	if n, ok := e.(events2.Notifier); ok {
 		return n.NotificationMessage(), nil
 	}
 
 	// Fallback for events requiring DB or special logic (e.g. OwningOrgNodeChanged)
 	switch v := e.(type) {
-	case *events.OwningOrgNodeChanged:
+	case *events2.OwningOrgNodeChanged:
 		n, err := h.cli.OrganisationNode.
 			Query().
 			Where(organisationnode.IDEQ(v.OwningOrgNodeID)).

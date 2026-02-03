@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	events2 "github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/event"
 	"github.com/google/uuid"
 
@@ -25,8 +25,8 @@ func TestEntStore_AppendAndLoad(t *testing.T) {
 	now := time.Now().UTC().Truncate(time.Millisecond) // Truncate for DB precision
 
 	// Create a sample event
-	evt := &events.ProjectStarted{
-		Base: events.Base{
+	evt := &events2.ProjectStarted{
+		Base: events2.Base{
 			ID:        uuid.New(),
 			ProjectID: projectID,
 			At:        now,
@@ -59,7 +59,7 @@ func TestEntStore_AppendAndLoad(t *testing.T) {
 		t.Fatalf("expected version 1, got %d", version)
 	}
 
-	loadedEvt, ok := loadedEvents[0].(*events.ProjectStarted)
+	loadedEvt, ok := loadedEvents[0].(*events2.ProjectStarted)
 	if !ok {
 		t.Fatalf("expected *ProjectStarted event, got %T", loadedEvents[0])
 	}

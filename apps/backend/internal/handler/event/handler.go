@@ -8,7 +8,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/event"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	events2 "github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -107,8 +107,8 @@ func (h *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	detailed := events.DetailedEvent{Event: e}
-	if hr, ok := e.(events.HasRelatedIDs); ok {
+	detailed := events2.DetailedEvent{Event: e}
+	if hr, ok := e.(events2.HasRelatedIDs); ok {
 		ids := hr.RelatedIDs()
 		if ids.PersonID != nil {
 			people, _ := h.querySvc.GetPeopleByIDs(r.Context(), []uuid.UUID{*ids.PersonID})
@@ -162,8 +162,8 @@ func (h *Handler) ListEventTypes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	eventTypes := lo.FilterMap(types, func(t events.EventMeta, _ int) (dto.EventTypeResponse, bool) {
-		ev, err := events.Create(t.Type)
+	eventTypes := lo.FilterMap(types, func(t events2.EventMeta, _ int) (dto.EventTypeResponse, bool) {
+		ev, err := events2.Create(t.Type)
 		if err != nil {
 			return dto.EventTypeResponse{}, false
 		}

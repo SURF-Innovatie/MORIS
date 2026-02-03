@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/SURF-Innovatie/MORIS/internal/adapter"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 )
 
 type CSVSource struct {

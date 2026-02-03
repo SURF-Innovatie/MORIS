@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/portfolio"
 	"github.com/google/uuid"
 )
 
@@ -27,7 +27,7 @@ type PortfolioResponse struct {
 	PinnedProductIDs []uuid.UUID `json:"pinned_product_ids"`
 }
 
-func (r PortfolioResponse) FromEntity(e entities.Portfolio) PortfolioResponse {
+func (r PortfolioResponse) FromEntity(e portfolio.Portfolio) PortfolioResponse {
 	return PortfolioResponse{
 		ID:               e.ID,
 		PersonID:         e.PersonID,

@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	coreauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity/readmodels"
 )
 
 var (
@@ -16,7 +16,7 @@ var (
 
 type Service interface {
 	AuthURL(ctx context.Context) (string, error)
-	LoginWithCode(ctx context.Context, code string) (string, *entities.UserAccount, error)
+	LoginWithCode(ctx context.Context, code string) (string, *readmodels.UserAccount, error)
 }
 
 type service struct {
@@ -32,7 +32,7 @@ func (s *service) AuthURL(ctx context.Context) (string, error) {
 	return s.client.AuthURL(ctx)
 }
 
-func (s *service) LoginWithCode(ctx context.Context, code string) (string, *entities.UserAccount, error) {
+func (s *service) LoginWithCode(ctx context.Context, code string) (string, *readmodels.UserAccount, error) {
 	if code == "" {
 		return "", nil, ErrMissingCode
 	}

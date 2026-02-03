@@ -7,7 +7,8 @@ import (
 	entorgnode "github.com/SURF-Innovatie/MORIS/ent/organisationnode"
 	entclosure "github.com/SURF-Innovatie/MORIS/ent/organisationnodeclosure"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation/readmodels"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/enttx"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -40,7 +41,7 @@ func (r *EntRepo) closure(ctx context.Context) *ent.OrganisationNodeClosureClien
 	return r.cli.OrganisationNodeClosure
 }
 
-func (r *EntRepo) CreateNode(ctx context.Context, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error) {
+func (r *EntRepo) CreateNode(ctx context.Context, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*organisation.OrganisationNode, error) {
 	create := r.node(ctx).Create().SetName(name).SetNillableRorID(rorID).SetNillableDescription(description).SetNillableAvatarURL(avatarURL)
 
 	if parentID != nil {
@@ -56,10 +57,10 @@ func (r *EntRepo) CreateNode(ctx context.Context, name string, parentID *uuid.UU
 		return nil, err
 	}
 
-	return transform.ToEntityPtr[entities.OrganisationNode](row), nil
+	return transform.ToEntityPtr[organisation.OrganisationNode](row), nil
 }
 
-func (r *EntRepo) GetNode(ctx context.Context, id uuid.UUID) (*entities.OrganisationNode, error) {
+func (r *EntRepo) GetNode(ctx context.Context, id uuid.UUID) (*organisation.OrganisationNode, error) {
 	row, err := r.node(ctx).
 		Query().
 		Where(entorgnode.IDEQ(id)).
@@ -68,10 +69,10 @@ func (r *EntRepo) GetNode(ctx context.Context, id uuid.UUID) (*entities.Organisa
 		return nil, err
 	}
 
-	return transform.ToEntityPtr[entities.OrganisationNode](row), nil
+	return transform.ToEntityPtr[organisation.OrganisationNode](row), nil
 }
 
-func (r *EntRepo) UpdateNode(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error) {
+func (r *EntRepo) UpdateNode(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*organisation.OrganisationNode, error) {
 	upd := r.node(ctx).UpdateOneID(id).SetName(name).SetNillableRorID(rorID).SetNillableDescription(description).SetNillableAvatarURL(avatarURL)
 
 	if parentID == nil {
@@ -89,10 +90,10 @@ func (r *EntRepo) UpdateNode(ctx context.Context, id uuid.UUID, name string, par
 		return nil, err
 	}
 
-	return transform.ToEntityPtr[entities.OrganisationNode](row), nil
+	return transform.ToEntityPtr[organisation.OrganisationNode](row), nil
 }
 
-func (r *EntRepo) ListRoots(ctx context.Context) ([]entities.OrganisationNode, error) {
+func (r *EntRepo) ListRoots(ctx context.Context) ([]organisation.OrganisationNode, error) {
 	rows, err := r.node(ctx).
 		Query().
 		Where(entorgnode.Not(entorgnode.HasParent())).
@@ -101,10 +102,10 @@ func (r *EntRepo) ListRoots(ctx context.Context) ([]entities.OrganisationNode, e
 		return nil, err
 	}
 
-	return transform.ToEntities[entities.OrganisationNode](rows), nil
+	return transform.ToEntities[organisation.OrganisationNode](rows), nil
 }
 
-func (r *EntRepo) ListChildren(ctx context.Context, parentID uuid.UUID) ([]entities.OrganisationNode, error) {
+func (r *EntRepo) ListChildren(ctx context.Context, parentID uuid.UUID) ([]organisation.OrganisationNode, error) {
 	rows, err := r.node(ctx).
 		Query().
 		Where(entorgnode.HasParentWith(entorgnode.IDEQ(parentID))).
@@ -113,10 +114,10 @@ func (r *EntRepo) ListChildren(ctx context.Context, parentID uuid.UUID) ([]entit
 		return nil, err
 	}
 
-	return transform.ToEntities[entities.OrganisationNode](rows), nil
+	return transform.ToEntities[organisation.OrganisationNode](rows), nil
 }
 
-func (r *EntRepo) ListAll(ctx context.Context) ([]entities.OrganisationNode, error) {
+func (r *EntRepo) ListAll(ctx context.Context) ([]organisation.OrganisationNode, error) {
 	rows, err := r.node(ctx).
 		Query().
 		All(ctx)
@@ -124,7 +125,7 @@ func (r *EntRepo) ListAll(ctx context.Context) ([]entities.OrganisationNode, err
 		return nil, err
 	}
 
-	return transform.ToEntities[entities.OrganisationNode](rows), nil
+	return transform.ToEntities[organisation.OrganisationNode](rows), nil
 }
 
 func (r *EntRepo) InsertClosure(ctx context.Context, ancestorID, descendantID uuid.UUID, depth int) error {
@@ -137,7 +138,7 @@ func (r *EntRepo) InsertClosure(ctx context.Context, ancestorID, descendantID uu
 	return err
 }
 
-func (r *EntRepo) ListClosuresByDescendant(ctx context.Context, descendantID uuid.UUID) ([]entities.OrganisationNodeClosure, error) {
+func (r *EntRepo) ListClosuresByDescendant(ctx context.Context, descendantID uuid.UUID) ([]readmodels.OrganisationNodeClosure, error) {
 	rows, err := r.closure(ctx).
 		Query().
 		Where(entclosure.DescendantIDEQ(descendantID)).
@@ -146,10 +147,10 @@ func (r *EntRepo) ListClosuresByDescendant(ctx context.Context, descendantID uui
 		return nil, err
 	}
 
-	return transform.ToEntities[entities.OrganisationNodeClosure](rows), nil
+	return transform.ToEntities[readmodels.OrganisationNodeClosure](rows), nil
 }
 
-func (r *EntRepo) ListClosuresByAncestor(ctx context.Context, ancestorID uuid.UUID) ([]entities.OrganisationNodeClosure, error) {
+func (r *EntRepo) ListClosuresByAncestor(ctx context.Context, ancestorID uuid.UUID) ([]readmodels.OrganisationNodeClosure, error) {
 	rows, err := r.closure(ctx).
 		Query().
 		Where(entclosure.AncestorIDEQ(ancestorID)).
@@ -158,7 +159,7 @@ func (r *EntRepo) ListClosuresByAncestor(ctx context.Context, ancestorID uuid.UU
 		return nil, err
 	}
 
-	return transform.ToEntities[entities.OrganisationNodeClosure](rows), nil
+	return transform.ToEntities[readmodels.OrganisationNodeClosure](rows), nil
 }
 
 func (r *EntRepo) DeleteClosures(ctx context.Context, ancestorIDs, descendantIDs []uuid.UUID) error {
@@ -176,12 +177,12 @@ func (r *EntRepo) DeleteClosures(ctx context.Context, ancestorIDs, descendantIDs
 	return err
 }
 
-func (r *EntRepo) CreateClosuresBulk(ctx context.Context, rows []entities.OrganisationNodeClosure) error {
+func (r *EntRepo) CreateClosuresBulk(ctx context.Context, rows []readmodels.OrganisationNodeClosure) error {
 	if len(rows) == 0 {
 		return nil
 	}
 
-	bulk := lo.Map(rows, func(c entities.OrganisationNodeClosure, _ int) *ent.OrganisationNodeClosureCreate {
+	bulk := lo.Map(rows, func(c readmodels.OrganisationNodeClosure, _ int) *ent.OrganisationNodeClosureCreate {
 		return r.closure(ctx).
 			Create().
 			SetAncestorID(c.AncestorID).
@@ -192,7 +193,7 @@ func (r *EntRepo) CreateClosuresBulk(ctx context.Context, rows []entities.Organi
 	return err
 }
 
-func (r *EntRepo) Search(ctx context.Context, query string, limit int) ([]entities.OrganisationNode, error) {
+func (r *EntRepo) Search(ctx context.Context, query string, limit int) ([]organisation.OrganisationNode, error) {
 	rows, err := r.node(ctx).
 		Query().
 		Where(entorgnode.NameContainsFold(query)).
@@ -201,5 +202,5 @@ func (r *EntRepo) Search(ctx context.Context, query string, limit int) ([]entiti
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntities[entities.OrganisationNode](rows), nil
+	return transform.ToEntities[organisation.OrganisationNode](rows), nil
 }

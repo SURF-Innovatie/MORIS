@@ -3,7 +3,7 @@ package dto
 import (
 	"time"
 
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/notification"
 	"github.com/google/uuid"
 )
 
@@ -20,7 +20,7 @@ type NotificationResponse struct {
 	EventFriendlyName string    `json:"event_friendly_name,omitempty"`
 }
 
-func (r NotificationResponse) FromEntity(n entities.Notification) NotificationResponse {
+func (r NotificationResponse) FromEntity(n notification.Notification) NotificationResponse {
 	resp := NotificationResponse{
 		ID:        n.ID,
 		UserID:    n.UserID,

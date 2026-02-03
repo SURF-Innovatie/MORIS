@@ -6,18 +6,18 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	organisationhierarchy "github.com/SURF-Innovatie/MORIS/internal/app/organisation/hierarchy"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/role"
 	"github.com/google/uuid"
 )
 
 type Service interface {
 	EnsureDefaults(ctx context.Context) error
-	Create(ctx context.Context, key, name string, orgNodeID uuid.UUID) (*entities.ProjectRole, error)
-	ListAvailableForNode(ctx context.Context, orgNodeID uuid.UUID) ([]entities.ProjectRole, error)
+	Create(ctx context.Context, key, name string, orgNodeID uuid.UUID) (*role.ProjectRole, error)
+	ListAvailableForNode(ctx context.Context, orgNodeID uuid.UUID) ([]role.ProjectRole, error)
 	Delete(ctx context.Context, id uuid.UUID, orgNodeID uuid.UUID) error
-	GetByID(ctx context.Context, id uuid.UUID) (*entities.ProjectRole, error)
-	UpdateAllowedEventTypes(ctx context.Context, roleID uuid.UUID, eventTypes []string) (*entities.ProjectRole, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*role.ProjectRole, error)
+	UpdateAllowedEventTypes(ctx context.Context, roleID uuid.UUID, eventTypes []string) (*role.ProjectRole, error)
 }
 
 type service struct {
@@ -72,7 +72,7 @@ func (s *service) EnsureDefaults(ctx context.Context) error {
 	return nil
 }
 
-func (s *service) Create(ctx context.Context, key, name string, orgNodeID uuid.UUID) (*entities.ProjectRole, error) {
+func (s *service) Create(ctx context.Context, key, name string, orgNodeID uuid.UUID) (*role.ProjectRole, error) {
 	return s.repo.CreateOrRestore(ctx, key, name, orgNodeID)
 }
 
@@ -80,7 +80,7 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID, orgNodeID uuid.UUID)
 	return s.repo.Delete(ctx, id, orgNodeID)
 }
 
-func (s *service) ListAvailableForNode(ctx context.Context, orgNodeID uuid.UUID) ([]entities.ProjectRole, error) {
+func (s *service) ListAvailableForNode(ctx context.Context, orgNodeID uuid.UUID) ([]role.ProjectRole, error) {
 	ids, err := s.orgHierarchySvc.AncestorIDs(ctx, orgNodeID)
 	if err != nil {
 		return nil, err
@@ -89,10 +89,10 @@ func (s *service) ListAvailableForNode(ctx context.Context, orgNodeID uuid.UUID)
 	return s.repo.ListByOrgIDs(ctx, ids)
 }
 
-func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*entities.ProjectRole, error) {
+func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*role.ProjectRole, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
-func (s *service) UpdateAllowedEventTypes(ctx context.Context, roleID uuid.UUID, eventTypes []string) (*entities.ProjectRole, error) {
+func (s *service) UpdateAllowedEventTypes(ctx context.Context, roleID uuid.UUID, eventTypes []string) (*role.ProjectRole, error) {
 	return s.repo.UpdateAllowedEventTypes(ctx, roleID, eventTypes)
 }

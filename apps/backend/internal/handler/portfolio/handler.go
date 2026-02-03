@@ -7,7 +7,7 @@ import (
 	appauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/app/portfolio"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	portfolio2 "github.com/SURF-Innovatie/MORIS/internal/domain/portfolio"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/google/uuid"
 )
@@ -125,8 +125,8 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.PortfolioResponse](*updated))
 }
 
-func defaultPortfolio(personID uuid.UUID) entities.Portfolio {
-	return entities.Portfolio{
+func defaultPortfolio(personID uuid.UUID) portfolio2.Portfolio {
+	return portfolio2.Portfolio{
 		PersonID:         personID,
 		ShowEmail:        true,
 		ShowOrcid:        true,

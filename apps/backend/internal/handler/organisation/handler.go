@@ -9,7 +9,9 @@ import (
 	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/role"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	customfield2 "github.com/SURF-Innovatie/MORIS/internal/domain/customfield"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -307,7 +309,7 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 
 	permission := r.URL.Query().Get("permission")
 
-	var nodes []entities.OrganisationNode
+	var nodes []organisation.OrganisationNode
 	var err error
 
 	if permission == "create_project" {
@@ -392,7 +394,7 @@ func (h *Handler) CreateProjectRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, id, entities.PermissionManageProjectRoles)
+	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, id, rbac.PermissionManageProjectRoles)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -456,7 +458,7 @@ func (h *Handler) DeleteProjectRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, orgID, entities.PermissionManageProjectRoles)
+	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, orgID, rbac.PermissionManageProjectRoles)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -539,7 +541,7 @@ func (h *Handler) UpdateProjectRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, orgID, entities.PermissionManageProjectRoles)
+	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, orgID, rbac.PermissionManageProjectRoles)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -591,7 +593,7 @@ func (h *Handler) CreateCustomField(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, id, entities.PermissionManageCustomFields)
+	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, id, rbac.PermissionManageCustomFields)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -610,7 +612,7 @@ func (h *Handler) CreateCustomField(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fd, err := h.customFieldSvc.Create(r.Context(), id, req.Name, entities.CustomFieldType(req.Type), entities.CustomFieldCategory(req.Category), req.Description, req.ValidationRegex, req.ExampleValue, req.Required)
+	fd, err := h.customFieldSvc.Create(r.Context(), id, req.Name, customfield2.Type(req.Type), customfield2.Category(req.Category), req.Description, req.ValidationRegex, req.ExampleValue, req.Required)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -651,7 +653,7 @@ func (h *Handler) DeleteCustomField(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, orgID, entities.PermissionManageCustomFields)
+	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, orgID, rbac.PermissionManageCustomFields)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -691,9 +693,9 @@ func (h *Handler) ListCustomFields(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var category *entities.CustomFieldCategory
+	var category *customfield2.Category
 	if c := r.URL.Query().Get("category"); c != "" {
-		val := entities.CustomFieldCategory(c)
+		val := customfield2.Category(c)
 		category = &val
 	}
 
@@ -742,7 +744,7 @@ func (h *Handler) UpdateMemberCustomFields(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Check Admin Access (Manage Members)
-	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, orgID, entities.PermissionManageMembers)
+	hasAccess, err := h.rbac.HasPermission(r.Context(), user.Person.ID, orgID, rbac.PermissionManageMembers)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -800,7 +802,7 @@ func (h *Handler) GetTree(w http.ResponseWriter, r *http.Request) {
 	_ = httputil.WriteJSON(w, http.StatusOK, tree)
 }
 
-func (h *Handler) buildTree(nodes []entities.OrganisationNode) []dto.OrganisationTreeNode {
+func (h *Handler) buildTree(nodes []organisation.OrganisationNode) []dto.OrganisationTreeNode {
 	// Map ID -> Node
 	nodeMap := make(map[uuid.UUID]*dto.OrganisationTreeNode)
 	for _, n := range nodes {
@@ -847,7 +849,7 @@ func (h *Handler) buildTree(nodes []entities.OrganisationNode) []dto.Organisatio
 	return h.buildTreeCorrectly(nodes)
 }
 
-func (h *Handler) buildTreeCorrectly(nodes []entities.OrganisationNode) []dto.OrganisationTreeNode {
+func (h *Handler) buildTreeCorrectly(nodes []organisation.OrganisationNode) []dto.OrganisationTreeNode {
 	// 1. Create a map of ID -> *DTO (using pointers for children to allow updates)
 	type info struct {
 		node     dto.OrganisationTreeNode
@@ -864,8 +866,8 @@ func (h *Handler) buildTreeCorrectly(nodes []entities.OrganisationNode) []dto.Or
 	// 1. Group by ParentID
 	// 2. Recursively build tree
 
-	childrenMap := make(map[uuid.UUID][]entities.OrganisationNode)
-	var roots []entities.OrganisationNode
+	childrenMap := make(map[uuid.UUID][]organisation.OrganisationNode)
+	var roots []organisation.OrganisationNode
 
 	for _, n := range nodes {
 		if n.ParentID == nil {
@@ -878,7 +880,7 @@ func (h *Handler) buildTreeCorrectly(nodes []entities.OrganisationNode) []dto.Or
 	return h.assembleTree(roots, childrenMap)
 }
 
-func (h *Handler) assembleTree(currentLevel []entities.OrganisationNode, childrenMap map[uuid.UUID][]entities.OrganisationNode) []dto.OrganisationTreeNode {
+func (h *Handler) assembleTree(currentLevel []organisation.OrganisationNode, childrenMap map[uuid.UUID][]organisation.OrganisationNode) []dto.OrganisationTreeNode {
 	result := make([]dto.OrganisationTreeNode, len(currentLevel))
 
 	for i, node := range currentLevel {

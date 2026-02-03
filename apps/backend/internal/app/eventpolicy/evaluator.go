@@ -9,8 +9,10 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
 	organisationhierarchy "github.com/SURF-Innovatie/MORIS/internal/app/organisation/hierarchy"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	notificationdomain "github.com/SURF-Innovatie/MORIS/internal/domain/notification"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/policy"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
+	internalevents "github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/samber/lo"
@@ -19,9 +21,9 @@ import (
 // Evaluator evaluates policies against events and executes actions
 type Evaluator interface {
 	// EvaluateAndExecute finds matching policies for an event and executes their actions
-	EvaluateAndExecute(ctx context.Context, event events.Event, project *entities.Project) error
+	EvaluateAndExecute(ctx context.Context, event internalevents.Event, project *project.Project) error
 	// CheckApprovalRequired checks if any policy requires approval for the event
-	CheckApprovalRequired(ctx context.Context, event events.Event, project *entities.Project) (bool, error)
+	CheckApprovalRequired(ctx context.Context, event internalevents.Event, project *project.Project) (bool, error)
 }
 
 type evaluator struct {
@@ -47,7 +49,7 @@ func NewEvaluator(
 }
 
 // CheckApprovalRequired checks if any policy requires approval for the event
-func (e *evaluator) CheckApprovalRequired(ctx context.Context, event events.Event, project *entities.Project) (bool, error) {
+func (e *evaluator) CheckApprovalRequired(ctx context.Context, event internalevents.Event, project *project.Project) (bool, error) {
 	if project == nil {
 		return false, nil
 	}
@@ -74,7 +76,7 @@ func (e *evaluator) CheckApprovalRequired(ctx context.Context, event events.Even
 		matches := e.evaluateConditions(p.Conditions, event, project)
 		log.Info().Msgf("Policy %s (Action: %s) match result: %v", p.Name, p.ActionType, matches)
 
-		if p.ActionType == entities.ActionTypeRequestApproval && matches {
+		if p.ActionType == policy.ActionTypeRequestApproval && matches {
 			log.Info().Msgf("Approval required by policy: %s", p.Name)
 			return true, nil
 		}
@@ -84,7 +86,7 @@ func (e *evaluator) CheckApprovalRequired(ctx context.Context, event events.Even
 }
 
 // EvaluateAndExecute finds matching policies and executes their actions
-func (e *evaluator) EvaluateAndExecute(ctx context.Context, event events.Event, project *entities.Project) error {
+func (e *evaluator) EvaluateAndExecute(ctx context.Context, event internalevents.Event, project *project.Project) error {
 	if project == nil {
 		return nil
 	}
@@ -96,7 +98,7 @@ func (e *evaluator) EvaluateAndExecute(ctx context.Context, event events.Event, 
 	}
 
 	// 2. Filter policies that match this event type and pass conditions
-	matchingPolicies := lo.Filter(policies, func(p entities.EventPolicy, _ int) bool {
+	matchingPolicies := lo.Filter(policies, func(p policy.EventPolicy, _ int) bool {
 		if !p.Enabled {
 			return false
 		}
@@ -109,11 +111,11 @@ func (e *evaluator) EvaluateAndExecute(ctx context.Context, event events.Event, 
 	log.Info().Msgf("EvaluateAndExecute: Event %s matches %d policies", event.Type(), len(matchingPolicies))
 
 	// 3. Separate approval and notification policies
-	approvalPolicies := lo.Filter(matchingPolicies, func(p entities.EventPolicy, _ int) bool {
-		return p.ActionType == entities.ActionTypeRequestApproval
+	approvalPolicies := lo.Filter(matchingPolicies, func(p policy.EventPolicy, _ int) bool {
+		return p.ActionType == policy.ActionTypeRequestApproval
 	})
-	notificationPolicies := lo.Filter(matchingPolicies, func(p entities.EventPolicy, _ int) bool {
-		return p.ActionType == entities.ActionTypeNotify
+	notificationPolicies := lo.Filter(matchingPolicies, func(p policy.EventPolicy, _ int) bool {
+		return p.ActionType == policy.ActionTypeNotify
 	})
 
 	log.Info().Msgf("EvaluateAndExecute: Found %d approval polices and %d notification policies", len(approvalPolicies), len(notificationPolicies))
@@ -122,7 +124,7 @@ func (e *evaluator) EvaluateAndExecute(ctx context.Context, event events.Event, 
 	status := event.GetStatus()
 	log.Info().Msgf("EvaluateAndExecute: Processing event %s with status %s", event.GetID(), status)
 
-	if status == events.StatusPending {
+	if status == internalevents.StatusPending {
 		// For pending events:
 		// 1. Execute approval policies first
 		approvalSent := false
@@ -146,7 +148,7 @@ func (e *evaluator) EvaluateAndExecute(ctx context.Context, event events.Event, 
 				log.Error().Err(err).Msgf("policy action error for %s", policy.ID)
 			}
 		}
-	} else if status == events.StatusApproved {
+	} else if status == internalevents.StatusApproved {
 		// For approved events:
 		// Only execute notification policies. Approval policies were already handled.
 		// We send notifications now because they were likely skipped during the 'pending' phase.
@@ -161,7 +163,7 @@ func (e *evaluator) EvaluateAndExecute(ctx context.Context, event events.Event, 
 }
 
 // getApplicablePolicies returns all policies that could apply to a project
-func (e *evaluator) getApplicablePolicies(ctx context.Context, projectID uuid.UUID, orgNodeID uuid.UUID) ([]entities.EventPolicy, error) {
+func (e *evaluator) getApplicablePolicies(ctx context.Context, projectID uuid.UUID, orgNodeID uuid.UUID) ([]policy.EventPolicy, error) {
 	// Get project-level policies
 	projectPolicies, err := e.repo.ListForProject(ctx, projectID)
 	if err != nil {
@@ -184,7 +186,7 @@ func (e *evaluator) getApplicablePolicies(ctx context.Context, projectID uuid.UU
 }
 
 // evaluateConditions checks if all conditions pass (AND logic)
-func (e *evaluator) evaluateConditions(conditions []entities.PolicyCondition, event events.Event, project *entities.Project) bool {
+func (e *evaluator) evaluateConditions(conditions []policy.Condition, event internalevents.Event, project *project.Project) bool {
 	for _, cond := range conditions {
 		if !e.checkCondition(cond, event, project) {
 			return false
@@ -194,29 +196,29 @@ func (e *evaluator) evaluateConditions(conditions []entities.PolicyCondition, ev
 }
 
 // checkCondition evaluates a single condition
-func (e *evaluator) checkCondition(cond entities.PolicyCondition, event events.Event, project *entities.Project) bool {
+func (e *evaluator) checkCondition(cond policy.Condition, event internalevents.Event, project *project.Project) bool {
 	value := e.extractValue(cond.Field, event, project)
 
 	switch cond.Operator {
-	case entities.OperatorEquals:
+	case policy.OperatorEquals:
 		return e.equals(value, cond.Value)
-	case entities.OperatorNotEquals:
+	case policy.OperatorNotEquals:
 		return !e.equals(value, cond.Value)
-	case entities.OperatorContains:
+	case policy.OperatorContains:
 		return strings.Contains(fmt.Sprint(value), fmt.Sprint(cond.Value))
-	case entities.OperatorStartsWith:
+	case policy.OperatorStartsWith:
 		return strings.HasPrefix(fmt.Sprint(value), fmt.Sprint(cond.Value))
-	case entities.OperatorGreaterThan:
+	case policy.OperatorGreaterThan:
 		return e.toFloat(value) > e.toFloat(cond.Value)
-	case entities.OperatorLessThan:
+	case policy.OperatorLessThan:
 		return e.toFloat(value) < e.toFloat(cond.Value)
-	case entities.OperatorIn:
+	case policy.OperatorIn:
 		return e.isIn(value, cond.Value)
-	case entities.OperatorNotIn:
+	case policy.OperatorNotIn:
 		return !e.isIn(value, cond.Value)
-	case entities.OperatorExists:
+	case policy.OperatorExists:
 		return value != nil && value != ""
-	case entities.OperatorNotExists:
+	case policy.OperatorNotExists:
 		return value == nil || value == ""
 	default:
 		log.Info().Msgf("unknown operator: %s", cond.Operator)
@@ -225,7 +227,7 @@ func (e *evaluator) checkCondition(cond entities.PolicyCondition, event events.E
 }
 
 // extractValue gets a value from event or project by field path
-func (e *evaluator) extractValue(fieldPath string, event events.Event, project *entities.Project) any {
+func (e *evaluator) extractValue(fieldPath string, event internalevents.Event, project *project.Project) any {
 	parts := strings.SplitN(fieldPath, ".", 2)
 	if len(parts) != 2 {
 		return nil
@@ -318,37 +320,37 @@ func (e *evaluator) isIn(value any, collection any) bool {
 }
 
 // executeAction executes the policy's action (notify or request_approval)
-func (e *evaluator) executeAction(ctx context.Context, policy entities.EventPolicy, event events.Event, project *entities.Project) error {
-	log.Info().Msgf("executeAction: Resolving recipients for policy %s", policy.Name)
+func (e *evaluator) executeAction(ctx context.Context, eventPolicy policy.EventPolicy, event internalevents.Event, project *project.Project) error {
+	log.Info().Msgf("executeAction: Resolving recipients for eventPolicy %s", eventPolicy.Name)
 
 	// Resolve all recipients
-	userIDs, err := e.resolveAllRecipients(ctx, policy, event.AggregateID(), project.OwningOrgNodeID)
+	userIDs, err := e.resolveAllRecipients(ctx, eventPolicy, event.AggregateID(), project.OwningOrgNodeID)
 	if err != nil {
 		return fmt.Errorf("resolving recipients: %w", err)
 	}
 
 	if len(userIDs) == 0 {
-		log.Info().Msgf("executeAction: No recipients found for policy %s", policy.Name)
+		log.Info().Msgf("executeAction: No recipients found for eventPolicy %s", eventPolicy.Name)
 		return nil // No recipients to notify
 	}
 
-	log.Info().Msgf("executeAction: Resolved %d recipients for policy %s. Sending %s...", len(userIDs), policy.Name, policy.ActionType)
+	log.Info().Msgf("executeAction: Resolved %d recipients for eventPolicy %s. Sending %s...", len(userIDs), eventPolicy.Name, eventPolicy.ActionType)
 
 	// Build message
-	message := e.buildMessage(policy, event, project)
+	message := e.buildMessage(eventPolicy, event, project)
 
-	switch policy.ActionType {
-	case entities.ActionTypeNotify:
-		return e.notificationSvc.Send(ctx, userIDs, event.GetID(), message, entities.NotificationInfo)
-	case entities.ActionTypeRequestApproval:
-		return e.notificationSvc.Send(ctx, userIDs, event.GetID(), message, entities.NotificationApprovalRequest)
+	switch eventPolicy.ActionType {
+	case policy.ActionTypeNotify:
+		return e.notificationSvc.Send(ctx, userIDs, event.GetID(), message, notificationdomain.NotificationInfo)
+	case policy.ActionTypeRequestApproval:
+		return e.notificationSvc.Send(ctx, userIDs, event.GetID(), message, notificationdomain.NotificationApprovalRequest)
 	default:
-		return fmt.Errorf("unknown action type: %s", policy.ActionType)
+		return fmt.Errorf("unknown action type: %s", eventPolicy.ActionType)
 	}
 }
 
 // resolveAllRecipients combines all recipient sources into unique user IDs
-func (e *evaluator) resolveAllRecipients(ctx context.Context, policy entities.EventPolicy, projectID, orgNodeID uuid.UUID) ([]uuid.UUID, error) {
+func (e *evaluator) resolveAllRecipients(ctx context.Context, policy policy.EventPolicy, projectID, orgNodeID uuid.UUID) ([]uuid.UUID, error) {
 	userIDSet := make(map[uuid.UUID]bool)
 
 	// Direct "user" IDs (actually person IDs from frontend, need conversion)
@@ -403,14 +405,14 @@ func (e *evaluator) resolveAllRecipients(ctx context.Context, policy entities.Ev
 }
 
 // buildMessage creates the notification message
-func (e *evaluator) buildMessage(policy entities.EventPolicy, event events.Event, project *entities.Project) string {
-	if policy.MessageTemplate != nil && *policy.MessageTemplate != "" {
+func (e *evaluator) buildMessage(eventPolicy policy.EventPolicy, event internalevents.Event, project *project.Project) string {
+	if eventPolicy.MessageTemplate != nil && *eventPolicy.MessageTemplate != "" {
 		// TODO: implement template substitution (e.g., {{project.title}})
-		return *policy.MessageTemplate
+		return *eventPolicy.MessageTemplate
 	}
 
 	// Default message based on action type
-	if policy.ActionType == entities.ActionTypeRequestApproval {
+	if eventPolicy.ActionType == policy.ActionTypeRequestApproval {
 		return fmt.Sprintf("Approval requested for event '%s' on project '%s'", event.FriendlyName(), project.Title)
 	}
 	return fmt.Sprintf("Event '%s' occurred on project '%s'", event.FriendlyName(), project.Title)

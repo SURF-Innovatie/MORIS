@@ -3,7 +3,7 @@ package dto
 import (
 	"time"
 
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
 )
 
 type ChangelogEntry struct {
@@ -15,7 +15,7 @@ type Changelog struct {
 	Entries []ChangelogEntry `json:"entries"`
 }
 
-func (c Changelog) FromEntity(log entities.ChangeLog) Changelog {
+func (c Changelog) FromEntity(log project.ChangeLog) Changelog {
 	entries := make([]ChangelogEntry, 0, len(log.Entries))
 	for _, e := range log.Entries {
 		entries = append(entries, ChangelogEntry{

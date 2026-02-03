@@ -5,7 +5,7 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/policy"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -49,7 +49,7 @@ func (h *Handler) ListForOrgNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := lo.Map(policies, func(p entities.EventPolicy, _ int) dto.EventPolicyResponse {
+	resp := lo.Map(policies, func(p policy.EventPolicy, _ int) dto.EventPolicyResponse {
 		var r dto.EventPolicyResponse
 		r.FromEntity(&p)
 		return r
@@ -137,7 +137,7 @@ func (h *Handler) ListForProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := lo.Map(policies, func(p entities.EventPolicy, _ int) dto.EventPolicyResponse {
+	resp := lo.Map(policies, func(p policy.EventPolicy, _ int) dto.EventPolicyResponse {
 		var r dto.EventPolicyResponse
 		r.FromEntity(&p)
 		return r
@@ -289,12 +289,12 @@ func (h *Handler) DeletePolicy(w http.ResponseWriter, r *http.Request) {
 }
 
 // requestToEntity converts request DTO to domain entity
-func (h *Handler) requestToEntity(req dto.EventPolicyRequest) (entities.EventPolicy, error) {
-	policy := entities.EventPolicy{
+func (h *Handler) requestToEntity(req dto.EventPolicyRequest) (policy.EventPolicy, error) {
+	eventPolicy := policy.EventPolicy{
 		Name:             req.Name,
 		Description:      req.Description,
 		EventTypes:       req.EventTypes,
-		ActionType:       entities.ActionType(req.ActionType),
+		ActionType:       policy.ActionType(req.ActionType),
 		MessageTemplate:  req.MessageTemplate,
 		RecipientDynamic: req.RecipientDynamic,
 		Enabled:          req.Enabled,
@@ -302,7 +302,7 @@ func (h *Handler) requestToEntity(req dto.EventPolicyRequest) (entities.EventPol
 
 	// Convert conditions
 	for _, c := range req.Conditions {
-		policy.Conditions = append(policy.Conditions, entities.PolicyCondition{
+		eventPolicy.Conditions = append(eventPolicy.Conditions, policy.Condition{
 			Field:    c.Field,
 			Operator: c.Operator,
 			Value:    c.Value,
@@ -313,28 +313,28 @@ func (h *Handler) requestToEntity(req dto.EventPolicyRequest) (entities.EventPol
 	for _, uidStr := range req.RecipientUserIDs {
 		uid, err := uuid.Parse(uidStr)
 		if err != nil {
-			return policy, err
+			return eventPolicy, err
 		}
-		policy.RecipientUserIDs = append(policy.RecipientUserIDs, uid)
+		eventPolicy.RecipientUserIDs = append(eventPolicy.RecipientUserIDs, uid)
 	}
 
 	// Parse project role IDs
 	for _, ridStr := range req.RecipientProjectRoleIDs {
 		rid, err := uuid.Parse(ridStr)
 		if err != nil {
-			return policy, err
+			return eventPolicy, err
 		}
-		policy.RecipientProjectRoleIDs = append(policy.RecipientProjectRoleIDs, rid)
+		eventPolicy.RecipientProjectRoleIDs = append(eventPolicy.RecipientProjectRoleIDs, rid)
 	}
 
 	// Parse org role IDs
 	for _, ridStr := range req.RecipientOrgRoleIDs {
 		rid, err := uuid.Parse(ridStr)
 		if err != nil {
-			return policy, err
+			return eventPolicy, err
 		}
-		policy.RecipientOrgRoleIDs = append(policy.RecipientOrgRoleIDs, rid)
+		eventPolicy.RecipientOrgRoleIDs = append(eventPolicy.RecipientOrgRoleIDs, rid)
 	}
 
-	return policy, nil
+	return eventPolicy, nil
 }

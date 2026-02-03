@@ -3,16 +3,19 @@ package queries
 import (
 	"context"
 
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/product"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/role"
 	"github.com/google/uuid"
 )
 
 type ProjectReadRepository interface {
-	PeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.Person, error)
-	ProjectRolesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.ProjectRole, error)
-	ProductsByIDs(ctx context.Context, ids []uuid.UUID) ([]entities.Product, error)
-	OrganisationNodeByID(ctx context.Context, id uuid.UUID) (entities.OrganisationNode, error)
+	PeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]identity.Person, error)
+	ProjectRolesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]role.ProjectRole, error)
+	ProductsByIDs(ctx context.Context, ids []uuid.UUID) ([]product.Product, error)
+	OrganisationNodeByID(ctx context.Context, id uuid.UUID) (organisation.OrganisationNode, error)
 
 	ProjectIDsForPerson(ctx context.Context, personID uuid.UUID) ([]uuid.UUID, error)
 
@@ -25,6 +28,6 @@ type EventStore interface {
 }
 
 type ProjectRoleRepository interface {
-	List(ctx context.Context) ([]entities.ProjectRole, error)
-	ListByOrgIDs(ctx context.Context, orgIDs []uuid.UUID) ([]entities.ProjectRole, error)
+	List(ctx context.Context) ([]role.ProjectRole, error)
+	ListByOrgIDs(ctx context.Context, orgIDs []uuid.UUID) ([]role.ProjectRole, error)
 }

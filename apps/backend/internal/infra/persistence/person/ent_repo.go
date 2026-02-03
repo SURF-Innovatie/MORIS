@@ -6,7 +6,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent"
 	pe "github.com/SURF-Innovatie/MORIS/ent/person"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
 	"github.com/google/uuid"
 )
 
@@ -18,7 +18,7 @@ func NewEntRepo(cli *ent.Client) *EntRepo {
 	return &EntRepo{cli: cli}
 }
 
-func (r *EntRepo) Create(ctx context.Context, p entities.Person) (*entities.Person, error) {
+func (r *EntRepo) Create(ctx context.Context, p identity.Person) (*identity.Person, error) {
 	if p.ORCiD != nil && *p.ORCiD == "" {
 		p.ORCiD = nil
 	}
@@ -35,10 +35,10 @@ func (r *EntRepo) Create(ctx context.Context, p entities.Person) (*entities.Pers
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntityPtr[entities.Person](row), nil
+	return transform.ToEntityPtr[identity.Person](row), nil
 }
 
-func (r *EntRepo) Get(ctx context.Context, id uuid.UUID) (*entities.Person, error) {
+func (r *EntRepo) Get(ctx context.Context, id uuid.UUID) (*identity.Person, error) {
 	row, err := r.cli.Person.
 		Query().
 		Where(pe.IDEQ(id)).
@@ -46,10 +46,10 @@ func (r *EntRepo) Get(ctx context.Context, id uuid.UUID) (*entities.Person, erro
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntityPtr[entities.Person](row), nil
+	return transform.ToEntityPtr[identity.Person](row), nil
 }
 
-func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, p entities.Person) (*entities.Person, error) {
+func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, p identity.Person) (*identity.Person, error) {
 	q := r.cli.Person.
 		UpdateOneID(id).
 		SetName(p.Name).
@@ -70,18 +70,18 @@ func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, p entities.Person) (
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntityPtr[entities.Person](row), nil
+	return transform.ToEntityPtr[identity.Person](row), nil
 }
 
-func (r *EntRepo) List(ctx context.Context) ([]*entities.Person, error) {
+func (r *EntRepo) List(ctx context.Context) ([]*identity.Person, error) {
 	rows, err := r.cli.Person.Query().All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntitiesPtr[entities.Person](rows), nil
+	return transform.ToEntitiesPtr[identity.Person](rows), nil
 }
 
-func (r *EntRepo) GetByEmail(ctx context.Context, email string) (*entities.Person, error) {
+func (r *EntRepo) GetByEmail(ctx context.Context, email string) (*identity.Person, error) {
 	row, err := r.cli.Person.
 		Query().
 		Where(pe.EmailEQ(email)).
@@ -89,10 +89,10 @@ func (r *EntRepo) GetByEmail(ctx context.Context, email string) (*entities.Perso
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntityPtr[entities.Person](row), nil
+	return transform.ToEntityPtr[identity.Person](row), nil
 }
 
-func (r *EntRepo) Search(ctx context.Context, query string, limit int) ([]entities.Person, error) {
+func (r *EntRepo) Search(ctx context.Context, query string, limit int) ([]identity.Person, error) {
 	rows, err := r.cli.Person.
 		Query().
 		Where(pe.Or(
@@ -104,7 +104,7 @@ func (r *EntRepo) Search(ctx context.Context, query string, limit int) ([]entiti
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntities[entities.Person](rows), nil
+	return transform.ToEntities[identity.Person](rows), nil
 }
 
 func (r *EntRepo) SetORCID(ctx context.Context, personID uuid.UUID, orcidID string) error {
@@ -123,9 +123,9 @@ func (r *EntRepo) ClearORCID(ctx context.Context, personID uuid.UUID) error {
 	return err
 }
 
-func (r *EntRepo) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]entities.Person, error) {
+func (r *EntRepo) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]identity.Person, error) {
 	if len(ids) == 0 {
-		return []entities.Person{}, nil
+		return []identity.Person{}, nil
 	}
 	rows, err := r.cli.Person.Query().
 		Where(pe.IDIn(ids...)).
@@ -133,5 +133,5 @@ func (r *EntRepo) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]entities.Per
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntities[entities.Person](rows), nil
+	return transform.ToEntities[identity.Person](rows), nil
 }

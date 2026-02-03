@@ -3,7 +3,7 @@ package eventdispatch
 import (
 	"context"
 
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/rs/zerolog/log"
 )
 

@@ -11,8 +11,11 @@ import (
 	productent "github.com/SURF-Innovatie/MORIS/ent/product"
 	entprojectrole "github.com/SURF-Innovatie/MORIS/ent/projectrole"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/product"
+	events2 "github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/role"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 )
@@ -25,8 +28,8 @@ func NewEntRepo(cli *ent.Client) *EntRepo {
 	return &EntRepo{cli: cli}
 }
 
-func (r *EntRepo) PeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.Person, error) {
-	out := make(map[uuid.UUID]entities.Person)
+func (r *EntRepo) PeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]identity.Person, error) {
+	out := make(map[uuid.UUID]identity.Person)
 	if len(ids) == 0 {
 		return out, nil
 	}
@@ -39,13 +42,13 @@ func (r *EntRepo) PeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UU
 		return nil, err
 	}
 
-	return lo.Associate(rows, func(p *ent.Person) (uuid.UUID, entities.Person) {
-		return p.ID, transform.ToEntity[entities.Person](p)
+	return lo.Associate(rows, func(p *ent.Person) (uuid.UUID, identity.Person) {
+		return p.ID, transform.ToEntity[identity.Person](p)
 	}), nil
 }
 
-func (r *EntRepo) ProjectRolesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.ProjectRole, error) {
-	out := make(map[uuid.UUID]entities.ProjectRole)
+func (r *EntRepo) ProjectRolesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]role.ProjectRole, error) {
+	out := make(map[uuid.UUID]role.ProjectRole)
 	if len(ids) == 0 {
 		return out, nil
 	}
@@ -58,14 +61,14 @@ func (r *EntRepo) ProjectRolesByIDs(ctx context.Context, ids []uuid.UUID) (map[u
 		return nil, err
 	}
 
-	return lo.Associate(rows, func(pr *ent.ProjectRole) (uuid.UUID, entities.ProjectRole) {
-		return pr.ID, transform.ToEntity[entities.ProjectRole](pr)
+	return lo.Associate(rows, func(pr *ent.ProjectRole) (uuid.UUID, role.ProjectRole) {
+		return pr.ID, transform.ToEntity[role.ProjectRole](pr)
 	}), nil
 }
 
-func (r *EntRepo) ProductsByIDs(ctx context.Context, ids []uuid.UUID) ([]entities.Product, error) {
+func (r *EntRepo) ProductsByIDs(ctx context.Context, ids []uuid.UUID) ([]product.Product, error) {
 	if len(ids) == 0 {
-		return []entities.Product{}, nil
+		return []product.Product{}, nil
 	}
 
 	rows, err := r.cli.Product.
@@ -76,25 +79,25 @@ func (r *EntRepo) ProductsByIDs(ctx context.Context, ids []uuid.UUID) ([]entitie
 		return nil, err
 	}
 
-	return transform.ToEntities[entities.Product](rows), nil
+	return transform.ToEntities[product.Product](rows), nil
 }
 
-func (r *EntRepo) OrganisationNodeByID(ctx context.Context, id uuid.UUID) (entities.OrganisationNode, error) {
+func (r *EntRepo) OrganisationNodeByID(ctx context.Context, id uuid.UUID) (organisation.OrganisationNode, error) {
 	row, err := r.cli.OrganisationNode.
 		Query().
 		Where(organisationent.IDEQ(id)).
 		Only(ctx)
 	if err != nil {
-		return entities.OrganisationNode{}, err
+		return organisation.OrganisationNode{}, err
 	}
 
-	return transform.ToEntity[entities.OrganisationNode](row), nil
+	return transform.ToEntity[organisation.OrganisationNode](row), nil
 }
 
 func (r *EntRepo) ProjectIDsForPerson(ctx context.Context, personID uuid.UUID) ([]uuid.UUID, error) {
 	evts, err := r.cli.Event.
 		Query().
-		Where(en.TypeEQ(events.ProjectRoleAssignedType)).
+		Where(en.TypeEQ(events2.ProjectRoleAssignedType)).
 		All(ctx)
 	if err != nil {
 		return nil, err
@@ -102,7 +105,7 @@ func (r *EntRepo) ProjectIDsForPerson(ctx context.Context, personID uuid.UUID) (
 
 	projectIDs := lo.FilterMap(evts, func(e *ent.Event, _ int) (uuid.UUID, bool) {
 		b, _ := json.Marshal(e.Data)
-		var payload events.ProjectRoleAssigned
+		var payload events2.ProjectRoleAssigned
 		if err := json.Unmarshal(b, &payload); err == nil {
 			if payload.PersonID == personID {
 				return e.ProjectID, true
@@ -117,7 +120,7 @@ func (r *EntRepo) ProjectIDsForPerson(ctx context.Context, personID uuid.UUID) (
 func (r *EntRepo) ProjectIDsStarted(ctx context.Context) ([]uuid.UUID, error) {
 	var projectIDs []uuid.UUID
 	if err := r.cli.Event.Query().
-		Where(en.TypeEQ(events.ProjectStartedType)).
+		Where(en.TypeEQ(events2.ProjectStartedType)).
 		Select(en.FieldProjectID).
 		Scan(ctx, &projectIDs); err != nil {
 		return nil, err

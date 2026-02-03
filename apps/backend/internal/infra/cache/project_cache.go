@@ -5,24 +5,24 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
 
 type ProjectCache interface {
-	GetProject(ctx context.Context, id uuid.UUID) (*entities.Project, error)
-	SetProject(ctx context.Context, proj *entities.Project) error
+	GetProject(ctx context.Context, id uuid.UUID) (*project.Project, error)
+	SetProject(ctx context.Context, proj *project.Project) error
 	DeleteProject(ctx context.Context, id uuid.UUID) error
 }
 
 type RedisProjectCache struct {
-	*RedisCache[entities.Project]
+	*RedisCache[project.Project]
 }
 
 func NewRedisProjectCache(rdb *redis.Client, ttl time.Duration) *RedisProjectCache {
 	return &RedisProjectCache{
-		RedisCache: NewRedisCache[entities.Project](rdb, ttl),
+		RedisCache: NewRedisCache[project.Project](rdb, ttl),
 	}
 }
 
@@ -30,11 +30,11 @@ func (c *RedisProjectCache) key(id uuid.UUID) string {
 	return fmt.Sprintf("project:%s", id.String())
 }
 
-func (c *RedisProjectCache) GetProject(ctx context.Context, id uuid.UUID) (*entities.Project, error) {
+func (c *RedisProjectCache) GetProject(ctx context.Context, id uuid.UUID) (*project.Project, error) {
 	return c.Get(ctx, c.key(id))
 }
 
-func (c *RedisProjectCache) SetProject(ctx context.Context, proj *entities.Project) error {
+func (c *RedisProjectCache) SetProject(ctx context.Context, proj *project.Project) error {
 	if proj == nil {
 		// Preserve original error message if preferred, or rely on generic
 		// Generic says "cannot cache nil value"

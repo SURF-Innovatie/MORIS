@@ -7,7 +7,7 @@ import (
 	userent "github.com/SURF-Innovatie/MORIS/ent/user"
 	authapp "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity/readmodels"
 	"github.com/google/uuid"
 )
 
@@ -23,11 +23,11 @@ func NewEntRepo(client *ent.Client, userSvc user.Service) authapp.Repository {
 	}
 }
 
-func (r *EntRepo) GetAccountByEmail(ctx context.Context, email string) (*entities.UserAccount, error) {
+func (r *EntRepo) GetAccountByEmail(ctx context.Context, email string) (*readmodels.UserAccount, error) {
 	return r.userSvc.GetAccountByEmail(ctx, email)
 }
 
-func (r *EntRepo) GetAccountByID(ctx context.Context, userID uuid.UUID) (*entities.UserAccount, error) {
+func (r *EntRepo) GetAccountByID(ctx context.Context, userID uuid.UUID) (*readmodels.UserAccount, error) {
 	return r.userSvc.GetAccount(ctx, userID)
 }
 

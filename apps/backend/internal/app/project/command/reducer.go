@@ -1,27 +1,26 @@
 package command
 
 import (
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/projection"
 	"github.com/google/uuid"
-
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
 )
 
 type Reducer struct{}
 
-func (Reducer) Reduce(id uuid.UUID, history []events.Event) (*entities.Project, error) {
+func (Reducer) Reduce(id uuid.UUID, history []events.Event) (*project.Project, error) {
 	p := projection.Reduce(id, history)
 	return p, nil
 }
 
-func (Reducer) Apply(cur *entities.Project, e events.Event) error {
+func (Reducer) Apply(cur *project.Project, e events.Event) error {
 	projection.Apply(cur, e)
 	return nil
 }
 
 type NewReducer struct{}
 
-func (NewReducer) New(id uuid.UUID) *entities.Project {
-	return &entities.Project{Id: id}
+func (NewReducer) New(id uuid.UUID) *project.Project {
+	return &project.Project{Id: id}
 }

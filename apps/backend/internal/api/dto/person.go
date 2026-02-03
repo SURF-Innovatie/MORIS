@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
 	"github.com/google/uuid"
 )
 
@@ -27,7 +27,7 @@ type PersonResponse struct {
 	Description *string   `json:"description,omitempty"`
 }
 
-func (r PersonResponse) FromEntity(e entities.Person) PersonResponse {
+func (r PersonResponse) FromEntity(e identity.Person) PersonResponse {
 	return PersonResponse{
 		ID:          e.ID,
 		UserID:      e.UserID,

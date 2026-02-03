@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/product"
 	"github.com/google/uuid"
 )
 
@@ -14,15 +14,15 @@ type ProductRequest struct {
 }
 
 type ProductResponse struct {
-	ID                 uuid.UUID            `json:"id"`
-	Name               string               `json:"name"`
-	Type               entities.ProductType `json:"type"`
-	Language           string               `json:"language"`
-	DOI                string               `json:"doi"`
-	ZenodoDepositionID int                  `json:"zenodo_deposition_id,omitempty"`
+	ID                 uuid.UUID           `json:"id"`
+	Name               string              `json:"name"`
+	Type               product.ProductType `json:"type"`
+	Language           string              `json:"language"`
+	DOI                string              `json:"doi"`
+	ZenodoDepositionID int                 `json:"zenodo_deposition_id,omitempty"`
 }
 
-func (r ProductResponse) FromEntity(e entities.Product) ProductResponse {
+func (r ProductResponse) FromEntity(e product.Product) ProductResponse {
 	return ProductResponse{
 		ID:                 e.Id,
 		Name:               e.Name,

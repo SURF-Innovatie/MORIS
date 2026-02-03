@@ -4,20 +4,20 @@ import (
 	"time"
 
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	events2 "github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/google/uuid"
 )
 
 type Event struct {
-	ID           uuid.UUID     `json:"id"`
-	ProjectID    uuid.UUID     `json:"projectId"`
-	Type         string        `json:"type"`
-	Status       events.Status `json:"status"`
-	CreatedBy    uuid.UUID     `json:"createdBy"`
-	At           time.Time     `json:"at"`
-	Details      string        `json:"details"`
-	ProjectTitle string        `json:"projectTitle"`
-	FriendlyName string        `json:"friendlyName,omitempty"`
+	ID           uuid.UUID      `json:"id"`
+	ProjectID    uuid.UUID      `json:"projectId"`
+	Type         string         `json:"type"`
+	Status       events2.Status `json:"status"`
+	CreatedBy    uuid.UUID      `json:"createdBy"`
+	At           time.Time      `json:"at"`
+	Details      string         `json:"details"`
+	ProjectTitle string         `json:"projectTitle"`
+	FriendlyName string         `json:"friendlyName,omitempty"`
 
 	// Optional "related object" pointers (IDs only)
 	PersonID      *uuid.UUID `json:"personId,omitempty"`
@@ -48,16 +48,16 @@ type EventTypeResponse struct {
 	Description  string `json:"description,omitempty"`
 }
 
-func (e Event) FromEntity(ev events.Event) Event {
+func (e Event) FromEntity(ev events2.Event) Event {
 	return e.FromEntityWithTitle(ev, "")
 }
 
-func (e Event) FromEntityWithTitle(ev events.Event, projectTitle string) Event {
+func (e Event) FromEntityWithTitle(ev events2.Event, projectTitle string) Event {
 	var coreEv = ev
 	return e.fromCore(coreEv, projectTitle)
 }
 
-func (e Event) FromDetailedEntity(dev events.DetailedEvent) Event {
+func (e Event) FromDetailedEntity(dev events2.DetailedEvent) Event {
 	dto := e.fromCore(dev.Event, "")
 
 	if dev.Person != nil {
@@ -80,7 +80,7 @@ func (e Event) FromDetailedEntity(dev events.DetailedEvent) Event {
 	return dto
 }
 
-func (e Event) fromCore(ev events.Event, projectTitle string) Event {
+func (e Event) fromCore(ev events2.Event, projectTitle string) Event {
 	createdBy := uuid.Nil
 	if cb, ok := any(ev).(interface{ CreatedByID() uuid.UUID }); ok {
 		createdBy = cb.CreatedByID()
@@ -100,7 +100,7 @@ func (e Event) fromCore(ev events.Event, projectTitle string) Event {
 	}
 
 	// Enrich with related IDs if available
-	if r, ok := ev.(events.HasRelatedIDs); ok {
+	if r, ok := ev.(events2.HasRelatedIDs); ok {
 		ids := r.RelatedIDs()
 		dtoEvent.PersonID = ids.PersonID
 		dtoEvent.ProductID = ids.ProductID

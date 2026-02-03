@@ -7,7 +7,7 @@ import (
 	entperson "github.com/SURF-Innovatie/MORIS/ent/person"
 	entproduct "github.com/SURF-Innovatie/MORIS/ent/product"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/product"
 	"github.com/google/uuid"
 )
 
@@ -19,25 +19,25 @@ func NewEntRepo(cli *ent.Client) *EntRepo {
 	return &EntRepo{cli: cli}
 }
 
-func (r *EntRepo) Get(ctx context.Context, id uuid.UUID) (*entities.Product, error) {
+func (r *EntRepo) Get(ctx context.Context, id uuid.UUID) (*product.Product, error) {
 	row, err := r.cli.Product.Query().
 		Where(entproduct.IDEQ(id)).
 		Only(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntityPtr[entities.Product](row), nil
+	return transform.ToEntityPtr[product.Product](row), nil
 }
 
-func (r *EntRepo) List(ctx context.Context) ([]*entities.Product, error) {
+func (r *EntRepo) List(ctx context.Context) ([]*product.Product, error) {
 	rows, err := r.cli.Product.Query().All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntitiesPtr[entities.Product](rows), nil
+	return transform.ToEntitiesPtr[product.Product](rows), nil
 }
 
-func (r *EntRepo) ListByAuthorPersonID(ctx context.Context, personID uuid.UUID) ([]*entities.Product, error) {
+func (r *EntRepo) ListByAuthorPersonID(ctx context.Context, personID uuid.UUID) ([]*product.Product, error) {
 	rows, err := r.cli.Person.Query().
 		Where(entperson.IDEQ(personID)).
 		QueryProducts().
@@ -45,10 +45,10 @@ func (r *EntRepo) ListByAuthorPersonID(ctx context.Context, personID uuid.UUID) 
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntitiesPtr[entities.Product](rows), nil
+	return transform.ToEntitiesPtr[product.Product](rows), nil
 }
 
-func (r *EntRepo) Create(ctx context.Context, p entities.Product) (*entities.Product, error) {
+func (r *EntRepo) Create(ctx context.Context, p product.Product) (*product.Product, error) {
 	builder := r.cli.Product.Create().
 		SetName(p.Name).
 		SetType(int(p.Type)).
@@ -65,10 +65,10 @@ func (r *EntRepo) Create(ctx context.Context, p entities.Product) (*entities.Pro
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntityPtr[entities.Product](row), nil
+	return transform.ToEntityPtr[product.Product](row), nil
 }
 
-func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, p entities.Product) (*entities.Product, error) {
+func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, p product.Product) (*product.Product, error) {
 	row, err := r.cli.Product.UpdateOneID(id).
 		SetName(p.Name).
 		SetType(int(p.Type)).
@@ -79,7 +79,7 @@ func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, p entities.Product) 
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntityPtr[entities.Product](row), nil
+	return transform.ToEntityPtr[product.Product](row), nil
 }
 
 func (r *EntRepo) Delete(ctx context.Context, id uuid.UUID) error {

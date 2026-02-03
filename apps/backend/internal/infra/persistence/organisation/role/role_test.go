@@ -8,7 +8,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/enttest"
 	entorgrole "github.com/SURF-Innovatie/MORIS/ent/organisationrole"
 	entrolescope "github.com/SURF-Innovatie/MORIS/ent/rolescope"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation/role"
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
@@ -88,7 +88,7 @@ func TestListRoles_FiltersAndOrders(t *testing.T) {
 		SetOrganisationNodeID(rootID).
 		SetKey("b").
 		SetDisplayName("Zeta").
-		SetPermissions([]string{string(entities.PermissionCreateProject)}).
+		SetPermissions([]string{string(rbac.PermissionCreateProject)}).
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("create role: %v", err)
@@ -97,7 +97,7 @@ func TestListRoles_FiltersAndOrders(t *testing.T) {
 		SetOrganisationNodeID(rootID).
 		SetKey("a").
 		SetDisplayName("Alpha").
-		SetPermissions([]string{string(entities.PermissionManageDetails)}).
+		SetPermissions([]string{string(rbac.PermissionManageDetails)}).
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("create role: %v", err)
@@ -108,7 +108,7 @@ func TestListRoles_FiltersAndOrders(t *testing.T) {
 		SetOrganisationNodeID(childID).
 		SetKey("c").
 		SetDisplayName("Other").
-		SetPermissions([]string{string(entities.PermissionManageMembers)}).
+		SetPermissions([]string{string(rbac.PermissionManageMembers)}).
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("create role: %v", err)
@@ -145,7 +145,7 @@ func TestCreateGetUpdateRole(t *testing.T) {
 	repo := role.NewEntRepo(cli)
 	rootID, _ := seedOrgTree(t, cli)
 
-	created, err := repo.CreateRole(ctx, rootID, "lead", "Lead", []entities.Permission{entities.PermissionCreateProject})
+	created, err := repo.CreateRole(ctx, rootID, "lead", "Lead", []rbac.Permission{rbac.PermissionCreateProject})
 	if err != nil {
 		t.Fatalf("CreateRole: %v", err)
 	}
@@ -158,7 +158,7 @@ func TestCreateGetUpdateRole(t *testing.T) {
 		t.Fatalf("unexpected role: %+v", got)
 	}
 
-	updated, err := repo.UpdateRole(ctx, created.ID, "Team lead", []entities.Permission{entities.PermissionManageDetails})
+	updated, err := repo.UpdateRole(ctx, created.ID, "Team lead", []rbac.Permission{rbac.PermissionManageDetails})
 	if err != nil {
 		t.Fatalf("UpdateRole: %v", err)
 	}
@@ -174,7 +174,7 @@ func TestCreateGetUpdateRole(t *testing.T) {
 	if row.DisplayName != "Team lead" {
 		t.Fatalf("expected persisted display name, got %q", row.DisplayName)
 	}
-	if !lo.Contains(row.Permissions, string(entities.PermissionManageDetails)) {
+	if !lo.Contains(row.Permissions, string(rbac.PermissionManageDetails)) {
 		t.Fatalf("expected manage_details permission persisted, got %v", row.Permissions)
 	}
 }
@@ -192,7 +192,7 @@ func TestDeleteRole_BlockedWhenScopeExists(t *testing.T) {
 		SetOrganisationNodeID(rootID).
 		SetKey("admin").
 		SetDisplayName("Admin").
-		SetPermissions([]string{string(entities.PermissionManageDetails)}).
+		SetPermissions([]string{string(rbac.PermissionManageDetails)}).
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("create role: %v", err)
@@ -232,7 +232,7 @@ func TestCreateScope_IdempotentAndRequiresRoleForOrg(t *testing.T) {
 		SetOrganisationNodeID(rootID).
 		SetKey("contributor").
 		SetDisplayName("Contributor").
-		SetPermissions([]string{string(entities.PermissionCreateProject)}).
+		SetPermissions([]string{string(rbac.PermissionCreateProject)}).
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("create role: %v", err)
@@ -276,7 +276,7 @@ func TestAddMembership_DeduplicatesAndRemoveMembership(t *testing.T) {
 		SetOrganisationNodeID(rootID).
 		SetKey("member").
 		SetDisplayName("Member").
-		SetPermissions([]string{string(entities.PermissionCreateProject)}).
+		SetPermissions([]string{string(rbac.PermissionCreateProject)}).
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("create role: %v", err)

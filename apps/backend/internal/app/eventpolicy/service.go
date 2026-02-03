@@ -4,19 +4,19 @@ import (
 	"context"
 
 	organisationhierarchy "github.com/SURF-Innovatie/MORIS/internal/app/organisation/hierarchy"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/policy"
 	"github.com/google/uuid"
 )
 
 // Service provides event policy management and evaluation
 type Service interface {
-	Create(ctx context.Context, policy entities.EventPolicy) (*entities.EventPolicy, error)
-	Update(ctx context.Context, id uuid.UUID, policy entities.EventPolicy) (*entities.EventPolicy, error)
+	Create(ctx context.Context, policy policy.EventPolicy) (*policy.EventPolicy, error)
+	Update(ctx context.Context, id uuid.UUID, policy policy.EventPolicy) (*policy.EventPolicy, error)
 	Delete(ctx context.Context, id uuid.UUID) error
-	GetByID(ctx context.Context, id uuid.UUID) (*entities.EventPolicy, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*policy.EventPolicy, error)
 
-	ListForOrgNode(ctx context.Context, orgNodeID uuid.UUID, includeInherited bool) ([]entities.EventPolicy, error)
-	ListForProject(ctx context.Context, projectID uuid.UUID, owningOrgNodeID uuid.UUID, includeInherited bool) ([]entities.EventPolicy, error)
+	ListForOrgNode(ctx context.Context, orgNodeID uuid.UUID, includeInherited bool) ([]policy.EventPolicy, error)
+	ListForProject(ctx context.Context, projectID uuid.UUID, owningOrgNodeID uuid.UUID, includeInherited bool) ([]policy.EventPolicy, error)
 }
 
 type service struct {
@@ -32,11 +32,11 @@ func NewService(repo repository, orgRbacSvc organisationhierarchy.Service) Servi
 	}
 }
 
-func (s *service) Create(ctx context.Context, policy entities.EventPolicy) (*entities.EventPolicy, error) {
+func (s *service) Create(ctx context.Context, policy policy.EventPolicy) (*policy.EventPolicy, error) {
 	return s.repo.Create(ctx, policy)
 }
 
-func (s *service) Update(ctx context.Context, id uuid.UUID, policy entities.EventPolicy) (*entities.EventPolicy, error) {
+func (s *service) Update(ctx context.Context, id uuid.UUID, policy policy.EventPolicy) (*policy.EventPolicy, error) {
 	return s.repo.Update(ctx, id, policy)
 }
 
@@ -45,12 +45,12 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 /**/
-func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*entities.EventPolicy, error) {
+func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*policy.EventPolicy, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
 // ListForOrgNode lists policies for an org node, optionally including inherited ones
-func (s *service) ListForOrgNode(ctx context.Context, orgNodeID uuid.UUID, includeInherited bool) ([]entities.EventPolicy, error) {
+func (s *service) ListForOrgNode(ctx context.Context, orgNodeID uuid.UUID, includeInherited bool) ([]policy.EventPolicy, error) {
 	var ancestorIDs []uuid.UUID
 	if includeInherited {
 		var err error
@@ -77,7 +77,7 @@ func (s *service) ListForOrgNode(ctx context.Context, orgNodeID uuid.UUID, inclu
 }
 
 // ListForProject lists policies for a project, optionally including inherited org policies
-func (s *service) ListForProject(ctx context.Context, projectID uuid.UUID, owningOrgNodeID uuid.UUID, includeInherited bool) ([]entities.EventPolicy, error) {
+func (s *service) ListForProject(ctx context.Context, projectID uuid.UUID, owningOrgNodeID uuid.UUID, includeInherited bool) ([]policy.EventPolicy, error) {
 	// Get project's own policies
 	projectPolicies, err := s.repo.ListForProject(ctx, projectID)
 	if err != nil {

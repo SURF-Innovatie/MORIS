@@ -9,7 +9,7 @@ import (
 
 	"time"
 
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity/readmodels"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -43,8 +43,8 @@ const (
 )
 
 // GetUserFromContext retrieves the authUser from the request context
-func GetUserFromContext(ctx context.Context) (*entities.UserAccount, bool) {
-	user, ok := ctx.Value(ContextKeyUser).(*entities.UserAccount)
+func GetUserFromContext(ctx context.Context) (*readmodels.UserAccount, bool) {
+	user, ok := ctx.Value(ContextKeyUser).(*readmodels.UserAccount)
 	return user, ok
 }
 

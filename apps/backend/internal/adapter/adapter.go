@@ -1,8 +1,10 @@
 package adapter
 
 import (
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/google/uuid"
 )
 
@@ -42,16 +44,16 @@ type OutputInfo struct {
 // This is what sinks consume - the full event history plus resolved entities.
 type ProjectContext struct {
 	ProjectID uuid.UUID
-	Events    []events.Event             // The raw event stream
-	Project   *entities.Project          // Reduced/projected state
-	Members   []entities.Person          // Resolved member entities
-	OrgNode   *entities.OrganisationNode // Owning organisation
+	Events    []events.Event                 // The raw event stream
+	Project   *project.Project               // Reduced/projected state
+	Members   []identity.Person              // Resolved member entities
+	OrgNode   *organisation.OrganisationNode // Owning organisation
 }
 
 // UserContext bundles user data for import/export.
 type UserContext struct {
-	Person *entities.Person
-	User   *entities.User
+	Person *identity.Person
+	User   *identity.User
 }
 
 // FetchOptions configures how data is fetched from a source

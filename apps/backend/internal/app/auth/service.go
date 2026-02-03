@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity/readmodels"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Service interface {
-	Login(ctx context.Context, email, password string) (string, *entities.UserAccount, error)
-	LoginByEmail(ctx context.Context, email string) (string, *entities.UserAccount, error)
-	ValidateToken(tokenString string) (*entities.UserAccount, error)
+	Login(ctx context.Context, email, password string) (string, *readmodels.UserAccount, error)
+	LoginByEmail(ctx context.Context, email string) (string, *readmodels.UserAccount, error)
+	ValidateToken(tokenString string) (*readmodels.UserAccount, error)
 }
 
 type service struct {
@@ -48,7 +48,7 @@ func NewService(repo Repository, opts Options) Service {
 	}
 }
 
-func (s *service) Login(ctx context.Context, email, password string) (string, *entities.UserAccount, error) {
+func (s *service) Login(ctx context.Context, email, password string) (string, *readmodels.UserAccount, error) {
 	usr, err := s.repo.GetAccountByEmail(ctx, email)
 	if err != nil {
 		// Keep the exact error mapping consistent across repos.
@@ -79,7 +79,7 @@ func (s *service) Login(ctx context.Context, email, password string) (string, *e
 	return token, usr, nil
 }
 
-func (s *service) LoginByEmail(ctx context.Context, email string) (string, *entities.UserAccount, error) {
+func (s *service) LoginByEmail(ctx context.Context, email string) (string, *readmodels.UserAccount, error) {
 	usr, err := s.repo.GetAccountByEmail(ctx, email)
 	if err != nil {
 		return "", nil, fmt.Errorf("invalid credentials")
@@ -97,7 +97,7 @@ func (s *service) LoginByEmail(ctx context.Context, email string) (string, *enti
 	return token, usr, nil
 }
 
-func (s *service) ValidateToken(tokenString string) (*entities.UserAccount, error) {
+func (s *service) ValidateToken(tokenString string) (*readmodels.UserAccount, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -134,7 +134,7 @@ func (s *service) ValidateToken(tokenString string) (*entities.UserAccount, erro
 	return usr, nil
 }
 
-func (s *service) generateJWT(usr *entities.UserAccount) (string, error) {
+func (s *service) generateJWT(usr *readmodels.UserAccount) (string, error) {
 	now := s.now()
 
 	claims := jwt.MapClaims{

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/SURF-Innovatie/MORIS/internal/app/notification"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )

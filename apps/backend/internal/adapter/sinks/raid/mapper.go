@@ -3,13 +3,14 @@ package raidsink
 import (
 	"time"
 
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation"
+	events2 "github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 
 	"github.com/SURF-Innovatie/MORIS/external/raid"
 	"github.com/SURF-Innovatie/MORIS/internal/adapter"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 )
 
 // Schema URIs for RAiD metadata
@@ -59,7 +60,7 @@ type titleEntry struct {
 // contributorState tracks contributor state from event processing
 type contributorState struct {
 	personID  uuid.UUID
-	person    *entities.Person
+	person    *identity.Person
 	roleID    uuid.UUID
 	startDate time.Time
 	endDate   *time.Time
@@ -109,7 +110,7 @@ func (m *RAiDMapper) MapToCreateRequest(pc adapter.ProjectContext) *raid.RAiDCre
 }
 
 // extractTitleHistory builds a list of all titles with their date ranges
-func (m *RAiDMapper) extractTitleHistory(evts []events.Event) []titleEntry {
+func (m *RAiDMapper) extractTitleHistory(evts []events2.Event) []titleEntry {
 	var titles []titleEntry
 	var currentTitle *titleEntry
 
@@ -126,10 +127,10 @@ func (m *RAiDMapper) extractTitleHistory(evts []events.Event) []titleEntry {
 
 	for _, e := range evts {
 		switch evt := e.(type) {
-		case *events.ProjectStarted:
+		case *events2.ProjectStarted:
 			endCurrentTitle(evt.OccurredAt())
 			startNewTitle(evt.Title, evt.OccurredAt())
-		case *events.TitleChanged:
+		case *events2.TitleChanged:
 			endCurrentTitle(evt.OccurredAt())
 			startNewTitle(evt.Title, evt.OccurredAt())
 		}
@@ -139,12 +140,12 @@ func (m *RAiDMapper) extractTitleHistory(evts []events.Event) []titleEntry {
 }
 
 // extractDescriptionHistory returns the current description
-func (m *RAiDMapper) extractDescriptionHistory(evts []events.Event) []string {
-	description := lo.Reduce(evts, func(acc string, e events.Event, _ int) string {
+func (m *RAiDMapper) extractDescriptionHistory(evts []events2.Event) []string {
+	description := lo.Reduce(evts, func(acc string, e events2.Event, _ int) string {
 		switch evt := e.(type) {
-		case *events.ProjectStarted:
+		case *events2.ProjectStarted:
 			return evt.Description
-		case *events.DescriptionChanged:
+		case *events2.DescriptionChanged:
 			return evt.Description
 		}
 		return acc
@@ -154,16 +155,16 @@ func (m *RAiDMapper) extractDescriptionHistory(evts []events.Event) []string {
 }
 
 // extractDates finds start/end dates from the event stream
-func (m *RAiDMapper) extractDates(evts []events.Event) (time.Time, *time.Time) {
+func (m *RAiDMapper) extractDates(evts []events2.Event) (time.Time, *time.Time) {
 	var startDate, endDate time.Time
 
 	for _, e := range evts {
 		switch evt := e.(type) {
-		case *events.ProjectStarted:
+		case *events2.ProjectStarted:
 			startDate, endDate = evt.StartDate, evt.EndDate
-		case *events.StartDateChanged:
+		case *events2.StartDateChanged:
 			startDate = evt.StartDate
-		case *events.EndDateChanged:
+		case *events2.EndDateChanged:
 			endDate = evt.EndDate
 		}
 	}
@@ -172,13 +173,13 @@ func (m *RAiDMapper) extractDates(evts []events.Event) (time.Time, *time.Time) {
 }
 
 // extractContributors processes role assignment events to build contributor list
-func (m *RAiDMapper) extractContributors(evts []events.Event, persons []entities.Person) []raid.RAiDContributor {
-	personMap := lo.KeyBy(persons, func(p entities.Person) uuid.UUID { return p.ID })
+func (m *RAiDMapper) extractContributors(evts []events2.Event, persons []identity.Person) []raid.RAiDContributor {
+	personMap := lo.KeyBy(persons, func(p identity.Person) uuid.UUID { return p.ID })
 	states := make(map[memberKey]*contributorState)
 
 	for _, e := range evts {
 		switch evt := e.(type) {
-		case *events.ProjectRoleAssigned:
+		case *events2.ProjectRoleAssigned:
 			key := memberKey{personID: evt.PersonID, roleID: evt.ProjectRoleID}
 			person := lo.ToPtr(personMap[evt.PersonID])
 			states[key] = &contributorState{
@@ -187,7 +188,7 @@ func (m *RAiDMapper) extractContributors(evts []events.Event, persons []entities
 				roleID:    evt.ProjectRoleID,
 				startDate: evt.OccurredAt(),
 			}
-		case *events.ProjectRoleUnassigned:
+		case *events2.ProjectRoleUnassigned:
 			key := memberKey{personID: evt.PersonID, roleID: evt.ProjectRoleID}
 			if state, ok := states[key]; ok {
 				state.endDate = lo.ToPtr(evt.OccurredAt())
@@ -221,16 +222,16 @@ func (m *RAiDMapper) extractContributors(evts []events.Event, persons []entities
 }
 
 // extractOrganisations finds organisations with roles from events
-func (m *RAiDMapper) extractOrganisations(evts []events.Event, orgNode *entities.OrganisationNode) []raid.RAiDOrganisation {
+func (m *RAiDMapper) extractOrganisations(evts []events2.Event, orgNode *organisation.OrganisationNode) []raid.RAiDOrganisation {
 	if orgNode == nil || lo.FromPtrOr(orgNode.RorID, "") == "" {
 		return nil
 	}
 
-	startDate := lo.Reduce(evts, func(acc time.Time, e events.Event, _ int) time.Time {
+	startDate := lo.Reduce(evts, func(acc time.Time, e events2.Event, _ int) time.Time {
 		switch evt := e.(type) {
-		case *events.ProjectStarted:
+		case *events2.ProjectStarted:
 			return evt.OccurredAt()
-		case *events.OwningOrgNodeChanged:
+		case *events2.OwningOrgNodeChanged:
 			return evt.OccurredAt()
 		}
 		return acc

@@ -3,7 +3,8 @@ package dto
 import (
 	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation/rbac"
 	"github.com/google/uuid"
 )
 
@@ -14,7 +15,7 @@ type OrganisationRoleResponse struct {
 	Permissions []string  `json:"permissions"`
 }
 
-func (r OrganisationRoleResponse) FromEntity(e *entities.OrganisationRole) OrganisationRoleResponse {
+func (r OrganisationRoleResponse) FromEntity(e *rbac.OrganisationRole) OrganisationRoleResponse {
 	perms := make([]string, len(e.Permissions))
 	for i, p := range e.Permissions {
 		perms[i] = string(p)
@@ -63,7 +64,7 @@ type OrganisationRoleScopeResponse struct {
 	RootNodeID uuid.UUID `json:"rootNodeId"`
 }
 
-func (r OrganisationRoleScopeResponse) FromEntity(e *entities.RoleScope) OrganisationRoleScopeResponse {
+func (r OrganisationRoleScopeResponse) FromEntity(e *rbac.RoleScope) OrganisationRoleScopeResponse {
 	return OrganisationRoleScopeResponse{
 		ID:         e.ID,
 		RoleID:     e.RoleID,
@@ -82,7 +83,7 @@ type OrganisationMembershipResponse struct {
 	RoleScopeID uuid.UUID `json:"roleScopeId"`
 }
 
-func (r OrganisationMembershipResponse) FromEntity(e *entities.Membership) OrganisationMembershipResponse {
+func (r OrganisationMembershipResponse) FromEntity(e *rbac.Membership) OrganisationMembershipResponse {
 	return OrganisationMembershipResponse{
 		ID:          e.ID,
 		PersonID:    e.PersonID,
@@ -126,7 +127,7 @@ type OrganisationApprovalNodeResponse struct {
 	ApprovalNodeID uuid.UUID `json:"approvalNodeId"`
 }
 
-func (r OrganisationApprovalNodeResponse) FromEntity(e *entities.OrganisationNode) OrganisationApprovalNodeResponse {
+func (r OrganisationApprovalNodeResponse) FromEntity(e *organisation.OrganisationNode) OrganisationApprovalNodeResponse {
 	return OrganisationApprovalNodeResponse{
 		ApprovalNodeID: e.ID,
 	}

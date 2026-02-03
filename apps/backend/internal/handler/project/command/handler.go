@@ -5,7 +5,7 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/command"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 )
 

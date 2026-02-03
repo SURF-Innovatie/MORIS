@@ -5,7 +5,8 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/role"
 	"github.com/google/uuid"
 )
 
@@ -39,7 +40,7 @@ type ProjectRoleResponse struct {
 	AllowedEventTypes []string  `json:"allowedEventTypes,omitempty"`
 }
 
-func (r ProjectRoleResponse) FromEntity(e entities.ProjectRole) ProjectRoleResponse {
+func (r ProjectRoleResponse) FromEntity(e role.ProjectRole) ProjectRoleResponse {
 	return ProjectRoleResponse{
 		ID:                e.ID,
 		Key:               e.Key,
@@ -55,7 +56,7 @@ type ProjectMemberResponse struct {
 	RoleName string    `json:"role_name"`
 }
 
-func (r ProjectMemberResponse) FromEntity(e entities.ProjectMemberDetail) ProjectMemberResponse {
+func (r ProjectMemberResponse) FromEntity(e project.MemberDetail) ProjectMemberResponse {
 	return ProjectMemberResponse{
 		PersonResponse: transform.ToDTOItem[PersonResponse](e.Person),
 		RoleID:         e.Role.ID,

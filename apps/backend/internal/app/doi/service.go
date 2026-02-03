@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/product"
 )
 
 var (
@@ -166,7 +166,7 @@ func (s *service) parseJSONLD(r io.Reader, originalDOI string) (*dto.Work, error
 			w.Type = mapSchemaType(tStr)
 		}
 	} else {
-		w.Type = entities.Other
+		w.Type = product.Other
 	}
 
 	// Publisher
@@ -179,32 +179,32 @@ func (s *service) parseJSONLD(r io.Reader, originalDOI string) (*dto.Work, error
 	return w, nil
 }
 
-func mapCSLType(t string) entities.ProductType {
+func mapCSLType(t string) product.ProductType {
 	switch strings.ToLower(t) {
 	case "dataset":
-		return entities.Dataset
+		return product.Dataset
 	case "software", "computerprogram":
-		return entities.Software
+		return product.Software
 	case "graphic", "image":
-		return entities.Image
+		return product.Image
 	case "article", "journal-article", "proceedings-article":
-		return entities.Other // Or a specific type if MORIS supports it, otherwise Other is safe
+		return product.Other // Or a specific type if MORIS supports it, otherwise Other is safe
 	case "book", "book-chapter":
-		return entities.Other
+		return product.Other
 	default:
-		return entities.Other
+		return product.Other
 	}
 }
 
-func mapSchemaType(t string) entities.ProductType {
+func mapSchemaType(t string) product.ProductType {
 	switch strings.ToLower(t) {
 	case "dataset":
-		return entities.Dataset
+		return product.Dataset
 	case "softwareapplication", "softwaresourcecode":
-		return entities.Software
+		return product.Software
 	case "imageobject":
-		return entities.Image
+		return product.Image
 	default:
-		return entities.Other
+		return product.Other
 	}
 }

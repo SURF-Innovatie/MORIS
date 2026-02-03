@@ -1,7 +1,8 @@
 package dto
 
 import (
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/customfield"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation"
 	"github.com/google/uuid"
 )
 
@@ -39,7 +40,7 @@ type OrganisationResponse struct {
 	RorID       *string    `json:"rorId"`
 }
 
-func (r OrganisationResponse) FromEntity(n entities.OrganisationNode) OrganisationResponse {
+func (r OrganisationResponse) FromEntity(n organisation.OrganisationNode) OrganisationResponse {
 	return OrganisationResponse{
 		ID:          n.ID,
 		ParentID:    n.ParentID,
@@ -81,7 +82,7 @@ type CustomFieldDefinitionResponse struct {
 	ExampleValue       string    `json:"example_value"`
 }
 
-func (r CustomFieldDefinitionResponse) FromEntity(e entities.CustomFieldDefinition) CustomFieldDefinitionResponse {
+func (r CustomFieldDefinitionResponse) FromEntity(e customfield.Definition) CustomFieldDefinitionResponse {
 	return CustomFieldDefinitionResponse{
 		ID:                 e.ID,
 		OrganisationNodeID: e.OrganisationNodeID,

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/errorlog"
 	"github.com/google/uuid"
 )
 
@@ -29,7 +29,7 @@ func (s *service) Log(_ context.Context, userID *uuid.UUID, method, route string
 	logCtx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
-	_ = s.repo.Create(logCtx, entities.ErrorLogCreateInput{
+	_ = s.repo.Create(logCtx, errorlog.ErrorLogCreateInput{
 		UserID:     userID,
 		HTTPMethod: method,
 		Route:      route,

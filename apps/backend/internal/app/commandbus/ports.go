@@ -3,9 +3,8 @@ package commandbus
 import (
 	"context"
 
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/google/uuid"
-
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 )
 
 type EventStore interface {

@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"github.com/SURF-Innovatie/MORIS/internal/app/event"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/projection"
 	"github.com/google/uuid"
 )
 
@@ -21,7 +21,7 @@ func New(eventSvc event.Service, cache Cache) *Loader {
 	return &Loader{eventSvc: eventSvc, cache: cache}
 }
 
-func (l *Loader) Load(ctx context.Context, projectID uuid.UUID) (*entities.Project, error) {
+func (l *Loader) Load(ctx context.Context, projectID uuid.UUID) (*project.Project, error) {
 	if l.cache != nil {
 		if p, err := l.cache.GetProject(ctx, projectID); err == nil && p != nil {
 			return p, nil

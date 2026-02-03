@@ -8,7 +8,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/enttest"
 	entclosure "github.com/SURF-Innovatie/MORIS/ent/organisationnodeclosure"
 	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	rbac2 "github.com/SURF-Innovatie/MORIS/internal/domain/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/organisation/rbac"
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
@@ -88,7 +88,7 @@ func TestHasPermission_TrueViaAncestorScope_FalseOtherwise(t *testing.T) {
 		SetOrganisationNodeID(rootID).
 		SetKey("admin").
 		SetDisplayName("Admin").
-		SetPermissions([]string{string(entities.PermissionManageDetails)}).
+		SetPermissions([]string{string(rbac2.PermissionManageDetails)}).
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("create role: %v", err)
@@ -104,7 +104,7 @@ func TestHasPermission_TrueViaAncestorScope_FalseOtherwise(t *testing.T) {
 		t.Fatalf("create membership: %v", err)
 	}
 
-	ok, err := repo.HasPermission(ctx, personID, childID, entities.PermissionManageDetails)
+	ok, err := repo.HasPermission(ctx, personID, childID, rbac2.PermissionManageDetails)
 	if err != nil {
 		t.Fatalf("HasPermission: %v", err)
 	}
@@ -112,7 +112,7 @@ func TestHasPermission_TrueViaAncestorScope_FalseOtherwise(t *testing.T) {
 		t.Fatalf("expected permission via ancestor scope")
 	}
 
-	ok, err = repo.HasPermission(ctx, personID, childID, entities.PermissionCreateProject)
+	ok, err = repo.HasPermission(ctx, personID, childID, rbac2.PermissionCreateProject)
 	if err != nil {
 		t.Fatalf("HasPermission: %v", err)
 	}
@@ -130,7 +130,7 @@ func TestHasPermission_SysAdminAlwaysTrue(t *testing.T) {
 	_, childID := seedOrgTree(t, cli)
 	personID, _ := seedPersonUser(t, cli, true)
 
-	ok, err := repo.HasPermission(ctx, personID, childID, entities.PermissionManageDetails)
+	ok, err := repo.HasPermission(ctx, personID, childID, rbac2.PermissionManageDetails)
 	if err != nil {
 		t.Fatalf("HasPermission: %v", err)
 	}
@@ -142,7 +142,7 @@ func TestHasPermission_SysAdminAlwaysTrue(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetMyPermissions: %v", err)
 	}
-	if len(perms) != len(entities.AllPermissions) {
+	if len(perms) != len(rbac2.AllPermissions) {
 		t.Fatalf("expected all permissions for sysadmin, got %d", len(perms))
 	}
 }
@@ -161,7 +161,7 @@ func TestGetMyPermissions_CollectsUnionFromMemberships(t *testing.T) {
 		SetOrganisationNodeID(rootID).
 		SetKey("r1").
 		SetDisplayName("R1").
-		SetPermissions([]string{string(entities.PermissionManageDetails)}).
+		SetPermissions([]string{string(rbac2.PermissionManageDetails)}).
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("create role1: %v", err)
@@ -170,7 +170,7 @@ func TestGetMyPermissions_CollectsUnionFromMemberships(t *testing.T) {
 		SetOrganisationNodeID(rootID).
 		SetKey("r2").
 		SetDisplayName("R2").
-		SetPermissions([]string{string(entities.PermissionCreateProject)}).
+		SetPermissions([]string{string(rbac2.PermissionCreateProject)}).
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("create role2: %v", err)
@@ -201,7 +201,7 @@ func TestGetMyPermissions_CollectsUnionFromMemberships(t *testing.T) {
 		t.Fatalf("GetMyPermissions: %v", err)
 	}
 
-	if !lo.Contains(perms, entities.PermissionManageDetails) || !lo.Contains(perms, entities.PermissionCreateProject) {
+	if !lo.Contains(perms, rbac2.PermissionManageDetails) || !lo.Contains(perms, rbac2.PermissionCreateProject) {
 		t.Fatalf("expected union of permissions, got %v", perms)
 	}
 
@@ -225,7 +225,7 @@ func TestListEffectiveMemberships_ReturnsMembershipsForAncestorScopes(t *testing
 		SetOrganisationNodeID(rootID).
 		SetKey("member").
 		SetDisplayName("Member").
-		SetPermissions([]string{string(entities.PermissionCreateProject)}).
+		SetPermissions([]string{string(rbac2.PermissionCreateProject)}).
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("create role: %v", err)
@@ -318,7 +318,7 @@ func TestGetApprovalNode_FindsNearestAncestorWithAdminMembership(t *testing.T) {
 		SetOrganisationNodeID(rootID).
 		SetKey("admin").
 		SetDisplayName("Admin").
-		SetPermissions([]string{string(entities.PermissionManageDetails)}).
+		SetPermissions([]string{string(rbac2.PermissionManageDetails)}).
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("create role: %v", err)

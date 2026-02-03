@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/SURF-Innovatie/MORIS/internal/app/commandbus"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/projection"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/projection"
 	"github.com/google/uuid"
 )
 
 type ProjectCacheRefresher interface {
-	Refresh(ctx context.Context, projectID uuid.UUID) (*entities.Project, error)
+	Refresh(ctx context.Context, projectID uuid.UUID) (*project.Project, error)
 }
 
 type EventStoreProjectCacheRefresher struct {
@@ -22,7 +22,7 @@ func NewEventStoreProjectCacheRefresher(eventStore commandbus.EventStore, cache 
 	return &EventStoreProjectCacheRefresher{eventStore: eventStore, cache: cache}
 }
 
-func (r *EventStoreProjectCacheRefresher) Refresh(ctx context.Context, projectID uuid.UUID) (*entities.Project, error) {
+func (r *EventStoreProjectCacheRefresher) Refresh(ctx context.Context, projectID uuid.UUID) (*project.Project, error) {
 	evts, version, err := r.eventStore.Load(ctx, projectID)
 	if err != nil {
 		return nil, err

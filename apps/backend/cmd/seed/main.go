@@ -16,8 +16,9 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	organisation2 "github.com/SURF-Innovatie/MORIS/internal/domain/organisation"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/product"
+	events2 "github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/enttx"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/event"
@@ -43,7 +44,7 @@ type seedProject struct {
 }
 
 type seedProduct struct {
-	Type        entities.ProductType
+	Type        product.ProductType
 	Language    string
 	Name        string
 	DOI         string
@@ -228,8 +229,8 @@ func main() {
 			Start:        time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
 			End:          time.Date(2024, 10, 20, 0, 0, 0, 0, time.UTC),
 			Products: []seedProduct{
-				{Type: entities.Software, Language: "en", Name: "PQCryptoBench", DOI: "10.1234/pqcb.2024.001"},
-				{Type: entities.Dataset, Language: "en", Name: "Post-Quantum Benchmark Dataset", DOI: "10.1234/pqcb.2024.002"},
+				{Type: product.Software, Language: "en", Name: "PQCryptoBench", DOI: "10.1234/pqcb.2024.001"},
+				{Type: product.Dataset, Language: "en", Name: "Post-Quantum Benchmark Dataset", DOI: "10.1234/pqcb.2024.002"},
 			},
 		},
 		{
@@ -240,7 +241,7 @@ func main() {
 			Start:        time.Date(2024, 3, 12, 0, 0, 0, 0, time.UTC),
 			End:          time.Date(2025, 1, 3, 0, 0, 0, 0, time.UTC),
 			Products: []seedProduct{
-				{Type: entities.Dataset, Language: "en", Name: "Methane Emission Field Measurements", DOI: "10.1234/mmc.2024.001"},
+				{Type: product.Dataset, Language: "en", Name: "Methane Emission Field Measurements", DOI: "10.1234/mmc.2024.001"},
 			},
 		},
 		{
@@ -251,8 +252,8 @@ func main() {
 			Start:        time.Date(2023, 11, 1, 0, 0, 0, 0, time.UTC),
 			End:          time.Date(2024, 11, 1, 0, 0, 0, 0, time.UTC),
 			Products: []seedProduct{
-				{Type: entities.Software, Language: "en", Name: "AIBench", DOI: "10.1234/alam.2024.001"},
-				{Type: entities.Dataset, Language: "en", Name: "AIBench Dataset", DOI: "10.1234/alam.2024.002"},
+				{Type: product.Software, Language: "en", Name: "AIBench", DOI: "10.1234/alam.2024.001"},
+				{Type: product.Dataset, Language: "en", Name: "AIBench Dataset", DOI: "10.1234/alam.2024.002"},
 			},
 		},
 		{
@@ -263,7 +264,7 @@ func main() {
 			Start:        time.Date(2024, 4, 15, 0, 0, 0, 0, time.UTC),
 			End:          time.Date(2025, 3, 18, 0, 0, 0, 0, time.UTC),
 			Products: []seedProduct{
-				{Type: entities.Software, Language: "en", Name: "WaveSoft", DOI: "10.1234/wbhp.2024.001"},
+				{Type: product.Software, Language: "en", Name: "WaveSoft", DOI: "10.1234/wbhp.2024.001"},
 			},
 		},
 		{
@@ -274,7 +275,7 @@ func main() {
 			Start:        time.Date(2023, 9, 30, 0, 0, 0, 0, time.UTC),
 			End:          time.Date(2024, 7, 12, 0, 0, 0, 0, time.UTC),
 			Products: []seedProduct{
-				{Type: entities.Software, Language: "en", Name: "Marine Drone Swarms", DOI: "10.1234/mdsm.2024.001"},
+				{Type: product.Software, Language: "en", Name: "Marine Drone Swarms", DOI: "10.1234/mdsm.2024.001"},
 			},
 		},
 	}
@@ -566,8 +567,8 @@ func main() {
 	for _, sp := range projects {
 		projectID := uuid.New()
 
-		startEvent := &events.ProjectStarted{
-			Base: events.Base{
+		startEvent := &events2.ProjectStarted{
+			Base: events2.Base{
 				ID:        uuid.New(),
 				ProjectID: projectID,
 				At:        time.Now().UTC(),
@@ -607,8 +608,8 @@ func main() {
 				roleID = leadRoleID // make test user the project lead/admin
 			}
 
-			pevt := &events.ProjectRoleAssigned{
-				Base: events.Base{
+			pevt := &events2.ProjectRoleAssigned{
+				Base: events2.Base{
 					ID:        uuid.New(),
 					ProjectID: projectID,
 					At:        time.Now().UTC(),
@@ -627,8 +628,8 @@ func main() {
 		for _, prod := range sp.Products {
 			productID := mustProductID(prod.DOI)
 
-			pevt := &events.ProductAdded{
-				Base: events.Base{
+			pevt := &events2.ProductAdded{
+				Base: events2.Base{
 					ProjectID: projectID,
 					At:        time.Now().UTC(),
 					Status:    "approved",
@@ -708,7 +709,7 @@ func createPath(ctx context.Context, orgSvc organisation.Service, rootID uuid.UU
 }
 
 // getOrCreateChild retrieves a child OrganisationNode by name under the given parent,
-func getOrCreateChild(ctx context.Context, cli *ent.Client, orgSvc organisation.Service, parentID uuid.UUID, name string) (*entities.OrganisationNode, error) {
+func getOrCreateChild(ctx context.Context, cli *ent.Client, orgSvc organisation.Service, parentID uuid.UUID, name string) (*organisation2.OrganisationNode, error) {
 	row, err := cli.OrganisationNode.
 		Query().
 		Where(
@@ -717,7 +718,7 @@ func getOrCreateChild(ctx context.Context, cli *ent.Client, orgSvc organisation.
 		).
 		Only(ctx)
 	if err == nil {
-		return transform.ToEntityPtr[entities.OrganisationNode](row), nil
+		return transform.ToEntityPtr[organisation2.OrganisationNode](row), nil
 	}
 	if !ent.IsNotFound(err) {
 		return nil, err

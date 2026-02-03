@@ -5,28 +5,29 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/internal/app/event"
 	"github.com/SURF-Innovatie/MORIS/internal/app/person"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity/readmodels"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 )
 
 type Service interface {
-	Get(ctx context.Context, id uuid.UUID) (*entities.User, error)
-	Create(ctx context.Context, user entities.User) (*entities.User, error)
-	Update(ctx context.Context, id uuid.UUID, user entities.User) (*entities.User, error)
+	Get(ctx context.Context, id uuid.UUID) (*identity.User, error)
+	Create(ctx context.Context, user identity.User) (*identity.User, error)
+	Update(ctx context.Context, id uuid.UUID, user identity.User) (*identity.User, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 
-	GetAccount(ctx context.Context, id uuid.UUID) (*entities.UserAccount, error)
-	GetAccountByEmail(ctx context.Context, email string) (*entities.UserAccount, error)
+	GetAccount(ctx context.Context, id uuid.UUID) (*readmodels.UserAccount, error)
+	GetAccountByEmail(ctx context.Context, email string) (*readmodels.UserAccount, error)
 	GetApprovedEvents(ctx context.Context, userID uuid.UUID) ([]events.Event, error)
-	ListAll(ctx context.Context, limit, offset int) ([]*entities.UserAccount, int, error)
+	ListAll(ctx context.Context, limit, offset int) ([]*readmodels.UserAccount, int, error)
 	ToggleActive(ctx context.Context, id uuid.UUID, isActive bool) error
 
-	SearchPersons(ctx context.Context, query string, observerPersonID *uuid.UUID) ([]entities.Person, error)
-	GetPeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.Person, error)
-	GetPeopleByUserIDs(ctx context.Context, userIDs []uuid.UUID) (map[uuid.UUID]entities.Person, error)
+	SearchPersons(ctx context.Context, query string, observerPersonID *uuid.UUID) ([]identity.Person, error)
+	GetPeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]identity.Person, error)
+	GetPeopleByUserIDs(ctx context.Context, userIDs []uuid.UUID) (map[uuid.UUID]identity.Person, error)
 }
 
 type service struct {
@@ -47,7 +48,7 @@ func NewService(
 	return &service{users: users, people: people, eventSvc: eventSvc, membership: membership, cache: cache}
 }
 
-func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.User, error) {
+func (s *service) Get(ctx context.Context, id uuid.UUID) (*identity.User, error) {
 	if u, err := s.cache.GetUser(ctx, id); err == nil {
 		return u, nil
 	}
@@ -59,7 +60,7 @@ func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.User, error)
 	return u, nil
 }
 
-func (s *service) Create(ctx context.Context, user entities.User) (*entities.User, error) {
+func (s *service) Create(ctx context.Context, user identity.User) (*identity.User, error) {
 	u, err := s.users.Create(ctx, user)
 	if err != nil {
 		return nil, err
@@ -68,7 +69,7 @@ func (s *service) Create(ctx context.Context, user entities.User) (*entities.Use
 	return u, nil
 }
 
-func (s *service) Update(ctx context.Context, id uuid.UUID, user entities.User) (*entities.User, error) {
+func (s *service) Update(ctx context.Context, id uuid.UUID, user identity.User) (*identity.User, error) {
 	u, err := s.users.Update(ctx, id, user)
 	if err != nil {
 		return nil, err
@@ -91,7 +92,7 @@ func (s *service) ToggleActive(ctx context.Context, id uuid.UUID, isActive bool)
 	return s.cache.DeleteUser(ctx, id)
 }
 
-func (s *service) GetAccount(ctx context.Context, id uuid.UUID) (*entities.UserAccount, error) {
+func (s *service) GetAccount(ctx context.Context, id uuid.UUID) (*readmodels.UserAccount, error) {
 	u, err := s.Get(ctx, id)
 	if err != nil {
 		return nil, err
@@ -100,10 +101,10 @@ func (s *service) GetAccount(ctx context.Context, id uuid.UUID) (*entities.UserA
 	if err != nil {
 		return nil, err
 	}
-	return &entities.UserAccount{User: *u, Person: *p}, nil
+	return &readmodels.UserAccount{User: *u, Person: *p}, nil
 }
 
-func (s *service) GetAccountByEmail(ctx context.Context, email string) (*entities.UserAccount, error) {
+func (s *service) GetAccountByEmail(ctx context.Context, email string) (*readmodels.UserAccount, error) {
 	p, err := s.people.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
@@ -112,20 +113,20 @@ func (s *service) GetAccountByEmail(ctx context.Context, email string) (*entitie
 	if err != nil {
 		return nil, err
 	}
-	return &entities.UserAccount{User: *u, Person: *p}, nil
+	return &readmodels.UserAccount{User: *u, Person: *p}, nil
 }
 
 func (s *service) GetApprovedEvents(ctx context.Context, userID uuid.UUID) ([]events.Event, error) {
 	return s.eventSvc.LoadUserApprovedEvents(ctx, userID)
 }
 
-func (s *service) ListAll(ctx context.Context, limit, offset int) ([]*entities.UserAccount, int, error) {
+func (s *service) ListAll(ctx context.Context, limit, offset int) ([]*readmodels.UserAccount, int, error) {
 	users, total, err := s.users.ListUsers(ctx, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	out := make([]*entities.UserAccount, 0, len(users))
+	out := make([]*readmodels.UserAccount, 0, len(users))
 	for _, u := range users {
 		p, err := s.people.Get(ctx, u.PersonID)
 		if err != nil {
@@ -133,12 +134,12 @@ func (s *service) ListAll(ctx context.Context, limit, offset int) ([]*entities.U
 			continue
 		}
 		uu := u // copy
-		out = append(out, &entities.UserAccount{User: uu, Person: *p})
+		out = append(out, &readmodels.UserAccount{User: uu, Person: *p})
 	}
 	return out, total, nil
 }
 
-func (s *service) SearchPersons(ctx context.Context, query string, observerPersonID *uuid.UUID) ([]entities.Person, error) {
+func (s *service) SearchPersons(ctx context.Context, query string, observerPersonID *uuid.UUID) ([]identity.Person, error) {
 	// base search
 	candidates, err := s.people.Search(ctx, query, 20)
 	if err != nil {
@@ -153,7 +154,7 @@ func (s *service) SearchPersons(ctx context.Context, query string, observerPerso
 		return nil, err
 	}
 	if len(projectIDs) == 0 {
-		return []entities.Person{}, nil
+		return []identity.Person{}, nil
 	}
 
 	memberIDs, err := s.membership.PersonIDsForProjects(ctx, projectIDs)
@@ -161,7 +162,7 @@ func (s *service) SearchPersons(ctx context.Context, query string, observerPerso
 		return nil, err
 	}
 	if len(memberIDs) == 0 {
-		return []entities.Person{}, nil
+		return []identity.Person{}, nil
 	}
 
 	allowed := make(map[uuid.UUID]struct{}, len(memberIDs))
@@ -170,25 +171,25 @@ func (s *service) SearchPersons(ctx context.Context, query string, observerPerso
 	}
 
 	// filter candidates in-memory (cheap, limit=20)
-	out := lo.Filter(candidates, func(p entities.Person, _ int) bool {
+	out := lo.Filter(candidates, func(p identity.Person, _ int) bool {
 		_, ok := allowed[p.ID]
 		return ok
 	})
 	return out, nil
 }
 
-func (s *service) GetPeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]entities.Person, error) {
+func (s *service) GetPeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]identity.Person, error) {
 	persons, err := s.people.GetByIDs(ctx, ids)
 	if err != nil {
 		return nil, err
 	}
-	return lo.SliceToMap(persons, func(p entities.Person) (uuid.UUID, entities.Person) {
+	return lo.SliceToMap(persons, func(p identity.Person) (uuid.UUID, identity.Person) {
 		return p.ID, p
 	}), nil
 }
 
-func (s *service) GetPeopleByUserIDs(ctx context.Context, userIDs []uuid.UUID) (map[uuid.UUID]entities.Person, error) {
-	userMap := make(map[uuid.UUID]entities.Person)
+func (s *service) GetPeopleByUserIDs(ctx context.Context, userIDs []uuid.UUID) (map[uuid.UUID]identity.Person, error) {
+	userMap := make(map[uuid.UUID]identity.Person)
 	for _, uid := range userIDs {
 		u, err := s.users.Get(ctx, uid)
 		if err != nil {

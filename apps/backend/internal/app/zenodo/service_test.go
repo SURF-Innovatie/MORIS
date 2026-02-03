@@ -8,15 +8,15 @@ import (
 	"testing"
 
 	ext "github.com/SURF-Innovatie/MORIS/external/zenodo"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
 	"github.com/google/uuid"
 )
 
 type fakeUserRepo struct {
-	byID map[uuid.UUID]entities.User
+	byID map[uuid.UUID]identity.User
 }
 
-func (r *fakeUserRepo) Get(_ context.Context, id uuid.UUID) (*entities.User, error) {
+func (r *fakeUserRepo) Get(_ context.Context, id uuid.UUID) (*identity.User, error) {
 	u, ok := r.byID[id]
 	if !ok {
 		return nil, errors.New("not found")
@@ -25,13 +25,13 @@ func (r *fakeUserRepo) Get(_ context.Context, id uuid.UUID) (*entities.User, err
 	return &uu, nil
 }
 
-func (r *fakeUserRepo) GetByPersonID(context.Context, uuid.UUID) (*entities.User, error) {
+func (r *fakeUserRepo) GetByPersonID(context.Context, uuid.UUID) (*identity.User, error) {
 	return nil, errors.New("not implemented")
 }
-func (r *fakeUserRepo) Create(context.Context, entities.User) (*entities.User, error) {
+func (r *fakeUserRepo) Create(context.Context, identity.User) (*identity.User, error) {
 	return nil, errors.New("not implemented")
 }
-func (r *fakeUserRepo) Update(context.Context, uuid.UUID, entities.User) (*entities.User, error) {
+func (r *fakeUserRepo) Update(context.Context, uuid.UUID, identity.User) (*identity.User, error) {
 	return nil, errors.New("not implemented")
 }
 func (r *fakeUserRepo) Delete(context.Context, uuid.UUID) error {
@@ -40,7 +40,7 @@ func (r *fakeUserRepo) Delete(context.Context, uuid.UUID) error {
 func (r *fakeUserRepo) ToggleActive(context.Context, uuid.UUID, bool) error {
 	return errors.New("not implemented")
 }
-func (r *fakeUserRepo) ListUsers(context.Context, int, int) ([]entities.User, int, error) {
+func (r *fakeUserRepo) ListUsers(context.Context, int, int) ([]identity.User, int, error) {
 	return nil, 0, errors.New("not implemented")
 }
 
@@ -127,7 +127,7 @@ func (c *fakeZenodoClient) NewVersion(context.Context, string, int) (*ext.Deposi
 func TestService_GetAuthURL_UsesUserIDAsState(t *testing.T) {
 	userID := uuid.New()
 
-	users := &fakeUserRepo{byID: map[uuid.UUID]entities.User{
+	users := &fakeUserRepo{byID: map[uuid.UUID]identity.User{
 		userID: {ID: userID, ZenodoAccessToken: nil, ZenodoRefreshToken: nil},
 	}}
 	client := &fakeZenodoClient{authURL: "https://example/auth?x=y"}
@@ -146,7 +146,7 @@ func TestService_GetAuthURL_UsesUserIDAsState(t *testing.T) {
 func TestService_Link_SetsTokens(t *testing.T) {
 	userID := uuid.New()
 
-	users := &fakeUserRepo{byID: map[uuid.UUID]entities.User{
+	users := &fakeUserRepo{byID: map[uuid.UUID]identity.User{
 		userID: {ID: userID, ZenodoAccessToken: nil, ZenodoRefreshToken: nil},
 	}}
 
@@ -165,7 +165,7 @@ func TestService_Link_AlreadyLinked(t *testing.T) {
 	userID := uuid.New()
 	existing := "EXISTING"
 
-	users := &fakeUserRepo{byID: map[uuid.UUID]entities.User{
+	users := &fakeUserRepo{byID: map[uuid.UUID]identity.User{
 		userID: {ID: userID, ZenodoAccessToken: &existing},
 	}}
 	client := &fakeZenodoClient{
@@ -185,7 +185,7 @@ func TestService_Unlink_ClearsTokens(t *testing.T) {
 	at := "AT"
 	rt := "RT"
 
-	users := &fakeUserRepo{byID: map[uuid.UUID]entities.User{
+	users := &fakeUserRepo{byID: map[uuid.UUID]identity.User{
 		userID: {ID: userID, ZenodoAccessToken: &at, ZenodoRefreshToken: &rt},
 	}}
 	client := &fakeZenodoClient{}
@@ -206,7 +206,7 @@ func TestService_CreateDeposition_UsesStoredAccessToken(t *testing.T) {
 	userID := uuid.New()
 	at := "AT"
 
-	users := &fakeUserRepo{byID: map[uuid.UUID]entities.User{
+	users := &fakeUserRepo{byID: map[uuid.UUID]identity.User{
 		userID: {ID: userID, ZenodoAccessToken: &at},
 	}}
 	client := &fakeZenodoClient{}

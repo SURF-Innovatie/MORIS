@@ -1,10 +1,14 @@
 package queries
 
-import "github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+import (
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/product"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
+)
 
 type ProjectDetails struct {
-	Project       entities.Project
-	OwningOrgNode entities.OrganisationNode
-	Members       []entities.ProjectMemberDetail
-	Products      []entities.Product
+	Project       project.Project
+	OwningOrgNode organisation.OrganisationNode
+	Members       []project.MemberDetail
+	Products      []product.Product
 }

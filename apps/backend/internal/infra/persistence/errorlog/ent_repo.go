@@ -5,7 +5,7 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/internal/app/errorlog"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	errorlog2 "github.com/SURF-Innovatie/MORIS/internal/domain/errorlog"
 	"github.com/google/uuid"
 )
 
@@ -17,7 +17,7 @@ func NewRepository(cli *ent.Client) errorlog.Repository {
 	return &entRepository{cli: cli}
 }
 
-func (r *entRepository) Create(ctx context.Context, in entities.ErrorLogCreateInput) error {
+func (r *entRepository) Create(ctx context.Context, in errorlog2.ErrorLogCreateInput) error {
 	create := r.cli.ErrorLog.Create().
 		SetHTTPMethod(in.HTTPMethod).
 		SetRoute(in.Route).

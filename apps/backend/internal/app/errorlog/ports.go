@@ -3,9 +3,9 @@ package errorlog
 import (
 	"context"
 
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/errorlog"
 )
 
 type Repository interface {
-	Create(ctx context.Context, in entities.ErrorLogCreateInput) error
+	Create(ctx context.Context, in errorlog.ErrorLogCreateInput) error
 }

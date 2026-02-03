@@ -1,6 +1,8 @@
 package dto
 
-import "github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+import (
+	"github.com/SURF-Innovatie/MORIS/internal/domain/policy"
+)
 
 // PolicyConditionDTO represents a condition for policy evaluation
 type PolicyConditionDTO struct {
@@ -46,7 +48,7 @@ type EventPolicyResponse struct {
 }
 
 // FromEntity converts domain entity to DTO
-func (r *EventPolicyResponse) FromEntity(e *entities.EventPolicy) {
+func (r *EventPolicyResponse) FromEntity(e *policy.EventPolicy) {
 	if e == nil {
 		return
 	}

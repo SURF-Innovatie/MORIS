@@ -1,7 +1,8 @@
 package dto
 
 import (
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity/readmodels"
 	"github.com/google/uuid"
 )
 
@@ -37,7 +38,7 @@ type UserResponse struct {
 	IsActive    bool      `json:"is_active"`
 }
 
-func (r UserResponse) FromEntity(acc *entities.UserAccount) UserResponse {
+func (r UserResponse) FromEntity(acc *readmodels.UserAccount) UserResponse {
 	p := acc.Person
 	u := acc.User
 
@@ -66,7 +67,7 @@ type UserPersonResponse struct {
 	ORCiD      *string   `json:"orcid"`
 }
 
-func (r UserPersonResponse) FromEntity(p entities.Person) UserPersonResponse {
+func (r UserPersonResponse) FromEntity(p identity.Person) UserPersonResponse {
 	return UserPersonResponse{
 		ID:         p.ID,
 		Name:       p.Name,

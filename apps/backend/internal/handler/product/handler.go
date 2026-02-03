@@ -7,7 +7,7 @@ import (
 	appauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	productsvc "github.com/SURF-Innovatie/MORIS/internal/app/product"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/product"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 )
 
@@ -55,10 +55,10 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		zenodoID = *req.ZenodoDepositionID
 	}
 
-	p, err := h.svc.Create(r.Context(), entities.Product{
+	p, err := h.svc.Create(r.Context(), product.Product{
 		Name:               req.Name,
 		Language:           req.Language,
-		Type:               entities.ProductType(req.Type),
+		Type:               product.ProductType(req.Type),
 		DOI:                req.DOI,
 		ZenodoDepositionID: zenodoID,
 		AuthorPersonID:     u.PersonID,
@@ -183,10 +183,10 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	if req.ZenodoDepositionID != nil {
 		zenodoID = *req.ZenodoDepositionID
 	}
-	p, err := h.svc.Update(r.Context(), id, entities.Product{
+	p, err := h.svc.Update(r.Context(), id, product.Product{
 		Name:               req.Name,
 		Language:           req.Language,
-		Type:               entities.ProductType(req.Type),
+		Type:               product.ProductType(req.Type),
 		DOI:                req.DOI,
 		ZenodoDepositionID: zenodoID,
 	})

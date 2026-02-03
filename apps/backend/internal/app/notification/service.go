@@ -3,17 +3,17 @@ package notification
 import (
 	"context"
 
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/notification"
 	"github.com/google/uuid"
 )
 
 type Service interface {
-	Create(ctx context.Context, n entities.Notification) (*entities.Notification, error)
-	Send(ctx context.Context, userIDs []uuid.UUID, eventID uuid.UUID, message string, notificationType entities.NotificationType) error
-	Get(ctx context.Context, id uuid.UUID) (*entities.Notification, error)
-	Update(ctx context.Context, id uuid.UUID, n entities.Notification) (*entities.Notification, error)
-	List(ctx context.Context) ([]entities.Notification, error)
-	ListForUser(ctx context.Context, userID uuid.UUID) ([]entities.Notification, error)
+	Create(ctx context.Context, n notification.Notification) (*notification.Notification, error)
+	Send(ctx context.Context, userIDs []uuid.UUID, eventID uuid.UUID, message string, notificationType notification.NotificationType) error
+	Get(ctx context.Context, id uuid.UUID) (*notification.Notification, error)
+	Update(ctx context.Context, id uuid.UUID, n notification.Notification) (*notification.Notification, error)
+	List(ctx context.Context) ([]notification.Notification, error)
+	ListForUser(ctx context.Context, userID uuid.UUID) ([]notification.Notification, error)
 	MarkAsRead(ctx context.Context, id uuid.UUID) error
 	MarkAsReadByEventID(ctx context.Context, eventID uuid.UUID) error
 }
@@ -26,17 +26,17 @@ func NewService(repo NotificationRepository) Service {
 	return &service{repo: repo}
 }
 
-func (s *service) Create(ctx context.Context, n entities.Notification) (*entities.Notification, error) {
+func (s *service) Create(ctx context.Context, n notification.Notification) (*notification.Notification, error) {
 	return s.repo.Create(ctx, n)
 }
 
-func (s *service) Send(ctx context.Context, userIDs []uuid.UUID, eventID uuid.UUID, message string, notificationType entities.NotificationType) error {
+func (s *service) Send(ctx context.Context, userIDs []uuid.UUID, eventID uuid.UUID, message string, notificationType notification.NotificationType) error {
 	if len(userIDs) == 0 {
 		return nil
 	}
 
 	for _, userID := range userIDs {
-		n := entities.Notification{
+		n := notification.Notification{
 			UserID:  userID,
 			Message: message,
 			EventID: &eventID,
@@ -50,19 +50,19 @@ func (s *service) Send(ctx context.Context, userIDs []uuid.UUID, eventID uuid.UU
 	return nil
 }
 
-func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.Notification, error) {
+func (s *service) Get(ctx context.Context, id uuid.UUID) (*notification.Notification, error) {
 	return s.repo.Get(ctx, id)
 }
 
-func (s *service) Update(ctx context.Context, id uuid.UUID, n entities.Notification) (*entities.Notification, error) {
+func (s *service) Update(ctx context.Context, id uuid.UUID, n notification.Notification) (*notification.Notification, error) {
 	return s.repo.Update(ctx, id, n)
 }
 
-func (s *service) List(ctx context.Context) ([]entities.Notification, error) {
+func (s *service) List(ctx context.Context) ([]notification.Notification, error) {
 	return s.repo.List(ctx)
 }
 
-func (s *service) ListForUser(ctx context.Context, userID uuid.UUID) ([]entities.Notification, error) {
+func (s *service) ListForUser(ctx context.Context, userID uuid.UUID) ([]notification.Notification, error) {
 	return s.repo.ListForUser(ctx, userID)
 }
 

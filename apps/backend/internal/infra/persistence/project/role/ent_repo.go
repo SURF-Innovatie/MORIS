@@ -10,7 +10,7 @@ import (
 	entprojectrole "github.com/SURF-Innovatie/MORIS/ent/projectrole"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/role"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	role2 "github.com/SURF-Innovatie/MORIS/internal/domain/project/role"
 	"github.com/google/uuid"
 )
 
@@ -22,7 +22,7 @@ func NewEntRepo(cli *ent.Client) role.Repository {
 	return &entRepo{cli: cli}
 }
 
-func (e *entRepo) Create(ctx context.Context, key, name string, orgNodeID uuid.UUID) (*entities.ProjectRole, error) {
+func (e *entRepo) Create(ctx context.Context, key, name string, orgNodeID uuid.UUID) (*role2.ProjectRole, error) {
 	r, err := e.cli.ProjectRole.Create().
 		SetKey(key).
 		SetName(name).
@@ -32,10 +32,10 @@ func (e *entRepo) Create(ctx context.Context, key, name string, orgNodeID uuid.U
 		return nil, err
 	}
 
-	return transform.ToEntityPtr[entities.ProjectRole](r), nil
+	return transform.ToEntityPtr[role2.ProjectRole](r), nil
 }
 
-func (e *entRepo) GetByKeyAndOrg(ctx context.Context, key string, orgNodeID uuid.UUID) (*entities.ProjectRole, error) {
+func (e *entRepo) GetByKeyAndOrg(ctx context.Context, key string, orgNodeID uuid.UUID) (*role2.ProjectRole, error) {
 	r, err := e.cli.ProjectRole.Query().
 		Where(
 			entprojectrole.KeyEQ(key),
@@ -47,7 +47,7 @@ func (e *entRepo) GetByKeyAndOrg(ctx context.Context, key string, orgNodeID uuid
 		return nil, err
 	}
 
-	return transform.ToEntityPtr[entities.ProjectRole](r), nil
+	return transform.ToEntityPtr[role2.ProjectRole](r), nil
 }
 
 func (e *entRepo) Delete(ctx context.Context, id uuid.UUID, orgNodeID uuid.UUID) error {
@@ -68,7 +68,7 @@ func (e *entRepo) Delete(ctx context.Context, id uuid.UUID, orgNodeID uuid.UUID)
 	return nil
 }
 
-func (e *entRepo) ListByOrgIDs(ctx context.Context, orgIDs []uuid.UUID) ([]entities.ProjectRole, error) {
+func (e *entRepo) ListByOrgIDs(ctx context.Context, orgIDs []uuid.UUID) ([]role2.ProjectRole, error) {
 	rows, err := e.cli.ProjectRole.Query().
 		Where(
 			entprojectrole.OrganisationNodeIDIn(orgIDs...),
@@ -80,7 +80,7 @@ func (e *entRepo) ListByOrgIDs(ctx context.Context, orgIDs []uuid.UUID) ([]entit
 		return nil, err
 	}
 
-	return transform.ToEntities[entities.ProjectRole](rows), nil
+	return transform.ToEntities[role2.ProjectRole](rows), nil
 }
 
 func (e *entRepo) Exists(ctx context.Context, key string, orgNodeID uuid.UUID) (bool, error) {
@@ -103,7 +103,7 @@ func (e *entRepo) Unarchive(ctx context.Context, key string, orgNodeID uuid.UUID
 		Exec(ctx)
 }
 
-func (e *entRepo) CreateOrRestore(ctx context.Context, key, name string, orgNodeID uuid.UUID) (*entities.ProjectRole, error) {
+func (e *entRepo) CreateOrRestore(ctx context.Context, key, name string, orgNodeID uuid.UUID) (*role2.ProjectRole, error) {
 	// First check if it exists (including archived)
 	existing, err := e.cli.ProjectRole.Query().
 		Where(
@@ -125,7 +125,7 @@ func (e *entRepo) CreateOrRestore(ctx context.Context, key, name string, orgNode
 			if err != nil {
 				return nil, err
 			}
-			return transform.ToEntityPtr[entities.ProjectRole](updated), nil
+			return transform.ToEntityPtr[role2.ProjectRole](updated), nil
 		}
 		return nil, fmt.Errorf("role with key '%s' already exists", key)
 	}
@@ -138,10 +138,10 @@ func (e *entRepo) CreateOrRestore(ctx context.Context, key, name string, orgNode
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntityPtr[entities.ProjectRole](r), nil
+	return transform.ToEntityPtr[role2.ProjectRole](r), nil
 }
 
-func (e *entRepo) List(ctx context.Context) ([]entities.ProjectRole, error) {
+func (e *entRepo) List(ctx context.Context) ([]role2.ProjectRole, error) {
 	rows, err := e.cli.ProjectRole.Query().
 		Where(entprojectrole.ArchivedAtIsNil()).
 		Order(ent.Asc(entprojectrole.FieldKey)).
@@ -150,10 +150,10 @@ func (e *entRepo) List(ctx context.Context) ([]entities.ProjectRole, error) {
 		return nil, err
 	}
 
-	return transform.ToEntities[entities.ProjectRole](rows), nil
+	return transform.ToEntities[role2.ProjectRole](rows), nil
 }
 
-func (e *entRepo) CreateWithEventTypes(ctx context.Context, key, name string, orgNodeID uuid.UUID, allowedEventTypes []string) (*entities.ProjectRole, error) {
+func (e *entRepo) CreateWithEventTypes(ctx context.Context, key, name string, orgNodeID uuid.UUID, allowedEventTypes []string) (*role2.ProjectRole, error) {
 	r, err := e.cli.ProjectRole.Create().
 		SetKey(key).
 		SetName(name).
@@ -164,10 +164,10 @@ func (e *entRepo) CreateWithEventTypes(ctx context.Context, key, name string, or
 		return nil, err
 	}
 
-	return transform.ToEntityPtr[entities.ProjectRole](r), nil
+	return transform.ToEntityPtr[role2.ProjectRole](r), nil
 }
 
-func (e *entRepo) GetByID(ctx context.Context, id uuid.UUID) (*entities.ProjectRole, error) {
+func (e *entRepo) GetByID(ctx context.Context, id uuid.UUID) (*role2.ProjectRole, error) {
 	r, err := e.cli.ProjectRole.Query().
 		Where(
 			entprojectrole.ID(id),
@@ -178,10 +178,10 @@ func (e *entRepo) GetByID(ctx context.Context, id uuid.UUID) (*entities.ProjectR
 		return nil, err
 	}
 
-	return transform.ToEntityPtr[entities.ProjectRole](r), nil
+	return transform.ToEntityPtr[role2.ProjectRole](r), nil
 }
 
-func (e *entRepo) UpdateAllowedEventTypes(ctx context.Context, id uuid.UUID, eventTypes []string) (*entities.ProjectRole, error) {
+func (e *entRepo) UpdateAllowedEventTypes(ctx context.Context, id uuid.UUID, eventTypes []string) (*role2.ProjectRole, error) {
 	r, err := e.cli.ProjectRole.UpdateOneID(id).
 		SetAllowedEventTypes(eventTypes).
 		Save(ctx)
@@ -189,5 +189,5 @@ func (e *entRepo) UpdateAllowedEventTypes(ctx context.Context, id uuid.UUID, eve
 		return nil, err
 	}
 
-	return transform.ToEntityPtr[entities.ProjectRole](r), nil
+	return transform.ToEntityPtr[role2.ProjectRole](r), nil
 }

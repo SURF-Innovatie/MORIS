@@ -9,7 +9,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/organisationnodeclosure"
 	"github.com/SURF-Innovatie/MORIS/internal/app/customfield"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	customfield2 "github.com/SURF-Innovatie/MORIS/internal/domain/customfield"
 	"github.com/google/uuid"
 )
 
@@ -21,7 +21,7 @@ func NewRepository(cli *ent.Client) customfield.Repository {
 	return &repo{cli: cli}
 }
 
-func (r *repo) Create(ctx context.Context, in customfield.CreateDefinitionInput) (*entities.CustomFieldDefinition, error) {
+func (r *repo) Create(ctx context.Context, in customfield.CreateDefinitionInput) (*customfield2.Definition, error) {
 	creator := r.cli.CustomFieldDefinition.Create().
 		SetOrganisationNodeID(in.OrgID).
 		SetName(in.Name).
@@ -43,7 +43,7 @@ func (r *repo) Create(ctx context.Context, in customfield.CreateDefinitionInput)
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntityPtr[entities.CustomFieldDefinition](row), nil
+	return transform.ToEntityPtr[customfield2.Definition](row), nil
 }
 
 func (r *repo) Delete(ctx context.Context, id uuid.UUID) error {
@@ -59,7 +59,7 @@ func (r *repo) ExistsInOrg(ctx context.Context, id uuid.UUID, orgID uuid.UUID) (
 		Exist(ctx)
 }
 
-func (r *repo) ListAvailableForNode(ctx context.Context, orgID uuid.UUID, category *entities.CustomFieldCategory) ([]entities.CustomFieldDefinition, error) {
+func (r *repo) ListAvailableForNode(ctx context.Context, orgID uuid.UUID, category *customfield2.Category) ([]customfield2.Definition, error) {
 	// Use closure table to find ancestors (including self if closure contains it)
 	ancestors, err := r.cli.OrganisationNodeClosure.Query().
 		Where(organisationnodeclosure.DescendantIDEQ(orgID)).
@@ -85,5 +85,5 @@ func (r *repo) ListAvailableForNode(ctx context.Context, orgID uuid.UUID, catego
 		return nil, err
 	}
 
-	return transform.ToEntities[entities.CustomFieldDefinition](rows), nil
+	return transform.ToEntities[customfield2.Definition](rows), nil
 }

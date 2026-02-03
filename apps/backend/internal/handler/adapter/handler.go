@@ -7,7 +7,8 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/adapter"
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/go-chi/chi/v5"
 	"github.com/samber/lo"
@@ -107,7 +108,7 @@ func (h *Handler) ExportProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Resolve members
-	members := lo.Map(projDetails.Members, func(m entities.ProjectMemberDetail, _ int) entities.Person {
+	members := lo.Map(projDetails.Members, func(m project.MemberDetail, _ int) identity.Person {
 		return m.Person
 	})
 

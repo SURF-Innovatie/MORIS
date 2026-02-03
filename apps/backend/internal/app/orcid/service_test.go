@@ -7,7 +7,7 @@ import (
 
 	ext "github.com/SURF-Innovatie/MORIS/external/orcid"
 	"github.com/SURF-Innovatie/MORIS/internal/app/orcid"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
 	"github.com/google/uuid"
 )
 
@@ -40,11 +40,11 @@ func (f *fakeOrcidClient) SearchExpanded(context.Context, string) ([]ext.OrcidPe
 
 // Fake user repo (implements internal/app/user.Repository)
 type fakeUserRepo struct {
-	byID       map[uuid.UUID]entities.User
+	byID       map[uuid.UUID]identity.User
 	byPersonID map[uuid.UUID]uuid.UUID
 }
 
-func (r *fakeUserRepo) Get(_ context.Context, id uuid.UUID) (*entities.User, error) {
+func (r *fakeUserRepo) Get(_ context.Context, id uuid.UUID) (*identity.User, error) {
 	u, ok := r.byID[id]
 	if !ok {
 		return nil, errors.New("not found")
@@ -53,9 +53,9 @@ func (r *fakeUserRepo) Get(_ context.Context, id uuid.UUID) (*entities.User, err
 	return &uu, nil
 }
 
-func (r *fakeUserRepo) Create(_ context.Context, u entities.User) (*entities.User, error) {
+func (r *fakeUserRepo) Create(_ context.Context, u identity.User) (*identity.User, error) {
 	if r.byID == nil {
-		r.byID = map[uuid.UUID]entities.User{}
+		r.byID = map[uuid.UUID]identity.User{}
 	}
 	if u.ID == uuid.Nil {
 		u.ID = uuid.New()
@@ -68,9 +68,9 @@ func (r *fakeUserRepo) Create(_ context.Context, u entities.User) (*entities.Use
 	return &u, nil
 }
 
-func (r *fakeUserRepo) Update(_ context.Context, id uuid.UUID, u entities.User) (*entities.User, error) {
+func (r *fakeUserRepo) Update(_ context.Context, id uuid.UUID, u identity.User) (*identity.User, error) {
 	if r.byID == nil {
-		r.byID = map[uuid.UUID]entities.User{}
+		r.byID = map[uuid.UUID]identity.User{}
 	}
 	u.ID = id
 	r.byID[id] = u
@@ -96,15 +96,15 @@ func (r *fakeUserRepo) ToggleActive(_ context.Context, id uuid.UUID, isActive bo
 	return nil
 }
 
-func (r *fakeUserRepo) ListUsers(context.Context, int, int) ([]entities.User, int, error) {
-	out := make([]entities.User, 0, len(r.byID))
+func (r *fakeUserRepo) ListUsers(context.Context, int, int) ([]identity.User, int, error) {
+	out := make([]identity.User, 0, len(r.byID))
 	for _, u := range r.byID {
 		out = append(out, u)
 	}
 	return out, len(out), nil
 }
 
-func (r *fakeUserRepo) GetByPersonID(ctx context.Context, personID uuid.UUID) (*entities.User, error) {
+func (r *fakeUserRepo) GetByPersonID(ctx context.Context, personID uuid.UUID) (*identity.User, error) {
 	if r.byPersonID == nil {
 		return nil, errors.New("not found")
 	}
@@ -124,14 +124,14 @@ func (r *fakeUserRepo) ClearZenodoTokens(context.Context, uuid.UUID) error {
 }
 
 type fakePersonRepo struct {
-	byID map[uuid.UUID]entities.Person
+	byID map[uuid.UUID]identity.Person
 }
 
-func (r *fakePersonRepo) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]entities.Person, error) {
+func (r *fakePersonRepo) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]identity.Person, error) {
 	panic("not implemented")
 }
 
-func (r *fakePersonRepo) Get(_ context.Context, id uuid.UUID) (*entities.Person, error) {
+func (r *fakePersonRepo) Get(_ context.Context, id uuid.UUID) (*identity.Person, error) {
 	p, ok := r.byID[id]
 	if !ok {
 		return nil, errors.New("not found")
@@ -140,7 +140,7 @@ func (r *fakePersonRepo) Get(_ context.Context, id uuid.UUID) (*entities.Person,
 	return &pp, nil
 }
 
-func (r *fakePersonRepo) GetByEmail(_ context.Context, email string) (*entities.Person, error) {
+func (r *fakePersonRepo) GetByEmail(_ context.Context, email string) (*identity.Person, error) {
 	for _, p := range r.byID {
 		if p.Email == email {
 			pp := p
@@ -150,8 +150,8 @@ func (r *fakePersonRepo) GetByEmail(_ context.Context, email string) (*entities.
 	return nil, errors.New("not found")
 }
 
-func (r *fakePersonRepo) List(context.Context) ([]*entities.Person, error) {
-	out := make([]*entities.Person, 0, len(r.byID))
+func (r *fakePersonRepo) List(context.Context) ([]*identity.Person, error) {
+	out := make([]*identity.Person, 0, len(r.byID))
 	for _, p := range r.byID {
 		pp := p
 		out = append(out, &pp)
@@ -159,8 +159,8 @@ func (r *fakePersonRepo) List(context.Context) ([]*entities.Person, error) {
 	return out, nil
 }
 
-func (r *fakePersonRepo) Search(_ context.Context, _ string, limit int) ([]entities.Person, error) {
-	out := make([]entities.Person, 0)
+func (r *fakePersonRepo) Search(_ context.Context, _ string, limit int) ([]identity.Person, error) {
+	out := make([]identity.Person, 0)
 	for _, p := range r.byID {
 		out = append(out, p)
 		if len(out) >= limit {
@@ -190,9 +190,9 @@ func (r *fakePersonRepo) ClearORCID(_ context.Context, personID uuid.UUID) error
 	return nil
 }
 
-func (r *fakePersonRepo) Create(_ context.Context, p entities.Person) (*entities.Person, error) {
+func (r *fakePersonRepo) Create(_ context.Context, p identity.Person) (*identity.Person, error) {
 	if r.byID == nil {
-		r.byID = map[uuid.UUID]entities.Person{}
+		r.byID = map[uuid.UUID]identity.Person{}
 	}
 	if p.ID == uuid.Nil {
 		p.ID = uuid.New()
@@ -202,9 +202,9 @@ func (r *fakePersonRepo) Create(_ context.Context, p entities.Person) (*entities
 	return &pp, nil
 }
 
-func (r *fakePersonRepo) Update(_ context.Context, id uuid.UUID, p entities.Person) (*entities.Person, error) {
+func (r *fakePersonRepo) Update(_ context.Context, id uuid.UUID, p identity.Person) (*identity.Person, error) {
 	if r.byID == nil {
-		r.byID = map[uuid.UUID]entities.Person{}
+		r.byID = map[uuid.UUID]identity.Person{}
 	}
 	p.ID = id
 	r.byID[id] = p
@@ -248,14 +248,14 @@ func TestService_Link_AlreadyLinked(t *testing.T) {
 	existing := "0000-0001-9999-8888"
 
 	users := &fakeUserRepo{
-		byID: map[uuid.UUID]entities.User{
+		byID: map[uuid.UUID]identity.User{
 			userID: {ID: userID, PersonID: personID},
 		},
 		byPersonID: map[uuid.UUID]uuid.UUID{personID: userID},
 	}
 
 	people := &fakePersonRepo{
-		byID: map[uuid.UUID]entities.Person{
+		byID: map[uuid.UUID]identity.Person{
 			personID: {ID: personID, ORCiD: &existing},
 		},
 	}
@@ -275,14 +275,14 @@ func TestService_Link_SetsORCIDOnPerson(t *testing.T) {
 	personID := uuid.New()
 
 	users := &fakeUserRepo{
-		byID: map[uuid.UUID]entities.User{
+		byID: map[uuid.UUID]identity.User{
 			userID: {ID: userID, PersonID: personID},
 		},
 		byPersonID: map[uuid.UUID]uuid.UUID{personID: userID},
 	}
 
 	people := &fakePersonRepo{
-		byID: map[uuid.UUID]entities.Person{
+		byID: map[uuid.UUID]identity.Person{
 			personID: {ID: personID, ORCiD: nil},
 		},
 	}
@@ -307,14 +307,14 @@ func TestService_Unlink_ClearsORCIDOnPerson(t *testing.T) {
 	existing := "0000-0002-1111-2222"
 
 	users := &fakeUserRepo{
-		byID: map[uuid.UUID]entities.User{
+		byID: map[uuid.UUID]identity.User{
 			userID: {ID: userID, PersonID: personID},
 		},
 		byPersonID: map[uuid.UUID]uuid.UUID{personID: userID},
 	}
 
 	people := &fakePersonRepo{
-		byID: map[uuid.UUID]entities.Person{
+		byID: map[uuid.UUID]identity.Person{
 			personID: {ID: personID, ORCiD: &existing},
 		},
 	}

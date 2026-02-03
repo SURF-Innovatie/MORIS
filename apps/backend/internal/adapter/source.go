@@ -3,7 +3,7 @@ package adapter
 import (
 	"context"
 
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 )
 
 // SourceAdapter imports data from external systems as domain events.

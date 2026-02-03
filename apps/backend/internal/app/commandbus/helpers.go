@@ -3,7 +3,7 @@ package commandbus
 import (
 	"context"
 
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 )
 
 type Decision[T any] func(ctx context.Context, cur *T) ([]events.Event, error)

@@ -6,7 +6,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/samber/lo"
 )
@@ -141,7 +141,7 @@ func (h *RBACHandler) GetMyPermissions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Convert to []string
-	out := lo.Map(perms, func(p entities.Permission, _ int) string {
+	out := lo.Map(perms, func(p rbac.Permission, _ int) string {
 		return string(p)
 	})
 

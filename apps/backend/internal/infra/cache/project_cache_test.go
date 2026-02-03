@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/alicebob/miniredis/v2"
 	"github.com/google/uuid"
@@ -22,7 +22,7 @@ func TestRedisProjectCache_SetAndGet(t *testing.T) {
 	c := cache.NewRedisProjectCache(rdb, 24*time.Hour)
 
 	id := uuid.New()
-	p := &entities.Project{
+	p := &project.Project{
 		Id:    id,
 		Title: "My Project",
 	}
@@ -74,7 +74,7 @@ func TestRedisProjectCache_Delete(t *testing.T) {
 	c := cache.NewRedisProjectCache(rdb, 24*time.Hour)
 
 	id := uuid.New()
-	p := &entities.Project{Id: id, Title: "To be deleted"}
+	p := &project.Project{Id: id, Title: "To be deleted"}
 
 	if err := c.SetProject(ctx, p); err != nil {
 		t.Fatalf("SetProject() err = %v", err)
@@ -96,7 +96,7 @@ func TestRedisProjectCache_NilRedis(t *testing.T) {
 	pc := cache.NewRedisProjectCache(nil, time.Hour)
 
 	projectID := uuid.New()
-	proj := &entities.Project{Id: projectID, Title: "x"}
+	proj := &project.Project{Id: projectID, Title: "x"}
 
 	err := pc.SetProject(ctx, proj)
 	if err == nil {

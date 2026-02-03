@@ -9,7 +9,7 @@ import (
 	entorgrole "github.com/SURF-Innovatie/MORIS/ent/organisationrole"
 	entrolescope "github.com/SURF-Innovatie/MORIS/ent/rolescope"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation/rbac"
 	"github.com/google/uuid"
 )
 
@@ -27,7 +27,7 @@ func (r *EntRepo) EnsureDefaultRoles(ctx context.Context) error {
 	return nil
 }
 
-func (r *EntRepo) ListRoles(ctx context.Context, orgID *uuid.UUID) ([]*entities.OrganisationRole, error) {
+func (r *EntRepo) ListRoles(ctx context.Context, orgID *uuid.UUID) ([]*rbac.OrganisationRole, error) {
 	q := r.cli.OrganisationRole.Query()
 	if orgID != nil {
 		q = q.Where(entorgrole.OrganisationNodeIDEQ(*orgID))
@@ -38,10 +38,10 @@ func (r *EntRepo) ListRoles(ctx context.Context, orgID *uuid.UUID) ([]*entities.
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntitiesPtr[entities.OrganisationRole](rows), nil
+	return transform.ToEntitiesPtr[rbac.OrganisationRole](rows), nil
 }
 
-func (r *EntRepo) CreateRole(ctx context.Context, orgID uuid.UUID, key, displayName string, permissions []entities.Permission) (*entities.OrganisationRole, error) {
+func (r *EntRepo) CreateRole(ctx context.Context, orgID uuid.UUID, key, displayName string, permissions []rbac.Permission) (*rbac.OrganisationRole, error) {
 	perms := make([]string, len(permissions))
 	for i, p := range permissions {
 		perms[i] = string(p)
@@ -57,18 +57,18 @@ func (r *EntRepo) CreateRole(ctx context.Context, orgID uuid.UUID, key, displayN
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntityPtr[entities.OrganisationRole](row), nil
+	return transform.ToEntityPtr[rbac.OrganisationRole](row), nil
 }
 
-func (r *EntRepo) GetRole(ctx context.Context, roleID uuid.UUID) (*entities.OrganisationRole, error) {
+func (r *EntRepo) GetRole(ctx context.Context, roleID uuid.UUID) (*rbac.OrganisationRole, error) {
 	row, err := r.cli.OrganisationRole.Get(ctx, roleID)
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntityPtr[entities.OrganisationRole](row), nil
+	return transform.ToEntityPtr[rbac.OrganisationRole](row), nil
 }
 
-func (r *EntRepo) UpdateRole(ctx context.Context, roleID uuid.UUID, displayName string, permissions []entities.Permission) (*entities.OrganisationRole, error) {
+func (r *EntRepo) UpdateRole(ctx context.Context, roleID uuid.UUID, displayName string, permissions []rbac.Permission) (*rbac.OrganisationRole, error) {
 	perms := make([]string, len(permissions))
 	for i, p := range permissions {
 		perms[i] = string(p)
@@ -82,7 +82,7 @@ func (r *EntRepo) UpdateRole(ctx context.Context, roleID uuid.UUID, displayName 
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntityPtr[entities.OrganisationRole](row), nil
+	return transform.ToEntityPtr[rbac.OrganisationRole](row), nil
 }
 
 func (r *EntRepo) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
@@ -98,7 +98,7 @@ func (r *EntRepo) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
 	return r.cli.OrganisationRole.DeleteOneID(roleID).Exec(ctx)
 }
 
-func (r *EntRepo) CreateScope(ctx context.Context, roleKey string, rootNodeID uuid.UUID) (*entities.RoleScope, error) {
+func (r *EntRepo) CreateScope(ctx context.Context, roleKey string, rootNodeID uuid.UUID) (*rbac.RoleScope, error) {
 	// Role Key is not unique globally anymore.
 	// We assume CreateScope is called with a key that is valid for the given rootNodeID (org).
 	role, err := r.cli.OrganisationRole.
@@ -125,7 +125,7 @@ func (r *EntRepo) CreateScope(ctx context.Context, roleKey string, rootNodeID uu
 		Only(ctx)
 
 	if err == nil {
-		return transform.ToEntityPtr[entities.RoleScope](existing), nil
+		return transform.ToEntityPtr[rbac.RoleScope](existing), nil
 	}
 	if !ent.IsNotFound(err) {
 		return nil, err
@@ -140,19 +140,19 @@ func (r *EntRepo) CreateScope(ctx context.Context, roleKey string, rootNodeID uu
 		return nil, err
 	}
 
-	return transform.ToEntityPtr[entities.RoleScope](row), nil
+	return transform.ToEntityPtr[rbac.RoleScope](row), nil
 }
 
-func (r *EntRepo) GetScope(ctx context.Context, id uuid.UUID) (*entities.RoleScope, error) {
+func (r *EntRepo) GetScope(ctx context.Context, id uuid.UUID) (*rbac.RoleScope, error) {
 	row, err := r.cli.RoleScope.Get(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	return transform.ToEntityPtr[entities.RoleScope](row), nil
+	return transform.ToEntityPtr[rbac.RoleScope](row), nil
 }
 
-func (r *EntRepo) AddMembership(ctx context.Context, personID uuid.UUID, roleScopeID uuid.UUID) (*entities.Membership, error) {
+func (r *EntRepo) AddMembership(ctx context.Context, personID uuid.UUID, roleScopeID uuid.UUID) (*rbac.Membership, error) {
 	if _, err := r.cli.Person.Get(ctx, personID); err != nil {
 		return nil, err
 	}
@@ -183,15 +183,15 @@ func (r *EntRepo) AddMembership(ctx context.Context, personID uuid.UUID, roleSco
 		return nil, err
 	}
 
-	return transform.ToEntityPtr[entities.Membership](row), nil
+	return transform.ToEntityPtr[rbac.Membership](row), nil
 }
 
-func (r *EntRepo) GetMembership(ctx context.Context, membershipID uuid.UUID) (*entities.Membership, error) {
+func (r *EntRepo) GetMembership(ctx context.Context, membershipID uuid.UUID) (*rbac.Membership, error) {
 	row, err := r.cli.Membership.Get(ctx, membershipID)
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntityPtr[entities.Membership](row), nil
+	return transform.ToEntityPtr[rbac.Membership](row), nil
 }
 
 func (r *EntRepo) RemoveMembership(ctx context.Context, membershipID uuid.UUID) error {

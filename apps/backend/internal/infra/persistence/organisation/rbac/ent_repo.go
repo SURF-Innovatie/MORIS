@@ -11,7 +11,9 @@ import (
 	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
 	organisation_rbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation/rbac"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 )
@@ -24,11 +26,11 @@ func NewEntRepo(cli *ent.Client) *EntRepo {
 	return &EntRepo{cli: cli}
 }
 
-func (r *EntRepo) GetMyPermissions(ctx context.Context, personID, nodeID uuid.UUID) ([]entities.Permission, error) {
+func (r *EntRepo) GetMyPermissions(ctx context.Context, personID, nodeID uuid.UUID) ([]rbac.Permission, error) {
 	// Check if user is sysadmin
 	user, err := r.cli.User.Query().Where(entuser.PersonIDEQ(personID)).First(ctx)
 	if err == nil && user.IsSysAdmin {
-		return entities.AllPermissions, nil
+		return rbac.AllPermissions, nil
 	}
 
 	// all ancestors of nodeID (including itself)
@@ -53,7 +55,7 @@ func (r *EntRepo) GetMyPermissions(ctx context.Context, personID, nodeID uuid.UU
 		return nil, err
 	}
 	if len(scopes) == 0 {
-		return []entities.Permission{}, nil
+		return []rbac.Permission{}, nil
 	}
 
 	scopeIDs := lo.Map(scopes, func(sc *ent.RoleScope, _ int) uuid.UUID { return sc.ID })
@@ -70,7 +72,7 @@ func (r *EntRepo) GetMyPermissions(ctx context.Context, personID, nodeID uuid.UU
 		return nil, err
 	}
 
-	permissions := make(map[entities.Permission]struct{})
+	permissions := make(map[rbac.Permission]struct{})
 	for _, m := range memberships {
 		scope, ok := scopeByID[m.RoleScopeID]
 		if !ok {
@@ -80,7 +82,7 @@ func (r *EntRepo) GetMyPermissions(ctx context.Context, personID, nodeID uuid.UU
 			continue // Should not happen
 		}
 		for _, p := range scope.Edges.Role.Permissions {
-			permissions[entities.Permission(p)] = struct{}{}
+			permissions[rbac.Permission(p)] = struct{}{}
 		}
 	}
 
@@ -142,7 +144,7 @@ func (r *EntRepo) ListEffectiveMemberships(ctx context.Context, nodeID uuid.UUID
 		if err != nil {
 			return nil, err
 		}
-		scopeRoot := &entities.OrganisationNode{
+		scopeRoot := &organisation.OrganisationNode{
 			ID:       n.ID,
 			ParentID: n.ParentID,
 			Name:     n.Name,
@@ -162,7 +164,7 @@ func (r *EntRepo) ListEffectiveMemberships(ctx context.Context, nodeID uuid.UUID
 			RoleKey:               sc.Edges.Role.Key,
 			Permissions:           toPermissions(sc.Edges.Role.Permissions),
 			CustomFields:          getCustomFieldsForNode(p.OrgCustomFields, nodeID),
-			Person:                transform.ToEntity[entities.Person](p),
+			Person:                transform.ToEntity[identity.Person](p),
 		})
 	}
 
@@ -201,7 +203,7 @@ func (r *EntRepo) ListMyMemberships(ctx context.Context, personID uuid.UUID) ([]
 		if err != nil {
 			return nil, err
 		}
-		scopeRoot := transform.ToEntityPtr[entities.OrganisationNode](n)
+		scopeRoot := transform.ToEntityPtr[organisation.OrganisationNode](n)
 
 		out = append(out, organisation_rbac.EffectiveMembership{
 			MembershipID:          m.ID,
@@ -218,7 +220,7 @@ func (r *EntRepo) ListMyMemberships(ctx context.Context, personID uuid.UUID) ([]
 	return out, nil
 }
 
-func (r *EntRepo) GetApprovalNode(ctx context.Context, nodeID uuid.UUID) (*entities.OrganisationNode, error) {
+func (r *EntRepo) GetApprovalNode(ctx context.Context, nodeID uuid.UUID) (*organisation.OrganisationNode, error) {
 	rows, err := r.cli.OrganisationNodeClosure.
 		Query().
 		Where(entclosure.DescendantIDEQ(nodeID)).
@@ -247,7 +249,7 @@ func (r *EntRepo) GetApprovalNode(ctx context.Context, nodeID uuid.UUID) (*entit
 				continue
 			}
 			for _, p := range sc.Edges.Role.Permissions {
-				if entities.Permission(p) == entities.PermissionManageDetails {
+				if rbac.Permission(p) == rbac.PermissionManageDetails {
 					adminScopeIDs = append(adminScopeIDs, sc.ID)
 					break
 				}
@@ -273,17 +275,17 @@ func (r *EntRepo) GetApprovalNode(ctx context.Context, nodeID uuid.UUID) (*entit
 		if err != nil {
 			return nil, err
 		}
-		return transform.ToEntityPtr[entities.OrganisationNode](n), nil
+		return transform.ToEntityPtr[organisation.OrganisationNode](n), nil
 	}
 
 	return nil, fmt.Errorf("no approval node found: ensure an admin membership exists in some ancestor scope")
 }
 
 func (r *EntRepo) HasAdminAccess(ctx context.Context, personID uuid.UUID, nodeID uuid.UUID) (bool, error) {
-	return r.HasPermission(ctx, personID, nodeID, entities.PermissionManageDetails)
+	return r.HasPermission(ctx, personID, nodeID, rbac.PermissionManageDetails)
 }
 
-func (r *EntRepo) HasPermission(ctx context.Context, personID uuid.UUID, nodeID uuid.UUID, permission entities.Permission) (bool, error) {
+func (r *EntRepo) HasPermission(ctx context.Context, personID uuid.UUID, nodeID uuid.UUID, permission rbac.Permission) (bool, error) {
 	user, err := r.cli.User.Query().Where(entuser.PersonIDEQ(personID)).First(ctx)
 	if err != nil {
 		return false, err
@@ -320,7 +322,7 @@ func (r *EntRepo) HasPermission(ctx context.Context, personID uuid.UUID, nodeID 
 			continue
 		}
 		for _, p := range sc.Edges.Role.Permissions {
-			if entities.Permission(p) == permission {
+			if rbac.Permission(p) == permission {
 				validScopeIDs = append(validScopeIDs, sc.ID)
 				break
 			}
@@ -344,9 +346,9 @@ func (r *EntRepo) HasPermission(ctx context.Context, personID uuid.UUID, nodeID 
 	return count > 0, nil
 }
 
-func toPermissions(s []string) []entities.Permission {
-	return lo.Map(s, func(v string, _ int) entities.Permission {
-		return entities.Permission(v)
+func toPermissions(s []string) []rbac.Permission {
+	return lo.Map(s, func(v string, _ int) rbac.Permission {
+		return rbac.Permission(v)
 	})
 }
 
@@ -364,6 +366,6 @@ func getCustomFieldsForNode(fields map[string]interface{}, nodeID uuid.UUID) map
 }
 func hasAdminPermission(perms []string) bool {
 	return lo.SomeBy(perms, func(p string) bool {
-		return p == string(entities.PermissionManageDetails) || p == string(entities.PermissionManageMembers)
+		return p == string(rbac.PermissionManageDetails) || p == string(rbac.PermissionManageMembers)
 	})
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/cmd/dev/wire"
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/internal/api"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/env"
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog/log"

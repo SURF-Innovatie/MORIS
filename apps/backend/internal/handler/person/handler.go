@@ -6,7 +6,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	personsvc "github.com/SURF-Innovatie/MORIS/internal/app/person"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 )
 
@@ -40,7 +40,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p, err := h.svc.Create(r.Context(), entities.Person{
+	p, err := h.svc.Create(r.Context(), identity.Person{
 		Name:        req.Name,
 		GivenName:   req.GivenName,
 		FamilyName:  req.FamilyName,
@@ -108,7 +108,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p, err := h.svc.Update(r.Context(), id, entities.Person{
+	p, err := h.svc.Update(r.Context(), id, identity.Person{
 		Name:        req.Name,
 		GivenName:   req.GivenName,
 		FamilyName:  req.FamilyName,

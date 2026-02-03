@@ -7,8 +7,8 @@ import (
 	entnotification "github.com/SURF-Innovatie/MORIS/ent/notification"
 	entuser "github.com/SURF-Innovatie/MORIS/ent/user"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/notification"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/google/uuid"
 )
 
@@ -20,7 +20,7 @@ func NewEntRepo(cli *ent.Client) *EntRepo {
 	return &EntRepo{cli: cli}
 }
 
-func (r *EntRepo) Create(ctx context.Context, n entities.Notification) (*entities.Notification, error) {
+func (r *EntRepo) Create(ctx context.Context, n notification.Notification) (*notification.Notification, error) {
 	create := r.cli.Notification.Create().
 		SetMessage(n.Message).
 		SetUserID(n.UserID).
@@ -35,10 +35,10 @@ func (r *EntRepo) Create(ctx context.Context, n entities.Notification) (*entitie
 		return nil, err
 	}
 
-	return transform.ToEntityPtr[entities.Notification](row), nil
+	return transform.ToEntityPtr[notification.Notification](row), nil
 }
 
-func (r *EntRepo) Get(ctx context.Context, id uuid.UUID) (*entities.Notification, error) {
+func (r *EntRepo) Get(ctx context.Context, id uuid.UUID) (*notification.Notification, error) {
 	row, err := r.cli.Notification.Query().
 		Where(entnotification.IDEQ(id)).
 		WithEvent().
@@ -47,7 +47,7 @@ func (r *EntRepo) Get(ctx context.Context, id uuid.UUID) (*entities.Notification
 		return nil, err
 	}
 
-	entity := transform.ToEntityPtr[entities.Notification](row)
+	entity := transform.ToEntityPtr[notification.Notification](row)
 	if row.Edges.Event != nil {
 		meta := events.GetMeta(row.Edges.Event.Type)
 		fname := meta.FriendlyName
@@ -56,7 +56,7 @@ func (r *EntRepo) Get(ctx context.Context, id uuid.UUID) (*entities.Notification
 	return entity, nil
 }
 
-func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, n entities.Notification) (*entities.Notification, error) {
+func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, n notification.Notification) (*notification.Notification, error) {
 	upd := r.cli.Notification.UpdateOneID(id).
 		SetMessage(n.Message).
 		SetUserID(n.UserID)
@@ -71,10 +71,10 @@ func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, n entities.Notificat
 	if err != nil {
 		return nil, err
 	}
-	return transform.ToEntityPtr[entities.Notification](row), nil
+	return transform.ToEntityPtr[notification.Notification](row), nil
 }
 
-func (r *EntRepo) List(ctx context.Context) ([]entities.Notification, error) {
+func (r *EntRepo) List(ctx context.Context) ([]notification.Notification, error) {
 	rows, err := r.cli.Notification.Query().
 		WithEvent().
 		All(ctx)
@@ -82,7 +82,7 @@ func (r *EntRepo) List(ctx context.Context) ([]entities.Notification, error) {
 		return nil, err
 	}
 
-	dtos := transform.ToEntities[entities.Notification](rows)
+	dtos := transform.ToEntities[notification.Notification](rows)
 	for i, row := range rows {
 		if row.Edges.Event != nil {
 			meta := events.GetMeta(row.Edges.Event.Type)
@@ -93,7 +93,7 @@ func (r *EntRepo) List(ctx context.Context) ([]entities.Notification, error) {
 	return dtos, nil
 }
 
-func (r *EntRepo) ListForUser(ctx context.Context, userID uuid.UUID) ([]entities.Notification, error) {
+func (r *EntRepo) ListForUser(ctx context.Context, userID uuid.UUID) ([]notification.Notification, error) {
 	rows, err := r.cli.Notification.Query().
 		Where(entnotification.HasUserWith(entuser.IDEQ(userID))).
 		Order(ent.Desc(entnotification.FieldSentAt)).
@@ -103,7 +103,7 @@ func (r *EntRepo) ListForUser(ctx context.Context, userID uuid.UUID) ([]entities
 		return nil, err
 	}
 
-	dtos := transform.ToEntities[entities.Notification](rows)
+	dtos := transform.ToEntities[notification.Notification](rows)
 	for i, row := range rows {
 		if row.Edges.Event != nil {
 			meta := events.GetMeta(row.Edges.Event.Type)

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/SURF-Innovatie/MORIS/internal/app/commandbus"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	events2 "github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/alicebob/miniredis/v2"
 	"github.com/google/uuid"
@@ -14,16 +14,16 @@ import (
 )
 
 type fakeEventStore struct {
-	evts    []events.Event
+	evts    []events2.Event
 	version int
 	err     error
 }
 
-func (f fakeEventStore) Load(ctx context.Context, id uuid.UUID) ([]events.Event, int, error) {
+func (f fakeEventStore) Load(ctx context.Context, id uuid.UUID) ([]events2.Event, int, error) {
 	return f.evts, f.version, f.err
 }
 
-func (f fakeEventStore) Append(ctx context.Context, id uuid.UUID, expectedVersion int, evts ...events.Event) error {
+func (f fakeEventStore) Append(ctx context.Context, id uuid.UUID, expectedVersion int, evts ...events2.Event) error {
 	return nil
 }
 
@@ -39,14 +39,14 @@ func TestEventStoreProjectCacheRefresher_Refresh_WritesToCache(t *testing.T) {
 	projectID := uuid.New()
 	actorID := uuid.New()
 
-	start := &events.ProjectStarted{
-		Base:        events.NewBase(projectID, actorID, events.StatusApproved),
+	start := &events2.ProjectStarted{
+		Base:        events2.NewBase(projectID, actorID, events2.StatusApproved),
 		Title:       "Test Title",
 		Description: "Test Description",
 	}
 
 	es := fakeEventStore{
-		evts:    []events.Event{start},
+		evts:    []events2.Event{start},
 		version: 7,
 		err:     nil,
 	}

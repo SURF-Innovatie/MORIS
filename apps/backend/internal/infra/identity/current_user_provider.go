@@ -6,7 +6,7 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	authapp "github.com/SURF-Innovatie/MORIS/internal/app/auth"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 )
 
@@ -18,18 +18,18 @@ func NewCurrentUserProvider(cli *ent.Client) *CurrentUserProvider {
 	return &CurrentUserProvider{cli: cli}
 }
 
-func (p *CurrentUserProvider) Current(ctx context.Context) (entities.Principal, error) {
+func (p *CurrentUserProvider) Current(ctx context.Context) (identity.Principal, error) {
 	authUser, ok := httputil.GetUserFromContext(ctx)
 	if !ok {
-		return entities.Principal{}, fmt.Errorf("no authenticated user in context")
+		return identity.Principal{}, fmt.Errorf("no authenticated user in context")
 	}
 
 	u, err := p.cli.User.Get(ctx, authUser.User.ID)
 	if err != nil {
-		return entities.Principal{}, err
+		return identity.Principal{}, err
 	}
 
-	return entities.Principal{
+	return identity.Principal{
 		UserID:     u.ID,
 		PersonID:   u.PersonID,
 		IsSysAdmin: u.IsSysAdmin,

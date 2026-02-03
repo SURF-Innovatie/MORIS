@@ -7,23 +7,25 @@ import (
 	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/app/person"
 	"github.com/SURF-Innovatie/MORIS/internal/app/tx"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation/rbac"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation/readmodels"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 )
 
 type Service interface {
-	CreateRoot(ctx context.Context, name string, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error)
-	CreateChild(ctx context.Context, parentID uuid.UUID, name string, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error)
+	CreateRoot(ctx context.Context, name string, rorID *string, description *string, avatarURL *string) (*organisation.OrganisationNode, error)
+	CreateChild(ctx context.Context, parentID uuid.UUID, name string, rorID *string, description *string, avatarURL *string) (*organisation.OrganisationNode, error)
 
-	Get(ctx context.Context, id uuid.UUID) (*entities.OrganisationNode, error)
-	Update(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error)
+	Get(ctx context.Context, id uuid.UUID) (*organisation.OrganisationNode, error)
+	Update(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*organisation.OrganisationNode, error)
 
-	ListRoots(ctx context.Context) ([]entities.OrganisationNode, error)
-	ListChildren(ctx context.Context, parentID uuid.UUID) ([]entities.OrganisationNode, error)
-	ListAll(ctx context.Context) ([]entities.OrganisationNode, error)
-	Search(ctx context.Context, query string) ([]entities.OrganisationNode, error)
-	SearchForProjectCreation(ctx context.Context, query string, actorID uuid.UUID) ([]entities.OrganisationNode, error)
+	ListRoots(ctx context.Context) ([]organisation.OrganisationNode, error)
+	ListChildren(ctx context.Context, parentID uuid.UUID) ([]organisation.OrganisationNode, error)
+	ListAll(ctx context.Context) ([]organisation.OrganisationNode, error)
+	Search(ctx context.Context, query string) ([]organisation.OrganisationNode, error)
+	SearchForProjectCreation(ctx context.Context, query string, actorID uuid.UUID) ([]organisation.OrganisationNode, error)
 	UpdateMemberCustomFields(ctx context.Context, orgID uuid.UUID, personID uuid.UUID, values map[string]interface{}) error
 }
 
@@ -38,8 +40,8 @@ func NewService(repo repository, personRepo person.Service, rbac rbacsvc.Service
 	return &service{repo: repo, personSvc: personRepo, rbac: rbac, tx: tx}
 }
 
-func (s *service) CreateRoot(ctx context.Context, name string, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error) {
-	var out *entities.OrganisationNode
+func (s *service) CreateRoot(ctx context.Context, name string, rorID *string, description *string, avatarURL *string) (*organisation.OrganisationNode, error) {
+	var out *organisation.OrganisationNode
 	err := s.tx.WithTx(ctx, func(ctx context.Context) error {
 		row, err := s.repo.CreateNode(ctx, name, nil, rorID, description, avatarURL)
 		if err != nil {
@@ -54,8 +56,8 @@ func (s *service) CreateRoot(ctx context.Context, name string, rorID *string, de
 	return out, err
 }
 
-func (s *service) CreateChild(ctx context.Context, parentID uuid.UUID, name string, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error) {
-	var out *entities.OrganisationNode
+func (s *service) CreateChild(ctx context.Context, parentID uuid.UUID, name string, rorID *string, description *string, avatarURL *string) (*organisation.OrganisationNode, error) {
+	var out *organisation.OrganisationNode
 	err := s.tx.WithTx(ctx, func(ctx context.Context) error {
 		// ensure parent exists
 		if _, err := s.repo.GetNode(ctx, parentID); err != nil {
@@ -77,8 +79,8 @@ func (s *service) CreateChild(ctx context.Context, parentID uuid.UUID, name stri
 		if err != nil {
 			return err
 		}
-		bulk := lo.Map(ancRows, func(a entities.OrganisationNodeClosure, _ int) entities.OrganisationNodeClosure {
-			return entities.OrganisationNodeClosure{
+		bulk := lo.Map(ancRows, func(a readmodels.OrganisationNodeClosure, _ int) readmodels.OrganisationNodeClosure {
+			return readmodels.OrganisationNodeClosure{
 				AncestorID:   a.AncestorID,
 				DescendantID: row.ID,
 				Depth:        a.Depth + 1,
@@ -96,27 +98,27 @@ func (s *service) CreateChild(ctx context.Context, parentID uuid.UUID, name stri
 	return out, err
 }
 
-func (s *service) Get(ctx context.Context, id uuid.UUID) (*entities.OrganisationNode, error) {
+func (s *service) Get(ctx context.Context, id uuid.UUID) (*organisation.OrganisationNode, error) {
 	return s.repo.GetNode(ctx, id)
 }
 
-func (s *service) ListRoots(ctx context.Context) ([]entities.OrganisationNode, error) {
+func (s *service) ListRoots(ctx context.Context) ([]organisation.OrganisationNode, error) {
 	return s.repo.ListRoots(ctx)
 }
 
-func (s *service) ListChildren(ctx context.Context, parentID uuid.UUID) ([]entities.OrganisationNode, error) {
+func (s *service) ListChildren(ctx context.Context, parentID uuid.UUID) ([]organisation.OrganisationNode, error) {
 	return s.repo.ListChildren(ctx, parentID)
 }
 
-func (s *service) ListAll(ctx context.Context) ([]entities.OrganisationNode, error) {
+func (s *service) ListAll(ctx context.Context) ([]organisation.OrganisationNode, error) {
 	return s.repo.ListAll(ctx)
 }
 
-func (s *service) Search(ctx context.Context, query string) ([]entities.OrganisationNode, error) {
+func (s *service) Search(ctx context.Context, query string) ([]organisation.OrganisationNode, error) {
 	return s.repo.Search(ctx, query, 20)
 }
 
-func (s *service) SearchForProjectCreation(ctx context.Context, query string, actorID uuid.UUID) ([]entities.OrganisationNode, error) {
+func (s *service) SearchForProjectCreation(ctx context.Context, query string, actorID uuid.UUID) ([]organisation.OrganisationNode, error) {
 	nodes, err := s.repo.Search(ctx, query, 100)
 	if err != nil {
 		return nil, err
@@ -124,9 +126,9 @@ func (s *service) SearchForProjectCreation(ctx context.Context, query string, ac
 
 	// Filter nodes where the user has PermissionCreateProject
 	// HasPermission checks for direct or inherited permission (via ancestry)
-	filtered := make([]entities.OrganisationNode, 0, len(nodes))
+	filtered := make([]organisation.OrganisationNode, 0, len(nodes))
 	for _, node := range nodes {
-		ok, err := s.rbac.HasPermission(ctx, actorID, node.ID, entities.PermissionCreateProject)
+		ok, err := s.rbac.HasPermission(ctx, actorID, node.ID, rbac.PermissionCreateProject)
 		if err == nil && ok {
 			filtered = append(filtered, node)
 		}
@@ -150,8 +152,8 @@ func (s *service) UpdateMemberCustomFields(ctx context.Context, orgID uuid.UUID,
 	return err
 }
 
-func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*entities.OrganisationNode, error) {
-	var out *entities.OrganisationNode
+func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*organisation.OrganisationNode, error) {
+	var out *organisation.OrganisationNode
 	err := s.tx.WithTx(ctx, func(ctx context.Context) error {
 		cur, err := s.repo.GetNode(ctx, id)
 		if err != nil {
@@ -183,7 +185,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentI
 		if err != nil {
 			return err
 		}
-		subDepth := lo.Associate(subRows, func(r entities.OrganisationNodeClosure) (uuid.UUID, int) {
+		subDepth := lo.Associate(subRows, func(r readmodels.OrganisationNodeClosure) (uuid.UUID, int) {
 			return r.DescendantID, r.Depth
 		})
 		subIDs := lo.Keys(subDepth)
@@ -203,7 +205,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentI
 		subSet := lo.SliceToMap(subIDs, func(sid uuid.UUID) (uuid.UUID, struct{}) {
 			return sid, struct{}{}
 		})
-		oldAncIDs := lo.FilterMap(oldAncRows, func(a entities.OrganisationNodeClosure, _ int) (uuid.UUID, bool) {
+		oldAncIDs := lo.FilterMap(oldAncRows, func(a readmodels.OrganisationNodeClosure, _ int) (uuid.UUID, bool) {
 			if _, inSub := subSet[a.AncestorID]; !inSub {
 				return a.AncestorID, true
 			}
@@ -229,9 +231,9 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentI
 			return err
 		}
 
-		bulk := lo.FlatMap(newAncRows, func(na entities.OrganisationNodeClosure, _ int) []entities.OrganisationNodeClosure {
-			return lo.Map(subIDs, func(descID uuid.UUID, _ int) entities.OrganisationNodeClosure {
-				return entities.OrganisationNodeClosure{
+		bulk := lo.FlatMap(newAncRows, func(na readmodels.OrganisationNodeClosure, _ int) []readmodels.OrganisationNodeClosure {
+			return lo.Map(subIDs, func(descID uuid.UUID, _ int) readmodels.OrganisationNodeClosure {
+				return readmodels.OrganisationNodeClosure{
 					AncestorID:   na.AncestorID,
 					DescendantID: descID,
 					Depth:        na.Depth + 1 + subDepth[descID],

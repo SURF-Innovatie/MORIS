@@ -5,8 +5,8 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/policy"
+	events2 "github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/rs/zerolog/log"
 )
 
@@ -21,27 +21,27 @@ func NewEventPolicyHandler(policySvc eventpolicy.Service, cli *ent.Client) *Hand
 	return &Handler{policySvc: policySvc, cli: cli}
 }
 
-func (h *Handler) Handle(ctx context.Context, event events.Event) error {
+func (h *Handler) Handle(ctx context.Context, event events2.Event) error {
 	switch e := event.(type) {
-	case *events.EventPolicyAdded:
+	case *events2.EventPolicyAdded:
 		return h.handlePolicyAdded(ctx, e)
-	case *events.EventPolicyRemoved:
+	case *events2.EventPolicyRemoved:
 		return h.handlePolicyRemoved(ctx, e)
-	case *events.EventPolicyUpdated:
+	case *events2.EventPolicyUpdated:
 		return h.handlePolicyUpdated(ctx, e)
 	}
 	return nil
 }
 
-func (h *Handler) handlePolicyAdded(ctx context.Context, e *events.EventPolicyAdded) error {
+func (h *Handler) handlePolicyAdded(ctx context.Context, e *events2.EventPolicyAdded) error {
 	projectID := e.AggregateID()
 
-	policy := entities.EventPolicy{
+	policy := policy.EventPolicy{
 		ID:                      e.PolicyID,
 		Name:                    e.Name,
 		Description:             e.Description,
 		EventTypes:              e.EventTypes,
-		ActionType:              entities.ActionType(e.ActionType),
+		ActionType:              policy.ActionType(e.ActionType),
 		RecipientUserIDs:        e.RecipientUserIDs,
 		RecipientProjectRoleIDs: e.RecipientProjectRoleIDs,
 		RecipientOrgRoleIDs:     e.RecipientOrgRoleIDs,
@@ -60,7 +60,7 @@ func (h *Handler) handlePolicyAdded(ctx context.Context, e *events.EventPolicyAd
 	return nil
 }
 
-func (h *Handler) handlePolicyRemoved(ctx context.Context, e *events.EventPolicyRemoved) error {
+func (h *Handler) handlePolicyRemoved(ctx context.Context, e *events2.EventPolicyRemoved) error {
 	err := h.policySvc.Delete(ctx, e.PolicyID)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to delete policy from event")
@@ -71,15 +71,15 @@ func (h *Handler) handlePolicyRemoved(ctx context.Context, e *events.EventPolicy
 	return nil
 }
 
-func (h *Handler) handlePolicyUpdated(ctx context.Context, e *events.EventPolicyUpdated) error {
+func (h *Handler) handlePolicyUpdated(ctx context.Context, e *events2.EventPolicyUpdated) error {
 	projectID := e.AggregateID()
 
-	policy := entities.EventPolicy{
+	policy := policy.EventPolicy{
 		ID:                      e.PolicyID,
 		Name:                    e.Name,
 		Description:             e.Description,
 		EventTypes:              e.EventTypes,
-		ActionType:              entities.ActionType(e.ActionType),
+		ActionType:              policy.ActionType(e.ActionType),
 		RecipientUserIDs:        e.RecipientUserIDs,
 		RecipientProjectRoleIDs: e.RecipientProjectRoleIDs,
 		RecipientOrgRoleIDs:     e.RecipientOrgRoleIDs,

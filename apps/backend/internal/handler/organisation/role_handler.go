@@ -7,7 +7,7 @@ import (
 	organisationrbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	organisationrolesvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/role"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -36,7 +36,7 @@ func NewRoleHandler(roleSvc organisationrolesvc.Service, rbacSvc organisationrba
 func (h *RoleHandler) ListPermissions(w http.ResponseWriter, r *http.Request) {
 	// Simple mapping for now - ideally this would be in the service or domain
 	// But since it's just constants + display info, we can do it here or helper
-	perms := lo.Map(entities.Definitions, func(d entities.PermissionDefinition, _ int) dto.PermissionDefinition {
+	perms := lo.Map(rbac.Definitions, func(d rbac.PermissionDefinition, _ int) dto.PermissionDefinition {
 		return dto.PermissionDefinition{
 			Key:         string(d.Permission),
 			Label:       d.Label,
@@ -118,7 +118,7 @@ func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !requireOrgPerm(w, r, h.rbacSvc, orgID, entities.PermissionManageOrganisationRoles) {
+	if !requireOrgPerm(w, r, h.rbacSvc, orgID, rbac.PermissionManageOrganisationRoles) {
 		return
 	}
 
@@ -127,8 +127,8 @@ func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	perms := lo.Map(req.Permissions, func(p string, _ int) entities.Permission {
-		return entities.Permission(p)
+	perms := lo.Map(req.Permissions, func(p string, _ int) rbac.Permission {
+		return rbac.Permission(p)
 	})
 
 	newRole, err := h.roleSvc.CreateRole(r.Context(), orgID, req.Key, req.DisplayName, perms)
@@ -137,7 +137,7 @@ func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.OrganisationRoleResponse, *entities.OrganisationRole](newRole))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.OrganisationRoleResponse, *rbac.OrganisationRole](newRole))
 }
 
 // UpdateRole godoc
@@ -168,7 +168,7 @@ func (h *RoleHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !requireOrgPerm(w, r, h.rbacSvc, existingRole.OrganisationNodeID, entities.PermissionManageOrganisationRoles) {
+	if !requireOrgPerm(w, r, h.rbacSvc, existingRole.OrganisationNodeID, rbac.PermissionManageOrganisationRoles) {
 		return
 	}
 
@@ -177,8 +177,8 @@ func (h *RoleHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	perms := lo.Map(req.Permissions, func(p string, _ int) entities.Permission {
-		return entities.Permission(p)
+	perms := lo.Map(req.Permissions, func(p string, _ int) rbac.Permission {
+		return rbac.Permission(p)
 	})
 
 	updatedRole, err := h.roleSvc.UpdateRole(r.Context(), roleID, req.DisplayName, perms)
@@ -187,7 +187,7 @@ func (h *RoleHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.OrganisationRoleResponse, *entities.OrganisationRole](updatedRole))
+	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.OrganisationRoleResponse, *rbac.OrganisationRole](updatedRole))
 }
 
 // DeleteRole godoc
@@ -215,7 +215,7 @@ func (h *RoleHandler) DeleteRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !requireOrgPerm(w, r, h.rbacSvc, existingRole.OrganisationNodeID, entities.PermissionManageOrganisationRoles) {
+	if !requireOrgPerm(w, r, h.rbacSvc, existingRole.OrganisationNodeID, rbac.PermissionManageOrganisationRoles) {
 		return
 	}
 
@@ -249,7 +249,7 @@ func (h *RoleHandler) CreateScope(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !requireOrgPerm(w, r, h.rbacSvc, req.RootNodeID, entities.PermissionManageOrganisationRoles) {
+	if !requireOrgPerm(w, r, h.rbacSvc, req.RootNodeID, rbac.PermissionManageOrganisationRoles) {
 		return
 	}
 
@@ -287,7 +287,7 @@ func (h *RoleHandler) AddMembership(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !requireOrgPerm(w, r, h.rbacSvc, scope.RootNodeID, entities.PermissionManageMembers) {
+	if !requireOrgPerm(w, r, h.rbacSvc, scope.RootNodeID, rbac.PermissionManageMembers) {
 		return
 	}
 
@@ -331,7 +331,7 @@ func (h *RoleHandler) RemoveMembership(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !requireOrgPerm(w, r, h.rbacSvc, scope.RootNodeID, entities.PermissionManageMembers) {
+	if !requireOrgPerm(w, r, h.rbacSvc, scope.RootNodeID, rbac.PermissionManageMembers) {
 		return
 	}
 
@@ -343,7 +343,7 @@ func (h *RoleHandler) RemoveMembership(w http.ResponseWriter, r *http.Request) {
 	_ = httputil.WriteStatus(w)
 }
 
-func requireOrgPerm(w http.ResponseWriter, r *http.Request, rbac organisationrbacsvc.Service, nodeID uuid.UUID, perm entities.Permission) bool {
+func requireOrgPerm(w http.ResponseWriter, r *http.Request, rbac organisationrbacsvc.Service, nodeID uuid.UUID, perm rbac.Permission) bool {
 	user, ok := httputil.GetUserFromContext(r.Context())
 	if !ok {
 		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)

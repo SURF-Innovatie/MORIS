@@ -4,73 +4,74 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation"
+	events2 "github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/google/uuid"
 
 	"github.com/SURF-Innovatie/MORIS/internal/adapter"
 	raidsink "github.com/SURF-Innovatie/MORIS/internal/adapter/sinks/raid"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/entities"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/events"
 )
 
 func ptr(s string) *string { return &s }
 
-func makeProjectStarted(projectID, actor uuid.UUID, title, desc string, start, end time.Time) *events.ProjectStarted {
-	evt := &events.ProjectStarted{
+func makeProjectStarted(projectID, actor uuid.UUID, title, desc string, start, end time.Time) *events2.ProjectStarted {
+	evt := &events2.ProjectStarted{
 		Title:       title,
 		Description: desc,
 		StartDate:   start,
 		EndDate:     end,
 	}
-	evt.SetBase(events.Base{
+	evt.SetBase(events2.Base{
 		ID:        uuid.New(),
 		ProjectID: projectID,
 		At:        start,
 		CreatedBy: actor,
-		Status:    events.StatusApproved,
+		Status:    events2.StatusApproved,
 	})
 	return evt
 }
 
-func makeTitleChanged(projectID, actor uuid.UUID, title string, at time.Time) *events.TitleChanged {
-	evt := &events.TitleChanged{
+func makeTitleChanged(projectID, actor uuid.UUID, title string, at time.Time) *events2.TitleChanged {
+	evt := &events2.TitleChanged{
 		Title: title,
 	}
-	evt.SetBase(events.Base{
+	evt.SetBase(events2.Base{
 		ID:        uuid.New(),
 		ProjectID: projectID,
 		At:        at,
 		CreatedBy: actor,
-		Status:    events.StatusApproved,
+		Status:    events2.StatusApproved,
 	})
 	return evt
 }
 
-func makeRoleAssigned(projectID, actor, personID, roleID uuid.UUID, at time.Time) *events.ProjectRoleAssigned {
-	evt := &events.ProjectRoleAssigned{
+func makeRoleAssigned(projectID, actor, personID, roleID uuid.UUID, at time.Time) *events2.ProjectRoleAssigned {
+	evt := &events2.ProjectRoleAssigned{
 		PersonID:      personID,
 		ProjectRoleID: roleID,
 	}
-	evt.SetBase(events.Base{
+	evt.SetBase(events2.Base{
 		ID:        uuid.New(),
 		ProjectID: projectID,
 		At:        at,
 		CreatedBy: actor,
-		Status:    events.StatusApproved,
+		Status:    events2.StatusApproved,
 	})
 	return evt
 }
 
-func makeRoleUnassigned(projectID, actor, personID, roleID uuid.UUID, at time.Time) *events.ProjectRoleUnassigned {
-	evt := &events.ProjectRoleUnassigned{
+func makeRoleUnassigned(projectID, actor, personID, roleID uuid.UUID, at time.Time) *events2.ProjectRoleUnassigned {
+	evt := &events2.ProjectRoleUnassigned{
 		PersonID:      personID,
 		ProjectRoleID: roleID,
 	}
-	evt.SetBase(events.Base{
+	evt.SetBase(events2.Base{
 		ID:        uuid.New(),
 		ProjectID: projectID,
 		At:        at,
 		CreatedBy: actor,
-		Status:    events.StatusApproved,
+		Status:    events2.StatusApproved,
 	})
 	return evt
 }
@@ -86,7 +87,7 @@ func TestRAiDMapper_TitleHistory(t *testing.T) {
 
 	pc := adapter.ProjectContext{
 		ProjectID: projectID,
-		Events: []events.Event{
+		Events: []events2.Event{
 			makeProjectStarted(projectID, actor, "Original Title", "Description", start, end),
 			makeTitleChanged(projectID, actor, "New Title", titleChange),
 		},
@@ -132,7 +133,7 @@ func TestRAiDMapper_SingleTitle(t *testing.T) {
 
 	pc := adapter.ProjectContext{
 		ProjectID: projectID,
-		Events: []events.Event{
+		Events: []events2.Event{
 			makeProjectStarted(projectID, actor, "Test Project", "A test description", start, end),
 		},
 	}
@@ -164,11 +165,11 @@ func TestRAiDMapper_ContributorsFromRoleEvents(t *testing.T) {
 
 	pc := adapter.ProjectContext{
 		ProjectID: projectID,
-		Events: []events.Event{
+		Events: []events2.Event{
 			makeProjectStarted(projectID, actor, "Test", "", start, start.AddDate(1, 0, 0)),
 			makeRoleAssigned(projectID, actor, personID, roleID, assignedAt),
 		},
-		Members: []entities.Person{
+		Members: []identity.Person{
 			{
 				ID:    personID,
 				Name:  "John Doe",
@@ -208,12 +209,12 @@ func TestRAiDMapper_ContributorWithEndDate(t *testing.T) {
 
 	pc := adapter.ProjectContext{
 		ProjectID: projectID,
-		Events: []events.Event{
+		Events: []events2.Event{
 			makeProjectStarted(projectID, actor, "Test", "", start, start.AddDate(1, 0, 0)),
 			makeRoleAssigned(projectID, actor, personID, roleID, assignedAt),
 			makeRoleUnassigned(projectID, actor, personID, roleID, unassignedAt),
 		},
-		Members: []entities.Person{
+		Members: []identity.Person{
 			{
 				ID:    personID,
 				Name:  "John Doe",
@@ -249,11 +250,11 @@ func TestRAiDMapper_SkipContributorWithoutORCID(t *testing.T) {
 
 	pc := adapter.ProjectContext{
 		ProjectID: projectID,
-		Events: []events.Event{
+		Events: []events2.Event{
 			makeProjectStarted(projectID, actor, "Test", "", start, start.AddDate(1, 0, 0)),
 			makeRoleAssigned(projectID, actor, personID, roleID, start),
 		},
-		Members: []entities.Person{
+		Members: []identity.Person{
 			{
 				ID:    personID,
 				Name:  "Jane Smith",
@@ -279,10 +280,10 @@ func TestRAiDMapper_OrganisationFromEvents(t *testing.T) {
 
 	pc := adapter.ProjectContext{
 		ProjectID: projectID,
-		Events: []events.Event{
+		Events: []events2.Event{
 			makeProjectStarted(projectID, actor, "Test", "", start, start.AddDate(1, 0, 0)),
 		},
-		OrgNode: &entities.OrganisationNode{
+		OrgNode: &organisation.OrganisationNode{
 			ID:    uuid.New(),
 			Name:  "Test University",
 			RorID: ptr("https://ror.org/12345678"),
