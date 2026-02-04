@@ -37,8 +37,26 @@ func (e *EventPolicyAdded) Apply(p *projdomain.Project) {
 	// Policies are stored separately, not on project entity directly
 }
 
-func (e *EventPolicyAdded) NotificationMessage() string {
-	return fmt.Sprintf("Event policy '%s' has been added to the project.", e.Name)
+func (e *EventPolicyAdded) NotificationTemplate() string {
+	return "Event policy '{{event.Name}}' has been added to the project."
+}
+
+func (e *EventPolicyAdded) ApprovalRequestTemplate() string {
+	return "Adding event policy '{{event.Name}}' requires approval."
+}
+
+func (e *EventPolicyAdded) ApprovedTemplate() string {
+	return "Event policy '{{event.Name}}' has been approved and added."
+}
+
+func (e *EventPolicyAdded) RejectedTemplate() string {
+	return "Adding event policy '{{event.Name}}' has been rejected."
+}
+
+func (e *EventPolicyAdded) NotificationVariables() map[string]string {
+	return map[string]string{
+		"event.Name": e.Name,
+	}
 }
 
 type EventPolicyAddedInput struct {
@@ -94,8 +112,26 @@ func (e *EventPolicyRemoved) Apply(p *projdomain.Project) {
 	// Policies are stored separately
 }
 
-func (e *EventPolicyRemoved) NotificationMessage() string {
-	return fmt.Sprintf("Event policy '%s' has been removed from the project.", e.Name)
+func (e *EventPolicyRemoved) NotificationTemplate() string {
+	return "Event policy '{{event.Name}}' has been removed from the project."
+}
+
+func (e *EventPolicyRemoved) ApprovalRequestTemplate() string {
+	return "Removing event policy '{{event.Name}}' requires approval."
+}
+
+func (e *EventPolicyRemoved) ApprovedTemplate() string {
+	return "Event policy '{{event.Name}}' removal has been approved."
+}
+
+func (e *EventPolicyRemoved) RejectedTemplate() string {
+	return "Removing event policy '{{event.Name}}' has been rejected."
+}
+
+func (e *EventPolicyRemoved) NotificationVariables() map[string]string {
+	return map[string]string{
+		"event.Name": e.Name,
+	}
 }
 
 type EventPolicyRemovedInput struct {
@@ -144,8 +180,26 @@ func (e *EventPolicyUpdated) Apply(p *projdomain.Project) {
 	// Policies are stored separately
 }
 
-func (e *EventPolicyUpdated) NotificationMessage() string {
-	return fmt.Sprintf("Event policy '%s' has been updated.", e.Name)
+func (e *EventPolicyUpdated) NotificationTemplate() string {
+	return "Event policy '{{event.Name}}' has been updated."
+}
+
+func (e *EventPolicyUpdated) ApprovalRequestTemplate() string {
+	return "Updating event policy '{{event.Name}}' requires approval."
+}
+
+func (e *EventPolicyUpdated) ApprovedTemplate() string {
+	return "Event policy '{{event.Name}}' update has been approved."
+}
+
+func (e *EventPolicyUpdated) RejectedTemplate() string {
+	return "Updating event policy '{{event.Name}}' has been rejected."
+}
+
+func (e *EventPolicyUpdated) NotificationVariables() map[string]string {
+	return map[string]string{
+		"event.Name": e.Name,
+	}
 }
 
 type EventPolicyUpdatedInput struct {

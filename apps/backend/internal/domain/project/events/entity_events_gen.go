@@ -35,10 +35,6 @@ func (e *ProductAdded) RelatedIDs() RelatedIDs {
 	return RelatedIDs{ProductID: &e.ProductID}
 }
 
-func (e *ProductAdded) NotificationMessage() string {
-	return "A new product has been added to the project."
-}
-
 func (e *ProductAdded) NotificationTemplate() string {
 	return "Product '{{product.Name}}' was added to project '{{project.Title}}'"
 }
@@ -124,10 +120,6 @@ func (e *ProductRemoved) Apply(project *projdomain.Project) {
 
 func (e *ProductRemoved) RelatedIDs() RelatedIDs {
 	return RelatedIDs{ProductID: &e.ProductID}
-}
-
-func (e *ProductRemoved) NotificationMessage() string {
-	return "A product has been removed from the project."
 }
 
 func (e *ProductRemoved) NotificationTemplate() string {

@@ -8,6 +8,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/user"
 	orgsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events/hydrator"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/project/projection"
 	eventrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/event"
 	"github.com/google/uuid"
@@ -18,10 +19,11 @@ type ApprovalRequestNotificationHandler struct {
 	cli       *ent.Client
 	eventRepo *eventrepo.EntRepo
 	rbac      orgsvc.Service
+	hydrator  *hydrator.Hydrator
 }
 
-func NewApprovalRequestHandler(cli *ent.Client, eventRepo *eventrepo.EntRepo, rbac orgsvc.Service) *ApprovalRequestNotificationHandler {
-	return &ApprovalRequestNotificationHandler{cli: cli, eventRepo: eventRepo, rbac: rbac}
+func NewApprovalRequestHandler(cli *ent.Client, eventRepo *eventrepo.EntRepo, rbac orgsvc.Service, hydrator *hydrator.Hydrator) *ApprovalRequestNotificationHandler {
+	return &ApprovalRequestNotificationHandler{cli: cli, eventRepo: eventRepo, rbac: rbac, hydrator: hydrator}
 }
 
 func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e events.Event) error {
@@ -95,8 +97,22 @@ func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e event
 }
 
 func (h *ApprovalRequestNotificationHandler) buildApprovalMessage(ctx context.Context, e events.Event, projectTitle string) (string, error) {
-	if n, ok := e.(events.ApprovalNotifier); ok {
-		return n.ApprovalMessage(projectTitle), nil
+	// Check if event implements Notifier
+	if n, ok := e.(events.Notifier); ok {
+		// Hydrate the event to get related entities for template variables
+		de := h.hydrator.HydrateOne(ctx, e)
+		// Add project title to the variables
+		vars := n.NotificationVariables()
+		if vars == nil {
+			vars = make(map[string]string)
+		}
+		vars["project.Title"] = projectTitle
+		vars = events.AddDetailedEventVariables(vars, de)
+		msg := events.ResolveTemplate(n.ApprovalRequestTemplate(), vars)
+		if msg != "" {
+			return msg, nil
+		}
 	}
+
 	return "", nil
 }

@@ -56,13 +56,27 @@ func (e *TemplateEvent) Apply(project *project.Project) {
 }
 
 // Notifier - implement if event should notify project members
-func (e *TemplateEvent) NotificationMessage() string {
-	return fmt.Sprintf("Something happened: %s", e.SomeStringField)
+// All five methods must be implemented together
+func (e *TemplateEvent) NotificationTemplate() string {
+	return "Something happened: {{event.SomeStringField}}"
 }
 
-// ApprovalNotifier - implement if event requires approval workflow
-func (e *TemplateEvent) ApprovalMessage(projectTitle string) string {
-	return fmt.Sprintf("Approval needed for action in project '%s'.", projectTitle)
+func (e *TemplateEvent) ApprovalRequestTemplate() string {
+	return "Approval needed for action: {{event.SomeStringField}}"
+}
+
+func (e *TemplateEvent) ApprovedTemplate() string {
+	return "Action '{{event.SomeStringField}}' has been approved."
+}
+
+func (e *TemplateEvent) RejectedTemplate() string {
+	return "Action '{{event.SomeStringField}}' has been rejected."
+}
+
+func (e *TemplateEvent) NotificationVariables() map[string]string {
+	return map[string]string{
+		"event.SomeStringField": e.SomeStringField,
+	}
 }
 
 // HasRelatedIDs - implement if event references related entities

@@ -336,24 +336,20 @@ func (e *{{eventName .Type}}) Apply(project *projdomain.Project) {
 	project.{{.Field}} = e.{{.Field}}
 }
 
-func (e *{{eventName .Type}}) NotificationMessage() string {
-	return "Project {{.Field | lower}} has been updated."
-}
-{{if .NotificationTemplate}}
 func (e *{{eventName .Type}}) NotificationTemplate() string {
-	return "{{.NotificationTemplate}}"
+	return "{{if .NotificationTemplate}}{{.NotificationTemplate}}{{else}}Project {{.Field | lower}} has been updated.{{end}}"
 }
 
 func (e *{{eventName .Type}}) ApprovalRequestTemplate() string {
-	return "{{.ApprovalRequestTemplate}}"
+	return "{{if .ApprovalRequestTemplate}}{{.ApprovalRequestTemplate}}{{else}}Changing project {{.Field | lower}} requires approval.{{end}}"
 }
 
 func (e *{{eventName .Type}}) ApprovedTemplate() string {
-	return "{{.ApprovedTemplate}}"
+	return "{{if .ApprovedTemplate}}{{.ApprovedTemplate}}{{else}}Project {{.Field | lower}} change has been approved.{{end}}"
 }
 
 func (e *{{eventName .Type}}) RejectedTemplate() string {
-	return "{{.RejectedTemplate}}"
+	return "{{if .RejectedTemplate}}{{.RejectedTemplate}}{{else}}Project {{.Field | lower}} change has been rejected.{{end}}"
 }
 
 func (e *{{eventName .Type}}) NotificationVariables() map[string]string {
@@ -361,7 +357,7 @@ func (e *{{eventName .Type}}) NotificationVariables() map[string]string {
 		"event.{{.Field}}": fmt.Sprint(e.{{.Field}}),
 	}
 }
-{{end}}{{if .RelatedID}}
+{{if .RelatedID}}
 func (e *{{eventName .Type}}) RelatedIDs() RelatedIDs {
 	return RelatedIDs{ {{.RelatedID}}: &e.{{.Field}} }
 }
@@ -434,24 +430,20 @@ func (e *{{.Entity}}Added) RelatedIDs() RelatedIDs {
 {{else}}	return RelatedIDs{}
 {{end}}}
 
-func (e *{{.Entity}}Added) NotificationMessage() string {
-	return "A new {{.Entity | lower}} has been added to the project."
-}
-{{if .AddNotificationTemplate}}
 func (e *{{.Entity}}Added) NotificationTemplate() string {
-	return "{{.AddNotificationTemplate}}"
+	return "{{if .AddNotificationTemplate}}{{.AddNotificationTemplate}}{{else}}A new {{.Entity | lower}} has been added to the project.{{end}}"
 }
 
 func (e *{{.Entity}}Added) ApprovalRequestTemplate() string {
-	return "{{.AddApprovalRequestTemplate}}"
+	return "{{if .AddApprovalRequestTemplate}}{{.AddApprovalRequestTemplate}}{{else}}Adding a {{.Entity | lower}} requires approval.{{end}}"
 }
 
 func (e *{{.Entity}}Added) ApprovedTemplate() string {
-	return "{{.AddApprovedTemplate}}"
+	return "{{if .AddApprovedTemplate}}{{.AddApprovedTemplate}}{{else}}Adding the {{.Entity | lower}} has been approved.{{end}}"
 }
 
 func (e *{{.Entity}}Added) RejectedTemplate() string {
-	return "{{.AddRejectedTemplate}}"
+	return "{{if .AddRejectedTemplate}}{{.AddRejectedTemplate}}{{else}}Adding the {{.Entity | lower}} has been rejected.{{end}}"
 }
 
 func (e *{{.Entity}}Added) NotificationVariables() map[string]string {
@@ -460,7 +452,6 @@ func (e *{{.Entity}}Added) NotificationVariables() map[string]string {
 	}
 {{else}}	return map[string]string{}
 {{end}}}
-{{end}}
 
 type {{.Entity}}AddedInput struct {
 {{if .IDField}}	{{.IDField}} uuid.UUID ` + "`json:\"{{.JSONKey}}\"`" + `{{end}}
@@ -528,25 +519,21 @@ func (e *{{.Entity}}Removed) RelatedIDs() RelatedIDs {
 {{if and .RelatedID .IDField}}	return RelatedIDs{ {{.RelatedID}}: &e.{{.IDField}} }
 {{else}}	return RelatedIDs{}
 {{end}}}
-{{if .RemoveNotificationTemplate}}
-func (e *{{.Entity}}Removed) NotificationMessage() string {
-	return "A {{.Entity | lower}} has been removed from the project."
-}
 
 func (e *{{.Entity}}Removed) NotificationTemplate() string {
-	return "{{.RemoveNotificationTemplate}}"
+	return "{{if .RemoveNotificationTemplate}}{{.RemoveNotificationTemplate}}{{else}}A {{.Entity | lower}} has been removed from the project.{{end}}"
 }
 
 func (e *{{.Entity}}Removed) ApprovalRequestTemplate() string {
-	return "{{.RemoveApprovalRequestTemplate}}"
+	return "{{if .RemoveApprovalRequestTemplate}}{{.RemoveApprovalRequestTemplate}}{{else}}Removing a {{.Entity | lower}} requires approval.{{end}}"
 }
 
 func (e *{{.Entity}}Removed) ApprovedTemplate() string {
-	return "{{.RemoveApprovedTemplate}}"
+	return "{{if .RemoveApprovedTemplate}}{{.RemoveApprovedTemplate}}{{else}}Removing the {{.Entity | lower}} has been approved.{{end}}"
 }
 
 func (e *{{.Entity}}Removed) RejectedTemplate() string {
-	return "{{.RemoveRejectedTemplate}}"
+	return "{{if .RemoveRejectedTemplate}}{{.RemoveRejectedTemplate}}{{else}}Removing the {{.Entity | lower}} has been rejected.{{end}}"
 }
 
 func (e *{{.Entity}}Removed) NotificationVariables() map[string]string {
@@ -555,7 +542,6 @@ func (e *{{.Entity}}Removed) NotificationVariables() map[string]string {
 	}
 {{else}}	return map[string]string{}
 {{end}}}
-{{end}}
 
 type {{.Entity}}RemovedInput struct {
 {{if .IDField}}	{{.IDField}} uuid.UUID ` + "`json:\"{{.JSONKey}}\"`" + `{{end}}

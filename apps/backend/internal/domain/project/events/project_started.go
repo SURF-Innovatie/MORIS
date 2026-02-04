@@ -37,10 +37,6 @@ func (e *ProjectStarted) Apply(p *projdomain.Project) {
 	p.Members = e.Members
 }
 
-func (e *ProjectStarted) NotificationMessage() string {
-	return fmt.Sprintf("Project '%s' has been started.", e.Title)
-}
-
 func (e *ProjectStarted) NotificationTemplate() string {
 	return "Project proposal '{{event.Title}}' created in '{{org_node.Name}}'"
 }

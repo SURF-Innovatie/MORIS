@@ -30,10 +30,6 @@ func (e *TitleChanged) Apply(project *projdomain.Project) {
 	project.Title = e.Title
 }
 
-func (e *TitleChanged) NotificationMessage() string {
-	return "Project title has been updated."
-}
-
 func (e *TitleChanged) NotificationTemplate() string {
 	return "Project title changed to '{{event.Title}}'"
 }
@@ -112,24 +108,20 @@ func (e *DescriptionChanged) Apply(project *projdomain.Project) {
 	project.Description = e.Description
 }
 
-func (e *DescriptionChanged) NotificationMessage() string {
-	return "Project description has been updated."
-}
-
 func (e *DescriptionChanged) NotificationTemplate() string {
 	return "Project description has been updated"
 }
 
 func (e *DescriptionChanged) ApprovalRequestTemplate() string {
-	return ""
+	return "Changing project description requires approval."
 }
 
 func (e *DescriptionChanged) ApprovedTemplate() string {
-	return ""
+	return "Project description change has been approved."
 }
 
 func (e *DescriptionChanged) RejectedTemplate() string {
-	return ""
+	return "Project description change has been rejected."
 }
 
 func (e *DescriptionChanged) NotificationVariables() map[string]string {
@@ -189,10 +181,6 @@ func (e StartDateChanged) String() string {
 
 func (e *StartDateChanged) Apply(project *projdomain.Project) {
 	project.StartDate = e.StartDate
-}
-
-func (e *StartDateChanged) NotificationMessage() string {
-	return "Project startdate has been updated."
 }
 
 func (e *StartDateChanged) NotificationTemplate() string {
@@ -270,10 +258,6 @@ func (e *EndDateChanged) Apply(project *projdomain.Project) {
 	project.EndDate = e.EndDate
 }
 
-func (e *EndDateChanged) NotificationMessage() string {
-	return "Project enddate has been updated."
-}
-
 func (e *EndDateChanged) NotificationTemplate() string {
 	return "Project end date changed to {{event.EndDate}}"
 }
@@ -347,10 +331,6 @@ func (e OwningOrgNodeChanged) String() string {
 
 func (e *OwningOrgNodeChanged) Apply(project *projdomain.Project) {
 	project.OwningOrgNodeID = e.OwningOrgNodeID
-}
-
-func (e *OwningOrgNodeChanged) NotificationMessage() string {
-	return "Project owningorgnodeid has been updated."
 }
 
 func (e *OwningOrgNodeChanged) NotificationTemplate() string {

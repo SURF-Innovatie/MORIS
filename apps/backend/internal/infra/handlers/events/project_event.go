@@ -8,6 +8,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/ent/organisationnode"
 	"github.com/SURF-Innovatie/MORIS/ent/user"
 	events2 "github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events/hydrator"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/project/projection"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/event"
 )
@@ -15,10 +16,11 @@ import (
 type ProjectEventNotificationHandler struct {
 	cli       *ent.Client
 	eventRepo *event.EntRepo
+	hydrator  *hydrator.Hydrator
 }
 
-func NewProjectEventHandler(cli *ent.Client, eventRepo *event.EntRepo) *ProjectEventNotificationHandler {
-	return &ProjectEventNotificationHandler{cli: cli, eventRepo: eventRepo}
+func NewProjectEventHandler(cli *ent.Client, eventRepo *event.EntRepo, hydrator *hydrator.Hydrator) *ProjectEventNotificationHandler {
+	return &ProjectEventNotificationHandler{cli: cli, eventRepo: eventRepo, hydrator: hydrator}
 }
 
 func (h *ProjectEventNotificationHandler) Handle(ctx context.Context, e events2.Event) error {
@@ -72,7 +74,12 @@ func (h *ProjectEventNotificationHandler) Handle(ctx context.Context, e events2.
 func (h *ProjectEventNotificationHandler) buildMessage(ctx context.Context, e events2.Event) (string, error) {
 	// Check if event implements Notifier
 	if n, ok := e.(events2.Notifier); ok {
-		return n.NotificationMessage(), nil
+		// Hydrate the event to get related entities for template variables
+		de := h.hydrator.HydrateOne(ctx, e)
+		msg := events2.BuildNotificationMessage(n, de)
+		if msg != "" {
+			return msg, nil
+		}
 	}
 
 	// Fallback for events requiring DB or special logic (e.g. OwningOrgNodeChanged)

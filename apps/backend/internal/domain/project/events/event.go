@@ -29,13 +29,9 @@ type Applier interface {
 	Apply(*project.Project)
 }
 
-type Notifier interface {
-	NotificationMessage() string
-}
-
-// RichNotifier allows events to provide templated notification messages with variables.
+// Notifier allows events to provide templated notification messages with variables.
 // Variables use {{variable}} syntax and are resolved from event/project context.
-type RichNotifier interface {
+type Notifier interface {
 	// NotificationTemplate returns a template string with {{variable}} placeholders
 	NotificationTemplate() string
 	// ApprovalRequestTemplate returns a template for approval requests
@@ -46,10 +42,6 @@ type RichNotifier interface {
 	RejectedTemplate() string
 	// NotificationVariables returns event-specific values for template substitution
 	NotificationVariables() map[string]string
-}
-
-type ApprovalNotifier interface {
-	ApprovalMessage(projectTitle string) string
 }
 
 type HasRelatedIDs interface {

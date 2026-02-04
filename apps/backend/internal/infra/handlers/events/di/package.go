@@ -5,6 +5,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	personsvc "github.com/SURF-Innovatie/MORIS/internal/app/person"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events/hydrator"
 	personhandler "github.com/SURF-Innovatie/MORIS/internal/handler/person"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/handlers/events"
@@ -24,14 +25,16 @@ var Package = do.Package(
 func provideProjectEventHandler(i do.Injector) (*events.ProjectEventNotificationHandler, error) {
 	cli := do.MustInvoke[*ent.Client](i)
 	eventRepo := do.MustInvoke[*eventrepo.EntRepo](i)
-	return events.NewProjectEventHandler(cli, eventRepo), nil
+	h := do.MustInvoke[*hydrator.Hydrator](i)
+	return events.NewProjectEventHandler(cli, eventRepo, h), nil
 }
 
 func provideApprovalRequestHandler(i do.Injector) (*events.ApprovalRequestNotificationHandler, error) {
 	cli := do.MustInvoke[*ent.Client](i)
 	eventRepo := do.MustInvoke[*eventrepo.EntRepo](i)
 	rbac := do.MustInvoke[organisationrbac.Service](i)
-	return events.NewApprovalRequestHandler(cli, eventRepo, rbac), nil
+	h := do.MustInvoke[*hydrator.Hydrator](i)
+	return events.NewApprovalRequestHandler(cli, eventRepo, rbac, h), nil
 }
 
 func providePolicyExecutionHandler(i do.Injector) (*events.PolicyExecutionHandler, error) {
@@ -48,7 +51,8 @@ func provideEventPolicyHandler(i do.Injector) (*events.Handler, error) {
 
 func provideStatusUpdateHandler(i do.Injector) (*events.StatusUpdateNotificationHandler, error) {
 	cli := do.MustInvoke[*ent.Client](i)
-	return events.NewStatusUpdateHandler(cli), nil
+	h := do.MustInvoke[*hydrator.Hydrator](i)
+	return events.NewStatusUpdateHandler(cli, h), nil
 }
 
 func provideCacheRefreshHandler(i do.Injector) (*events.CacheRefreshHandler, error) {
