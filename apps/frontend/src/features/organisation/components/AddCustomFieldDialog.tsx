@@ -39,7 +39,7 @@ export const createFieldSchema = z.object({
   type: z.enum(["TEXT", "NUMBER", "BOOLEAN", "DATE"]),
   category: z.enum(["PROJECT", "PERSON"]),
   description: z.string().optional(),
-  required: z.boolean().default(false),
+  required: z.boolean(),
   validation_regex: z.string().optional(),
   example_value: z.string().optional(),
 });

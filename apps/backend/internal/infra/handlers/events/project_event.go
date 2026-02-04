@@ -25,11 +25,6 @@ func (h *ProjectEventNotificationHandler) Handle(ctx context.Context, e events2.
 	if e.GetStatus() == events2.StatusPending {
 		return nil
 	}
-	// First check metadata policy
-	meta := events2.GetMeta(e.Type())
-	if !meta.ShouldNotify(ctx, e, h.cli) {
-		return nil
-	}
 
 	msg, err := h.buildMessage(ctx, e)
 	if err != nil || msg == "" {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
+	projdomain "github.com/SURF-Innovatie/MORIS/internal/domain/project"
 	"github.com/google/uuid"
 )
 
@@ -33,7 +33,7 @@ func (e EventPolicyAdded) String() string {
 	return fmt.Sprintf("Event policy '%s' added", e.Name)
 }
 
-func (e *EventPolicyAdded) Apply(project *project.Project) {
+func (e *EventPolicyAdded) Apply(p *projdomain.Project) {
 	// Policies are stored separately, not on project entity directly
 }
 
@@ -90,7 +90,7 @@ func (e EventPolicyRemoved) String() string {
 	return fmt.Sprintf("Event policy '%s' removed", e.Name)
 }
 
-func (e *EventPolicyRemoved) Apply(project *project.Project) {
+func (e *EventPolicyRemoved) Apply(p *projdomain.Project) {
 	// Policies are stored separately
 }
 
@@ -140,7 +140,7 @@ func (e EventPolicyUpdated) String() string {
 	return fmt.Sprintf("Event policy '%s' updated", e.Name)
 }
 
-func (e *EventPolicyUpdated) Apply(project *project.Project) {
+func (e *EventPolicyUpdated) Apply(p *projdomain.Project) {
 	// Policies are stored separately
 }
 
@@ -207,7 +207,7 @@ func init() {
 	})
 
 	RegisterDecider[EventPolicyAddedInput](EventPolicyAddedType,
-		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *project.Project, in EventPolicyAddedInput, status Status) (Event, error) {
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *projdomain.Project, in EventPolicyAddedInput, status Status) (Event, error) {
 			return DecideEventPolicyAdded(projectID, actor, in, status)
 		})
 
@@ -221,7 +221,7 @@ func init() {
 	})
 
 	RegisterDecider[EventPolicyRemovedInput](EventPolicyRemovedType,
-		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *project.Project, in EventPolicyRemovedInput, status Status) (Event, error) {
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *projdomain.Project, in EventPolicyRemovedInput, status Status) (Event, error) {
 			return DecideEventPolicyRemoved(projectID, actor, in, status)
 		})
 
@@ -235,7 +235,7 @@ func init() {
 	})
 
 	RegisterDecider[EventPolicyUpdatedInput](EventPolicyUpdatedType,
-		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *project.Project, in EventPolicyUpdatedInput, status Status) (Event, error) {
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *projdomain.Project, in EventPolicyUpdatedInput, status Status) (Event, error) {
 			return DecideEventPolicyUpdated(projectID, actor, in, status)
 		})
 

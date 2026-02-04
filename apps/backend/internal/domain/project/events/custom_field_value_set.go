@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
+	projdomain "github.com/SURF-Innovatie/MORIS/internal/domain/project"
 	"github.com/google/uuid"
 )
 
@@ -35,7 +35,7 @@ func (e CustomFieldValueSet) String() string {
 	return fmt.Sprintf("custom field %s set to %s", e.DefinitionID, e.Value)
 }
 
-func (e CustomFieldValueSet) Apply(p *project.Project) {
+func (e CustomFieldValueSet) Apply(p *projdomain.Project) {
 	if p.CustomFields == nil {
 		p.CustomFields = make(map[string]interface{})
 	}
@@ -43,7 +43,7 @@ func (e CustomFieldValueSet) Apply(p *project.Project) {
 }
 
 // Decider
-func DecideCustomFieldValueSet(ctx context.Context, projectID, userID uuid.UUID, state *project.Project, cmd CustomFieldValueSetInput, status Status) (Event, error) {
+func DecideCustomFieldValueSet(ctx context.Context, projectID, userID uuid.UUID, state *projdomain.Project, cmd CustomFieldValueSetInput, status Status) (Event, error) {
 	if state == nil {
 		return nil, errors.New("project does not exist")
 	}
@@ -64,8 +64,7 @@ func DecideCustomFieldValueSet(ctx context.Context, projectID, userID uuid.UUID,
 
 // Meta
 var CustomFieldValueSetMeta = EventMeta{
-	Type:          CustomFieldValueSetType,
-	FriendlyName:  "Set Custom Field Value",
-	CheckAllowed:  func(ctx context.Context, e Event, cli *ent.Client) bool { return true },
-	CheckApproval: func(ctx context.Context, e Event, cli *ent.Client) bool { return false },
+	Type:         CustomFieldValueSetType,
+	FriendlyName: "Set Custom Field Value",
+	CheckAllowed: func(ctx context.Context, e Event, cli *ent.Client) bool { return true },
 }

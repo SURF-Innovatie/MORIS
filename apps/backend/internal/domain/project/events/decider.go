@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
+	projdomain "github.com/SURF-Innovatie/MORIS/internal/domain/project"
 	"github.com/google/uuid"
 )
 
@@ -13,7 +13,7 @@ type ProjectDecider[I any] func(
 	ctx context.Context,
 	projectID uuid.UUID,
 	actor uuid.UUID,
-	cur *project.Project,
+	cur *projdomain.Project,
 	input I,
 	status Status,
 ) (Event, error)
@@ -22,7 +22,7 @@ type ProjectDeciderRaw func(
 	ctx context.Context,
 	projectID uuid.UUID,
 	actor uuid.UUID,
-	cur *project.Project,
+	cur *projdomain.Project,
 	input json.RawMessage,
 	status Status,
 ) (Event, error)
@@ -35,7 +35,7 @@ func RegisterDecider[I any](eventType string, d ProjectDecider[I]) {
 		ctx context.Context,
 		projectID uuid.UUID,
 		actor uuid.UUID,
-		cur *project.Project,
+		cur *projdomain.Project,
 		raw json.RawMessage,
 		status Status,
 	) (Event, error) {

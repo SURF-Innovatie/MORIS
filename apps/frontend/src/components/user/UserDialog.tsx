@@ -37,8 +37,8 @@ const userSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   password: z.string().optional(),
-  is_sys_admin: z.boolean().default(false),
-  is_active: z.boolean().default(true),
+  is_sys_admin: z.boolean(),
+  is_active: z.boolean(),
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
