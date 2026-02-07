@@ -1,7 +1,8 @@
-h1:vcl21mq54l0U9q/yN7/pikiQe4+JIbayUKuy+XFANFg=
+h1:Cpwd5wR90zse/JB80ACoEgE7HxVc6t8TeZZrMiYHbY0=
 20260110215341_initial_schema.sql h1:AdC0c2evZQ07zDzysyctP4s0llim7+ESLw52Zx46NLw=
 20260110222105_zenodo_fields.sql h1:soNsj0nlXErkgjxgr+ivifwhCvl0S6KDKMEmbHkXu9A=
 20260111223807_event_policies.sql h1:kLXmX9WQh8PYKHvB+cJrUnUvZZd7AscQzCOgAkRBvyc=
 20260114100638_add_zenodo_access_token.sql h1:+NRFSLeblckEta9aUCBpDeSwu/hXUnfJYuiDHtzNbbU=
 20260114135829_make_password_optional.sql h1:pEdETo89vbY4MS0uKGOpmuHF4NRrzhAfGkCOkT+bQLI=
 20260120185442_add_portfolio.sql h1:TX9cKKLNB878q4UcEbUNS4QsU0kRj6Z5DMn//KdUVDI=
+20260207135307_add_slugs.sql h1:CFDFvqK84nkCOx3zSMs3p78md7j1MSV4QUwLBnFs6O0=

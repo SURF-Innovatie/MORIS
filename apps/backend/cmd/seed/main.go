@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"time"
 
@@ -113,6 +114,11 @@ func main() {
 		return
 	}
 
+	// Helper for slugs
+	genSlug := func(s string) string {
+		return strings.ToLower(regexp.MustCompile("[^a-zA-Z0-9]+").ReplaceAllString(s, "-"))
+	}
+
 	// Default password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)
 	if err != nil {
@@ -151,6 +157,7 @@ func main() {
 		SetPersonID(testPersonID).
 		SetIsSysAdmin(true).
 		SetPassword(string(hashedPassword)).
+		SetSlug(genSlug(testUserName)). // Set slug
 		Save(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msgf("failed creating user for %s", testUserName)
@@ -187,6 +194,7 @@ func main() {
 			SetID(adminAccountID).
 			SetPersonID(adminPerson.ID).
 			SetIsSysAdmin(true).
+			SetSlug(genSlug(admin.Name)). // Set slug
 			Save(ctx)
 		if err != nil {
 			log.Fatal().Err(err).Msgf("failed creating user for %s", admin.Name)
@@ -418,6 +426,7 @@ func main() {
 				SetID(userID).
 				SetPersonID(p.ID).
 				SetPassword(string(hashedPassword)).
+				SetSlug(genSlug(name)). // Set slug
 				Save(ctx)
 			if err != nil {
 				log.Fatal().Err(err).Msgf("failed creating user for person %q", name)
@@ -575,6 +584,7 @@ func main() {
 				Status:    "approved",
 			},
 			Title:           sp.Title,
+			Slug:            genSlug(sp.Title), // Set slug
 			Description:     sp.Description,
 			StartDate:       sp.Start,
 			EndDate:         sp.End,

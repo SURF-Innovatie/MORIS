@@ -24,7 +24,7 @@ func TestOrganisationRepo_UsesTxFromContext_Rollback(t *testing.T) {
 	txMgr := enttx.NewManager(cli)
 
 	err := txMgr.WithTx(context.Background(), func(ctx context.Context) error {
-		_, err := repo.CreateNode(ctx, "root", nil, nil, nil, nil)
+		_, err := repo.CreateNode(ctx, "root", nil, nil, nil, nil, "root")
 		if err != nil {
 			t.Fatalf("CreateNode failed: %v", err)
 		}
@@ -51,7 +51,7 @@ func TestOrganisationRepo_UsesTxFromContext_Commit(t *testing.T) {
 	txMgr := enttx.NewManager(cli)
 
 	err := txMgr.WithTx(context.Background(), func(ctx context.Context) error {
-		_, err := repo.CreateNode(ctx, "root", nil, nil, nil, nil)
+		_, err := repo.CreateNode(ctx, "root", nil, nil, nil, nil, "root")
 		return err
 	})
 	if err != nil {

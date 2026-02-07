@@ -144,3 +144,29 @@ func (r *EntRepo) ListAncestors(ctx context.Context, orgID uuid.UUID) ([]uuid.UU
 		return uuid.Nil, false
 	}), nil
 }
+
+func (r *EntRepo) ProjectIDBySlug(ctx context.Context, slug string) (uuid.UUID, error) {
+	// Query for ProjectStarted events with this slug
+	events, err := r.cli.Event.Query().
+		Where(en.TypeEQ(events2.ProjectStartedType)).
+		All(ctx)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	// Filter in memory for now as Ent JSON filtering can be complex depending on dialect
+	// Optimally this should be a DB-side JSON query
+	for _, e := range events {
+		// e.Data is map[string]interface{}
+		if e.Data == nil {
+			continue
+		}
+		if s, ok := e.Data["slug"].(string); ok {
+			if s == slug {
+				return e.ProjectID, nil
+			}
+		}
+	}
+
+	return uuid.Nil, nil
+}

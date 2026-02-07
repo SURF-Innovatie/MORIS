@@ -11,7 +11,7 @@
     "db:add-admin": "go run ./cmd/add_admin/main.go",
     "generate:ent": "go generate ./ent/...",
     "generate:swag": "swag init -g cmd/dev/main.go --output api/swag-docs --parseDependency --parseInternal",
-    "generate:events": "go generate ./internal/domain/events/...",
+    "generate:events": "go generate ./internal/domain/project/events/...",
     "api:generate": "pnpm run generate:swag && pnpm run generate:ent && pnpm run generate:events",
     "db:migrate:diff": "go run -mod=mod ./ent/migrate/main.go",
     "db:migrate:apply": "atlas migrate apply --env local",

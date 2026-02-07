@@ -11,6 +11,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/eventpolicy"
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/role"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
@@ -37,6 +38,7 @@ type service struct {
 	evaluator   eventpolicy.Evaluator
 	orgSvc      organisation.Service
 	rbacSvc     rbacsvc.Service
+	repo        queries.ProjectReadRepository
 }
 
 func NewService(
@@ -49,6 +51,7 @@ func NewService(
 	orgSvc organisation.Service,
 	rbacSvc rbacsvc.Service,
 	evtPub event.Publisher,
+	repo queries.ProjectReadRepository,
 ) Service {
 	return &service{
 		evtSvc:      evtSvc,
@@ -59,6 +62,7 @@ func NewService(
 		evaluator:   evaluator,
 		orgSvc:      orgSvc,
 		rbacSvc:     rbacSvc,
+		repo:        repo,
 		exec: commandbus.NewExecutor[project.Project](
 			evtSvc,
 			evtPub,
@@ -127,6 +131,17 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*p
 					if !has {
 						return nil, fmt.Errorf("you do not have permission to create projects in this organisation")
 					}
+				}
+			}
+
+			// Unique slug check
+			if slug, ok := inputMap["slug"].(string); ok {
+				existingID, err := s.repo.ProjectIDBySlug(ctx, slug)
+				if err != nil {
+					return nil, err
+				}
+				if existingID != uuid.Nil {
+					return nil, fmt.Errorf("slug '%s' is already in use", slug)
 				}
 			}
 		}

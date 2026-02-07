@@ -92,3 +92,8 @@ func (r ProjectResponse) FromEntity(d *queries.ProjectDetails) ProjectResponse {
 		CustomFields:  d.Project.CustomFields,
 	}
 }
+
+type SlugCheckResponse struct {
+	Available bool   `json:"available"`
+	Slug      string `json:"slug"`
+}

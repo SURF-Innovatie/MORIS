@@ -41,8 +41,8 @@ func (r *EntRepo) closure(ctx context.Context) *ent.OrganisationNodeClosureClien
 	return r.cli.OrganisationNodeClosure
 }
 
-func (r *EntRepo) CreateNode(ctx context.Context, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*organisation.OrganisationNode, error) {
-	create := r.node(ctx).Create().SetName(name).SetNillableRorID(rorID).SetNillableDescription(description).SetNillableAvatarURL(avatarURL)
+func (r *EntRepo) CreateNode(ctx context.Context, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string, slug string) (*organisation.OrganisationNode, error) {
+	create := r.node(ctx).Create().SetName(name).SetNillableRorID(rorID).SetNillableDescription(description).SetNillableAvatarURL(avatarURL).SetSlug(slug)
 
 	if parentID != nil {
 		parent, err := r.node(ctx).Get(ctx, *parentID)

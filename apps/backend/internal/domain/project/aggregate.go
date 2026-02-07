@@ -22,6 +22,7 @@ type Project struct {
 	Description     string
 	Members         []Member
 	OwningOrgNodeID uuid.UUID
+	Slug            string
 	ProductIDs      []uuid.UUID
 	CustomFields    map[string]interface{}
 }

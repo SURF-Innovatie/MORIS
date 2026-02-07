@@ -183,6 +183,7 @@ var (
 		{Name: "description", Type: field.TypeString, Nullable: true},
 		{Name: "avatar_url", Type: field.TypeString, Nullable: true},
 		{Name: "ror_id", Type: field.TypeString, Nullable: true},
+		{Name: "slug", Type: field.TypeString, Unique: true},
 		{Name: "parent_id", Type: field.TypeUUID, Nullable: true},
 	}
 	// OrganisationNodesTable holds the schema information for the "organisation_nodes" table.
@@ -193,7 +194,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "organisation_nodes_organisation_nodes_children",
-				Columns:    []*schema.Column{OrganisationNodesColumns[5]},
+				Columns:    []*schema.Column{OrganisationNodesColumns[6]},
 				RefColumns: []*schema.Column{OrganisationNodesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -202,7 +203,7 @@ var (
 			{
 				Name:    "organisationnode_parent_id",
 				Unique:  false,
-				Columns: []*schema.Column{OrganisationNodesColumns[5]},
+				Columns: []*schema.Column{OrganisationNodesColumns[6]},
 			},
 		},
 	}
@@ -397,6 +398,7 @@ var (
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "person_id", Type: field.TypeUUID, Unique: true},
+		{Name: "slug", Type: field.TypeString, Unique: true},
 		{Name: "password", Type: field.TypeString, Nullable: true},
 		{Name: "is_sys_admin", Type: field.TypeBool, Default: false},
 		{Name: "is_active", Type: field.TypeBool, Default: true},

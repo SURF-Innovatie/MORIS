@@ -71,6 +71,7 @@ export function GeneralTab({
     owningOrg:
       !hasAccess(ProjectEventType.OwningOrgNodeChanged) ||
       pendingFields.owningOrg,
+    slug: true,
   };
 
   const oneFieldEditable =

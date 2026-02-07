@@ -3,6 +3,8 @@ package organisation
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strings"
 
 	rbacsvc "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
 	"github.com/SURF-Innovatie/MORIS/internal/app/person"
@@ -42,8 +44,9 @@ func NewService(repo repository, personRepo person.Service, rbac rbacsvc.Service
 
 func (s *service) CreateRoot(ctx context.Context, name string, rorID *string, description *string, avatarURL *string) (*organisation.OrganisationNode, error) {
 	var out *organisation.OrganisationNode
+	slug := generateSlug(name)
 	err := s.tx.WithTx(ctx, func(ctx context.Context) error {
-		row, err := s.repo.CreateNode(ctx, name, nil, rorID, description, avatarURL)
+		row, err := s.repo.CreateNode(ctx, name, nil, rorID, description, avatarURL, slug)
 		if err != nil {
 			return err
 		}
@@ -58,13 +61,14 @@ func (s *service) CreateRoot(ctx context.Context, name string, rorID *string, de
 
 func (s *service) CreateChild(ctx context.Context, parentID uuid.UUID, name string, rorID *string, description *string, avatarURL *string) (*organisation.OrganisationNode, error) {
 	var out *organisation.OrganisationNode
+	slug := generateSlug(name)
 	err := s.tx.WithTx(ctx, func(ctx context.Context) error {
 		// ensure parent exists
 		if _, err := s.repo.GetNode(ctx, parentID); err != nil {
 			return err
 		}
 
-		row, err := s.repo.CreateNode(ctx, name, &parentID, rorID, description, avatarURL)
+		row, err := s.repo.CreateNode(ctx, name, &parentID, rorID, description, avatarURL, slug)
 		if err != nil {
 			return err
 		}
@@ -250,4 +254,8 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, name string, parentI
 		return nil
 	})
 	return out, err
+}
+
+func generateSlug(name string) string {
+	return strings.ToLower(regexp.MustCompile("[^a-zA-Z0-9]+").ReplaceAllString(name, "-"))
 }

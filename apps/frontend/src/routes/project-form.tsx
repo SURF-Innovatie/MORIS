@@ -26,6 +26,7 @@ import { ProjectFields } from "@/components/project-form/ProjectFields";
 import { CustomFieldsRenderer } from "@/components/project-form/CustomFieldsRenderer";
 import { OrganisationSearchSelect } from "@/components/organisation/OrganisationSearchSelect";
 import { EMPTY_UUID } from "@/lib/constants";
+import { slugify } from "@/lib/utils";
 
 export default function CreateProjectRoute() {
   const navigate = useNavigate();
@@ -48,6 +49,7 @@ export default function CreateProjectRoute() {
       const newProjectId = uuidv4();
       await createProjectStartedEvent(newProjectId, {
         title: values.title,
+        slug: slugify(values.title),
         description: values.description,
         start_date: values.startDate.toISOString(),
         end_date: values.endDate.toISOString(),
@@ -66,7 +68,7 @@ export default function CreateProjectRoute() {
               definition_id: defId,
               value: valStr, // Sending string for now.
             });
-          }
+          },
         );
         await Promise.all(promises);
       }

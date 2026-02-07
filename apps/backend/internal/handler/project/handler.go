@@ -237,3 +237,34 @@ func (h *Handler) ListAvailableCustomFields(w http.ResponseWriter, r *http.Reque
 
 	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOs[dto.CustomFieldDefinitionResponse](defs))
 }
+
+// CheckSlugAvailability godoc
+// @Summary Check if a project slug is available
+// @Description Checks if a slug is available for use
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param slug query string true "Slug to check"
+// @Success 200 {object} dto.SlugCheckResponse
+// @Failure 400 {string} string "missing slug"
+// @Failure 500 {string} string "internal server error"
+// @Router /projects/slug-check [get]
+func (h *Handler) CheckSlugAvailability(w http.ResponseWriter, r *http.Request) {
+	slug := r.URL.Query().Get("slug")
+	if slug == "" {
+		httputil.WriteError(w, r, http.StatusBadRequest, "missing slug", nil)
+		return
+	}
+
+	available, err := h.svc.CheckSlugAvailability(r.Context(), slug)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	_ = httputil.WriteJSON(w, http.StatusOK, dto.SlugCheckResponse{
+		Available: available,
+		Slug:      slug,
+	})
+}

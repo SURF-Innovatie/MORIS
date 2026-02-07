@@ -33,6 +33,7 @@ type Service interface {
 	GetProjectRolesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]role.ProjectRole, error)
 	GetProductsByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]product.Product, error)
 	GetPeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]identity.Person, error)
+	CheckSlugAvailability(ctx context.Context, slug string) (bool, error)
 }
 
 type service struct {
@@ -452,4 +453,13 @@ func (s *service) GetProductsByIDs(ctx context.Context, ids []uuid.UUID) (map[uu
 
 func (s *service) GetPeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]identity.Person, error) {
 	return s.repo.PeopleByIDs(ctx, ids)
+}
+
+func (s *service) CheckSlugAvailability(ctx context.Context, slug string) (bool, error) {
+	_, err := s.repo.ProjectIDBySlug(ctx, slug)
+	if err == nil {
+		// Found, so not available
+		return false, nil
+	}
+	return true, nil
 }

@@ -19,6 +19,7 @@ func (OrganisationNode) Fields() []ent.Field {
 		field.String("description").Optional().Nillable(),
 		field.String("avatar_url").Optional().Nillable(),
 		field.String("ror_id").Optional().Nillable(),
+		field.String("slug").Unique(),
 
 		// Explicit FK column (nullable => root nodes)
 		field.UUID("parent_id", uuid.UUID{}).

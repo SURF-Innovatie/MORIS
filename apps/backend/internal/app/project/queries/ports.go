@@ -21,6 +21,7 @@ type ProjectReadRepository interface {
 
 	ProjectIDsStarted(ctx context.Context) ([]uuid.UUID, error)
 	ListAncestors(ctx context.Context, orgID uuid.UUID) ([]uuid.UUID, error)
+	ProjectIDBySlug(ctx context.Context, slug string) (uuid.UUID, error)
 }
 
 type EventStore interface {

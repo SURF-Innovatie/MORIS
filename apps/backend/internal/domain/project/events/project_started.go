@@ -15,6 +15,7 @@ const ProjectStartedType = "project.started"
 type ProjectStarted struct {
 	Base
 	Title           string           `json:"title"`
+	Slug            string           `json:"slug"`
 	Description     string           `json:"description"`
 	StartDate       time.Time        `json:"startDate"`
 	EndDate         time.Time        `json:"endDate"`
@@ -30,6 +31,7 @@ func (e ProjectStarted) String() string {
 
 func (e *ProjectStarted) Apply(project *project.Project) {
 	project.Title = e.Title
+	project.Slug = e.Slug
 	project.Description = e.Description
 	project.StartDate = e.StartDate
 	project.EndDate = e.EndDate
@@ -47,6 +49,7 @@ func (e *ProjectStarted) RelatedIDs() RelatedIDs {
 
 type ProjectStartedInput struct {
 	Title           string           `json:"title"`
+	Slug            string           `json:"slug"`
 	Description     string           `json:"description"`
 	StartDate       time.Time        `json:"start_date"`
 	EndDate         time.Time        `json:"end_date"`
@@ -66,6 +69,9 @@ func DecideProjectStarted(
 	if in.Title == "" {
 		return nil, errors.New("title is required")
 	}
+	if in.Slug == "" {
+		return nil, errors.New("slug is required")
+	}
 	if in.EndDate.Before(in.StartDate) {
 		return nil, errors.New("end date before start date")
 	}
@@ -76,6 +82,7 @@ func DecideProjectStarted(
 	return &ProjectStarted{
 		Base:            base,
 		Title:           in.Title,
+		Slug:            in.Slug,
 		Description:     in.Description,
 		StartDate:       in.StartDate,
 		EndDate:         in.EndDate,

@@ -59,7 +59,8 @@ func provideProjectCommandService(i do.Injector) (command.Service, error) {
 	orgSvc := do.MustInvoke[organisation.Service](i)
 	rbacSvc := do.MustInvoke[organisationrbac.Service](i)
 	evtPub := do.MustInvoke[event.Publisher](i)
-	return command.NewService(eventSvc, pc, curUser, entProv, roleSvc, evaluator, orgSvc, rbacSvc, evtPub), nil
+	repo := do.MustInvoke[*projectrepo.EntRepo](i)
+	return command.NewService(eventSvc, pc, curUser, entProv, roleSvc, evaluator, orgSvc, rbacSvc, evtPub, repo), nil
 }
 
 func provideCacheWarmupService(i do.Injector) (cachewarmup.Service, error) {

@@ -9,7 +9,7 @@ import (
 )
 
 type repository interface {
-	CreateNode(ctx context.Context, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*organisation.OrganisationNode, error)
+	CreateNode(ctx context.Context, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string, slug string) (*organisation.OrganisationNode, error)
 	GetNode(ctx context.Context, id uuid.UUID) (*organisation.OrganisationNode, error)
 	UpdateNode(ctx context.Context, id uuid.UUID, name string, parentID *uuid.UUID, rorID *string, description *string, avatarURL *string) (*organisation.OrganisationNode, error)
 
