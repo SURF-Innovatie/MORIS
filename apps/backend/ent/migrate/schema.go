@@ -153,6 +153,13 @@ var (
 		{Name: "type", Type: field.TypeEnum, Enums: []string{"info", "approval_request", "status_update"}, Default: "info"},
 		{Name: "read", Type: field.TypeBool, Default: false},
 		{Name: "sent_at", Type: field.TypeTime},
+		{Name: "activity_id", Type: field.TypeString, Nullable: true},
+		{Name: "activity_type", Type: field.TypeString, Nullable: true},
+		{Name: "payload", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "origin_service", Type: field.TypeString, Nullable: true},
+		{Name: "target_service", Type: field.TypeString, Nullable: true},
+		{Name: "direction", Type: field.TypeEnum, Enums: []string{"inbound", "outbound", "internal"}, Default: "internal"},
+		{Name: "delivery_status", Type: field.TypeEnum, Enums: []string{"pending", "delivered", "failed"}, Default: "delivered"},
 		{Name: "event_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "user_id", Type: field.TypeUUID},
 	}
@@ -164,13 +171,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "notifications_events_notifications",
-				Columns:    []*schema.Column{NotificationsColumns[5]},
+				Columns:    []*schema.Column{NotificationsColumns[12]},
 				RefColumns: []*schema.Column{EventsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "notifications_users_notifications",
-				Columns:    []*schema.Column{NotificationsColumns[6]},
+				Columns:    []*schema.Column{NotificationsColumns[13]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

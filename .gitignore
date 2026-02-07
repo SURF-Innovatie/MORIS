@@ -6,6 +6,5 @@ generated-orval
 *.tsbuildinfo
 dist
 .orval
-.agent
 apps/backend/api/swag-docs/*
 apps/frontend/src/api/events.ts

@@ -32,6 +32,7 @@ import (
 	doihandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/doi/di"
 	eventhandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/event/di"
 	eventpolicyhandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/eventpolicy/di"
+	ldninboxhandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/ldn/inbox/di"
 	notificationhandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/notification/di"
 	nwohandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/nwo/di"
 	orcidhandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/orcid/di"
@@ -102,6 +103,7 @@ var Package = do.Package(
 	notificaionappdi.Package,
 	notificationrepodi.Package,
 	notificationhandlerdi.Package,
+	ldninboxhandlerdi.Package,
 
 	nwoappdi.Package,
 	nwohandlerdi.Package,

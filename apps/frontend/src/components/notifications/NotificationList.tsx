@@ -18,7 +18,33 @@ enum NotificationType {
   Info = "info",
 }
 
-const getIcon = (type?: string) => {
+// AS2 Activity Types mapping
+enum AS2ActivityType {
+  Offer = "Offer",
+  Update = "Update",
+  Announce = "Announce",
+  Accept = "Accept",
+  Reject = "Reject",
+}
+
+const getIcon = (type?: string, activityType?: string) => {
+  // Check AS2 activity type first
+  if (activityType) {
+    switch (activityType) {
+      case AS2ActivityType.Offer:
+        return <ClipboardCheck className="h-5 w-5 text-blue-500" />;
+      case AS2ActivityType.Update:
+      case AS2ActivityType.Accept:
+        return <Info className="h-5 w-5 text-green-500" />;
+      case AS2ActivityType.Reject:
+        return <Bell className="h-5 w-5 text-red-500" />;
+      case AS2ActivityType.Announce:
+      default:
+        break; // Fall through to legacy check
+    }
+  }
+
+  // Legacy type handling
   switch (type) {
     case NotificationType.ApprovalRequest:
       return <ClipboardCheck className="h-5 w-5 text-blue-500" />;
@@ -76,7 +102,9 @@ export function NotificationList({ limit }: NotificationListProps) {
                 !notification.read ? "bg-primary/5" : ""
               } ${index === 0 ? "rounded-t-xl" : ""} ${index === notifications.length - 1 ? "rounded-b-xl" : ""}`}
             >
-              <div className="mt-1">{getIcon(notification.type)}</div>
+              <div className="mt-1">
+                {getIcon(notification.type, notification.activity_type)}
+              </div>
               <div className="flex-1 space-y-1">
                 <p
                   className={`text-sm ${!notification.read ? "font-medium text-foreground" : "text-muted-foreground"}`}
@@ -87,7 +115,7 @@ export function NotificationList({ limit }: NotificationListProps) {
                   {notification.sent_at
                     ? format(
                         new Date(notification.sent_at),
-                        "MMM d, yyyy 'at' h:mm a"
+                        "MMM d, yyyy 'at' h:mm a",
                       )
                     : "Just now"}
                 </p>

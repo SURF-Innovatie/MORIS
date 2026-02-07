@@ -2,11 +2,13 @@ package notification
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	appnotif "github.com/SURF-Innovatie/MORIS/internal/app/notification"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
+	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -19,8 +21,10 @@ func NewHandler(svc appnotif.Service) *Handler {
 
 // ListMe godoc
 // @Summary List notifications for current user
+// @Description Returns notifications in JSON format by default, or AS2 JSON-LD if Accept header is application/ld+json
 // @Tags notifications
 // @Produce json
+// @Produce application/ld+json
 // @Security BearerAuth
 // @Success 200 {array} dto.NotificationResponse
 // @Failure 401 {string} string "unauthorized"
@@ -33,6 +37,13 @@ func (h *Handler) ListMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Content negotiation: check Accept header
+	accept := r.Header.Get("Accept")
+	if strings.Contains(accept, "application/ld+json") || strings.Contains(accept, "application/activity+json") {
+		h.listMeAS2(w, r, userCtx.User.ID)
+		return
+	}
+
 	notifs, err := h.svc.ListForUser(r.Context(), userCtx.User.ID)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
@@ -40,6 +51,24 @@ func (h *Handler) ListMe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOs[dto.NotificationResponse](notifs))
+}
+
+// listMeAS2 returns notifications in AS2 JSON-LD format.
+func (h *Handler) listMeAS2(w http.ResponseWriter, r *http.Request, userID any) {
+	uid, ok := userID.(uuid.UUID)
+	if !ok {
+		httputil.WriteError(w, r, http.StatusInternalServerError, "invalid user id type", nil)
+		return
+	}
+
+	activities, err := h.svc.ListForUserAsActivities(r.Context(), uid)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/ld+json")
+	_ = httputil.WriteJSON(w, http.StatusOK, activities)
 }
 
 // MarkAsRead godoc

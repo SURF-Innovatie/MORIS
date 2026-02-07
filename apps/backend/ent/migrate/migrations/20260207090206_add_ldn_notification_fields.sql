@@ -1,0 +1,2 @@
+-- Modify "notifications" table
+ALTER TABLE "notifications" ADD COLUMN "activity_id" character varying NULL, ADD COLUMN "activity_type" character varying NULL, ADD COLUMN "payload" text NULL, ADD COLUMN "origin_service" character varying NULL, ADD COLUMN "target_service" character varying NULL, ADD COLUMN "direction" character varying NOT NULL DEFAULT 'internal', ADD COLUMN "delivery_status" character varying NOT NULL DEFAULT 'delivered';

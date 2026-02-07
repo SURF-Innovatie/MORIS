@@ -18,18 +18,28 @@ type NotificationResponse struct {
 	Read              bool      `json:"read"`
 	SentAt            time.Time `json:"sent_at"`
 	EventFriendlyName string    `json:"event_friendly_name,omitempty"`
+
+	// LDN/AS2 fields
+	ActivityID     *string `json:"activity_id,omitempty"`
+	ActivityType   *string `json:"activity_type,omitempty"`
+	Direction      string  `json:"direction,omitempty"`
+	DeliveryStatus string  `json:"delivery_status,omitempty"`
 }
 
 func (r NotificationResponse) FromEntity(n notification.Notification) NotificationResponse {
 	resp := NotificationResponse{
-		ID:        n.ID,
-		UserID:    n.UserID,
-		EventID:   n.EventID,
-		ProjectID: n.ProjectID,
-		Message:   n.Message,
-		Type:      string(n.Type),
-		Read:      n.Read,
-		SentAt:    n.SentAt,
+		ID:             n.ID,
+		UserID:         n.UserID,
+		EventID:        n.EventID,
+		ProjectID:      n.ProjectID,
+		Message:        n.Message,
+		Type:           string(n.Type),
+		Read:           n.Read,
+		SentAt:         n.SentAt,
+		ActivityID:     n.ActivityID,
+		ActivityType:   n.ActivityType,
+		Direction:      string(n.Direction),
+		DeliveryStatus: string(n.DeliveryStatus),
 	}
 	if n.EventFriendlyName != nil {
 		resp.EventFriendlyName = *n.EventFriendlyName

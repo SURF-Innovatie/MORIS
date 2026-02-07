@@ -24,10 +24,29 @@ func (r *EntRepo) Create(ctx context.Context, n notification.Notification) (*not
 	create := r.cli.Notification.Create().
 		SetMessage(n.Message).
 		SetUserID(n.UserID).
-		SetType(entnotification.Type(n.Type))
+		SetType(entnotification.Type(n.Type)).
+		SetDirection(entnotification.Direction(n.Direction)).
+		SetDeliveryStatus(entnotification.DeliveryStatus(n.DeliveryStatus))
 
 	if n.EventID != nil && *n.EventID != uuid.Nil {
 		create.SetEventID(*n.EventID)
+	}
+
+	// LDN/AS2 fields
+	if n.ActivityID != nil {
+		create.SetActivityID(*n.ActivityID)
+	}
+	if n.ActivityType != nil {
+		create.SetActivityType(*n.ActivityType)
+	}
+	if n.Payload != nil {
+		create.SetPayload(*n.Payload)
+	}
+	if n.OriginService != nil {
+		create.SetOriginService(*n.OriginService)
+	}
+	if n.TargetService != nil {
+		create.SetTargetService(*n.TargetService)
 	}
 
 	row, err := create.Save(ctx)

@@ -16,6 +16,7 @@ import (
 	doihandler "github.com/SURF-Innovatie/MORIS/internal/handler/doi"
 	eventHandler "github.com/SURF-Innovatie/MORIS/internal/handler/event"
 	eventpolicyhandler "github.com/SURF-Innovatie/MORIS/internal/handler/eventpolicy"
+	ldninbox "github.com/SURF-Innovatie/MORIS/internal/handler/ldn/inbox"
 	authmiddleware "github.com/SURF-Innovatie/MORIS/internal/handler/middleware"
 	notificationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/notification"
 	nwohandler "github.com/SURF-Innovatie/MORIS/internal/handler/nwo"
@@ -66,6 +67,7 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 	systemHandler := do.MustInvoke[*systemhandler.Handler](injector)
 	doiHandler := do.MustInvoke[*doihandler.Handler](injector)
 	adapterHandler := do.MustInvoke[*adapterhandler.Handler](injector)
+	ldnInboxHandler := do.MustInvoke[*ldninbox.Handler](injector)
 
 	// Setup Router
 	r := chi.NewRouter()
@@ -104,6 +106,7 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 			doihandler.MountRoutes(r, doiHandler)
 			nwohandler.MountRoutes(r, nwoHandler)
 			adapterhandler.MountRoutes(r, adapterHandler)
+			ldninbox.Routes(r, ldnInboxHandler)
 
 			// Event Policies routes (standalone and org-scoped)
 			eventPolicyHandler.RegisterRoutes(r)
