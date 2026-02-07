@@ -21,6 +21,7 @@ import (
 	nwohandler "github.com/SURF-Innovatie/MORIS/internal/handler/nwo"
 	orcidhandler "github.com/SURF-Innovatie/MORIS/internal/handler/orcid"
 	organisationhandler "github.com/SURF-Innovatie/MORIS/internal/handler/organisation"
+	pagehandler "github.com/SURF-Innovatie/MORIS/internal/handler/page" // Added page handler import
 	personhandler "github.com/SURF-Innovatie/MORIS/internal/handler/person"
 	portfoliohandler "github.com/SURF-Innovatie/MORIS/internal/handler/portfolio"
 	producthandler "github.com/SURF-Innovatie/MORIS/internal/handler/product"
@@ -58,6 +59,7 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 	roleHandler := do.MustInvoke[*organisationhandler.RoleHandler](injector)
 	productHandler := do.MustInvoke[*producthandler.Handler](injector)
 	portfolioHandler := do.MustInvoke[*portfoliohandler.Handler](injector)
+	pageHandler := do.MustInvoke[*pagehandler.Handler](injector) // Invoke page handler
 	notificationHandler := do.MustInvoke[*notificationhandler.Handler](injector)
 	evtHandler := do.MustInvoke[*eventHandler.Handler](injector)
 	eventPolicyHandler := do.MustInvoke[*eventpolicyhandler.Handler](injector)
@@ -104,6 +106,15 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 			doihandler.MountRoutes(r, doiHandler)
 			nwohandler.MountRoutes(r, nwoHandler)
 			adapterhandler.MountRoutes(r, adapterHandler)
+
+			// Page routes
+			r.Route("/pages", pagehandler.Routes(pageHandler))
+
+			// User pages route (for fetching pages by user)
+			r.Get("/users/{userId}/pages", pageHandler.ListByUser)
+
+			// Project pages route (for fetching pages by project)
+			r.Get("/projects/{projectId}/pages", pageHandler.ListByProject)
 
 			// Event Policies routes (standalone and org-scoped)
 			eventPolicyHandler.RegisterRoutes(r)

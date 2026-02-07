@@ -19,6 +19,7 @@ import (
 	nwoappdi "github.com/SURF-Innovatie/MORIS/internal/app/nwo/di"
 	orcidappdi "github.com/SURF-Innovatie/MORIS/internal/app/orcid/di"
 	organisationappdi "github.com/SURF-Innovatie/MORIS/internal/app/organisation/di"
+	pageappdi "github.com/SURF-Innovatie/MORIS/internal/app/page/di"
 	personappdi "github.com/SURF-Innovatie/MORIS/internal/app/person/di"
 	portfolioappdi "github.com/SURF-Innovatie/MORIS/internal/app/portfolio/di"
 	productappdi "github.com/SURF-Innovatie/MORIS/internal/app/product/di"
@@ -36,6 +37,7 @@ import (
 	nwohandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/nwo/di"
 	orcidhandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/orcid/di"
 	organisationhandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/organisation/di"
+	pagehandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/page/di"
 	personhandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/person/di"
 	portfoliohandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/portfolio/di"
 	producthandlerdi "github.com/SURF-Innovatie/MORIS/internal/handler/product/di"
@@ -118,6 +120,9 @@ var Package = do.Package(
 	personrepodi.Package,
 	personappdi.Package,
 	personhandlerdi.Package,
+
+	pageappdi.Package,
+	pagehandlerdi.Package,
 
 	portfolioappdi.Package,
 	portfolierepodi.Package,

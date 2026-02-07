@@ -68,6 +68,7 @@ func (r ProjectMemberResponse) FromEntity(e project.MemberDetail) ProjectMemberR
 type ProjectResponse struct {
 	Id            uuid.UUID               `json:"id"`
 	Version       int                     `json:"version"`
+	Slug          string                  `json:"slug"`
 	Title         string                  `json:"title" example:"NewService Project"`
 	Description   string                  `json:"description" example:"This is a new project"`
 	StartDate     time.Time               `json:"start_date" example:"2025-01-01T00:00:00Z"`
@@ -82,6 +83,7 @@ func (r ProjectResponse) FromEntity(d *queries.ProjectDetails) ProjectResponse {
 	return ProjectResponse{
 		Id:            d.Project.Id,
 		Version:       d.Project.Version,
+		Slug:          d.Project.Slug,
 		Title:         d.Project.Title,
 		Description:   d.Project.Description,
 		StartDate:     d.Project.StartDate,

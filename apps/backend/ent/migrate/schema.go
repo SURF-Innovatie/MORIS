@@ -271,6 +271,50 @@ var (
 			},
 		},
 	}
+	// PagesColumns holds the columns for the "pages" table.
+	PagesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "title", Type: field.TypeString},
+		{Name: "slug", Type: field.TypeString},
+		{Name: "content", Type: field.TypeJSON, Nullable: true},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"project", "profile"}, Default: "project"},
+		{Name: "is_published", Type: field.TypeBool, Default: false},
+		{Name: "project_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "user_id", Type: field.TypeUUID, Nullable: true},
+	}
+	// PagesTable holds the schema information for the "pages" table.
+	PagesTable = &schema.Table{
+		Name:       "pages",
+		Columns:    PagesColumns,
+		PrimaryKey: []*schema.Column{PagesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "pages_users_pages",
+				Columns:    []*schema.Column{PagesColumns[9]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "page_slug",
+				Unique:  true,
+				Columns: []*schema.Column{PagesColumns[2]},
+			},
+			{
+				Name:    "page_project_id",
+				Unique:  false,
+				Columns: []*schema.Column{PagesColumns[6]},
+			},
+			{
+				Name:    "page_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{PagesColumns[9]},
+			},
+		},
+	}
 	// PersonsColumns holds the columns for the "persons" table.
 	PersonsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -447,6 +491,7 @@ var (
 		OrganisationNodesTable,
 		OrganisationNodeClosuresTable,
 		OrganisationRolesTable,
+		PagesTable,
 		PersonsTable,
 		PortfoliosTable,
 		ProductsTable,
@@ -468,6 +513,7 @@ func init() {
 	OrganisationNodeClosuresTable.ForeignKeys[0].RefTable = OrganisationNodesTable
 	OrganisationNodeClosuresTable.ForeignKeys[1].RefTable = OrganisationNodesTable
 	OrganisationRolesTable.ForeignKeys[0].RefTable = OrganisationNodesTable
+	PagesTable.ForeignKeys[0].RefTable = UsersTable
 	PortfoliosTable.ForeignKeys[0].RefTable = PersonsTable
 	ProjectRolesTable.ForeignKeys[0].RefTable = OrganisationNodesTable
 	RoleScopesTable.ForeignKeys[0].RefTable = OrganisationRolesTable

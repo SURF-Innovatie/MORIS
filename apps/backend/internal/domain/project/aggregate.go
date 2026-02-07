@@ -18,11 +18,11 @@ type Project struct {
 	Version         int
 	StartDate       time.Time
 	EndDate         time.Time
+	Slug            string // Added/moved Slug field here as per the instruction's implied placement
 	Title           string
 	Description     string
 	Members         []Member
 	OwningOrgNodeID uuid.UUID
-	Slug            string
 	ProductIDs      []uuid.UUID
 	CustomFields    map[string]interface{}
 }

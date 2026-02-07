@@ -45,6 +45,9 @@ const UserOrganisationRolesRoute = lazy(() =>
     default: m.UserOrganisationRolesRoute,
   })),
 );
+const PageEditRoute = lazy(() => import("@/routes/page-edit"));
+const PageViewRoute = lazy(() => import("@/routes/page-view"));
+
 const MultiRoleManagementRoute = lazy(() =>
   import("@/routes/admin-organisation-roles").then((m) => ({
     default: m.MultiRoleManagementRoute,
@@ -156,6 +159,29 @@ export function createAppRouter() {
         {
           path: ":id/edit",
           element: <ProjectEditRoute />,
+        },
+      ],
+    },
+    {
+      path: "/pages",
+      element: (
+        <Suspense fallback={<PageLoader />}>
+          <ProtectedRoute />
+        </Suspense>
+      ),
+      errorElement: <RouteError />,
+      children: [
+        {
+          path: "new",
+          element: <PageEditRoute />,
+        },
+        {
+          path: ":slug",
+          element: <PageViewRoute />,
+        },
+        {
+          path: ":slug/edit",
+          element: <PageEditRoute />,
         },
       ],
     },
