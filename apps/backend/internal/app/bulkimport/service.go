@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/SURF-Innovatie/MORIS/internal/app/doi"
 	"github.com/SURF-Innovatie/MORIS/internal/app/product"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/command"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
@@ -16,12 +15,10 @@ import (
 )
 
 type Service interface {
-	// BulkImport adds all DOI-derived products to a single existing project.
 	BulkImport(ctx context.Context, actorUserID uuid.UUID, actorPersonID uuid.UUID, projectID uuid.UUID, entries []Entry) (*Result, error)
 }
 
 type service struct {
-	doiSvc            doi.Service
 	productSvc        product.Service
 	projectCommandSvc command.Service
 	projectQuerySvc   queries.Service
@@ -29,14 +26,12 @@ type service struct {
 }
 
 func NewService(
-	doiSvc doi.Service,
 	productSvc product.Service,
 	projectCommandSvc command.Service,
 	projectQuerySvc queries.Service,
 	txManager tx.Manager,
 ) Service {
 	return &service{
-		doiSvc:            doiSvc,
 		productSvc:        productSvc,
 		projectCommandSvc: projectCommandSvc,
 		projectQuerySvc:   projectQuerySvc,
@@ -77,7 +72,6 @@ func (s *service) BulkImport(
 			alreadyInProject[proj.Id] = struct{}{}
 		}
 
-		// Only add those not already present
 		toAdd := make([]uuid.UUID, 0, len(entries))
 
 		for _, e := range entries {
@@ -90,17 +84,8 @@ func (s *service) BulkImport(
 				continue
 			}
 
-			work, err := s.doiSvc.Resolve(ctx, e.DOI)
-			if err != nil {
-				item.Error = fmt.Sprintf("resolve doi: %v", err)
-				res.Errors = append(res.Errors, EntryError{DOI: e.DOI, Error: item.Error})
-				res.Items = append(res.Items, item)
-				continue
-			}
-			item.Work = work
-
-			// reuse existing product if DOI exists in DB
-			p, createdNew, err := s.productSvc.CreateOrGetFromWork(ctx, actorPersonID, work)
+			// Get/create the product, then ALWAYS return the product details in the item.
+			p, createdNew, err := s.productSvc.GetOrCreateFromDOI(ctx, actorPersonID, e.DOI)
 			if err != nil {
 				item.Error = fmt.Sprintf("create/get product: %v", err)
 				res.Errors = append(res.Errors, EntryError{DOI: e.DOI, Error: item.Error})
@@ -108,7 +93,8 @@ func (s *service) BulkImport(
 				continue
 			}
 
-			item.ProductID = p.Id
+			item.Product = p
+
 			if createdNew {
 				res.CreatedProducts = append(res.CreatedProducts, p.Id)
 			}
@@ -119,7 +105,6 @@ func (s *service) BulkImport(
 				continue
 			}
 
-			// Mark as to be added, and update set to avoid duplicates within the same request
 			toAdd = append(toAdd, p.Id)
 			alreadyInProject[p.Id] = struct{}{}
 
@@ -138,7 +123,6 @@ func (s *service) BulkImport(
 	if err != nil {
 		return nil, err
 	}
-
 	return res, nil
 }
 

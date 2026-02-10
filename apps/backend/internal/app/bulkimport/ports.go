@@ -1,7 +1,7 @@
 package bulkimport
 
 import (
-	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/product"
 	"github.com/google/uuid"
 )
 
@@ -10,17 +10,16 @@ type Entry struct {
 }
 
 type ItemResult struct {
-	DOI       string    `json:"doi"`
-	Work      *dto.Work `json:"work,omitempty"`
-	ProductID uuid.UUID `json:"product_id,omitempty"`
-	Error     string    `json:"error,omitempty"`
+	DOI     string           `json:"doi"`
+	Product *product.Product `json:"product,omitempty"`
+	Error   string           `json:"error"`
 }
 
 type Result struct {
 	ProjectID       uuid.UUID    `json:"project_id"`
 	CreatedProducts []uuid.UUID  `json:"created_products"`
-	Errors          []EntryError `json:"errors"`
 	Items           []ItemResult `json:"items"`
+	Errors          []EntryError `json:"errors"`
 }
 
 type EntryError struct {

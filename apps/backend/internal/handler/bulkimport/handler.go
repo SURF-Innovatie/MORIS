@@ -6,8 +6,8 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	appauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
 	bulkimportsvc "github.com/SURF-Innovatie/MORIS/internal/app/bulkimport"
+	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
-	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -77,25 +77,14 @@ func (h *Handler) BulkImportIntoProject(w http.ResponseWriter, r *http.Request) 
 			DOI: it.DOI,
 		}
 
-		if it.ProductID != uuid.Nil {
-			id := it.ProductID
-			item.ProductID = &id
-		}
-
 		if it.Error != "" {
 			e := it.Error
 			item.Error = &e
 		}
 
-		if it.Work != nil {
-			item.Work = &dto.BulkImportWork{
-				DOI:       it.Work.DOI,
-				Title:     it.Work.Title,
-				Publisher: it.Work.Publisher,
-				Type:      int(it.Work.Type),
-				Authors:   it.Work.Authors,
-				Date:      it.Work.Date,
-			}
+		if it.Product != nil {
+			pdto := transform.ToDTOItem[dto.ProductResponse](*it.Product)
+			item.Product = &pdto
 		}
 
 		resp.Items = append(resp.Items, item)
