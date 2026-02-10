@@ -9,3 +9,4 @@ dist
 .agent
 apps/backend/api/swag-docs/*
 apps/frontend/src/api/events.ts
+.run

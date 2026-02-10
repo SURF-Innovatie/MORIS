@@ -30,14 +30,15 @@ func NewService() Service {
 	return &service{
 		client: &http.Client{
 			Timeout: 10 * time.Second,
-			// Default CheckRedirect follows redirects (up to 10)
 		},
 	}
 }
 
 func (s *service) Resolve(ctx context.Context, doi string) (*dto.Work, error) {
-	// Clean DOI
-	doi = strings.TrimPrefix(doi, "https://doi.org/")
+	doi = normalizeDOI(doi)
+	if doi == "" {
+		return nil, fmt.Errorf("empty doi")
+	}
 
 	url := fmt.Sprintf("https://doi.org/%s", doi)
 
@@ -46,8 +47,6 @@ func (s *service) Resolve(ctx context.Context, doi string) (*dto.Work, error) {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	// Request multiple formats via content negotiation
-	// We prioritize CSL JSON (Crossref style) as it's cleaner, then JSON-LD (Schema.org)
 	req.Header.Set("Accept", "application/vnd.citationstyles.csl+json, application/ld+json, application/json")
 
 	resp, err := s.client.Do(req)
@@ -65,7 +64,6 @@ func (s *service) Resolve(ctx context.Context, doi string) (*dto.Work, error) {
 
 	contentType := resp.Header.Get("Content-Type")
 
-	// Parse based on content type
 	if strings.Contains(contentType, "application/vnd.citationstyles.csl+json") || strings.Contains(contentType, "application/json") {
 		return s.parseCSLJSON(resp.Body, doi)
 	} else if strings.Contains(contentType, "application/ld+json") {
@@ -75,30 +73,45 @@ func (s *service) Resolve(ctx context.Context, doi string) (*dto.Work, error) {
 	return nil, fmt.Errorf("unsupported content type: %s", contentType)
 }
 
+func normalizeDOI(in string) string {
+	in = strings.TrimSpace(in)
+
+	// Common URL forms
+	in = strings.TrimPrefix(in, "https://doi.org/")
+	in = strings.TrimPrefix(in, "http://doi.org/")
+	in = strings.TrimPrefix(in, "https://dx.doi.org/")
+	in = strings.TrimPrefix(in, "http://dx.doi.org/")
+
+	// Optional "doi:" prefix seen in some exports
+	in = strings.TrimPrefix(strings.ToLower(in), "doi:")
+	in = strings.TrimSpace(in)
+
+	return in
+}
+
 // CSL JSON (Crossref-like) structure
 type cslItem struct {
 	DOI       string `json:"DOI"`
 	Title     string `json:"title"`
 	Type      string `json:"type"`
-	GraphType string `json:"@type"` // For JSON-LD sometimes served as JSON
+	GraphType string `json:"@type"`
 	Publisher string `json:"publisher"`
 	Author    []struct {
 		Given  string `json:"given"`
 		Family string `json:"family"`
-		Name   string `json:"name"` // Sometimes used in JSON-LD
+		Name   string `json:"name"`
 	} `json:"author"`
 	Issued struct {
-		DateParts [][]interface{} `json:"date-parts"` // e.g. [[2021, 1, 15]]
+		DateParts [][]interface{} `json:"date-parts"`
 	} `json:"issued"`
 }
 
-func (s *service) parseCSLJSON(r io.Reader, originalDOI string) (*dto.Work, error) {
+func (s *service) parseCSLJSON(r io.Reader, doi string) (*dto.Work, error) {
 	var item cslItem
 	if err := json.NewDecoder(r).Decode(&item); err != nil {
 		return nil, fmt.Errorf("failed to decode CSL JSON: %w", err)
 	}
 
-	// Basic mapping
 	w := &dto.Work{
 		DOI:       item.DOI,
 		Title:     item.Title,
@@ -107,10 +120,9 @@ func (s *service) parseCSLJSON(r io.Reader, originalDOI string) (*dto.Work, erro
 	}
 
 	if w.DOI == "" {
-		w.DOI = originalDOI
+		w.DOI = doi
 	}
 
-	// Authors
 	for _, a := range item.Author {
 		name := ""
 		if a.Given != "" && a.Family != "" {
@@ -120,45 +132,37 @@ func (s *service) parseCSLJSON(r io.Reader, originalDOI string) (*dto.Work, erro
 		} else if a.Family != "" {
 			name = a.Family
 		}
-
 		if name != "" {
 			w.Authors = append(w.Authors, name)
 		}
 	}
 
-	// Date
 	if len(item.Issued.DateParts) > 0 && len(item.Issued.DateParts[0]) > 0 {
-		// Just taking the year/first part for simplicity or full date if available
 		parts := item.Issued.DateParts[0]
 		if len(parts) >= 1 {
-			// Convert float/mix to int safe-ish
-			val := fmt.Sprintf("%v", parts[0])
-			w.Date = val
+			w.Date = fmt.Sprintf("%v", parts[0])
 		}
 	}
 
 	return w, nil
 }
 
-// JSON-LD (Schema.org) structure generic map since it varies
-func (s *service) parseJSONLD(r io.Reader, originalDOI string) (*dto.Work, error) {
+func (s *service) parseJSONLD(r io.Reader, normalizedDOI string) (*dto.Work, error) {
 	var data map[string]interface{}
 	if err := json.NewDecoder(r).Decode(&data); err != nil {
 		return nil, fmt.Errorf("failed to decode JSON-LD: %w", err)
 	}
 
 	w := &dto.Work{
-		DOI: originalDOI, // Often not explicitly in the root of JSON-LD in a simple way, assume matches
+		DOI: normalizedDOI,
 	}
 
-	// Title
 	if name, ok := data["name"].(string); ok {
 		w.Title = name
 	} else if headline, ok := data["headline"].(string); ok {
 		w.Title = headline
 	}
 
-	// Type
 	if t, ok := data["@type"].(string); ok {
 		w.Type = mapSchemaType(t)
 	} else if tList, ok := data["@type"].([]interface{}); ok && len(tList) > 0 {
@@ -169,7 +173,6 @@ func (s *service) parseJSONLD(r io.Reader, originalDOI string) (*dto.Work, error
 		w.Type = product.Other
 	}
 
-	// Publisher
 	if pub, ok := data["publisher"].(map[string]interface{}); ok {
 		if name, ok := pub["name"].(string); ok {
 			w.Publisher = name
@@ -188,7 +191,7 @@ func mapCSLType(t string) product.ProductType {
 	case "graphic", "image":
 		return product.Image
 	case "article", "journal-article", "proceedings-article":
-		return product.Other // Or a specific type if MORIS supports it, otherwise Other is safe
+		return product.Other
 	case "book", "book-chapter":
 		return product.Other
 	default:

@@ -2,7 +2,10 @@ package product
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
+	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/product"
 	"github.com/google/uuid"
 )
@@ -14,6 +17,7 @@ type Service interface {
 	Create(ctx context.Context, p product.Product) (*product.Product, error)
 	Update(ctx context.Context, id uuid.UUID, p product.Product) (*product.Product, error)
 	Delete(ctx context.Context, id uuid.UUID) error
+	CreateFromWork(ctx context.Context, authorPersonID uuid.UUID, work *dto.Work) (*product.Product, error)
 }
 
 type service struct {
@@ -46,4 +50,30 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, p product.Product) (
 
 func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	return s.repo.Delete(ctx, id)
+}
+
+func (s *service) CreateFromWork(ctx context.Context, authorPersonID uuid.UUID, work *dto.Work) (*product.Product, error) {
+	if work == nil {
+		return nil, fmt.Errorf("work is nil")
+	}
+	doi := strings.TrimSpace(work.DOI)
+	if doi == "" {
+		return nil, fmt.Errorf("work DOI is empty")
+	}
+
+	p := product.Product{
+		Id:             uuid.New(),
+		Type:           work.Type,
+		Language:       "en", // TODO: derive from metadata if available
+		Name:           strings.TrimSpace(work.Title),
+		DOI:            doi,
+		AuthorPersonID: authorPersonID,
+		// ZenodoDepositionID remains default 0
+	}
+
+	created, err := s.repo.Create(ctx, p)
+	if err != nil {
+		return nil, err
+	}
+	return created, nil
 }

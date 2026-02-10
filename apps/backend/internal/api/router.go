@@ -12,6 +12,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/cachewarmup"
 	adapterhandler "github.com/SURF-Innovatie/MORIS/internal/handler/adapter"
 	authhandler "github.com/SURF-Innovatie/MORIS/internal/handler/auth"
+	bulkimporthandler "github.com/SURF-Innovatie/MORIS/internal/handler/bulkimport"
 	crossrefhandler "github.com/SURF-Innovatie/MORIS/internal/handler/crossref"
 	doihandler "github.com/SURF-Innovatie/MORIS/internal/handler/doi"
 	eventHandler "github.com/SURF-Innovatie/MORIS/internal/handler/event"
@@ -66,6 +67,7 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 	systemHandler := do.MustInvoke[*systemhandler.Handler](injector)
 	doiHandler := do.MustInvoke[*doihandler.Handler](injector)
 	adapterHandler := do.MustInvoke[*adapterhandler.Handler](injector)
+	bulkImportHandler := do.MustInvoke[*bulkimporthandler.Handler](injector)
 
 	// Setup Router
 	r := chi.NewRouter()
@@ -85,7 +87,7 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 		r.Group(func(r chi.Router) {
 			r.Use(authmiddleware.AuthMiddleware(authSvc))
 			r.Route("/projects", func(r chi.Router) {
-				projecthandler.MountProjectRoutes(r, projHandler)
+				projecthandler.MountProjectRoutes(r, projHandler, bulkImportHandler)
 				r.Get("/{id}/roles", projHandler.ListAvailableRoles)
 				commandHandler.MountProjectCommandRouter(r, projCmdHandler)
 				// Event policy routes for projects
