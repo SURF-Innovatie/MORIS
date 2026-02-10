@@ -14,7 +14,7 @@ type Product struct {
 	Name               string
 	DOI                string
 	ZenodoDepositionID int
-	AuthorPersonID     uuid.UUID
+	AuthorPersonIDs    []uuid.UUID
 }
 
 type ProductType int
@@ -38,12 +38,30 @@ func (p *Product) FromEnt(row *ent.Product) *Product {
 	if row.ZenodoDepositionID != nil {
 		zenodoID = *row.ZenodoDepositionID
 	}
+	lang := ""
+	if row.Language != nil {
+		lang = *row.Language
+	}
+
+	doi := ""
+	if row.Doi != nil {
+		doi = *row.Doi
+	}
+
+	authorIDs := make([]uuid.UUID, 0, len(row.Edges.Authors))
+	for _, a := range row.Edges.Authors {
+		if a != nil {
+			authorIDs = append(authorIDs, a.ID)
+		}
+	}
+
 	return &Product{
 		Id:                 row.ID,
 		Type:               ProductType(row.Type),
-		Language:           *row.Language,
+		Language:           lang,
 		Name:               row.Name,
-		DOI:                *row.Doi,
+		DOI:                doi,
 		ZenodoDepositionID: zenodoID,
+		AuthorPersonIDs:    authorIDs,
 	}
 }

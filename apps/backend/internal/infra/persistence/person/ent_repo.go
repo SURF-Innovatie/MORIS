@@ -2,6 +2,7 @@ package person
 
 import (
 	"context"
+	"strings"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	pe "github.com/SURF-Innovatie/MORIS/ent/person"
@@ -87,6 +88,24 @@ func (r *EntRepo) GetByEmail(ctx context.Context, email string) (*identity.Perso
 		Where(pe.EmailEQ(email)).
 		Only(ctx)
 	if err != nil {
+		return nil, err
+	}
+	return transform.ToEntityPtr[identity.Person](row), nil
+}
+
+func (r *EntRepo) GetByORCID(ctx context.Context, orcid string) (*identity.Person, error) {
+	orcid = strings.TrimSpace(orcid)
+	if orcid == "" {
+		return nil, nil
+	}
+
+	row, err := r.cli.Person.Query().
+		Where(pe.OrcidIDEQ(orcid)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return transform.ToEntityPtr[identity.Person](row), nil

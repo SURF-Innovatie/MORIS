@@ -25,7 +25,6 @@ func (Product) Fields() []ent.Field {
 			Unique().
 			Optional().
 			Nillable(),
-		// Zenodo integration
 		field.Int("zenodo_deposition_id").
 			Optional().
 			Nillable(),
@@ -34,6 +33,6 @@ func (Product) Fields() []ent.Field {
 
 func (Product) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("author", Person.Type).Ref("products"),
+		edge.To("authors", Person.Type),
 	}
 }

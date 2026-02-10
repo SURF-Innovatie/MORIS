@@ -85,7 +85,7 @@ func (s *service) BulkImport(
 			}
 
 			// Get/create the product, then ALWAYS return the product details in the item.
-			p, createdNew, err := s.productSvc.GetOrCreateFromDOI(ctx, actorPersonID, e.DOI)
+			p, createdNew, err := s.productSvc.GetOrCreateFromDOI(ctx, e.DOI)
 			if err != nil {
 				item.Error = fmt.Sprintf("create/get product: %v", err)
 				res.Errors = append(res.Errors, EntryError{DOI: e.DOI, Error: item.Error})

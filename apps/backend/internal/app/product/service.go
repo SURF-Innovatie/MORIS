@@ -7,6 +7,8 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	"github.com/SURF-Innovatie/MORIS/internal/app/doi"
+	"github.com/SURF-Innovatie/MORIS/internal/app/person"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/product"
 	"github.com/google/uuid"
 )
@@ -19,17 +21,18 @@ type Service interface {
 	Update(ctx context.Context, id uuid.UUID, p product.Product) (*product.Product, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	GetByDOI(ctx context.Context, doi string) (*product.Product, error)
-	CreateOrGetFromWork(ctx context.Context, authorPersonID uuid.UUID, work *dto.Work) (*product.Product, bool, error)
-	GetOrCreateFromDOI(ctx context.Context, authorPersonID uuid.UUID, doi string) (*product.Product, bool, error)
+	CreateOrGetFromWork(ctx context.Context, work *dto.Work) (*product.Product, bool, error)
+	GetOrCreateFromDOI(ctx context.Context, doi string) (*product.Product, bool, error)
 }
 
 type service struct {
-	repo   Repository
-	doiSvc doi.Service
+	repo      Repository
+	doiSvc    doi.Service
+	personSvc person.Service
 }
 
-func NewService(repo Repository, doiSvc doi.Service) Service {
-	return &service{repo: repo, doiSvc: doiSvc}
+func NewService(repo Repository, doiSvc doi.Service, personSvc person.Service) Service {
+	return &service{repo: repo, doiSvc: doiSvc, personSvc: personSvc}
 }
 
 func (s *service) Get(ctx context.Context, id uuid.UUID) (*product.Product, error) {
@@ -64,11 +67,11 @@ func (s *service) GetByDOI(ctx context.Context, doi string) (*product.Product, e
 	return s.repo.GetByDOI(ctx, doi)
 }
 
-func (s *service) CreateOrGetFromWork(ctx context.Context, authorPersonID uuid.UUID, w *dto.Work) (*product.Product, bool, error) {
+func (s *service) CreateOrGetFromWork(ctx context.Context, w *dto.Work) (*product.Product, bool, error) {
 	if w == nil {
 		return nil, false, fmt.Errorf("work is required")
 	}
-	doiStr := strings.TrimSpace(w.DOI)
+	doiStr := strings.TrimSpace(w.DOI.String())
 	if doiStr == "" {
 		return nil, false, fmt.Errorf("work.doi is required")
 	}
@@ -81,12 +84,17 @@ func (s *service) CreateOrGetFromWork(ctx context.Context, authorPersonID uuid.U
 		return existing, false, nil
 	}
 
+	authorIDs, err := s.resolveAuthorPersons(ctx, w.Authors)
+	if err != nil {
+		return nil, false, err
+	}
+
 	p := product.Product{
-		Name:           w.Title,
-		Type:           w.Type,
-		Language:       "en", // TODO: derive from metadata if available
-		DOI:            doiStr,
-		AuthorPersonID: authorPersonID,
+		Name:            w.Title,
+		Type:            w.Type,
+		Language:        "en",
+		DOI:             doiStr,
+		AuthorPersonIDs: authorIDs,
 	}
 
 	created, err := s.repo.Create(ctx, p)
@@ -96,7 +104,7 @@ func (s *service) CreateOrGetFromWork(ctx context.Context, authorPersonID uuid.U
 	return created, true, nil
 }
 
-func (s *service) GetOrCreateFromDOI(ctx context.Context, authorPersonID uuid.UUID, doiStr string) (*product.Product, bool, error) {
+func (s *service) GetOrCreateFromDOI(ctx context.Context, doiStr string) (*product.Product, bool, error) {
 	doiStr = strings.TrimSpace(doiStr)
 	if doiStr == "" {
 		return nil, false, fmt.Errorf("doi is required")
@@ -119,5 +127,87 @@ func (s *service) GetOrCreateFromDOI(ctx context.Context, authorPersonID uuid.UU
 		return nil, false, err
 	}
 
-	return s.CreateOrGetFromWork(ctx, authorPersonID, work)
+	return s.CreateOrGetFromWork(ctx, work)
+}
+
+func (s *service) resolveAuthorPersons(ctx context.Context, authors []dto.WorkAuthor) ([]uuid.UUID, error) {
+	ids := make([]uuid.UUID, 0, len(authors))
+
+	for _, a := range authors {
+		orcid := strings.TrimSpace(a.ORCID)
+		name := strings.TrimSpace(a.Name)
+		given := strings.TrimSpace(a.Given)
+		family := strings.TrimSpace(a.Family)
+
+		var p *identity.Person
+		var err error
+
+		if orcid != "" {
+			p, err = s.personSvc.GetByORCID(ctx, orcid)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// If ORCID absent or not found -> always create a new person (per your requirement)
+		if p == nil {
+			if name == "" {
+				if given != "" && family != "" {
+					name = given + " " + family
+				} else if family != "" {
+					name = family
+				} else {
+					name = "Unknown author"
+				}
+			}
+
+			email := makeSyntheticAuthorEmail(orcid, name)
+
+			created, err := s.personSvc.Create(ctx, identity.Person{
+				ORCiD:      ptrIfNonEmpty(orcid), // depending on your identity.Person type
+				Name:       name,
+				GivenName:  ptrIfNonEmpty(given),
+				FamilyName: ptrIfNonEmpty(family),
+				Email:      email,
+			})
+			if err != nil {
+				return nil, err
+			}
+			p = created
+		}
+
+		ids = append(ids, p.ID) // adjust field name to your identity.Person
+	}
+
+	// optional: dedupe ids
+	uniq := make([]uuid.UUID, 0, len(ids))
+	seen := map[uuid.UUID]struct{}{}
+	for _, id := range ids {
+		if id == uuid.Nil {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		uniq = append(uniq, id)
+	}
+	return uniq, nil
+}
+
+func makeSyntheticAuthorEmail(orcid string, fallbackName string) string {
+	// Stable + unique enough for your system (adjust domain)
+	key := orcid
+	if key == "" {
+		key = uuid.NewString()
+	}
+	return fmt.Sprintf("author+%s@moris.invalid", key)
+}
+
+func ptrIfNonEmpty(s string) *string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil
+	}
+	return &s
 }

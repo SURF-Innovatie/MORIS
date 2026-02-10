@@ -1,15 +1,22 @@
 package dto
 
 import (
+	"github.com/SURF-Innovatie/MORIS/external/doi"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/product"
 )
 
-// Work represents the simplified product data resolved from a DOI
+type WorkAuthor struct {
+	Given  string `json:"given,omitempty"`
+	Family string `json:"family,omitempty"`
+	Name   string `json:"name,omitempty"`
+	ORCID  string `json:"orcid,omitempty"`
+}
+
 type Work struct {
-	DOI       string              `json:"doi"`
+	DOI       doi.DOI             `json:"doi"`
 	Title     string              `json:"title"`
 	Type      product.ProductType `json:"type"`
 	Date      string              `json:"date,omitempty"`
 	Publisher string              `json:"publisher,omitempty"`
-	Authors   []string            `json:"authors,omitempty"`
+	Authors   []WorkAuthor        `json:"authors,omitempty"`
 }

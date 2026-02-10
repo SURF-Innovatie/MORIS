@@ -13,6 +13,7 @@ type Service interface {
 	Update(ctx context.Context, id uuid.UUID, p identity.Person) (*identity.Person, error)
 	List(ctx context.Context) ([]*identity.Person, error)
 	GetByEmail(ctx context.Context, email string) (*identity.Person, error)
+	GetByORCID(ctx context.Context, orcid string) (*identity.Person, error)
 	Search(ctx context.Context, query string, limit int) ([]identity.Person, error)
 	SetORCID(ctx context.Context, personID uuid.UUID, orcidID string) error
 	ClearORCID(ctx context.Context, personID uuid.UUID) error
@@ -45,6 +46,10 @@ func (s *service) List(ctx context.Context) ([]*identity.Person, error) {
 
 func (s *service) GetByEmail(ctx context.Context, email string) (*identity.Person, error) {
 	return s.repo.GetByEmail(ctx, email)
+}
+
+func (s *service) GetByORCID(ctx context.Context, orcid string) (*identity.Person, error) {
+	return s.repo.GetByORCID(ctx, orcid)
 }
 
 func (s *service) Search(ctx context.Context, query string, limit int) ([]identity.Person, error) {

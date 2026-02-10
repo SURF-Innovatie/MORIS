@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	doi "github.com/SURF-Innovatie/MORIS/external/doi"
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/product"
 )
@@ -34,13 +35,10 @@ func NewService() Service {
 	}
 }
 
-func (s *service) Resolve(ctx context.Context, doi string) (*dto.Work, error) {
-	doi = normalizeDOI(doi)
-	if doi == "" {
-		return nil, fmt.Errorf("empty doi")
-	}
+func (s *service) Resolve(ctx context.Context, originalDoi string) (*dto.Work, error) {
+	parsedDoi, err := doi.Parse(originalDoi)
 
-	url := fmt.Sprintf("https://doi.org/%s", doi)
+	url := fmt.Sprintf("https://doi.org/%s", parsedDoi)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
@@ -65,28 +63,12 @@ func (s *service) Resolve(ctx context.Context, doi string) (*dto.Work, error) {
 	contentType := resp.Header.Get("Content-Type")
 
 	if strings.Contains(contentType, "application/vnd.citationstyles.csl+json") || strings.Contains(contentType, "application/json") {
-		return s.parseCSLJSON(resp.Body, doi)
+		return s.parseCSLJSON(resp.Body, parsedDoi)
 	} else if strings.Contains(contentType, "application/ld+json") {
-		return s.parseJSONLD(resp.Body, doi)
+		return s.parseJSONLD(resp.Body, parsedDoi)
 	}
 
 	return nil, fmt.Errorf("unsupported content type: %s", contentType)
-}
-
-func normalizeDOI(in string) string {
-	in = strings.TrimSpace(in)
-
-	// Common URL forms
-	in = strings.TrimPrefix(in, "https://doi.org/")
-	in = strings.TrimPrefix(in, "http://doi.org/")
-	in = strings.TrimPrefix(in, "https://dx.doi.org/")
-	in = strings.TrimPrefix(in, "http://dx.doi.org/")
-
-	// Optional "doi:" prefix seen in some exports
-	in = strings.TrimPrefix(strings.ToLower(in), "doi:")
-	in = strings.TrimSpace(in)
-
-	return in
 }
 
 // CSL JSON (Crossref-like) structure
@@ -100,40 +82,50 @@ type cslItem struct {
 		Given  string `json:"given"`
 		Family string `json:"family"`
 		Name   string `json:"name"`
+		ORCID  string `json:"ORCID"`
 	} `json:"author"`
 	Issued struct {
 		DateParts [][]interface{} `json:"date-parts"`
 	} `json:"issued"`
 }
 
-func (s *service) parseCSLJSON(r io.Reader, doi string) (*dto.Work, error) {
+func (s *service) parseCSLJSON(r io.Reader, parsedDoi doi.DOI) (*dto.Work, error) {
 	var item cslItem
 	if err := json.NewDecoder(r).Decode(&item); err != nil {
 		return nil, fmt.Errorf("failed to decode CSL JSON: %w", err)
 	}
 
 	w := &dto.Work{
-		DOI:       item.DOI,
+		DOI:       parsedDoi,
 		Title:     item.Title,
 		Publisher: item.Publisher,
 		Type:      mapCSLType(item.Type),
 	}
 
-	if w.DOI == "" {
-		w.DOI = doi
-	}
-
 	for _, a := range item.Author {
-		name := ""
-		if a.Given != "" && a.Family != "" {
-			name = fmt.Sprintf("%s %s", a.Given, a.Family)
-		} else if a.Name != "" {
-			name = a.Name
-		} else if a.Family != "" {
-			name = a.Family
+		wa := dto.WorkAuthor{
+			Given:  strings.TrimSpace(a.Given),
+			Family: strings.TrimSpace(a.Family),
+			Name:   strings.TrimSpace(a.Name),
+			ORCID:  strings.TrimSpace(a.ORCID),
 		}
-		if name != "" {
-			w.Authors = append(w.Authors, name)
+
+		// If Name missing, derive it
+		if wa.Name == "" {
+			switch {
+			case wa.Given != "" && wa.Family != "":
+				wa.Name = wa.Given + " " + wa.Family
+			case wa.Family != "":
+				wa.Name = wa.Family
+			}
+		}
+
+		// Normalize ORCID if it is a URL
+		wa.ORCID = strings.TrimPrefix(wa.ORCID, "https://orcid.org/")
+		wa.ORCID = strings.TrimPrefix(wa.ORCID, "http://orcid.org/")
+
+		if wa.Name != "" || wa.ORCID != "" {
+			w.Authors = append(w.Authors, wa)
 		}
 	}
 
@@ -147,14 +139,14 @@ func (s *service) parseCSLJSON(r io.Reader, doi string) (*dto.Work, error) {
 	return w, nil
 }
 
-func (s *service) parseJSONLD(r io.Reader, normalizedDOI string) (*dto.Work, error) {
+func (s *service) parseJSONLD(r io.Reader, parsedDoi doi.DOI) (*dto.Work, error) {
 	var data map[string]interface{}
 	if err := json.NewDecoder(r).Decode(&data); err != nil {
 		return nil, fmt.Errorf("failed to decode JSON-LD: %w", err)
 	}
 
 	w := &dto.Work{
-		DOI: normalizedDOI,
+		DOI: parsedDoi,
 	}
 
 	if name, ok := data["name"].(string); ok {

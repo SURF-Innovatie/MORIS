@@ -9,6 +9,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/product"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
+	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -61,7 +62,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		Type:               product.ProductType(req.Type),
 		DOI:                req.DOI,
 		ZenodoDepositionID: zenodoID,
-		AuthorPersonID:     u.PersonID,
+		AuthorPersonIDs:    []uuid.UUID{u.PersonID}, //TODO, pass all authors in the request body and validate them
 	})
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)

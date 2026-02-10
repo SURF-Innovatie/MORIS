@@ -43,7 +43,9 @@ func (Person) Edges() []ent.Edge {
 		edge.From("memberships", Membership.Type).
 			Ref("person"),
 
-		edge.To("products", Product.Type),
 		edge.To("portfolio", Portfolio.Type).Unique(),
+
+		edge.From("authored_products", Product.Type).
+			Ref("authors"),
 	}
 }
