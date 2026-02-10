@@ -17,7 +17,8 @@ type Service interface {
 	Create(ctx context.Context, p product.Product) (*product.Product, error)
 	Update(ctx context.Context, id uuid.UUID, p product.Product) (*product.Product, error)
 	Delete(ctx context.Context, id uuid.UUID) error
-	CreateFromWork(ctx context.Context, authorPersonID uuid.UUID, work *dto.Work) (*product.Product, error)
+	GetByDOI(ctx context.Context, doi string) (*product.Product, error)
+	CreateOrGetFromWork(ctx context.Context, authorPersonID uuid.UUID, work *dto.Work) (*product.Product, bool, error)
 }
 
 type service struct {
@@ -52,28 +53,41 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	return s.repo.Delete(ctx, id)
 }
 
-func (s *service) CreateFromWork(ctx context.Context, authorPersonID uuid.UUID, work *dto.Work) (*product.Product, error) {
-	if work == nil {
-		return nil, fmt.Errorf("work is nil")
-	}
-	doi := strings.TrimSpace(work.DOI)
+func (s *service) GetByDOI(ctx context.Context, doi string) (*product.Product, error) {
+	doi = strings.TrimSpace(doi)
 	if doi == "" {
-		return nil, fmt.Errorf("work DOI is empty")
+		return nil, nil
+	}
+	return s.repo.GetByDOI(ctx, doi)
+}
+
+func (s *service) CreateOrGetFromWork(ctx context.Context, authorPersonID uuid.UUID, w *dto.Work) (*product.Product, bool, error) {
+	if w == nil {
+		return nil, false, fmt.Errorf("work is required")
+	}
+	doi := strings.TrimSpace(w.DOI)
+	if doi == "" {
+		return nil, false, fmt.Errorf("work.doi is required")
+	}
+
+	existing, err := s.repo.GetByDOI(ctx, doi)
+	if err != nil {
+		return nil, false, err
+	}
+	if existing != nil {
+		return existing, false, nil
 	}
 
 	p := product.Product{
-		Id:             uuid.New(),
-		Type:           work.Type,
+		Name:           w.Title,
+		Type:           w.Type,
 		Language:       "en", // TODO: derive from metadata if available
-		Name:           strings.TrimSpace(work.Title),
 		DOI:            doi,
 		AuthorPersonID: authorPersonID,
-		// ZenodoDepositionID remains default 0
 	}
-
 	created, err := s.repo.Create(ctx, p)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	return created, nil
+	return created, true, nil
 }

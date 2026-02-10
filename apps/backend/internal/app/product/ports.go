@@ -14,4 +14,5 @@ type Repository interface {
 	Create(ctx context.Context, p product.Product) (*product.Product, error)
 	Update(ctx context.Context, id uuid.UUID, p product.Product) (*product.Product, error)
 	Delete(ctx context.Context, id uuid.UUID) error
+	GetByDOI(ctx context.Context, doi string) (*product.Product, error)
 }

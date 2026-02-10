@@ -85,3 +85,17 @@ func (r *EntRepo) Update(ctx context.Context, id uuid.UUID, p product.Product) (
 func (r *EntRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return r.cli.Product.DeleteOneID(id).Exec(ctx)
 }
+
+func (r *EntRepo) GetByDOI(ctx context.Context, doi string) (*product.Product, error) {
+	row, err := r.cli.Product.
+		Query().
+		Where(entproduct.DoiEQ(doi)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return (&product.Product{}).FromEnt(row), nil
+}

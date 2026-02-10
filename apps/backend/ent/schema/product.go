@@ -22,6 +22,7 @@ func (Product) Fields() []ent.Field {
 		field.Int("Type").
 			Optional(),
 		field.String("doi").
+			Unique().
 			Optional().
 			Nillable(),
 		// Zenodo integration
