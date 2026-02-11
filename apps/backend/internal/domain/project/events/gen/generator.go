@@ -337,24 +337,28 @@ func (e *{{eventName .Type}}) Apply(project *projdomain.Project) {
 }
 
 func (e *{{eventName .Type}}) NotificationTemplate() string {
-	return "{{if .NotificationTemplate}}{{.NotificationTemplate}}{{else}}Project {{.Field | lower}} has been updated.{{end}}"
+	return "{{if .NotificationTemplate}}{{.NotificationTemplate}}{{else}}Project {{if .FriendlyName}}{{.FriendlyName | lower}}{{else}}{{.Field | lower}}{{end}} has been updated.{{end}}"
 }
 
 func (e *{{eventName .Type}}) ApprovalRequestTemplate() string {
-	return "{{if .ApprovalRequestTemplate}}{{.ApprovalRequestTemplate}}{{else}}Changing project {{.Field | lower}} requires approval.{{end}}"
+	return "{{if .ApprovalRequestTemplate}}{{.ApprovalRequestTemplate}}{{else}}Changing project {{if .FriendlyName}}{{.FriendlyName | lower}}{{else}}{{.Field | lower}}{{end}} requires approval.{{end}}"
 }
 
 func (e *{{eventName .Type}}) ApprovedTemplate() string {
-	return "{{if .ApprovedTemplate}}{{.ApprovedTemplate}}{{else}}Project {{.Field | lower}} change has been approved.{{end}}"
+	return "{{if .ApprovedTemplate}}{{.ApprovedTemplate}}{{else}}Project {{if .FriendlyName}}{{.FriendlyName | lower}}{{else}}{{.Field | lower}}{{end}} change has been approved.{{end}}"
 }
 
 func (e *{{eventName .Type}}) RejectedTemplate() string {
-	return "{{if .RejectedTemplate}}{{.RejectedTemplate}}{{else}}Project {{.Field | lower}} change has been rejected.{{end}}"
+	return "{{if .RejectedTemplate}}{{.RejectedTemplate}}{{else}}Project {{if .FriendlyName}}{{.FriendlyName | lower}}{{else}}{{.Field | lower}}{{end}} change has been rejected.{{end}}"
 }
 
 func (e *{{eventName .Type}}) NotificationVariables() map[string]string {
 	return map[string]string{
+{{- if eq .FieldType "time.Time" }}
+		"event.{{.Field}}": e.{{.Field}}.Format("2006-01-02"),
+{{- else }}
 		"event.{{.Field}}": fmt.Sprint(e.{{.Field}}),
+{{- end }}
 	}
 }
 {{if .RelatedID}}

@@ -201,7 +201,7 @@ func (e *StartDateChanged) RejectedTemplate() string {
 
 func (e *StartDateChanged) NotificationVariables() map[string]string {
 	return map[string]string{
-		"event.StartDate": fmt.Sprint(e.StartDate),
+		"event.StartDate": e.StartDate.Format("2006-01-02"),
 	}
 }
 
@@ -276,7 +276,7 @@ func (e *EndDateChanged) RejectedTemplate() string {
 
 func (e *EndDateChanged) NotificationVariables() map[string]string {
 	return map[string]string{
-		"event.EndDate": fmt.Sprint(e.EndDate),
+		"event.EndDate": e.EndDate.Format("2006-01-02"),
 	}
 }
 

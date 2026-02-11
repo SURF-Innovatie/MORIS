@@ -57,13 +57,17 @@ func New(persons PersonLoader, products ProductLoader, roles RoleLoader, orgNode
 
 // HydrateOne hydrates a single event with related entities
 func (h *Hydrator) HydrateOne(ctx context.Context, e events.Event) events.DetailedEvent {
-	return h.HydrateMany(ctx, []events.Event{e})[0]
+	detailed := h.HydrateMany(ctx, []events.Event{e})
+	if len(detailed) == 0 {
+		return events.DetailedEvent{}
+	}
+	return detailed[0]
 }
 
 // HydrateMany hydrates multiple events with batch loading for efficiency
 func (h *Hydrator) HydrateMany(ctx context.Context, evts []events.Event) []events.DetailedEvent {
 	if len(evts) == 0 {
-		return nil
+		return []events.DetailedEvent{}
 	}
 
 	// Collect all IDs to batch load
@@ -85,7 +89,10 @@ func (h *Hydrator) HydrateMany(ctx context.Context, evts []events.Event) []event
 				orgNodeIDs = append(orgNodeIDs, *ids.OrgNodeID)
 			}
 		}
-		creatorUserIDs = append(creatorUserIDs, e.CreatedByID())
+		creatorID := e.CreatedByID()
+		if creatorID != uuid.Nil {
+			creatorUserIDs = append(creatorUserIDs, creatorID)
+		}
 	}
 
 	// Batch load all entities

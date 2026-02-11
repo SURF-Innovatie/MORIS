@@ -133,15 +133,7 @@ func init() {
 		Type:         "project.template", // Must match Type() return value
 		FriendlyName: "Template Event",   // Human-readable name for UI
 
-		// Optional: Define when approval is required (nil = never)
-		CheckApproval: func(ctx context.Context, event Event, client *ent.Client) bool {
-			return false // or add custom logic
-		},
-
-		// Optional: Define when notifications should be sent (nil = never)
-		// CheckNotification: func(ctx context.Context, event Event, client *ent.Client) bool {
-		// 	return true // or add custom logic
-		// },
+		// CheckApproval and CheckNotification removed - now handled via policy evaluator
 
 		// Optional: Define who can trigger this event (nil = everyone)
 		CheckAllowed: func(ctx context.Context, event Event, client *ent.Client) bool {
