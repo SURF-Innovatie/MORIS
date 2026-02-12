@@ -2,6 +2,7 @@ package wire
 
 import (
 	crossrefclientdi "github.com/SURF-Innovatie/MORIS/external/crossref/di"
+	doiclientdi "github.com/SURF-Innovatie/MORIS/external/doi/di"
 	nwoclientdi "github.com/SURF-Innovatie/MORIS/external/nwo/di"
 	orcidoclientdi "github.com/SURF-Innovatie/MORIS/external/orcid/di"
 	raidclientdi "github.com/SURF-Innovatie/MORIS/external/raid/di"
@@ -87,6 +88,7 @@ var Package = do.Package(
 
 	doiappdi.Package,
 	doihandlerdi.Package,
+	doiclientdi.Package,
 
 	errorlogappdi.Package,
 	errorlogrepodi.Package,
