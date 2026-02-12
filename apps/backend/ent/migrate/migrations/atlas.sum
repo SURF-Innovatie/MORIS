@@ -1,4 +1,4 @@
-h1:fNVxc2oIH3gixVG18HP1FSsSxSkwMLuQgEQ5tDECo3o=
+h1:cJjNuyvO1aGWK/VoCcakl25IfXXltwfwCdA4qistoxo=
 20260110215341_initial_schema.sql h1:AdC0c2evZQ07zDzysyctP4s0llim7+ESLw52Zx46NLw=
 20260110222105_zenodo_fields.sql h1:soNsj0nlXErkgjxgr+ivifwhCvl0S6KDKMEmbHkXu9A=
 20260111223807_event_policies.sql h1:kLXmX9WQh8PYKHvB+cJrUnUvZZd7AscQzCOgAkRBvyc=
@@ -6,3 +6,4 @@ h1:fNVxc2oIH3gixVG18HP1FSsSxSkwMLuQgEQ5tDECo3o=
 20260114135829_make_password_optional.sql h1:pEdETo89vbY4MS0uKGOpmuHF4NRrzhAfGkCOkT+bQLI=
 20260120185442_add_portfolio.sql h1:TX9cKKLNB878q4UcEbUNS4QsU0kRj6Z5DMn//KdUVDI=
 20260212075834_add_product_authors.sql h1:YZoYvyv55SrL5woP5h/ToQjYBQazqVvn46Y7pHHMS0Q=
+20260212135407_add_catalogs.sql h1:wpU0Af8H99XN9mDhIghAk33Yo+Ju3FwlVlsoyq+duVw=

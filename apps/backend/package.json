@@ -18,6 +18,7 @@
     "db:migrate:status": "atlas migrate status --env local",
     "db:migrate:dev": "sh -c 'go run ./cmd/seed/main.go -skip-seed && go run -mod=mod ./ent/migrate/main.go \"$1\" && pnpm run db:migrate:apply' --",
     "db:migrate:squash": "go run -mod=mod ./ent/migrate/squash/main.go",
+    "db:migrate:append": "sh -c 'set -a; [ -f .env ] && . ./.env; set +a; MIGRATION_FILE=$(ls ent/migrate/migrations/*.sql | grep -v \"atlas.sum\" | tail -n 1) && MIGRATION_NAME=$(basename $MIGRATION_FILE | sed \"s/^[0-9]*_//;s/\\.sql$//\") && rm $MIGRATION_FILE && atlas migrate hash --dir \"file://ent/migrate/migrations\" && go run ./cmd/seed/main.go -skip-seed && pnpm run db:migrate:diff $MIGRATION_NAME' --",
     "lint": "golangci-lint run ./...",
     "test": "go test ./..."
   }

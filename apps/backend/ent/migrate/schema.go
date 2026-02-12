@@ -8,6 +8,27 @@ import (
 )
 
 var (
+	// CatalogsColumns holds the columns for the "catalogs" table.
+	CatalogsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "rich_description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "project_ids", Type: field.TypeJSON, Nullable: true},
+		{Name: "title", Type: field.TypeString},
+		{Name: "logo_url", Type: field.TypeString, Nullable: true},
+		{Name: "primary_color", Type: field.TypeString, Nullable: true},
+		{Name: "secondary_color", Type: field.TypeString, Nullable: true},
+		{Name: "accent_color", Type: field.TypeString, Nullable: true},
+		{Name: "favicon", Type: field.TypeString, Nullable: true},
+		{Name: "font_family", Type: field.TypeString, Nullable: true},
+	}
+	// CatalogsTable holds the schema information for the "catalogs" table.
+	CatalogsTable = &schema.Table{
+		Name:       "catalogs",
+		Columns:    CatalogsColumns,
+		PrimaryKey: []*schema.Column{CatalogsColumns[0]},
+	}
 	// CustomFieldDefinitionsColumns holds the columns for the "custom_field_definitions" table.
 	CustomFieldDefinitionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -436,6 +457,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		CatalogsTable,
 		CustomFieldDefinitionsTable,
 		ErrorLogsTable,
 		EventsTable,

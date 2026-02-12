@@ -50,6 +50,8 @@ const MultiRoleManagementRoute = lazy(() =>
     default: m.MultiRoleManagementRoute,
   })),
 );
+const AdminCatalogsRoute = lazy(() => import("@/routes/admin-catalogs"));
+const AdminCatalogFormRoute = lazy(() => import("@/routes/admin-catalog-form"));
 
 export function createAppRouter() {
   const routes: RouteObject[] = [
@@ -133,6 +135,18 @@ export function createAppRouter() {
                 {
                   path: "organisations/:nodeId/roles",
                   element: <MultiRoleManagementRoute />,
+                },
+                {
+                  path: "catalogs",
+                  element: <AdminCatalogsRoute />,
+                },
+                {
+                  path: "catalogs/new",
+                  element: <AdminCatalogFormRoute />,
+                },
+                {
+                  path: "catalogs/:id/edit",
+                  element: <AdminCatalogFormRoute />,
                 },
               ],
             },

@@ -14,6 +14,7 @@ import {
   Building2,
   Settings,
   Sparkles,
+  BookOpen,
 } from "lucide-react";
 
 import { Button } from "../ui/button";
@@ -66,6 +67,11 @@ export const ExpandableNavbar = () => {
                 to: "/dashboard/admin/organisations",
                 label: "Organisations",
                 icon: Building2,
+              },
+              {
+                to: "/dashboard/admin/catalogs",
+                label: "Catalogs",
+                icon: BookOpen,
               },
             ],
           },

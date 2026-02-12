@@ -9,21 +9,21 @@ import (
 )
 
 type Member struct {
-	PersonID      uuid.UUID
-	ProjectRoleID uuid.UUID
+	PersonID      uuid.UUID `json:"person_id"`
+	ProjectRoleID uuid.UUID `json:"project_role_id"`
 }
 
 type Project struct {
-	Id              uuid.UUID
-	Version         int
-	StartDate       time.Time
-	EndDate         time.Time
-	Title           string
-	Description     string
-	Members         []Member
-	OwningOrgNodeID uuid.UUID
-	ProductIDs      []uuid.UUID
-	CustomFields    map[string]interface{}
+	Id              uuid.UUID              `json:"id"`
+	Version         int                    `json:"version"`
+	StartDate       time.Time              `json:"start_date"`
+	EndDate         time.Time              `json:"end_date"`
+	Title           string                 `json:"title"`
+	Description     string                 `json:"description"`
+	Members         []Member               `json:"members"`
+	OwningOrgNodeID uuid.UUID              `json:"owning_org_node_id"`
+	ProductIDs      []uuid.UUID            `json:"product_ids"`
+	CustomFields    map[string]interface{} `json:"custom_fields"`
 }
 
 type MemberDetail struct {

@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+html {
+  font-size: 110%;
+}
+
+@theme {
+  --font-condensed: "Saira Condensed", sans-serif;
+  --font-condensed-extra: "Saira Extra Condensed", sans-serif;
+}

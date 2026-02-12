@@ -10,6 +10,7 @@ import (
 	zenodoclientdi "github.com/SURF-Innovatie/MORIS/external/zenodo/di"
 	adapterinternaldi "github.com/SURF-Innovatie/MORIS/internal/adapter/di"
 	authappdi "github.com/SURF-Innovatie/MORIS/internal/app/auth/di"
+	catalogappdi "github.com/SURF-Innovatie/MORIS/internal/app/catalog/di"
 	crossrefappdi "github.com/SURF-Innovatie/MORIS/internal/app/crossref/di"
 	customfieldappdi "github.com/SURF-Innovatie/MORIS/internal/app/customfield/di"
 	doiappdi "github.com/SURF-Innovatie/MORIS/internal/app/doi/di"
@@ -149,4 +150,6 @@ var Package = do.Package(
 	zenodoappdi.Package,
 	zenodohandlerdi.Package,
 	zenodoclientdi.Package,
+
+	catalogappdi.Package,
 )

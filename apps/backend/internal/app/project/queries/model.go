@@ -7,8 +7,8 @@ import (
 )
 
 type ProjectDetails struct {
-	Project       project.Project
-	OwningOrgNode organisation.OrganisationNode
-	Members       []project.MemberDetail
-	Products      []product.Product
+	Project       project.Project               `json:"project"`
+	OwningOrgNode organisation.OrganisationNode `json:"owning_org_node"`
+	Members       []project.MemberDetail        `json:"members"`
+	Products      []product.Product             `json:"products"`
 }

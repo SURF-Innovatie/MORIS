@@ -84,7 +84,7 @@ func main() {
 		if err != nil {
 			log.Fatal().Err(err).Msg("failed opening raw db connection")
 		}
-		if _, err := rawDB.ExecContext(ctx, `DROP SCHEMA public CASCADE; CREATE SCHEMA public; DROP SCHEMA IF EXISTS atlas_schema_revisions CASCADE;`); err != nil {
+		if _, err := rawDB.ExecContext(ctx, `DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public; DROP SCHEMA IF EXISTS atlas_schema_revisions CASCADE;`); err != nil {
 			log.Fatal().Err(err).Msg("failed resetting schema")
 		}
 		if err := rawDB.Close(); err != nil {
@@ -564,6 +564,8 @@ func main() {
 
 	log.Info().Msg("Seeding projects (event stream)...")
 
+	var seededProjectIDs []uuid.UUID
+
 	for _, sp := range projects {
 		projectID := uuid.New()
 
@@ -643,8 +645,31 @@ func main() {
 			version++
 		}
 
+		seededProjectIDs = append(seededProjectIDs, projectID)
 		log.Info().Msgf("Seeded project: %s (%s)", sp.Title, projectID.String())
 	}
+
+	// Seed Catalog
+	log.Info().Msg("Seeding catalog...")
+	catalogID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
+	_, err = client.Catalog.Create().
+		SetID(catalogID).
+		SetName("nwo").
+		SetTitle("DeepNL").
+		SetDescription("DeepNL research projects and outputs.").
+		SetRichDescription("<p>DeepNL is a research programme funded by the Dutch Research Council (NWO) that brings together leading Dutch research groups in the area of deep learning and natural language processing. The programme aims to develop <strong>novel deep learning methods</strong> for understanding, generating, and reasoning with natural language.</p><ul><li>Advancing fundamental NLP research</li><li>Building collaborative research infrastructure</li><li>Training the next generation of NLP researchers</li></ul>").
+		SetProjectIds(seededProjectIDs).
+		SetPrimaryColor("#008094").
+		SetSecondaryColor("#004c5a").
+		SetAccentColor("#e8a427").
+		SetLogoURL("https://www.nwo.nl/themes/custom/nwo/assets/images/logo.svg?v=25").
+		SetFavicon("https://www.nwo.nl/themes/custom/nwo/favicon.ico").
+		SetFontFamily("Saira Extra Condensed").
+		Save(ctx)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed creating catalog nwo")
+	}
+	log.Info().Msgf("Seeded catalog nwo with %d projects", len(seededProjectIDs))
 
 	log.Info().Msg("Seeding done.")
 

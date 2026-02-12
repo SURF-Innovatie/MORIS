@@ -8,6 +8,7 @@ import (
 
 	_ "github.com/SURF-Innovatie/MORIS/api/swag-docs"
 	coreauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
+	"github.com/SURF-Innovatie/MORIS/internal/app/catalog"
 	"github.com/SURF-Innovatie/MORIS/internal/app/errorlog"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/cachewarmup"
 	adapterhandler "github.com/SURF-Innovatie/MORIS/internal/handler/adapter"
@@ -68,6 +69,7 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 	doiHandler := do.MustInvoke[*doihandler.Handler](injector)
 	adapterHandler := do.MustInvoke[*adapterhandler.Handler](injector)
 	bulkImportHandler := do.MustInvoke[*bulkimporthandler.Handler](injector)
+	catalogHandler := do.MustInvoke[*catalog.Handler](injector)
 
 	// Setup Router
 	r := chi.NewRouter()
@@ -84,6 +86,7 @@ func SetupRouter(injector do.Injector) *chi.Mux {
 		r.Use(authmiddleware.ErrorLoggingMiddleware(errorLogSvc))
 		authhandler.MountRoutes(r, authSvc, authHandler)
 		systemhandler.MountRoutes(r, systemHandler)
+		catalog.MountRoutes(r, catalogHandler, authmiddleware.AuthMiddleware(authSvc), authmiddleware.RequireSysAdminMiddleware())
 		r.Group(func(r chi.Router) {
 			r.Use(authmiddleware.AuthMiddleware(authSvc))
 			r.Route("/projects", func(r chi.Router) {
