@@ -1,7 +1,7 @@
 package project
 
 import (
-	"github.com/SURF-Innovatie/MORIS/internal/handler/bulkimport"
+	"github.com/SURF-Innovatie/MORIS/internal/handler/project/bulkimport"
 	"github.com/go-chi/chi/v5"
 )
 

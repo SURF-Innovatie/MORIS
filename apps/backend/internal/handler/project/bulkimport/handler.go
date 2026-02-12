@@ -5,17 +5,17 @@ import (
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
 	appauth "github.com/SURF-Innovatie/MORIS/internal/app/auth"
-	bulkimportsvc "github.com/SURF-Innovatie/MORIS/internal/app/bulkimport"
+	bulkimport2 "github.com/SURF-Innovatie/MORIS/internal/app/project/bulkimport"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 )
 
 type Handler struct {
-	svc         bulkimportsvc.Service
+	svc         bulkimport2.Service
 	currentUser appauth.CurrentUserProvider
 }
 
-func NewHandler(svc bulkimportsvc.Service, cu appauth.CurrentUserProvider) *Handler {
+func NewHandler(svc bulkimport2.Service, cu appauth.CurrentUserProvider) *Handler {
 	return &Handler{svc: svc, currentUser: cu}
 }
 
@@ -55,9 +55,9 @@ func (h *Handler) BulkImportIntoProject(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	entries := make([]bulkimportsvc.Entry, 0, len(req.Dois))
+	entries := make([]bulkimport2.Entry, 0, len(req.Dois))
 	for _, d := range req.Dois {
-		entries = append(entries, bulkimportsvc.Entry{DOI: d})
+		entries = append(entries, bulkimport2.Entry{DOI: d})
 	}
 
 	result, err := h.svc.BulkImport(r.Context(), u.UserID, u.PersonID, projectID, entries)

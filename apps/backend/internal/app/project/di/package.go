@@ -7,6 +7,8 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/organisation"
 	organisationhierarchy "github.com/SURF-Innovatie/MORIS/internal/app/organisation/hierarchy"
 	organisationrbac "github.com/SURF-Innovatie/MORIS/internal/app/organisation/rbac"
+	"github.com/SURF-Innovatie/MORIS/internal/app/product"
+	"github.com/SURF-Innovatie/MORIS/internal/app/project/bulkimport"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/cachewarmup"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/command"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/load"
@@ -14,6 +16,7 @@ import (
 	projectrole2 "github.com/SURF-Innovatie/MORIS/internal/app/project/role"
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
+	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/enttx"
 	projectrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project"
 	"github.com/samber/do/v2"
 )
@@ -24,6 +27,7 @@ var Package = do.Package(
 	do.Lazy(provideProjectQueryService),
 	do.Lazy(provideProjectCommandService),
 	do.Lazy(provideCacheWarmupService),
+	do.Lazy(provideBulkImportService),
 )
 
 func provideProjectRoleService(i do.Injector) (projectrole2.Service, error) {
@@ -67,4 +71,13 @@ func provideCacheWarmupService(i do.Injector) (cachewarmup.Service, error) {
 	ldr := do.MustInvoke[*load.Loader](i)
 	pc := do.MustInvoke[cache.ProjectCache](i)
 	return cachewarmup.NewService(repo, ldr, pc), nil
+}
+
+func provideBulkImportService(i do.Injector) (bulkimport.Service, error) {
+	productSvc := do.MustInvoke[product.Service](i)
+	projectCommandSvc := do.MustInvoke[command.Service](i)
+	projectQuerySvc := do.MustInvoke[queries.Service](i)
+	txManager := do.MustInvoke[*enttx.Manager](i)
+
+	return bulkimport.NewService(productSvc, projectCommandSvc, projectQuerySvc, txManager), nil
 }
