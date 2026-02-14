@@ -13,11 +13,8 @@ export function ProjectAccessProvider({ children }: { children: ReactNode }) {
   } = useGetProjectsIdAllowedEvents(id!, {
     query: {
       enabled: !!id,
-      // Refetch on every navigation to ensure fresh permissions
       refetchOnMount: "always",
-      // Also refetch when window regains focus
       refetchOnWindowFocus: true,
-      // Don't use stale data - always show loading state while refetching
       staleTime: 0,
     },
   });

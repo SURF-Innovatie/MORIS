@@ -44,7 +44,7 @@ import { Allowed } from "@/components/auth/Allowed";
 import { ProjectEventType } from "@/api/events";
 import { ZenodoUploadDialog } from "@/components/products/ZenodoUploadDialog";
 import { ProductCard, getProductTypeLabel } from "../products/ProductCard";
-import { useAccess } from "@/context/AccessContext";
+import { useAccess } from "@/contexts/AccessContext";
 import { Doi } from "@/lib/doi";
 
 // Schema for the DOI search form

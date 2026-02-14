@@ -8,8 +8,15 @@ import {
   useGetOrganisationNodesIdOrganisationRoles,
 } from "@api/moris";
 import { EventPolicyResponse } from "@api/model";
-import { createEventPolicyRemovedEvent, ProjectEventType } from "@/api/events";
-import { useAccess } from "@/context/AccessContext";
+import {
+  createEventPolicyAddedEvent,
+  createEventPolicyUpdatedEvent,
+  createEventPolicyRemovedEvent,
+  ProjectEventType,
+  EventPolicyAddedInput,
+  EventPolicyUpdatedInput,
+} from "@/api/events";
+import { useAccess } from "@/contexts/AccessContext";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +24,10 @@ import { Loader2, Plus, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProjectPolicyCard } from "./ProjectPolicyCard";
-import { ProjectPolicyFormDialog } from "./ProjectPolicyFormDialog";
+import {
+  PolicyFormDialog,
+  PolicyFormData,
+} from "@/components/shared/PolicyFormDialog";
 
 interface ProjectEventPoliciesTabProps {
   projectId: string;
@@ -33,6 +43,7 @@ export function ProjectEventPoliciesTab({
     null
   );
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { hasAccess } = useAccess();
@@ -75,6 +86,58 @@ export function ProjectEventPoliciesTab({
     }
   };
 
+  const handlePolicySubmit = async (
+    data: PolicyFormData,
+    existingPolicy?: EventPolicyResponse
+  ) => {
+    setIsSubmitting(true);
+    try {
+      if (existingPolicy?.id) {
+        const input: EventPolicyUpdatedInput = {
+          policy_id: existingPolicy.id,
+          name: data.name,
+          description: data.description || "",
+          event_types: data.event_types,
+          action_type: data.action_type,
+          recipient_user_ids: data.recipient_user_ids,
+          recipient_project_role_ids: data.recipient_project_role_ids,
+          recipient_org_role_ids: data.recipient_org_role_ids,
+          recipient_dynamic: data.recipient_dynamic,
+          enabled: data.enabled,
+        };
+        await createEventPolicyUpdatedEvent(projectId, input);
+        toast({ title: "Policy update requested" });
+      } else {
+        const input: EventPolicyAddedInput = {
+          name: data.name,
+          description: data.description || "",
+          event_types: data.event_types,
+          action_type: data.action_type,
+          recipient_user_ids: data.recipient_user_ids,
+          recipient_project_role_ids: data.recipient_project_role_ids,
+          recipient_org_role_ids: data.recipient_org_role_ids,
+          recipient_dynamic: data.recipient_dynamic,
+          enabled: data.enabled,
+        };
+        await createEventPolicyAddedEvent(projectId, input);
+        toast({ title: "Policy creation requested" });
+      }
+      queryClient.invalidateQueries({
+        queryKey: getGetProjectsIdPoliciesQueryKey(projectId),
+      });
+    } catch {
+      toast({
+        title: existingPolicy?.id
+          ? "Failed to update policy"
+          : "Failed to create policy",
+        variant: "destructive",
+      });
+      throw new Error("Event creation failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -108,12 +171,17 @@ export function ProjectEventPoliciesTab({
                 New Policy
               </Button>
             </DialogTrigger>
-            <ProjectPolicyFormDialog
-              projectId={projectId}
+            <PolicyFormDialog
               eventTypes={eventTypes}
               projectRoles={projectRoles}
               orgRoles={orgRoles}
               onClose={() => setCreateDialogOpen(false)}
+              onSubmit={async (data) => {
+                await handlePolicySubmit(data);
+                setCreateDialogOpen(false);
+              }}
+              title="Create Project Event Policy"
+              isSubmitting={isSubmitting}
             />
           </Dialog>
         ) : (
@@ -180,13 +248,18 @@ export function ProjectEventPoliciesTab({
         onOpenChange={(open) => !open && setEditPolicy(null)}
       >
         {editPolicy && (
-          <ProjectPolicyFormDialog
-            projectId={projectId}
+          <PolicyFormDialog
             eventTypes={eventTypes}
             projectRoles={projectRoles}
             orgRoles={orgRoles}
             policy={editPolicy}
             onClose={() => setEditPolicy(null)}
+            onSubmit={async (data) => {
+              await handlePolicySubmit(data, editPolicy);
+              setEditPolicy(null);
+            }}
+            title="Update Project Event Policy"
+            isSubmitting={isSubmitting}
           />
         )}
       </Dialog>

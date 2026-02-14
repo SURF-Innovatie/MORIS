@@ -6,7 +6,7 @@ import { Bell, CheckCircle2, ClipboardCheck, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { ApprovalModal } from "@/components/project-edit/ApprovalModal";
-import { EMPTY_UUID } from "@/lib/utils";
+import { EMPTY_UUID } from "@/lib/constants";
 
 interface NotificationListProps {
   limit?: number;

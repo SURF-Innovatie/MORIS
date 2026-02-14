@@ -7,8 +7,10 @@ import {
   getGetOrganisationsIdPoliciesQueryKey,
   useGetOrganisationNodesIdOrganisationRoles,
   useGetOrganisationNodesIdRoles,
+  usePostOrganisationsIdPolicies,
+  usePutPoliciesId,
 } from "@api/moris";
-import { EventPolicyResponse } from "@api/model";
+import { EventPolicyRequest, EventPolicyResponse } from "@api/model";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Loader2, Plus } from "lucide-react";
@@ -16,7 +18,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PolicyCard } from "./PolicyCard";
-import { PolicyFormDialog } from "./PolicyFormDialog";
+import {
+  PolicyFormDialog,
+  PolicyFormData,
+} from "@/components/shared/PolicyFormDialog";
 
 interface EventPoliciesTabProps {
   nodeId: string;
@@ -58,6 +63,61 @@ export function EventPoliciesTab({ nodeId }: EventPoliciesTabProps) {
     },
   });
 
+  const createMutation = usePostOrganisationsIdPolicies();
+  const updateMutation = usePutPoliciesId();
+  const isMutating = createMutation.isPending || updateMutation.isPending;
+
+  const handlePolicySubmit = async (
+    data: PolicyFormData,
+    existingPolicy?: EventPolicyResponse
+  ) => {
+    const request: EventPolicyRequest = {
+      name: data.name,
+      description: data.description || undefined,
+      event_types: data.event_types,
+      action_type: data.action_type,
+      recipient_dynamic:
+        data.recipient_dynamic.length > 0 ? data.recipient_dynamic : undefined,
+      recipient_user_ids:
+        data.recipient_user_ids.length > 0
+          ? data.recipient_user_ids
+          : undefined,
+      recipient_org_role_ids:
+        data.recipient_org_role_ids.length > 0
+          ? data.recipient_org_role_ids
+          : undefined,
+      recipient_project_role_ids:
+        data.recipient_project_role_ids.length > 0
+          ? data.recipient_project_role_ids
+          : undefined,
+      enabled: data.enabled,
+    };
+
+    try {
+      if (existingPolicy?.id) {
+        await updateMutation.mutateAsync({
+          id: existingPolicy.id,
+          data: request,
+        });
+        toast({ title: "Policy updated" });
+      } else {
+        await createMutation.mutateAsync({ id: nodeId, data: request });
+        toast({ title: "Policy created" });
+      }
+      queryClient.invalidateQueries({
+        queryKey: getGetOrganisationsIdPoliciesQueryKey(nodeId),
+      });
+    } catch {
+      toast({
+        title: existingPolicy?.id
+          ? "Failed to update policy"
+          : "Failed to create policy",
+        variant: "destructive",
+      });
+      throw new Error("Mutation failed");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -88,11 +148,15 @@ export function EventPoliciesTab({ nodeId }: EventPoliciesTabProps) {
             </Button>
           </DialogTrigger>
           <PolicyFormDialog
-            nodeId={nodeId}
             eventTypes={eventTypes}
             orgRoles={orgRoles}
             projectRoles={projectRoles}
             onClose={() => setCreateDialogOpen(false)}
+            onSubmit={async (data) => {
+              await handlePolicySubmit(data);
+              setCreateDialogOpen(false);
+            }}
+            isSubmitting={isMutating}
           />
         </Dialog>
       </div>
@@ -155,12 +219,16 @@ export function EventPoliciesTab({ nodeId }: EventPoliciesTabProps) {
       >
         {editPolicy && (
           <PolicyFormDialog
-            nodeId={nodeId}
             eventTypes={eventTypes}
             orgRoles={orgRoles}
             projectRoles={projectRoles}
             policy={editPolicy}
             onClose={() => setEditPolicy(null)}
+            onSubmit={async (data) => {
+              await handlePolicySubmit(data, editPolicy);
+              setEditPolicy(null);
+            }}
+            isSubmitting={isMutating}
           />
         )}
       </Dialog>

@@ -26,7 +26,7 @@ import { ProductsTab } from "@/components/project-edit/ProductsTab";
 import { ProjectEventPoliciesTab } from "@/components/project-edit/ProjectEventPoliciesTab";
 import { projectFormSchema } from "@/lib/schemas/project";
 import { EMPTY_UUID } from "@/lib/constants";
-import { ProjectAccessProvider } from "@/context/ProjectAccessContext";
+import { ProjectAccessProvider } from "@/contexts/ProjectAccessContext";
 
 export default function ProjectEditRoute() {
   return (

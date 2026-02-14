@@ -16,13 +16,13 @@ interface AccessProviderProps {
   isError?: boolean;
 }
 
-export function AccessProvider({ 
-  children, 
-  allowedEvents = [], 
+export function AccessProvider({
+  children,
+  allowedEvents = [],
   isLoading = false,
-  isError = false 
+  isError = false
 }: AccessProviderProps) {
-  
+
   const value = useMemo(() => {
     return {
       allowedEvents,

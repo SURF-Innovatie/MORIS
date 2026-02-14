@@ -1,12 +1,5 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import {
-  usePostOrganisationsIdPolicies,
-  usePutPoliciesId,
-  getGetOrganisationsIdPoliciesQueryKey,
-} from "@api/moris";
-import {
-  EventPolicyRequest,
   EventPolicyResponse,
   EventTypeInfo,
   OrganisationRoleResponse,
@@ -33,7 +26,6 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Bell, ShieldCheck } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 
 const DYNAMIC_RECIPIENTS = [
   { value: "project_members", label: "All Project Members" },
@@ -41,22 +33,38 @@ const DYNAMIC_RECIPIENTS = [
   { value: "org_admins", label: "Organisation Admins" },
 ];
 
-interface PolicyFormDialogProps {
-  nodeId: string;
+export interface PolicyFormData {
+  name: string;
+  description: string;
+  event_types: string[];
+  action_type: "notify" | "request_approval";
+  recipient_dynamic: string[];
+  recipient_user_ids: string[];
+  recipient_org_role_ids: string[];
+  recipient_project_role_ids: string[];
+  enabled: boolean;
+}
+
+export interface PolicyFormDialogProps {
   eventTypes: EventTypeInfo[];
   orgRoles: OrganisationRoleResponse[];
   projectRoles: ProjectRoleResponse[];
   policy?: EventPolicyResponse;
   onClose: () => void;
+  onSubmit: (data: PolicyFormData) => Promise<void>;
+  title?: string;
+  isSubmitting?: boolean;
 }
 
 export function PolicyFormDialog({
-  nodeId,
   eventTypes,
   orgRoles,
   projectRoles,
   policy,
   onClose,
+  onSubmit,
+  title,
+  isSubmitting = false,
 }: PolicyFormDialogProps) {
   const isEditing = !!policy;
 
@@ -82,61 +90,19 @@ export function PolicyFormDialog({
   );
   const [enabled, setEnabled] = useState(policy?.enabled ?? true);
 
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  const createMutation = usePostOrganisationsIdPolicies({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: getGetOrganisationsIdPoliciesQueryKey(nodeId),
-        });
-        toast({ title: "Policy created" });
-        onClose();
-      },
-      onError: () => {
-        toast({ title: "Failed to create policy", variant: "destructive" });
-      },
-    },
-  });
-
-  const updateMutation = usePutPoliciesId({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: getGetOrganisationsIdPoliciesQueryKey(nodeId),
-        });
-        toast({ title: "Policy updated" });
-        onClose();
-      },
-      onError: () => {
-        toast({ title: "Failed to update policy", variant: "destructive" });
-      },
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const data: EventPolicyRequest = {
+    await onSubmit({
       name,
-      description: description || undefined,
+      description,
       event_types: selectedEventTypes,
       action_type: actionType,
-      recipient_dynamic:
-        dynamicRecipients.length > 0 ? dynamicRecipients : undefined,
-      recipient_user_ids: specificUsers.length > 0 ? specificUsers : undefined,
-      recipient_org_role_ids:
-        selectedOrgRoles.length > 0 ? selectedOrgRoles : undefined,
-      recipient_project_role_ids:
-        selectedProjectRoles.length > 0 ? selectedProjectRoles : undefined,
+      recipient_dynamic: dynamicRecipients,
+      recipient_user_ids: specificUsers,
+      recipient_org_role_ids: selectedOrgRoles,
+      recipient_project_role_ids: selectedProjectRoles,
       enabled,
-    };
-
-    if (isEditing && policy?.id) {
-      updateMutation.mutate({ id: policy.id, data });
-    } else {
-      createMutation.mutate({ id: nodeId, data });
-    }
+    });
   };
 
   const toggleEventType = (type: string) => {
@@ -167,14 +133,12 @@ export function PolicyFormDialog({
     );
   };
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
+  const defaultTitle = isEditing ? "Edit Event Policy" : "Create Event Policy";
 
   return (
     <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle>
-          {isEditing ? "Edit Event Policy" : "Create Event Policy"}
-        </DialogTitle>
+        <DialogTitle>{title || defaultTitle}</DialogTitle>
       </DialogHeader>
       <form
         onSubmit={handleSubmit}
@@ -253,7 +217,7 @@ export function PolicyFormDialog({
             </Select>
           </div>
 
-          <div className="border rounded-lg p-6 space-y-6 ">
+          <div className="border rounded-lg p-6 space-y-6">
             <h3 className="font-semibold text-lg">Recipients</h3>
 
             <div className="space-y-4">
@@ -363,9 +327,9 @@ export function PolicyFormDialog({
           </Button>
           <Button
             type="submit"
-            disabled={!name || selectedEventTypes.length === 0 || isPending}
+            disabled={!name || selectedEventTypes.length === 0 || isSubmitting}
           >
-            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isEditing ? "Save Changes" : "Create Policy"}
           </Button>
         </DialogFooter>

@@ -94,7 +94,7 @@ export const OrganisationTreeView = ({
   }, [selectedRootId]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const renderCustomNode = ({ nodeDatum, toggleNode }: any) => {
+  const renderCustomNode = ({ nodeDatum }: any) => {
     // nodeDatum is the data object we passed in, plus internal d3 stuff
     const hasChildren = nodeDatum.children && nodeDatum.children.length > 0;
     const isLeaf = !hasChildren;
