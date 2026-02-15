@@ -32,7 +32,7 @@ func (Person) Fields() []ent.Field {
 		field.String("description").
 			Optional().
 			Nillable(),
-		field.JSON("org_custom_fields", map[string]interface{}{}).
+		field.JSON("org_custom_fields", map[string]any{}).
 			Optional().
 			Annotations(entoas.Skip(true)),
 	}

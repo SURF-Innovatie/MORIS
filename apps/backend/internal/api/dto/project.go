@@ -75,7 +75,7 @@ type ProjectResponse struct {
 	OwningOrgNode OrganisationResponse    `json:"owning_org_node"`
 	Members       []ProjectMemberResponse `json:"members"`
 	Products      []ProductResponse       `json:"products"`
-	CustomFields  map[string]interface{}  `json:"custom_fields"`
+	CustomFields  map[string]any          `json:"custom_fields"`
 }
 
 func (r ProjectResponse) FromEntity(d *queries.ProjectDetails) ProjectResponse {

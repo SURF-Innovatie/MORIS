@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 )
 
 type RORItem struct {
@@ -105,10 +106,5 @@ func SearchROR(query string) ([]RORItem, error) {
 }
 
 func containsResult(slice []string, val string) bool {
-	for _, item := range slice {
-		if item == val {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(slice, val)
 }

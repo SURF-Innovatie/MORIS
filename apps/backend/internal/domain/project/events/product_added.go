@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
 	"github.com/google/uuid"
@@ -55,10 +56,8 @@ func DecideProductAdded(
 		return nil, errors.New("current project is required")
 	}
 
-	for _, x := range cur.ProductIDs {
-		if x == in.ProductID {
-			return nil, fmt.Errorf("product %s already exists in project %s", in.ProductID, cur.Id)
-		}
+	if slices.Contains(cur.ProductIDs, in.ProductID) {
+		return nil, fmt.Errorf("product %s already exists in project %s", in.ProductID, cur.Id)
 	}
 
 	base := NewBase(projectID, actor, status)

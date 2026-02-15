@@ -184,8 +184,8 @@ func main() {
 
 				// Generate Function Name
 				funcName := structName
-				if strings.HasSuffix(structName, "Input") {
-					funcName = strings.TrimSuffix(structName, "Input")
+				if before, ok0 := strings.CutSuffix(structName, "Input"); ok0 {
+					funcName = before
 				}
 				enumKey := funcName
 				funcName += "Event"

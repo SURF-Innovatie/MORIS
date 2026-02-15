@@ -258,7 +258,7 @@ func (e *evaluator) getFieldValue(obj any, fieldName string) any {
 	}
 
 	v := reflect.ValueOf(obj)
-	if v.Kind() == reflect.Ptr {
+	if v.Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 	if v.Kind() != reflect.Struct {

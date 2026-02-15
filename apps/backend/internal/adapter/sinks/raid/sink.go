@@ -17,7 +17,7 @@ type RAiDSink struct {
 
 // NewRAiDSink creates a new RAiD sink adapter.
 // The client parameter is ignored in this file-based version.
-func NewRAiDSink(_ interface{}, opts ...RAiDMapperOption) *RAiDSink {
+func NewRAiDSink(_ any, opts ...RAiDMapperOption) *RAiDSink {
 	return &RAiDSink{
 		mapper: NewRAiDMapper(opts...),
 	}

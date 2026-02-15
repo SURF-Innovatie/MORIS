@@ -76,7 +76,7 @@ func (c *Client) authenticate(ctx context.Context) error {
 }
 
 // doRequest performs an HTTP request with automatic token injection and retry on 401.
-func (c *Client) doRequest(ctx context.Context, method, path string, payload interface{}, retry bool) (*http.Response, error) {
+func (c *Client) doRequest(ctx context.Context, method, path string, payload any, retry bool) (*http.Response, error) {
 	reqUrl := fmt.Sprintf("%s%s", strings.TrimRight(c.options.BaseURL, "/"), path)
 
 	var body io.Reader

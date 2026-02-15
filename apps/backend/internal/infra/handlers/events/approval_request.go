@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"slices"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
 	"github.com/SURF-Innovatie/MORIS/ent/notification"
@@ -69,13 +70,7 @@ func (h *ApprovalRequestNotificationHandler) Handle(ctx context.Context, e event
 	}
 
 	for _, em := range effs {
-		hasAdminRights := false
-		for _, p := range em.Permissions {
-			if p == "manage_details" {
-				hasAdminRights = true
-				break
-			}
-		}
+		hasAdminRights := slices.Contains(em.Permissions, "manage_details")
 		if !hasAdminRights {
 			continue
 		}

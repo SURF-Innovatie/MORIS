@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { z } from "zod";
 import { Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ const createRoleSchema = z.object({
     .min(1, "Key is required")
     .regex(
       /^[a-z0-9_-]+$/,
-      "Key must be lowercase alphanumeric, dashes, or underscores"
+      "Key must be lowercase alphanumeric, dashes, or underscores",
     ),
   name: z.string().min(1, "Name is required"),
 });
@@ -51,7 +51,7 @@ export const AddProjectRoleDialog = ({
     usePostOrganisationNodesIdRoles();
 
   const form = useForm<z.infer<typeof createRoleSchema>>({
-    resolver: zodResolver(createRoleSchema),
+    resolver: standardSchemaResolver(createRoleSchema),
     defaultValues: {
       key: "",
       name: "",

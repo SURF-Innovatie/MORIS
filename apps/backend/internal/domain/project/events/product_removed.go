@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
 	"github.com/google/uuid"
@@ -60,13 +61,7 @@ func DecideProductRemoved(
 		return nil, errors.New("current project is required")
 	}
 
-	exist := false
-	for _, x := range cur.ProductIDs {
-		if x == in.ProductID {
-			exist = true
-			break
-		}
-	}
+	exist := slices.Contains(cur.ProductIDs, in.ProductID)
 	if !exist {
 		return nil, fmt.Errorf("product %s not found for project %s", in.ProductID, cur.Id)
 	}

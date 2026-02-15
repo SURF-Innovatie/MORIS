@@ -97,5 +97,5 @@ func (r CustomFieldDefinitionResponse) FromEntity(e customfield.Definition) Cust
 }
 
 type MemberCustomFieldUpdateValues struct {
-	Values map[string]interface{} `json:"values"`
+	Values map[string]any `json:"values"`
 }

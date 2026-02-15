@@ -353,12 +353,12 @@ func toPermissions(s []string) []rbac.Permission {
 }
 
 // Helper to safely get custom fields for a node
-func getCustomFieldsForNode(fields map[string]interface{}, nodeID uuid.UUID) map[string]interface{} {
+func getCustomFieldsForNode(fields map[string]any, nodeID uuid.UUID) map[string]any {
 	if fields == nil {
 		return nil
 	}
 	if v, ok := fields[nodeID.String()]; ok {
-		if m, ok := v.(map[string]interface{}); ok {
+		if m, ok := v.(map[string]any); ok {
 			return m
 		}
 	}

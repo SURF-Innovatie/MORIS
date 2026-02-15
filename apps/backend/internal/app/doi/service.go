@@ -88,7 +88,7 @@ type cslItem struct {
 		Name   string `json:"name"` // Sometimes used in JSON-LD
 	} `json:"author"`
 	Issued struct {
-		DateParts [][]interface{} `json:"date-parts"` // e.g. [[2021, 1, 15]]
+		DateParts [][]any `json:"date-parts"` // e.g. [[2021, 1, 15]]
 	} `json:"issued"`
 }
 
@@ -142,7 +142,7 @@ func (s *service) parseCSLJSON(r io.Reader, originalDOI string) (*dto.Work, erro
 
 // JSON-LD (Schema.org) structure generic map since it varies
 func (s *service) parseJSONLD(r io.Reader, originalDOI string) (*dto.Work, error) {
-	var data map[string]interface{}
+	var data map[string]any
 	if err := json.NewDecoder(r).Decode(&data); err != nil {
 		return nil, fmt.Errorf("failed to decode JSON-LD: %w", err)
 	}
@@ -161,7 +161,7 @@ func (s *service) parseJSONLD(r io.Reader, originalDOI string) (*dto.Work, error
 	// Type
 	if t, ok := data["@type"].(string); ok {
 		w.Type = mapSchemaType(t)
-	} else if tList, ok := data["@type"].([]interface{}); ok && len(tList) > 0 {
+	} else if tList, ok := data["@type"].([]any); ok && len(tList) > 0 {
 		if tStr, ok := tList[0].(string); ok {
 			w.Type = mapSchemaType(tStr)
 		}
@@ -170,7 +170,7 @@ func (s *service) parseJSONLD(r io.Reader, originalDOI string) (*dto.Work, error
 	}
 
 	// Publisher
-	if pub, ok := data["publisher"].(map[string]interface{}); ok {
+	if pub, ok := data["publisher"].(map[string]any); ok {
 		if name, ok := pub["name"].(string); ok {
 			w.Publisher = name
 		}

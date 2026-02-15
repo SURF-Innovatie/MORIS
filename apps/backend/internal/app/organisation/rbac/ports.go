@@ -32,5 +32,5 @@ type EffectiveMembership struct {
 	HasAdminRights bool
 
 	Person       identity.Person
-	CustomFields map[string]interface{}
+	CustomFields map[string]any
 }

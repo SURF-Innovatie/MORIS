@@ -37,7 +37,7 @@ func (e CustomFieldValueSet) String() string {
 
 func (e CustomFieldValueSet) Apply(p *project.Project) {
 	if p.CustomFields == nil {
-		p.CustomFields = make(map[string]interface{})
+		p.CustomFields = make(map[string]any)
 	}
 	p.CustomFields[e.DefinitionID] = e.Value
 }

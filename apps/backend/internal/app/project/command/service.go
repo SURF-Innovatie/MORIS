@@ -115,7 +115,7 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*p
 
 	if req.Type == events2.ProjectStartedType {
 		// Parse input safely using json encoding
-		var inputMap map[string]interface{}
+		var inputMap map[string]any
 		if err := json.Unmarshal(req.Input, &inputMap); err == nil {
 			if strID, ok := inputMap["owning_org_node_id"].(string); ok {
 				orgID, err := uuid.Parse(strID)
