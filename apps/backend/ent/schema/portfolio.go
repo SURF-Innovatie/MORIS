@@ -22,6 +22,7 @@ func (Portfolio) Fields() []ent.Field {
 		field.Bool("show_orcid").Default(true),
 		field.JSON("pinned_project_ids", []uuid.UUID{}).Optional(),
 		field.JSON("pinned_product_ids", []uuid.UUID{}).Optional(),
+		field.JSON("recent_project_ids", []uuid.UUID{}).Optional(),
 	}
 }
 

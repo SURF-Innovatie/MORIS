@@ -1,14 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import {
-  Search,
-  Plus,
-  Bell,
-  Menu,
-  LogOut,
-  Settings,
-  User,
-  Star,
-} from "lucide-react";
+import { Search, Plus, Bell, Menu, LogOut, Settings, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -65,9 +56,6 @@ export const GlobalHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
 
         {/* Logo */}
         <Link to="/dashboard" className="flex items-center gap-2 font-semibold">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Star className="h-5 w-5 fill-current" />
-          </div>
           <span className="hidden font-display text-lg tracking-tight sm:inline-block">
             MORIS
           </span>

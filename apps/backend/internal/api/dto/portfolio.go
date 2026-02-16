@@ -25,6 +25,7 @@ type PortfolioResponse struct {
 	ShowOrcid        bool        `json:"show_orcid"`
 	PinnedProjectIDs []uuid.UUID `json:"pinned_project_ids"`
 	PinnedProductIDs []uuid.UUID `json:"pinned_product_ids"`
+	RecentProjectIDs []uuid.UUID `json:"recent_project_ids"`
 }
 
 func (r PortfolioResponse) FromEntity(e portfolio.Portfolio) PortfolioResponse {
@@ -38,5 +39,6 @@ func (r PortfolioResponse) FromEntity(e portfolio.Portfolio) PortfolioResponse {
 		ShowOrcid:        e.ShowOrcid,
 		PinnedProjectIDs: e.PinnedProjectIDs,
 		PinnedProductIDs: e.PinnedProductIDs,
+		RecentProjectIDs: e.RecentProjectIDs,
 	}
 }

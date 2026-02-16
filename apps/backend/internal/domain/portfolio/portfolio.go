@@ -15,6 +15,7 @@ type Portfolio struct {
 	ShowOrcid        bool
 	PinnedProjectIDs []uuid.UUID
 	PinnedProductIDs []uuid.UUID
+	RecentProjectIDs []uuid.UUID
 }
 
 func (p *Portfolio) FromEnt(row *ent.Portfolio) *Portfolio {
@@ -28,5 +29,6 @@ func (p *Portfolio) FromEnt(row *ent.Portfolio) *Portfolio {
 		ShowOrcid:        row.ShowOrcid,
 		PinnedProjectIDs: row.PinnedProjectIds,
 		PinnedProductIDs: row.PinnedProductIds,
+		RecentProjectIDs: row.RecentProjectIds,
 	}
 }

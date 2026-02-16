@@ -24,6 +24,7 @@ const SurfconextCallbackRoute = lazy(
 );
 const ProtectedRoute = lazy(() => import("@/routes/protected-route"));
 const InboxRoute = lazy(() => import("@/routes/inbox"));
+const ActivityRoute = lazy(() => import("@/routes/activity"));
 const ProjectsRoute = lazy(() => import("@/routes/projects"));
 const ProductsRoute = lazy(() => import("@/routes/products"));
 const AdminUsersRoute = lazy(() => import("@/routes/admin-users"));
@@ -49,17 +50,32 @@ const MultiRoleManagementRoute = lazy(() =>
   })),
 );
 
-const ProjectLayout = lazy(() =>
-  import("@/components/layout").then((m) => ({ default: m.ProjectLayout })),
+const ProjectLayoutWrapper = lazy(() =>
+  import("@/routes/project-layout-wrapper"),
 );
 const ProjectOverview = lazy(() =>
   import("@/features/project/pages/ProjectOverview").then((m) => ({
     default: m.ProjectOverview,
   })),
 );
-const ProjectEditPage = lazy(() =>
-  import("@/features/project/pages/ProjectEdit").then((m) => ({
-    default: m.ProjectEdit,
+const ProjectTeamTab = lazy(() =>
+  import("@/features/project/pages/ProjectTeamTab").then((m) => ({
+    default: m.ProjectTeamTab,
+  })),
+);
+const ProjectProductsTab = lazy(() =>
+  import("@/features/project/pages/ProjectProductsTab").then((m) => ({
+    default: m.ProjectProductsTab,
+  })),
+);
+const ProjectActivityTab = lazy(() =>
+  import("@/features/project/pages/ProjectActivityTab").then((m) => ({
+    default: m.ProjectActivityTab,
+  })),
+);
+const ProjectSettingsTab = lazy(() =>
+  import("@/features/project/pages/ProjectSettingsTab").then((m) => ({
+    default: m.ProjectSettingsTab,
   })),
 );
 
@@ -93,6 +109,10 @@ export function createAppRouter() {
             {
               path: "inbox",
               element: <InboxRoute />,
+            },
+            {
+              path: "activity",
+              element: <ActivityRoute />,
             },
             {
               path: "projects",
@@ -166,15 +186,32 @@ export function createAppRouter() {
           children: [
             {
               path: ":id",
-              element: <ProjectLayout />,
+              element: <ProjectLayoutWrapper />,
               children: [
                 {
                   index: true,
                   element: <ProjectOverview />,
                 },
                 {
+                  path: "team",
+                  element: <ProjectTeamTab />,
+                },
+                {
+                  path: "products",
+                  element: <ProjectProductsTab />,
+                },
+                {
+                  path: "activity",
+                  element: <ProjectActivityTab />,
+                },
+                {
+                  path: "settings",
+                  element: <ProjectSettingsTab />,
+                },
+                {
+                  // Redirect old /edit route to /settings for backward compatibility
                   path: "edit",
-                  element: <ProjectEditPage />,
+                  element: <Navigate to="settings" replace />,
                 },
               ],
             },

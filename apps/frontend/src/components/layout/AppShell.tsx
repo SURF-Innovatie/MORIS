@@ -9,7 +9,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { AppNavigation } from "./AppNavigation";
-import { Star } from "lucide-react";
 
 export const AppShell = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -20,7 +19,7 @@ export const AppShell = () => {
       <div className="flex min-h-screen flex-col bg-background">
         <GlobalHeader onMenuClick={() => setIsSidebarOpen(true)} />
 
-        <main className="flex-1 flex flex-col">
+        <main className="flex-1 flex flex-col container mx-auto px-4 py-6 md:px-6 lg:px-8">
           <Outlet />
         </main>
 
@@ -28,9 +27,6 @@ export const AppShell = () => {
           <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0">
             <SheetHeader className="p-4 border-b">
               <SheetTitle className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Star className="h-5 w-5 fill-current" />
-                </div>
                 <span className="font-display text-lg tracking-tight">
                   MORIS
                 </span>

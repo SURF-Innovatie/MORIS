@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { EventRenderer } from "@/components/events/EventRenderer";
 import { ProjectEvent } from "@/api/events";
+import { EmptyState } from "@/components/composition";
 
 interface ChangelogTabProps {
   projectId: string;
@@ -91,10 +92,11 @@ export function ChangelogTab({ projectId }: ChangelogTabProps) {
             </div>
           ))}
           {events.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
-              <History className="mb-2 h-8 w-8 opacity-20" />
-              <p>No history available.</p>
-            </div>
+            <EmptyState
+              icon={History}
+              title="No history available"
+              description="Project events will appear here once actions are taken"
+            />
           )}
         </div>
       </CardContent>

@@ -49,6 +49,7 @@ func (r *EntRepo) Upsert(ctx context.Context, port portfolio.Portfolio) (*portfo
 			SetShowOrcid(port.ShowOrcid).
 			SetPinnedProjectIds(port.PinnedProjectIDs).
 			SetPinnedProductIds(port.PinnedProductIDs).
+			SetRecentProjectIds(port.RecentProjectIDs).
 			Save(ctx)
 		if err != nil {
 			return nil, err
@@ -64,6 +65,7 @@ func (r *EntRepo) Upsert(ctx context.Context, port portfolio.Portfolio) (*portfo
 		SetShowOrcid(port.ShowOrcid).
 		SetPinnedProjectIds(port.PinnedProjectIDs).
 		SetPinnedProductIds(port.PinnedProductIDs).
+		SetRecentProjectIds(port.RecentProjectIDs).
 		Save(ctx)
 	if err != nil {
 		return nil, err

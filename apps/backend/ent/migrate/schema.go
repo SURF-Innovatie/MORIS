@@ -299,6 +299,7 @@ var (
 		{Name: "show_orcid", Type: field.TypeBool, Default: true},
 		{Name: "pinned_project_ids", Type: field.TypeJSON, Nullable: true},
 		{Name: "pinned_product_ids", Type: field.TypeJSON, Nullable: true},
+		{Name: "recent_project_ids", Type: field.TypeJSON, Nullable: true},
 		{Name: "person_id", Type: field.TypeUUID, Unique: true},
 	}
 	// PortfoliosTable holds the schema information for the "portfolios" table.
@@ -309,7 +310,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "portfolios_persons_portfolio",
-				Columns:    []*schema.Column{PortfoliosColumns[8]},
+				Columns:    []*schema.Column{PortfoliosColumns[9]},
 				RefColumns: []*schema.Column{PersonsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

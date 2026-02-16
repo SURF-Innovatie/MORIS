@@ -21,7 +21,7 @@ export const CompactOrganisationList = () => {
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between px-2">
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-          Your Teams
+          Organizations
         </h4>
       </div>
 

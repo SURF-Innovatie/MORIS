@@ -15,27 +15,25 @@ import {
   createOwningOrgNodeChangedEvent,
   createCustomFieldValueSetEvent,
 } from "@/api/events";
-import { applyPendingEvents } from "@/lib/events/projection";
 
 import { GeneralTab } from "@/components/project-edit/GeneralTab";
-import { PeopleTab } from "@/components/project-edit/PeopleTab";
-import { ChangelogTab } from "@/components/project-edit/ChangelogTab";
-import { ProductsTab } from "@/components/project-edit/ProductsTab";
 import { ProjectEventPoliciesTab } from "@/components/project-edit/ProjectEventPoliciesTab";
 import { projectFormSchema } from "@/lib/schemas/project";
 import { EMPTY_UUID } from "@/lib/constants";
-import { ProjectAccessProvider } from "@/contexts/ProjectAccessContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { applyPendingEvents } from "@/lib/events/projection";
 
-export const ProjectEdit = () => {
-  return (
-    <ProjectAccessProvider>
-      <ProjectEditForm />
-    </ProjectAccessProvider>
-  );
-};
-
-function ProjectEditForm() {
+/**
+ * ProjectSettingsTab - Admin settings for project configuration
+ *
+ * This component provides admin controls for project settings with two sub-tabs:
+ * - General: Basic project information (title, description, dates, organization, custom fields)
+ * - Policies: Event approval policies configuration
+ *
+ * Uses URL params for sub-tab navigation (?tab=general or ?tab=policies)
+ * Only accessible to users with edit permissions (enforced at route level)
+ */
+export function ProjectSettingsTab() {
   const { id } = useParams();
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -114,7 +112,6 @@ function ProjectEditForm() {
   }, [refetchPending]);
 
   async function onSubmit(values: z.infer<typeof projectFormSchema>) {
-    // ... (Same submission logic as original, copied for brevity but ideally shared)
     if (!projectedProject) return;
 
     setIsSaving(true);
@@ -136,10 +133,10 @@ function ProjectEditForm() {
       const currentStartDate = projectedProject.start_date
         ? new Date(projectedProject.start_date).toISOString()
         : null;
-      if (values.startDate.toISOString() !== currentStartDate) {
+      if (values.startDate?.toISOString() !== currentStartDate) {
         promises.push(
           createStartDateChangedEvent(id!, {
-            start_date: values.startDate.toISOString(),
+            start_date: values.startDate!.toISOString(),
           }),
         );
       }
@@ -147,10 +144,10 @@ function ProjectEditForm() {
       const currentEndDate = projectedProject.end_date
         ? new Date(projectedProject.end_date).toISOString()
         : null;
-      if (values.endDate.toISOString() !== currentEndDate) {
+      if (values.endDate?.toISOString() !== currentEndDate) {
         promises.push(
           createEndDateChangedEvent(id!, {
-            end_date: values.endDate.toISOString(),
+            end_date: values.endDate!.toISOString(),
           }),
         );
       }
@@ -218,6 +215,14 @@ function ProjectEditForm() {
     );
   }
 
+  if (!projectedProject) {
+    return (
+      <div className="flex h-64 items-center justify-center text-muted-foreground">
+        Project not found
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Tabs
@@ -225,16 +230,9 @@ function ProjectEditForm() {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        {/* Recreated Tabs List inside the page content if helpful, or rely on ProjectLayout tabs? 
-               ProjectLayout tabs are for top-level navigation (Overview, Edit, Team).
-               Inside "Edit", we might have sub-tabs like General, Policies, Changelog. 
-           */}
-        <TabsList className="grid w-full max-w-xl grid-cols-5">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="people">People</TabsTrigger>
-          <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="policies">Policies</TabsTrigger>
-          <TabsTrigger value="changelog">Changelog</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-4">
@@ -245,26 +243,6 @@ function ProjectEditForm() {
             project={projectedProject}
             pendingEvents={pendingEventsData?.events as any}
           />
-        </TabsContent>
-
-        <TabsContent value="people">
-          <PeopleTab
-            projectId={id!}
-            members={projectedProject?.members || []}
-            onRefresh={refetchProject}
-          />
-        </TabsContent>
-
-        <TabsContent value="products">
-          <ProductsTab
-            projectId={id!}
-            products={projectedProject?.products || []}
-            onRefresh={refetchProject}
-          />
-        </TabsContent>
-
-        <TabsContent value="changelog">
-          <ChangelogTab projectId={id!} />
         </TabsContent>
 
         <TabsContent value="policies">

@@ -46,6 +46,7 @@ import { ZenodoUploadDialog } from "@/components/products/ZenodoUploadDialog";
 import { ProductCard, getProductTypeLabel } from "../products/ProductCard";
 import { useAccess } from "@/contexts/AccessContext";
 import { Doi } from "@/lib/doi";
+import { EmptyState } from "@/components/composition";
 
 // Schema for the DOI search form
 const doiFormSchema = z.object({
@@ -351,8 +352,12 @@ export function ProductsTab({
           />
         ))}
         {products.length === 0 && (
-          <div className="col-span-full flex flex-col items-center justify-center p-8 text-center border rounded-lg border-dashed text-muted-foreground">
-            <p>No products added yet.</p>
+          <div className="col-span-full border rounded-lg border-dashed">
+            <EmptyState
+              title="No products added yet"
+              description="Add research outputs by importing from DOI or uploading to Zenodo"
+              size="sm"
+            />
           </div>
         )}
       </div>

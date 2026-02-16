@@ -125,6 +125,41 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	_ = httputil.WriteJSON(w, http.StatusOK, transform.ToDTOItem[dto.PortfolioResponse](*updated))
 }
 
+// TrackProjectAccess godoc
+// @Summary Track project access for current user
+// @Description Records that the current user accessed a project, updating their recent projects list
+// @Tags portfolio
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param project_id path string true "Project ID"
+// @Success 204 "project access tracked"
+// @Failure 400 {string} string "invalid project ID"
+// @Failure 500 {string} string "internal server error"
+// @Router /portfolio/track-access/{project_id} [post]
+func (h *Handler) TrackProjectAccess(w http.ResponseWriter, r *http.Request) {
+	projectIDStr := r.PathValue("project_id")
+	projectID, err := uuid.Parse(projectIDStr)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusBadRequest, "invalid project ID", nil)
+		return
+	}
+
+	u, err := h.currentUser.Current(r.Context())
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusUnauthorized, "unauthorized", nil)
+		return
+	}
+
+	err = h.svc.TrackProjectAccess(r.Context(), u.PersonID, projectID)
+	if err != nil {
+		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func defaultPortfolio(personID uuid.UUID) portfolio2.Portfolio {
 	return portfolio2.Portfolio{
 		PersonID:         personID,
@@ -132,5 +167,6 @@ func defaultPortfolio(personID uuid.UUID) portfolio2.Portfolio {
 		ShowOrcid:        true,
 		PinnedProjectIDs: []uuid.UUID{},
 		PinnedProductIDs: []uuid.UUID{},
+		RecentProjectIDs: []uuid.UUID{},
 	}
 }

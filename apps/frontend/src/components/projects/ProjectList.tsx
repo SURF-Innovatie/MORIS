@@ -147,7 +147,7 @@ export const ProjectList = ({ showCreateButton = true }: ProjectListProps) => {
               <Card
                 key={project.id}
                 className="group flex flex-col transition-all hover:shadow-md hover:border-primary/20"
-                onClick={() => navigate(`/projects/${project.id}/edit`)}
+                onClick={() => navigate(`/projects/${project.id}`)}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-4">
@@ -257,7 +257,7 @@ export const ProjectList = ({ showCreateButton = true }: ProjectListProps) => {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => navigate(`/projects/${project.id}/edit`)}
+                        onClick={() => navigate(`/projects/${project.id}`)}
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Button>

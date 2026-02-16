@@ -20,7 +20,7 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/composition";
 import { ProjectFields } from "@/components/project-form/ProjectFields";
 import { CustomFieldsRenderer } from "@/components/project-form/CustomFieldsRenderer";
 import { useAccess } from "@/contexts/AccessContext";
@@ -134,9 +134,12 @@ export function GeneralTab({
                 <CardTitle className="text-sm font-medium">
                   Organization
                   {pendingFields.owningOrg && (
-                    <Badge variant="secondary" className="ml-2 h-5 text-[10px]">
-                      Pending Approval
-                    </Badge>
+                    <StatusBadge
+                      status="pending"
+                      label="Pending Approval"
+                      size="xs"
+                      className="ml-2"
+                    />
                   )}
                 </CardTitle>
               </CardHeader>
