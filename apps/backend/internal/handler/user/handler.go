@@ -9,6 +9,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events/hydrator"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/httputil"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -16,12 +17,13 @@ import (
 )
 
 type Handler struct {
-	svc     user.Service
-	projSvc queries.Service
+	svc      user.Service
+	projSvc  queries.Service
+	hydrator *hydrator.Hydrator
 }
 
-func NewHandler(svc user.Service, projSvc queries.Service) *Handler {
-	return &Handler{svc: svc, projSvc: projSvc}
+func NewHandler(svc user.Service, projSvc queries.Service, h *hydrator.Hydrator) *Handler {
+	return &Handler{svc: svc, projSvc: projSvc, hydrator: h}
 }
 
 // CreateUser godoc
@@ -275,82 +277,35 @@ func (h *Handler) GetApprovedEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Collect related IDs
-	personIDs := make([]uuid.UUID, 0)
-	roleIDs := make([]uuid.UUID, 0)
-	productIDs := make([]uuid.UUID, 0)
-	creatorIDs := make([]uuid.UUID, 0)
-
-	for _, e := range apprEvents {
-		// Related IDs
-		if r, ok := e.(events.HasRelatedIDs); ok {
-			ids := r.RelatedIDs()
-			if ids.PersonID != nil {
-				personIDs = append(personIDs, *ids.PersonID)
-			}
-			if ids.ProjectRoleID != nil {
-				roleIDs = append(roleIDs, *ids.ProjectRoleID)
-			}
-			if ids.ProductID != nil {
-				productIDs = append(productIDs, *ids.ProductID)
-			}
-		}
-		// Creator ID
-		if c, ok := any(e).(interface{ CreatedByID() uuid.UUID }); ok {
-			cid := c.CreatedByID()
-			if cid != uuid.Nil {
-				creatorIDs = append(creatorIDs, cid)
-			}
-		}
-	}
-
-	// Batch fetch related entities
-	// We ignore errors here to allow partial success (rendering events without full details is better than failing)
-	personsMap, _ := h.svc.GetPeopleByIDs(r.Context(), lo.Uniq(personIDs))
-	rolesMap, _ := h.projSvc.GetProjectRolesByIDs(r.Context(), lo.Uniq(roleIDs))
-	productsMap, _ := h.projSvc.GetProductsByIDs(r.Context(), lo.Uniq(productIDs))
-	creatorsMap, _ := h.svc.GetPeopleByUserIDs(r.Context(), lo.Uniq(creatorIDs))
+	// Use hydrator for batch loading related entities
+	detailedEvents := h.hydrator.HydrateMany(r.Context(), apprEvents)
 
 	// Map to DTO
-	dtos := lo.Map(apprEvents, func(e events.Event, _ int) dto.Event {
-		proj, _ := h.projSvc.GetProject(r.Context(), e.AggregateID())
+	dtos := lo.Map(detailedEvents, func(de events.DetailedEvent, _ int) dto.Event {
+		proj, _ := h.projSvc.GetProject(r.Context(), de.Event.AggregateID())
 		projectTitle := ""
 		if proj != nil {
 			projectTitle = proj.Project.Title
 		}
 
-		dtoEvent := dto.Event{}.FromEntityWithTitle(e, projectTitle)
+		dtoEvent := dto.Event{}.FromEntityWithTitle(de.Event, projectTitle)
 
-		// Enrich
-		if r, ok := e.(events.HasRelatedIDs); ok {
-			ids := r.RelatedIDs()
-			if ids.PersonID != nil {
-				if p, ok := personsMap[*ids.PersonID]; ok {
-					pdto := transform.ToDTOItem[dto.PersonResponse](p)
-					dtoEvent.Person = &pdto
-				}
-			}
-			if ids.ProjectRoleID != nil {
-				if r, ok := rolesMap[*ids.ProjectRoleID]; ok {
-					rdto := transform.ToDTOItem[dto.ProjectRoleResponse](r)
-					dtoEvent.ProjectRole = &rdto
-				}
-			}
-			if ids.ProductID != nil {
-				if p, ok := productsMap[*ids.ProductID]; ok {
-					pdto := transform.ToDTOItem[dto.ProductResponse](p)
-					dtoEvent.Product = &pdto
-				}
-			}
+		// Enrich from DetailedEvent
+		if de.Person != nil {
+			pdto := transform.ToDTOItem[dto.PersonResponse](*de.Person)
+			dtoEvent.Person = &pdto
 		}
-
-		// Enrich Creator
-		if c, ok := any(e).(interface{ CreatedByID() uuid.UUID }); ok {
-			cid := c.CreatedByID()
-			if p, ok := creatorsMap[cid]; ok {
-				pdto := transform.ToDTOItem[dto.PersonResponse](p)
-				dtoEvent.Creator = &pdto
-			}
+		if de.ProjectRole != nil {
+			rdto := transform.ToDTOItem[dto.ProjectRoleResponse](*de.ProjectRole)
+			dtoEvent.ProjectRole = &rdto
+		}
+		if de.Product != nil {
+			pdto := transform.ToDTOItem[dto.ProductResponse](*de.Product)
+			dtoEvent.Product = &pdto
+		}
+		if de.Creator != nil {
+			pdto := transform.ToDTOItem[dto.PersonResponse](*de.Creator)
+			dtoEvent.Creator = &pdto
 		}
 
 		return dtoEvent

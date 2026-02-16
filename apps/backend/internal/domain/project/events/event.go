@@ -29,12 +29,19 @@ type Applier interface {
 	Apply(*project.Project)
 }
 
+// Notifier allows events to provide templated notification messages with variables.
+// Variables use {{variable}} syntax and are resolved from event/project context.
 type Notifier interface {
-	NotificationMessage() string
-}
-
-type ApprovalNotifier interface {
-	ApprovalMessage(projectTitle string) string
+	// NotificationTemplate returns a template string with {{variable}} placeholders
+	NotificationTemplate() string
+	// ApprovalRequestTemplate returns a template for approval requests
+	ApprovalRequestTemplate() string
+	// ApprovedTemplate returns a template for approved status updates
+	ApprovedTemplate() string
+	// RejectedTemplate returns a template for rejected status updates
+	RejectedTemplate() string
+	// NotificationVariables returns event-specific values for template substitution
+	NotificationVariables() map[string]string
 }
 
 type HasRelatedIDs interface {
@@ -55,36 +62,10 @@ type EventMeta struct {
 	Type         string
 	FriendlyName string
 
-	// CheckApproval determines if this event requires approval.
-	// Receives context, event, and ent client for DB access.
-	// If nil, defaults to false (no approval required).
-	CheckApproval func(ctx context.Context, event Event, client *ent.Client) bool
-
-	// CheckNotification determines if this event should send notifications.
-	// Receives context, event, and ent client for DB access.
-	// If nil, defaults to false (no notification).
-	CheckNotification func(ctx context.Context, event Event, client *ent.Client) bool
-
 	// CheckAllowed determines if the actor is allowed to trigger this event.
 	// Receives context, event, and ent client for DB access.
 	// If nil, defaults to true (all users allowed).
 	CheckAllowed func(ctx context.Context, event Event, client *ent.Client) bool
-}
-
-// NeedsApproval checks if this event requires approval.
-func (m EventMeta) NeedsApproval(ctx context.Context, event Event, client *ent.Client) bool {
-	if m.CheckApproval == nil {
-		return false
-	}
-	return m.CheckApproval(ctx, event, client)
-}
-
-// ShouldNotify checks if this event should send notifications.
-func (m EventMeta) ShouldNotify(ctx context.Context, event Event, client *ent.Client) bool {
-	if m.CheckNotification == nil {
-		return false
-	}
-	return m.CheckNotification(ctx, event, client)
 }
 
 // IsAllowed checks if the actor is allowed to trigger this event.

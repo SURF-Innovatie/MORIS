@@ -94,6 +94,30 @@ func (r *EntRepo) OrganisationNodeByID(ctx context.Context, id uuid.UUID) (organ
 	return transform.ToEntity[organisation.OrganisationNode](row), nil
 }
 
+func (r *EntRepo) OrganisationNodesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]organisation.OrganisationNode, error) {
+	out := make(map[uuid.UUID]organisation.OrganisationNode)
+	if len(ids) == 0 {
+		return out, nil
+	}
+
+	rows, err := r.cli.OrganisationNode.
+		Query().
+		Where(organisationent.IDIn(ids...)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return lo.Associate(rows, func(o *ent.OrganisationNode) (uuid.UUID, organisation.OrganisationNode) {
+		return o.ID, transform.ToEntity[organisation.OrganisationNode](o)
+	}), nil
+}
+
+// GetPeopleByIDs is an alias for PeopleByIDs to satisfy the hydrator.PersonLoader interface
+func (r *EntRepo) GetPeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]identity.Person, error) {
+	return r.PeopleByIDs(ctx, ids)
+}
+
 func (r *EntRepo) ProjectIDsForPerson(ctx context.Context, personID uuid.UUID) ([]uuid.UUID, error) {
 	evts, err := r.cli.Event.
 		Query().

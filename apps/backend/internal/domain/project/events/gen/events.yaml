@@ -1,0 +1,89 @@
+# Event Configuration
+# Used by gen/generator.go to produce *_gen.go files
+#
+# Relation Types:
+# - field_events: Simple value changes (string, time.Time, uuid.UUID)
+# - entity_ref_events: Changes to one-to-one entity references (UUID -> Entity)
+# - entity_collection_events: Add/remove for one-to-many entity references ([]UUID)
+#
+# Notification Templates:
+# - Use {{variable}} syntax for placeholders
+# - Available: {{project.Title}}, {{creator.Name}}, {{product.Name}}, {{person.Name}}, 
+#              {{org_node.Name}}, {{role.Name}}, {{event.FieldName}}
+
+# Tier 1: Simple field changes (no entity relation)
+field_events:
+  - type: "project.title_changed"
+    field: Title
+    field_type: string
+    json_key: title
+    friendly_name: "Title Change"
+    no_op_on_empty: true
+    notification_template: "Project title changed to '{{event.Title}}'"
+    approval_request_template: "Request to change project title to '{{event.Title}}' requires approval"
+    approved_template: "Title change to '{{event.Title}}' approved"
+    rejected_template: "Title change to '{{event.Title}}' rejected"
+
+  - type: "project.description_changed"
+    field: Description
+    field_type: string
+    json_key: description
+    friendly_name: "Description Change"
+    notification_template: "Project description has been updated"
+
+  - type: "project.start_date_changed"
+    field: StartDate
+    field_type: time.Time
+    json_key: startDate
+    friendly_name: "Start Date Change"
+    compare_func: Equal
+    notification_template: "Project start date changed to {{event.StartDate}}"
+    approval_request_template: "Request to change start date to {{event.StartDate}} requires approval"
+    approved_template: "Start date change to {{event.StartDate}} approved"
+    rejected_template: "Start date change to {{event.StartDate}} rejected"
+
+  - type: "project.end_date_changed"
+    field: EndDate
+    field_type: time.Time
+    json_key: endDate
+    friendly_name: "End Date Change"
+    compare_func: Equal
+    notification_template: "Project end date changed to {{event.EndDate}}"
+    approval_request_template: "Request to change end date to {{event.EndDate}} requires approval"
+    approved_template: "End date change to {{event.EndDate}} approved"
+    rejected_template: "End date change to {{event.EndDate}} rejected"
+
+# Tier 2: One-to-one entity reference changes
+# These are UUID fields that reference a single entity
+# The hydrator will resolve the entity for display
+entity_ref_events:
+  - type: "project.owning_org_node_changed"
+    field: OwningOrgNodeID
+    json_key: owning_org_node_id
+    friendly_name: "Owning Organisation Node Change"
+    entity: OrganisationNode
+    related_id: OrgNodeID
+    require_non_nil: true
+    notification_template: "Project transferred to organisation '{{org_node.Name}}'"
+    approval_request_template: "Request to transfer project to '{{org_node.Name}}' requires approval"
+    approved_template: "Transfer to '{{org_node.Name}}' approved"
+    rejected_template: "Transfer to '{{org_node.Name}}' rejected"
+
+# Tier 3: One-to-many entity collection events (add/remove)
+# These generate both Added and Removed event types
+entity_collection_events:
+  - entity: Product
+    id_field: ProductID
+    slice_field: ProductIDs
+    json_key: product_id
+    add_friendly_name: "Product Addition"
+    remove_friendly_name: "Product Removal"
+    related_id: ProductID
+    add_notification_template: "Product '{{product.Name}}' was added to project '{{project.Title}}'"
+    add_approval_request_template: "Request to add product '{{product.Name}}' requires approval"
+    add_approved_template: "Addition of product '{{product.Name}}' approved"
+    add_rejected_template: "Addition of product '{{product.Name}}' rejected"
+    remove_notification_template: "Product '{{product.Name}}' was removed from project '{{project.Title}}'"
+    remove_approval_request_template: "Request to remove product '{{product.Name}}' requires approval"
+    remove_approved_template: "Removal of product '{{product.Name}}' approved"
+    remove_rejected_template: "Removal of product '{{product.Name}}' rejected"
