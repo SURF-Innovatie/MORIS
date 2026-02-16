@@ -1,13 +1,12 @@
 import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { usePostAuthOrcidLink, useGetProfile } from "@api/moris";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
 const OrcidCallbackRoute = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { updateUser } = useAuth();
   const { mutateAsync: linkORCID } = usePostAuthOrcidLink();
   const { refetch: fetchProfile } = useGetProfile({
@@ -25,20 +24,16 @@ const OrcidCallbackRoute = () => {
     processedRef.current = true;
 
     if (error) {
-      toast({
-        title: "ORCID Connection Failed",
+      toast.error("ORCID Connection Failed", {
         description: "You denied access or an error occurred.",
-        variant: "destructive",
       });
       navigate("/dashboard/profile", { replace: true });
       return;
     }
 
     if (!code) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No authorization code received.",
-        variant: "destructive",
       });
       navigate("/dashboard/profile", { replace: true });
       return;
@@ -65,16 +60,13 @@ const OrcidCallbackRoute = () => {
           console.error("Failed to update user context:", error);
         }
 
-        toast({
-          title: "Success",
+        toast.success("Success", {
           description: "Your ORCID iD has been successfully linked.",
         });
       } catch (err: any) {
-        toast({
-          title: "Connection Failed",
+        toast.error("Connection Failed", {
           description:
             err.response?.data?.message || "Failed to link ORCID iD.",
-          variant: "destructive",
         });
       } finally {
         navigate("/dashboard/profile", { replace: true });

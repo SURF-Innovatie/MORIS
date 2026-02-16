@@ -13,8 +13,6 @@ const PageLoader = () => (
 const RootLayout = lazy(() => import("@/routes/root"));
 const DashboardRoute = lazy(() => import("@/routes/dashboard"));
 const CreateProjectRoute = lazy(() => import("@/routes/project-form"));
-const ProjectEditRoute = lazy(() => import("@/routes/project-edit"));
-const ProjectDetailsRoute = lazy(() => import("@/routes/project-details"));
 const LoginRoute = lazy(() => import("@/routes/login"));
 const RouteError = lazy(() => import("@/routes/route-error"));
 const ProfileRoute = lazy(() => import("@/routes/profile"));
@@ -48,6 +46,20 @@ const UserOrganisationRolesRoute = lazy(() =>
 const MultiRoleManagementRoute = lazy(() =>
   import("@/routes/admin-organisation-roles").then((m) => ({
     default: m.MultiRoleManagementRoute,
+  })),
+);
+
+const ProjectLayout = lazy(() =>
+  import("@/components/layout").then((m) => ({ default: m.ProjectLayout })),
+);
+const ProjectOverview = lazy(() =>
+  import("@/features/project/pages/ProjectOverview").then((m) => ({
+    default: m.ProjectOverview,
+  })),
+);
+const ProjectEditPage = lazy(() =>
+  import("@/features/project/pages/ProjectEdit").then((m) => ({
+    default: m.ProjectEdit,
   })),
 );
 
@@ -150,12 +162,23 @@ export function createAppRouter() {
       errorElement: <RouteError />,
       children: [
         {
-          path: ":id",
-          element: <ProjectDetailsRoute />,
-        },
-        {
-          path: ":id/edit",
-          element: <ProjectEditRoute />,
+          element: <RootLayout />,
+          children: [
+            {
+              path: ":id",
+              element: <ProjectLayout />,
+              children: [
+                {
+                  index: true,
+                  element: <ProjectOverview />,
+                },
+                {
+                  path: "edit",
+                  element: <ProjectEditPage />,
+                },
+              ],
+            },
+          ],
         },
       ],
     },

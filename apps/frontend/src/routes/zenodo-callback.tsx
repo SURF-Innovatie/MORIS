@@ -1,12 +1,11 @@
 import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { usePostZenodoLink, useGetProfile } from "@api/moris";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const ZenodoCallbackRoute = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { mutateAsync: linkZenodo } = usePostZenodoLink();
   const { refetch: fetchProfile } = useGetProfile({
     query: {
@@ -23,20 +22,16 @@ const ZenodoCallbackRoute = () => {
     processedRef.current = true;
 
     if (error) {
-      toast({
-        title: "Zenodo Connection Failed",
+      toast.error("Zenodo Connection Failed", {
         description: "You denied access or an error occurred.",
-        variant: "destructive",
       });
       navigate("/dashboard/profile", { replace: true });
       return;
     }
 
     if (!code) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No authorization code received.",
-        variant: "destructive",
       });
       navigate("/dashboard/profile", { replace: true });
       return;
@@ -47,16 +42,13 @@ const ZenodoCallbackRoute = () => {
         await linkZenodo({ data: { code } });
         await fetchProfile();
 
-        toast({
-          title: "Success",
+        toast.success("Success", {
           description: "Your Zenodo account has been successfully linked.",
         });
       } catch (err: any) {
-        toast({
-          title: "Connection Failed",
+        toast.error("Connection Failed", {
           description:
             err.response?.data?.message || "Failed to link Zenodo account.",
-          variant: "destructive",
         });
       } finally {
         navigate("/dashboard/profile", { replace: true });

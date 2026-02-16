@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useGetAuthOrcidUrl, usePostAuthOrcidUnlink } from "@api/moris";
 import { UserResponse } from "@api/model";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -29,7 +29,6 @@ export function OrcidConnection({
   refetchProfile,
 }: OrcidConnectionProps) {
   const { updateUser } = useAuth();
-  const { toast } = useToast();
   const [isUnlinkDialogOpen, setIsUnlinkDialogOpen] = useState(false);
 
   const { refetch: getAuthURL, isFetching: isGettingURL } = useGetAuthOrcidUrl({
@@ -48,10 +47,8 @@ export function OrcidConnection({
         window.location.href = result.data.url;
       }
     } catch (error) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to get ORCID authorization URL",
-        variant: "destructive",
       });
     }
   };
@@ -59,8 +56,7 @@ export function OrcidConnection({
   const handleUnlinkORCID = async () => {
     try {
       await unlinkORCID();
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "ORCID account unlinked successfully",
       });
       setIsUnlinkDialogOpen(false);
@@ -71,10 +67,8 @@ export function OrcidConnection({
         updateUser(updatedUser);
       }
     } catch (error) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to unlink ORCID account",
-        variant: "destructive",
       });
     }
   };

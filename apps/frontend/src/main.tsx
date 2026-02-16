@@ -8,7 +8,7 @@ import "./index.css";
 import { createAppRouter } from "./router";
 import { AuthProvider } from "./contexts/AuthContext";
 import { BackendStatusProvider } from "./contexts/BackendStatusContext";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { BackendOfflineAlert } from "@/components/status/BackendOfflineAlert";
 import { SessionExpiredAlert } from "@/components/status/SessionExpiredAlert";
 
@@ -45,5 +45,5 @@ ReactDOM.createRoot(rootElement).render(
         </AuthProvider>
       </BackendStatusProvider>
     </QueryClientProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

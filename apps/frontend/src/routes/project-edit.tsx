@@ -7,7 +7,7 @@ import { Loader2, ArrowLeft, Eye } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useGetProjectsId, useGetProjectsIdPendingEvents } from "@api/moris";
 import {
   createTitleChangedEvent,
@@ -39,7 +39,6 @@ export default function ProjectEditRoute() {
 function ProjectEditForm() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "general";
@@ -49,7 +48,7 @@ function ProjectEditForm() {
         prev.set("tab", tab);
         return prev;
       },
-      { replace: true }
+      { replace: true },
     );
   };
 
@@ -132,7 +131,7 @@ function ProjectEditForm() {
         promises.push(
           createDescriptionChangedEvent(id!, {
             description: values.description,
-          })
+          }),
         );
       }
 
@@ -143,7 +142,7 @@ function ProjectEditForm() {
         promises.push(
           createStartDateChangedEvent(id!, {
             start_date: values.startDate.toISOString(),
-          })
+          }),
         );
       }
 
@@ -154,7 +153,7 @@ function ProjectEditForm() {
         promises.push(
           createEndDateChangedEvent(id!, {
             end_date: values.endDate.toISOString(),
-          })
+          }),
         );
       }
 
@@ -164,7 +163,7 @@ function ProjectEditForm() {
         promises.push(
           createOwningOrgNodeChangedEvent(id!, {
             owning_org_node_id: values.organisationID,
-          })
+          }),
         );
       }
 
@@ -185,15 +184,14 @@ function ProjectEditForm() {
               createCustomFieldValueSetEvent(id!, {
                 definition_id: defId,
                 value: valStr,
-              })
+              }),
             );
           }
         });
       }
 
       if (promises.length === 0) {
-        toast({
-          title: "No changes",
+        toast("No changes", {
           description: "No changes were detected to save.",
         });
         setIsSaving(false);
@@ -204,14 +202,11 @@ function ProjectEditForm() {
       await refetchProject();
       await refetchPending();
 
-      toast({
-        title: "Project updated",
+      toast.success("Project updated", {
         description: "The project details have been successfully saved.",
       });
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to update project. Please try again.",
       });
     } finally {
@@ -321,7 +316,7 @@ function ProjectEditForm() {
 
 function applyPendingEvents(
   project: any, // Using any here to allow augmentation with pending flags easily
-  events: any[]
+  events: any[],
 ): any {
   if (!events || events.length === 0) return project;
 
@@ -371,7 +366,7 @@ function applyPendingEvents(
       case ProjectEventType.ProductRemoved:
         if (e.data?.product_id) {
           p.products = (p.products || []).filter(
-            (prod: any) => prod.id !== e.data.product_id
+            (prod: any) => prod.id !== e.data.product_id,
           );
         }
         break;
@@ -400,7 +395,7 @@ function applyPendingEvents(
               !(
                 m.user_id === e.data.person_id &&
                 m.role_id === e.data.project_role_id
-              )
+              ),
           );
         }
         break;

@@ -24,7 +24,7 @@ import {
 import { Plus, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { RoleDialog } from "./RoleDialog";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface RoleListProps {
@@ -45,7 +45,6 @@ export function RoleList({ nodeId }: RoleListProps) {
   const [roleToDelete, setRoleToDelete] =
     useState<OrganisationRoleResponse | null>(null);
 
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { mutateAsync: deleteRole, isPending: isDeleting } =
     useDeleteOrganisationRolesId();
@@ -64,7 +63,7 @@ export function RoleList({ nodeId }: RoleListProps) {
     if (!roleToDelete?.id) return;
     try {
       await deleteRole({ id: roleToDelete.id });
-      toast({ title: "Role deleted successfully" });
+      toast.success("Role deleted successfully");
       queryClient.invalidateQueries({
         queryKey: getGetOrganisationNodesIdOrganisationRolesQueryKey(nodeId),
       });
@@ -75,10 +74,8 @@ export function RoleList({ nodeId }: RoleListProps) {
         error?.response?.data?.message ||
         error?.message ||
         "Failed to delete role";
-      toast({
-        title: "Cannot delete role",
+      toast.error("Cannot delete role", {
         description: msg,
-        variant: "destructive",
       });
     }
   };

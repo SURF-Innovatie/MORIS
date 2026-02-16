@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { Loader2, Pencil } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -37,7 +37,6 @@ export function EditMemberCustomFieldsButton({
     useGetOrganisationNodesIdCustomFields(nodeId, { category: "PERSON" });
   const { mutateAsync: updateFields, isPending } =
     usePutOrganisationNodesIdMembersPersonIdCustomFields();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Prepare default values from membership custom fields
@@ -63,17 +62,14 @@ export function EditMemberCustomFieldsButton({
         personId: membership.person!.id!,
         data: { values: data },
       });
-      toast({ title: "Custom fields updated" });
+      toast.success("Custom fields updated");
       queryClient.invalidateQueries({
         queryKey: getGetOrganisationNodesIdMembershipsEffectiveQueryKey(nodeId),
       });
       setOpen(false);
     } catch (error) {
       console.error("Failed to update custom fields", error);
-      toast({
-        title: "Failed to update custom fields",
-        variant: "destructive",
-      });
+      toast.error("Failed to update custom fields");
     }
   };
 

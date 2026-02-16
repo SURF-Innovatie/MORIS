@@ -39,7 +39,7 @@ import {
   usePostAdminUsersIdToggleActive,
   getGetAdminUsersListQueryKey,
 } from "@api/moris";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { UserDialog } from "@/components/user/UserDialog";
 import { UserResponse } from "@api/model";
@@ -55,7 +55,6 @@ export const AdminUsersRoute = () => {
   const { mutateAsync: deleteUser } = useDeleteUsersId();
   const { mutateAsync: toggleActive } = usePostAdminUsersIdToggleActive();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const users = response?.data;
   const totalPages = response?.total_pages || 1;
@@ -80,15 +79,12 @@ export const AdminUsersRoute = () => {
       await queryClient.invalidateQueries({
         queryKey: getGetAdminUsersListQueryKey(),
       });
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: `User ${currentStatus ? "deactivated" : "activated"} successfully`,
       });
     } catch (e: any) {
       console.error("Failed to toggle active status", e);
-      toast({
-        variant: "destructive",
-        title: "Error",
+      toast.error("Error", {
         description:
           e.response?.data?.message || "Failed to update user status",
       });
@@ -102,15 +98,12 @@ export const AdminUsersRoute = () => {
       await queryClient.invalidateQueries({
         queryKey: getGetAdminUsersListQueryKey(),
       });
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "User deleted successfully",
       });
     } catch (e: any) {
       console.error("Failed to delete user", e);
-      toast({
-        variant: "destructive",
-        title: "Error",
+      toast.error("Error", {
         description: e.response?.data?.message || "Failed to delete user",
       });
     } finally {

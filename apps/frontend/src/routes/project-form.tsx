@@ -15,7 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   createProjectStartedEvent,
   createCustomFieldValueSetEvent,
@@ -29,7 +29,6 @@ import { EMPTY_UUID } from "@/lib/constants";
 
 export default function CreateProjectRoute() {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
 
   const form = useForm<z.infer<typeof projectFormSchema>>({
@@ -66,20 +65,17 @@ export default function CreateProjectRoute() {
               definition_id: defId,
               value: valStr, // Sending string for now.
             });
-          }
+          },
         );
         await Promise.all(promises);
       }
 
-      toast({
-        title: "Project created",
+      toast.success("Project created", {
         description: "The new project has been successfully created.",
       });
       navigate("/dashboard");
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
+      toast.error("Error", {
         description: error.message || "Something went wrong. Please try again.",
       });
     } finally {

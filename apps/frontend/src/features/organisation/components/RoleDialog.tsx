@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
@@ -42,7 +42,6 @@ export function RoleDialog({
   role,
 }: RoleDialogProps) {
   const isEdit = !!role;
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: permissionsData } = useGetOrganisationPermissions();
@@ -98,7 +97,7 @@ export function RoleDialog({
             permissions: data.permissions,
           },
         });
-        toast({ title: "Role updated successfully" });
+        toast.success("Role updated successfully");
       } else {
         await createRole({
           id: nodeId,
@@ -108,7 +107,7 @@ export function RoleDialog({
             permissions: data.permissions,
           },
         });
-        toast({ title: "Role created successfully" });
+        toast.success("Role created successfully");
       }
 
       queryClient.invalidateQueries({
@@ -121,10 +120,8 @@ export function RoleDialog({
         error?.response?.data?.message ||
         error?.message ||
         "Failed to save role";
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: msg,
-        variant: "destructive",
       });
     }
   };
@@ -136,7 +133,7 @@ export function RoleDialog({
     } else {
       setValue(
         "permissions",
-        current.filter((p) => p !== permKey)
+        current.filter((p) => p !== permKey),
       );
     }
   };
@@ -194,7 +191,7 @@ export function RoleDialog({
             <div className="border rounded-md p-4 space-y-3 max-h-60 overflow-y-auto">
               {permissions.map((perm) => {
                 const isChecked = (selectedPermissions || []).includes(
-                  perm.key || ""
+                  perm.key || "",
                 );
                 return (
                   <div key={perm.key} className="flex items-start space-x-2">

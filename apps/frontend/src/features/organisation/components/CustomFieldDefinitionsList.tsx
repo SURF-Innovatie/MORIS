@@ -1,6 +1,6 @@
 import { Loader2, Trash2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   useGetOrganisationNodesIdCustomFields,
   useDeleteOrganisationNodesIdCustomFieldsFieldId,
@@ -36,23 +36,22 @@ export const CustomFieldDefinitionsList = ({
   } = useGetOrganisationNodesIdCustomFields(nodeId);
   const { mutateAsync: deleteField } =
     useDeleteOrganisationNodesIdCustomFieldsFieldId();
-  const { toast } = useToast();
 
   const handleDelete = async (fieldId: string) => {
     if (
       !confirm(
-        "Are you sure you want to delete this field? Data in projects or member profiles might be lost."
+        "Are you sure you want to delete this field? Data in projects or member profiles might be lost.",
       )
     ) {
       return;
     }
     try {
       await deleteField({ id: nodeId, fieldId });
-      toast({ title: "Custom field deleted" });
+      toast.success("Custom field deleted");
       refetch();
     } catch (error) {
       console.error("Failed to delete field", error);
-      toast({ title: "Error deleting field", variant: "destructive" });
+      toast.error("Error deleting field");
     }
   };
 

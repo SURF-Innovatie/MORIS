@@ -10,7 +10,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   useGetEventTypes,
   usePatchOrganisationNodesIdRolesRoleId,
@@ -32,14 +32,13 @@ export const EditRolePermissionsDialog = ({
   onOpenChange,
   onSuccess,
 }: EditRolePermissionsDialogProps) => {
-  const { toast } = useToast();
   const { data: eventTypes, isLoading: isLoadingEventTypes } =
     useGetEventTypes();
   const { mutateAsync: updateRole, isPending } =
     usePatchOrganisationNodesIdRolesRoleId();
 
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(
-    new Set(role.allowedEventTypes || [])
+    new Set(role.allowedEventTypes || []),
   );
 
   const handleToggle = (eventType: string) => {
@@ -71,14 +70,11 @@ export const EditRolePermissionsDialog = ({
           allowedEventTypes: Array.from(selectedTypes),
         },
       });
-      toast({ title: "Role permissions updated" });
+      toast.success("Role permissions updated");
       onSuccess();
     } catch (error) {
       console.error("Failed to update role permissions", error);
-      toast({
-        title: "Error updating permissions",
-        variant: "destructive",
-      });
+      toast.error("Error updating permissions");
     }
   };
 

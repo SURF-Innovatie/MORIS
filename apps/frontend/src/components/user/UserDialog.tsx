@@ -22,7 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { UserResponse } from "@api/model";
 import {
   usePostPeople,
@@ -50,7 +50,6 @@ interface UserDialogProps {
 }
 
 export function UserDialog({ open, onOpenChange, user }: UserDialogProps) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const isEditMode = !!user;
 
@@ -118,7 +117,7 @@ export function UserDialog({ open, onOpenChange, user }: UserDialogProps) {
           },
         });
 
-        toast({ title: "Success", description: "User updated successfully" });
+        toast.success("Success", { description: "User updated successfully" });
       } else {
         // Create new
         // 1. Create Person
@@ -142,7 +141,7 @@ export function UserDialog({ open, onOpenChange, user }: UserDialogProps) {
           },
         });
 
-        toast({ title: "Success", description: "User created successfully" });
+        toast.success("Success", { description: "User created successfully" });
       }
 
       queryClient.invalidateQueries({
@@ -151,9 +150,7 @@ export function UserDialog({ open, onOpenChange, user }: UserDialogProps) {
       onOpenChange(false);
     } catch (error: any) {
       console.error("User operation failed", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
+      toast.error("Error", {
         description: error.response?.data?.message || "Failed to save user",
       });
     }

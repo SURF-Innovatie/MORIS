@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { AXIOS_INSTANCE } from "@/api/custom-axios";
 
@@ -21,7 +21,6 @@ interface SurfconextLoginResponse {
 const SurfconextCallbackRoute = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { login } = useAuth();
   const processedRef = useRef(false);
 
@@ -33,20 +32,16 @@ const SurfconextCallbackRoute = () => {
     processedRef.current = true;
 
     if (error) {
-      toast({
-        title: "SURFconext Login Failed",
+      toast.error("SURFconext Login Failed", {
         description: "You denied access or an error occurred.",
-        variant: "destructive",
       });
       navigate("/", { replace: true });
       return;
     }
 
     if (!code) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No authorization code received.",
-        variant: "destructive",
       });
       navigate("/", { replace: true });
       return;
@@ -62,8 +57,7 @@ const SurfconextCallbackRoute = () => {
 
         if (token && user) {
           login(token, user);
-          toast({
-            title: "Welcome",
+          toast.success("Welcome", {
             description: `Logged in as ${user.name || user.email}`,
           });
           const returnUrl = sessionStorage.getItem("auth_return_url");
@@ -77,12 +71,10 @@ const SurfconextCallbackRoute = () => {
           throw new Error("Invalid response from server");
         }
       } catch (err: any) {
-        toast({
-          title: "Login Failed",
+        toast.error("Login Failed", {
           description:
             err.message ||
             "Failed to complete SURFconext login. Your account may not exist in MORIS.",
-          variant: "destructive",
         });
         navigate("/", { replace: true });
       }

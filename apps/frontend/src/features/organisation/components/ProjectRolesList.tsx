@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   useGetOrganisationNodesIdRoles,
   useDeleteOrganisationNodesIdRolesRoleId,
@@ -31,10 +31,9 @@ export const ProjectRolesList = ({ nodeId }: ProjectRolesListProps) => {
   } = useGetOrganisationNodesIdRoles(nodeId);
   const { mutateAsync: deleteRole, isPending: isDeleting } =
     useDeleteOrganisationNodesIdRolesRoleId();
-  const { toast } = useToast();
 
   const [selectedRole, setSelectedRole] = useState<ProjectRoleResponse | null>(
-    null
+    null,
   );
   const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
 
@@ -42,11 +41,11 @@ export const ProjectRolesList = ({ nodeId }: ProjectRolesListProps) => {
     if (!roleToDelete) return;
     try {
       await deleteRole({ id: nodeId, roleId: roleToDelete });
-      toast({ title: "Role deleted" });
+      toast.success("Role deleted");
       refetch();
     } catch (error) {
       console.error("Failed to delete role", error);
-      toast({ title: "Error deleting role", variant: "destructive" });
+      toast.error("Error deleting role");
     } finally {
       setRoleToDelete(null);
     }

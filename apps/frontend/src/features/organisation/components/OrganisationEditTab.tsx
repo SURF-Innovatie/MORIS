@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { RorSearchSelect } from "@/components/organisation/RorSearchSelect";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { getGetOrganisationNodesIdQueryKey } from "@api/moris";
 
 interface OrganisationEditTabProps {
@@ -24,8 +24,6 @@ export const OrganisationEditTab = ({ nodeId }: OrganisationEditTabProps) => {
   const [description, setDescription] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [rorId, setRorId] = useState<string | undefined>(undefined);
-
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -46,16 +44,13 @@ export const OrganisationEditTab = ({ nodeId }: OrganisationEditTabProps) => {
         queryClient.invalidateQueries({
           queryKey: ["/organisation-nodes/roots"],
         }); // Invalidate roots in case name changed
-        toast({
-          title: "Organisation updated",
+        toast.success("Organisation updated", {
           description: "Your changes have been saved successfully.",
         });
       },
       onError: (error: any) => {
-        toast({
-          title: "Failed to update organisation",
+        toast.error("Failed to update organisation", {
           description: error?.message || "An unknown error occurred",
-          variant: "destructive",
         });
       },
     },

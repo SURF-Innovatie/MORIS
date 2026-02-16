@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import {
   createProjectRoleAssignedEvent,
@@ -52,7 +52,6 @@ export function EditRoleDialog({
   const [selectedRoles, setSelectedRoles] = useState<string[]>(currentRoleIds);
   const [isSaving, setIsSaving] = useState(false);
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const { data: roles, isLoading: isLoadingRoles } =
     useGetProjectsIdRoles(projectId);
@@ -105,22 +104,18 @@ export function EditRoleDialog({
 
       const totalChanges = rolesToAdd.length + rolesToRemove.length;
       if (totalChanges > 0) {
-        toast({
-          title: "Roles updated",
+        toast.success("Roles updated", {
           description: `${rolesToAdd.length} role(s) added, ${rolesToRemove.length} role(s) removed.`,
         });
       } else {
-        toast({ title: "No changes made" });
+        toast.success("No changes made");
       }
 
       onOpenChange(false);
       onSuccess?.();
     } catch (error) {
       console.error(error);
-      toast({
-        title: "Failed to update roles",
-        variant: "destructive",
-      });
+      toast.error("Failed to update roles");
     } finally {
       setIsSaving(false);
     }

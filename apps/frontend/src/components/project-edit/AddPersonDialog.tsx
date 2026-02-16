@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { usePostPeople, useGetProjectsIdRoles } from "@api/moris";
 import { createProjectRoleAssignedEvent } from "@/api/events";
 import { OrcidSearchSelect } from "@/components/profile/OrcidSearchSelect";
@@ -54,7 +54,6 @@ export function AddPersonDialog({
 }: AddPersonDialogProps) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>("create");
-  const { toast } = useToast();
 
   // State for existing users mode
   const [selectedPersonIds, setSelectedPersonIds] = useState<string[]>([]);
@@ -119,8 +118,7 @@ export function AddPersonDialog({
         setIsAssigningRole(false);
 
         const roleCount = values.roles.length;
-        toast({
-          title: "Member added",
+        toast.success("Member added", {
           description: `${values.name} has been successfully added to the project with ${roleCount} ${roleCount === 1 ? "role" : "roles"}.`,
         });
 
@@ -131,9 +129,7 @@ export function AddPersonDialog({
     } catch (error) {
       console.error(error);
       setIsAssigningRole(false);
-      toast({
-        variant: "destructive",
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to add member. Please try again.",
       });
     }
@@ -141,18 +137,14 @@ export function AddPersonDialog({
 
   async function onSubmitExisting() {
     if (selectedPersonIds.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "No users selected",
+      toast.error("No users selected", {
         description: "Please select at least one user to add.",
       });
       return;
     }
 
     if (selectedRoles.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "No roles selected",
+      toast.error("No roles selected", {
         description: "Please select at least one role for the users.",
       });
       return;
@@ -175,8 +167,7 @@ export function AddPersonDialog({
 
       const userCount = selectedPersonIds.length;
       const roleCount = selectedRoles.length;
-      toast({
-        title: userCount === 1 ? "Member added" : "Members added",
+      toast.success(userCount === 1 ? "Member added" : "Members added", {
         description: `${userCount} ${userCount === 1 ? "user" : "users"} added with ${roleCount} ${roleCount === 1 ? "role" : "roles"}.`,
       });
 
@@ -186,9 +177,7 @@ export function AddPersonDialog({
     } catch (error) {
       console.error(error);
       setIsAssigningRole(false);
-      toast({
-        variant: "destructive",
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to add members. Please try again.",
       });
     }

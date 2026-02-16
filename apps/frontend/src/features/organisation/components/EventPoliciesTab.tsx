@@ -14,7 +14,7 @@ import { EventPolicyRequest, EventPolicyResponse } from "@api/model";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Loader2, Plus } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PolicyCard } from "./PolicyCard";
@@ -30,10 +30,9 @@ interface EventPoliciesTabProps {
 export function EventPoliciesTab({ nodeId }: EventPoliciesTabProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editPolicy, setEditPolicy] = useState<EventPolicyResponse | null>(
-    null
+    null,
   );
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   // Fetch event types from backend
   const { data: eventTypes = [] } = useGetEventTypes();
@@ -55,10 +54,10 @@ export function EventPoliciesTab({ nodeId }: EventPoliciesTabProps) {
         queryClient.invalidateQueries({
           queryKey: getGetOrganisationsIdPoliciesQueryKey(nodeId),
         });
-        toast({ title: "Policy deleted" });
+        toast.success("Policy deleted");
       },
       onError: () => {
-        toast({ title: "Failed to delete policy", variant: "destructive" });
+        toast.error("Failed to delete policy");
       },
     },
   });
@@ -69,7 +68,7 @@ export function EventPoliciesTab({ nodeId }: EventPoliciesTabProps) {
 
   const handlePolicySubmit = async (
     data: PolicyFormData,
-    existingPolicy?: EventPolicyResponse
+    existingPolicy?: EventPolicyResponse,
   ) => {
     const request: EventPolicyRequest = {
       name: data.name,
@@ -99,21 +98,20 @@ export function EventPoliciesTab({ nodeId }: EventPoliciesTabProps) {
           id: existingPolicy.id,
           data: request,
         });
-        toast({ title: "Policy updated" });
+        toast.success("Policy updated");
       } else {
         await createMutation.mutateAsync({ id: nodeId, data: request });
-        toast({ title: "Policy created" });
+        toast.success("Policy created");
       }
       queryClient.invalidateQueries({
         queryKey: getGetOrganisationsIdPoliciesQueryKey(nodeId),
       });
     } catch {
-      toast({
-        title: existingPolicy?.id
+      toast.error(
+        existingPolicy?.id
           ? "Failed to update policy"
           : "Failed to create policy",
-        variant: "destructive",
-      });
+      );
       throw new Error("Mutation failed");
     }
   };

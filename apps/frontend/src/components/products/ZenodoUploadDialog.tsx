@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   usePostZenodoDepositions,
   usePutZenodoDepositionsId,
@@ -47,7 +47,6 @@ export function ZenodoUploadDialog({
   onOpenChange,
   onSuccess,
 }: ZenodoUploadDialogProps) {
-  const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [title, setTitle] = useState("");
@@ -112,10 +111,8 @@ export function ZenodoUploadDialog({
 
   const handleSubmit = async () => {
     if (!selectedFile || !title || !description || !creatorName) {
-      toast({
-        title: "Missing Fields",
+      toast.error("Missing Fields", {
         description: "Please fill in all required fields and select a file.",
-        variant: "destructive",
       });
       return;
     }
@@ -177,11 +174,9 @@ export function ZenodoUploadDialog({
       setStep("success");
     } catch (error: any) {
       console.error("Zenodo upload error:", error);
-      toast({
-        title: "Upload Failed",
+      toast.error("Upload Failed", {
         description:
           error.response?.data?.message || "Failed to upload to Zenodo",
-        variant: "destructive",
       });
       setStep("form");
     }

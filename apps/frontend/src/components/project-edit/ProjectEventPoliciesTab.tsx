@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus, Lock } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProjectPolicyCard } from "./ProjectPolicyCard";
 import {
@@ -40,12 +40,11 @@ export function ProjectEventPoliciesTab({
 }: ProjectEventPoliciesTabProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editPolicy, setEditPolicy] = useState<EventPolicyResponse | null>(
-    null
+    null,
   );
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const { hasAccess } = useAccess();
 
   const canAddPolicy = hasAccess(ProjectEventType.EventPolicyAdded);
@@ -78,9 +77,9 @@ export function ProjectEventPoliciesTab({
       queryClient.invalidateQueries({
         queryKey: getGetProjectsIdPoliciesQueryKey(projectId),
       });
-      toast({ title: "Policy removal requested" });
+      toast.success("Policy removal requested");
     } catch (error) {
-      toast({ title: "Failed to remove policy", variant: "destructive" });
+      toast.error("Failed to remove policy");
     } finally {
       setIsDeleting(null);
     }
@@ -88,7 +87,7 @@ export function ProjectEventPoliciesTab({
 
   const handlePolicySubmit = async (
     data: PolicyFormData,
-    existingPolicy?: EventPolicyResponse
+    existingPolicy?: EventPolicyResponse,
   ) => {
     setIsSubmitting(true);
     try {
@@ -106,7 +105,7 @@ export function ProjectEventPoliciesTab({
           enabled: data.enabled,
         };
         await createEventPolicyUpdatedEvent(projectId, input);
-        toast({ title: "Policy update requested" });
+        toast.success("Policy update requested");
       } else {
         const input: EventPolicyAddedInput = {
           name: data.name,
@@ -120,18 +119,17 @@ export function ProjectEventPoliciesTab({
           enabled: data.enabled,
         };
         await createEventPolicyAddedEvent(projectId, input);
-        toast({ title: "Policy creation requested" });
+        toast.success("Policy creation requested");
       }
       queryClient.invalidateQueries({
         queryKey: getGetProjectsIdPoliciesQueryKey(projectId),
       });
     } catch {
-      toast({
-        title: existingPolicy?.id
+      toast.error(
+        existingPolicy?.id
           ? "Failed to update policy"
           : "Failed to create policy",
-        variant: "destructive",
-      });
+      );
       throw new Error("Event creation failed");
     } finally {
       setIsSubmitting(false);

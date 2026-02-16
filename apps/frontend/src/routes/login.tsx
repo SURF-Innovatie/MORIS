@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { AXIOS_INSTANCE } from "@/api/custom-axios";
 
 export default function LoginPage() {
@@ -13,7 +13,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const { mutate: login, isPending } = useLogin();
   const { isAuthenticated, isLoading } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isSurfconextLoading, setIsSurfconextLoading] = useState(false);
@@ -32,10 +31,8 @@ export default function LoginPage() {
       { email, password },
       {
         onError: (error: any) => {
-          toast({
-            title: "Login Failed",
+          toast.error("Login Failed", {
             description: error.message || "Invalid email or password",
-            variant: "destructive",
           });
         },
       },
@@ -71,10 +68,8 @@ export default function LoginPage() {
         throw new Error("No authorization URL received");
       }
     } catch (error: any) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: error.message || "Failed to initiate SURFconext login",
-        variant: "destructive",
       });
       setIsSurfconextLoading(false);
     }

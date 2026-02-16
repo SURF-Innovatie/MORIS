@@ -22,15 +22,15 @@ import { DeliverableMix } from "@/components/portfolio/DeliverableMix";
 import { DeliverablesSection } from "@/components/portfolio/DeliverablesSection";
 import { AffiliationsCard } from "@/components/portfolio/AffiliationsCard";
 import { ActivityHighlights } from "@/components/portfolio/ActivityHighlights";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 const PortfolioRoute = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const { data: user, isLoading: isLoadingUser } = useGetProfile();
-  const { data: portfolio, isLoading: isLoadingPortfolio } = useGetPortfolioMe();
+  const { data: portfolio, isLoading: isLoadingPortfolio } =
+    useGetPortfolioMe();
   const { data: projects, isLoading: isLoadingProjects } = useGetProjects();
   const { data: products, isLoading: isLoadingProducts } = useGetProductsMe();
   const { data: memberships } = useGetOrganisationMembershipsMine();
@@ -41,13 +41,10 @@ const PortfolioRoute = () => {
           queryClient.invalidateQueries({
             queryKey: getGetPortfolioMeQueryKey(),
           });
-          toast({ title: "Portfolio updated" });
+          toast.success("Portfolio updated");
         },
         onError: () => {
-          toast({
-            title: "Failed to update portfolio",
-            variant: "destructive",
-          });
+          toast.error("Failed to update portfolio");
         },
       },
     });
@@ -72,7 +69,7 @@ const PortfolioRoute = () => {
     if (!user?.id) return projects;
 
     const filtered = projects.filter((project) =>
-      project.members?.some((member) => member.user_id === user.id)
+      project.members?.some((member) => member.user_id === user.id),
     );
 
     return filtered.length ? filtered : projects;
@@ -94,7 +91,7 @@ const PortfolioRoute = () => {
     const projectMap = new Map(
       relevantProjects
         .filter((project) => project.id)
-        .map((project) => [project.id!, project])
+        .map((project) => [project.id!, project]),
     );
     return pinnedProjectIds
       .map((id) => projectMap.get(id))
@@ -102,12 +99,11 @@ const PortfolioRoute = () => {
   }, [pinnedProjectIds, relevantProjects]);
 
   const featuredProjects = useMemo(() => {
-    const sorted = [...relevantProjects]
-      .sort((a, b) => {
-        const aDate = a.end_date || a.start_date || "";
-        const bDate = b.end_date || b.start_date || "";
-        return new Date(bDate).getTime() - new Date(aDate).getTime();
-      });
+    const sorted = [...relevantProjects].sort((a, b) => {
+      const aDate = a.end_date || a.start_date || "";
+      const bDate = b.end_date || b.start_date || "";
+      return new Date(bDate).getTime() - new Date(aDate).getTime();
+    });
 
     if (pinnedProjects.length === 0) {
       return sorted.slice(0, 4);
@@ -134,7 +130,7 @@ const PortfolioRoute = () => {
     const productMap = new Map(
       products
         .filter((product) => product.id)
-        .map((product) => [product.id!, product])
+        .map((product) => [product.id!, product]),
     );
     return pinnedProductIds
       .map((id) => productMap.get(id))
@@ -168,7 +164,7 @@ const PortfolioRoute = () => {
     setPinnedProjectIds((prev) =>
       prev.includes(projectId)
         ? prev.filter((id) => id !== projectId)
-        : [...prev, projectId]
+        : [...prev, projectId],
     );
   };
 
@@ -176,11 +172,14 @@ const PortfolioRoute = () => {
     setPinnedProductIds((prev) =>
       prev.includes(productId)
         ? prev.filter((id) => id !== productId)
-        : [...prev, productId]
+        : [...prev, productId],
     );
   };
 
-  const eventHighlights = (eventsData?.events ?? []).slice(0, 5) as ProjectEvent[];
+  const eventHighlights = (eventsData?.events ?? []).slice(
+    0,
+    5,
+  ) as ProjectEvent[];
 
   if (isLoadingUser) {
     return <div>Loading portfolio...</div>;

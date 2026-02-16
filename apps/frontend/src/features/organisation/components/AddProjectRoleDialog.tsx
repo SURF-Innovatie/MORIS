@@ -22,7 +22,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { usePostOrganisationNodesIdRoles } from "@api/moris";
 
 const createRoleSchema = z.object({
@@ -46,7 +46,6 @@ export const AddProjectRoleDialog = ({
   onSuccess,
 }: AddProjectRoleDialogProps) => {
   const [open, setOpen] = useState(false);
-  const { toast } = useToast();
   const { mutateAsync: createRole, isPending } =
     usePostOrganisationNodesIdRoles();
 
@@ -64,8 +63,7 @@ export const AddProjectRoleDialog = ({
         id: nodeId,
         data: values,
       });
-      toast({
-        title: "Role created",
+      toast.success("Role created", {
         description:
           "Project role has been successfully created. Configure permissions to enable event access.",
       });
@@ -74,9 +72,7 @@ export const AddProjectRoleDialog = ({
       onSuccess();
     } catch (error) {
       console.error(error);
-      toast({
-        variant: "destructive",
-        title: "Error",
+      toast.error("Error", {
         description:
           "Failed to create role. Ensure key is unique within the organisation.",
       });

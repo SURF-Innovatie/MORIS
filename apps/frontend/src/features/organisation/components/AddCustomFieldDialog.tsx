@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { usePostOrganisationNodesIdCustomFields } from "@api/moris";
 
 export const createFieldSchema = z.object({
@@ -54,7 +54,6 @@ export const AddCustomFieldDialog = ({
   onSuccess,
 }: AddCustomFieldDialogProps) => {
   const [open, setOpen] = useState(false);
-  const { toast } = useToast();
   const { mutateAsync: createField, isPending } =
     usePostOrganisationNodesIdCustomFields();
 
@@ -77,8 +76,7 @@ export const AddCustomFieldDialog = ({
         id: nodeId,
         data: values,
       });
-      toast({
-        title: "Field created",
+      toast.success("Field created", {
         description: "Custom field has been successfully created.",
       });
       setOpen(false);
@@ -86,9 +84,7 @@ export const AddCustomFieldDialog = ({
       onSuccess();
     } catch (error) {
       console.error(error);
-      toast({
-        variant: "destructive",
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to create custom field.",
       });
     }

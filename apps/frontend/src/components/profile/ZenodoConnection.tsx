@@ -5,7 +5,7 @@ import {
   useGetZenodoStatus,
 } from "@api/moris";
 import { UserResponse } from "@api/model";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -27,7 +27,6 @@ interface ZenodoConnectionProps {
 }
 
 export function ZenodoConnection({ refetchProfile }: ZenodoConnectionProps) {
-  const { toast } = useToast();
   const [isUnlinkDialogOpen, setIsUnlinkDialogOpen] = useState(false);
 
   const { data: statusData, refetch: refetchStatus } = useGetZenodoStatus();
@@ -37,7 +36,7 @@ export function ZenodoConnection({ refetchProfile }: ZenodoConnectionProps) {
       query: {
         enabled: false,
       },
-    }
+    },
   );
 
   const { mutateAsync: unlinkZenodo, isPending: isUnlinking } =
@@ -50,10 +49,8 @@ export function ZenodoConnection({ refetchProfile }: ZenodoConnectionProps) {
         window.location.href = result.data.auth_url;
       }
     } catch (error) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to get Zenodo authorization URL",
-        variant: "destructive",
       });
     }
   };
@@ -61,18 +58,15 @@ export function ZenodoConnection({ refetchProfile }: ZenodoConnectionProps) {
   const handleUnlinkZenodo = async () => {
     try {
       await unlinkZenodo();
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Zenodo account unlinked successfully",
       });
       setIsUnlinkDialogOpen(false);
       await refetchStatus();
       await refetchProfile();
     } catch (error) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to unlink Zenodo account",
-        variant: "destructive",
       });
     }
   };

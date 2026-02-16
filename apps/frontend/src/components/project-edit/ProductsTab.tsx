@@ -28,7 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   useGetDoiResolve,
   usePostProducts,
@@ -69,7 +69,6 @@ export function ProductsTab({
   products,
   onRefresh,
 }: ProductsTabProps) {
-  const { toast } = useToast();
   const { hasAccess } = useAccess();
   const { mutateAsync: addProduct } = usePostProducts();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -116,9 +115,7 @@ export function ProductsTab({
   }
 
   if (isDoiError && searchDoi && !isLoadingDoi) {
-    toast({
-      variant: "destructive",
-      title: "Error",
+    toast.error("Error", {
       description: "Failed to find product with this DOI.",
     });
     setSearchDoi(null);
@@ -153,8 +150,7 @@ export function ProductsTab({
           product_id: newProduct.id,
         });
 
-        toast({
-          title: "Product added",
+        toast.success("Product added", {
           description:
             "The product has been successfully added to the project.",
         });
@@ -165,9 +161,7 @@ export function ProductsTab({
       }
     } catch (error) {
       console.error(error);
-      toast({
-        variant: "destructive",
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to add product. Please try again.",
       });
     }
@@ -181,17 +175,14 @@ export function ProductsTab({
         product_id: productToDelete,
       });
 
-      toast({
-        title: "Product removed",
+      toast.success("Product removed", {
         description: "The product has been removed from the project.",
       });
       setProductToDelete(null);
       onRefresh();
     } catch (error) {
       console.error(error);
-      toast({
-        variant: "destructive",
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to remove product.",
       });
     }
@@ -221,8 +212,7 @@ export function ProductsTab({
           product_id: newProduct.id,
         });
 
-        toast({
-          title: "Product uploaded to Zenodo",
+        toast.success("Product uploaded to Zenodo", {
           description:
             "The product has been published and added to the project.",
         });
@@ -231,9 +221,7 @@ export function ProductsTab({
       }
     } catch (error) {
       console.error(error);
-      toast({
-        variant: "destructive",
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to add product. Please try again.",
       });
     }
