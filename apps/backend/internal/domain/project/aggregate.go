@@ -14,16 +14,17 @@ type Member struct {
 }
 
 type Project struct {
-	Id              uuid.UUID
-	Version         int
-	StartDate       time.Time
-	EndDate         time.Time
-	Title           string
-	Description     string
-	Members         []Member
-	OwningOrgNodeID uuid.UUID
-	ProductIDs      []uuid.UUID
-	CustomFields    map[string]any
+	Id                        uuid.UUID
+	Version                   int
+	StartDate                 time.Time
+	EndDate                   time.Time
+	Title                     string
+	Description               string
+	Members                   []Member
+	OwningOrgNodeID           uuid.UUID
+	ProductIDs                []uuid.UUID
+	AffiliatedOrganisationIDs []uuid.UUID
+	CustomFields              map[string]any
 }
 
 type MemberDetail struct {

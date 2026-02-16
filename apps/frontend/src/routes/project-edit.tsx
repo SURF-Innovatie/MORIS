@@ -23,10 +23,11 @@ import { GeneralTab } from "@/components/project-edit/GeneralTab";
 import { PeopleTab } from "@/components/project-edit/PeopleTab";
 import { ChangelogTab } from "@/components/project-edit/ChangelogTab";
 import { ProductsTab } from "@/components/project-edit/ProductsTab";
+import { AffiliatedOrganisationsTab } from "@/components/project-edit/AffiliatedOrganisationsTab";
 import { ProjectEventPoliciesTab } from "@/components/project-edit/ProjectEventPoliciesTab";
 import { projectFormSchema } from "@/lib/schemas/project";
 import { EMPTY_UUID } from "@/lib/constants";
-import { ProjectAccessProvider } from "@/contexts/ProjectAccessContext";
+import { ProjectAccessProvider } from "@/context/ProjectAccessContext";
 
 export default function ProjectEditRoute() {
   return (
@@ -49,7 +50,7 @@ function ProjectEditForm() {
         prev.set("tab", tab);
         return prev;
       },
-      { replace: true }
+      { replace: true },
     );
   };
 
@@ -132,7 +133,7 @@ function ProjectEditForm() {
         promises.push(
           createDescriptionChangedEvent(id!, {
             description: values.description,
-          })
+          }),
         );
       }
 
@@ -142,8 +143,8 @@ function ProjectEditForm() {
       if (values.startDate.toISOString() !== currentStartDate) {
         promises.push(
           createStartDateChangedEvent(id!, {
-            startDate: values.startDate.toISOString(),
-          })
+            start_date: values.startDate.toISOString(),
+          }),
         );
       }
 
@@ -153,8 +154,8 @@ function ProjectEditForm() {
       if (values.endDate.toISOString() !== currentEndDate) {
         promises.push(
           createEndDateChangedEvent(id!, {
-            endDate: values.endDate.toISOString(),
-          })
+            end_date: values.endDate.toISOString(),
+          }),
         );
       }
 
@@ -164,7 +165,7 @@ function ProjectEditForm() {
         promises.push(
           createOwningOrgNodeChangedEvent(id!, {
             owning_org_node_id: values.organisationID,
-          })
+          }),
         );
       }
 
@@ -185,7 +186,7 @@ function ProjectEditForm() {
               createCustomFieldValueSetEvent(id!, {
                 definition_id: defId,
                 value: valStr,
-              })
+              }),
             );
           }
         });
@@ -268,10 +269,11 @@ function ProjectEditForm() {
           className="space-y-8"
         >
           <div className="flex items-center justify-between">
-            <TabsList className="grid w-full max-w-xl grid-cols-5">
+            <TabsList className="grid w-full max-w-2xl grid-cols-6">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="people">People</TabsTrigger>
               <TabsTrigger value="products">Products</TabsTrigger>
+              <TabsTrigger value="affiliations">Affiliations</TabsTrigger>
               <TabsTrigger value="policies">Policies</TabsTrigger>
               <TabsTrigger value="changelog">Changelog</TabsTrigger>
             </TabsList>
@@ -303,6 +305,16 @@ function ProjectEditForm() {
             />
           </TabsContent>
 
+          <TabsContent value="affiliations">
+            <AffiliatedOrganisationsTab
+              projectId={id!}
+              affiliatedOrganisations={
+                (projectedProject as any)?.affiliated_organisations || []
+              }
+              onRefresh={refetchProject}
+            />
+          </TabsContent>
+
           <TabsContent value="changelog">
             <ChangelogTab projectId={id!} />
           </TabsContent>
@@ -321,7 +333,7 @@ function ProjectEditForm() {
 
 function applyPendingEvents(
   project: any, // Using any here to allow augmentation with pending flags easily
-  events: any[]
+  events: any[],
 ): any {
   if (!events || events.length === 0) return project;
 
@@ -371,7 +383,7 @@ function applyPendingEvents(
       case ProjectEventType.ProductRemoved:
         if (e.data?.product_id) {
           p.products = (p.products || []).filter(
-            (prod: any) => prod.id !== e.data.product_id
+            (prod: any) => prod.id !== e.data.product_id,
           );
         }
         break;
@@ -400,7 +412,7 @@ function applyPendingEvents(
               !(
                 m.user_id === e.data.person_id &&
                 m.role_id === e.data.project_role_id
-              )
+              ),
           );
         }
         break;

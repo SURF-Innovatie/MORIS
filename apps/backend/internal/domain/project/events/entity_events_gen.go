@@ -188,6 +188,183 @@ var ProductRemovedMeta = EventMeta{
 	FriendlyName: "Product Removal",
 }
 
+// --- AffiliatedOrganisationAdded / AffiliatedOrganisationRemoved ---
+
+const AffiliatedOrganisationAddedType = "project.affiliatedorganisation_added"
+const AffiliatedOrganisationRemovedType = "project.affiliatedorganisation_removed"
+
+type AffiliatedOrganisationAdded struct {
+	Base
+	AffiliatedOrganisationID uuid.UUID `json:"affiliated_organisation_id"`
+}
+
+func (AffiliatedOrganisationAdded) isEvent()     {}
+func (AffiliatedOrganisationAdded) Type() string { return AffiliatedOrganisationAddedType }
+func (e AffiliatedOrganisationAdded) String() string {
+	return fmt.Sprintf("AffiliatedOrganisation added: %s", e.AffiliatedOrganisationID)
+}
+
+func (e *AffiliatedOrganisationAdded) Apply(project *projdomain.Project) {
+	project.AffiliatedOrganisationIDs = append(project.AffiliatedOrganisationIDs, e.AffiliatedOrganisationID)
+}
+
+func (e *AffiliatedOrganisationAdded) RelatedIDs() RelatedIDs {
+	return RelatedIDs{AffiliatedOrganisationID: &e.AffiliatedOrganisationID}
+}
+
+func (e *AffiliatedOrganisationAdded) NotificationTemplate() string {
+	return "Affiliated organisation '{{affiliated_organisation.Name}}' was added to project '{{project.Title}}'"
+}
+
+func (e *AffiliatedOrganisationAdded) ApprovalRequestTemplate() string {
+	return "Request to add affiliated organisation '{{affiliated_organisation.Name}}' requires approval"
+}
+
+func (e *AffiliatedOrganisationAdded) ApprovedTemplate() string {
+	return "Addition of affiliated organisation '{{affiliated_organisation.Name}}' approved"
+}
+
+func (e *AffiliatedOrganisationAdded) RejectedTemplate() string {
+	return "Addition of affiliated organisation '{{affiliated_organisation.Name}}' rejected"
+}
+
+func (e *AffiliatedOrganisationAdded) NotificationVariables() map[string]string {
+	return map[string]string{
+		"event.AffiliatedOrganisationID": e.AffiliatedOrganisationID.String(),
+	}
+}
+
+type AffiliatedOrganisationAddedInput struct {
+	AffiliatedOrganisationID uuid.UUID `json:"affiliated_organisation_id"`
+}
+
+func DecideAffiliatedOrganisationAdded(
+	projectID uuid.UUID,
+	actor uuid.UUID,
+	cur *projdomain.Project,
+	in AffiliatedOrganisationAddedInput,
+	status Status,
+) (Event, error) {
+	if projectID == uuid.Nil {
+		return nil, errors.New("project id is required")
+	}
+	if in.AffiliatedOrganisationID == uuid.Nil {
+		return nil, errors.New("affiliated_organisation_id is required")
+	}
+	if cur == nil {
+		return nil, errors.New("current project is required")
+	}
+	for _, x := range cur.AffiliatedOrganisationIDs {
+		if x == in.AffiliatedOrganisationID {
+			return nil, fmt.Errorf("affiliatedorganisation %s already exists", in.AffiliatedOrganisationID)
+		}
+	}
+	base := NewBase(projectID, actor, status)
+	base.FriendlyNameStr = AffiliatedOrganisationAddedMeta.FriendlyName
+
+	return &AffiliatedOrganisationAdded{
+		Base:                     base,
+		AffiliatedOrganisationID: in.AffiliatedOrganisationID,
+	}, nil
+}
+
+var AffiliatedOrganisationAddedMeta = EventMeta{
+	Type:         AffiliatedOrganisationAddedType,
+	FriendlyName: "Affiliated Organisation Addition",
+}
+
+// --- AffiliatedOrganisationRemoved ---
+
+type AffiliatedOrganisationRemoved struct {
+	Base
+	AffiliatedOrganisationID uuid.UUID `json:"affiliated_organisation_id"`
+}
+
+func (AffiliatedOrganisationRemoved) isEvent()     {}
+func (AffiliatedOrganisationRemoved) Type() string { return AffiliatedOrganisationRemovedType }
+func (e AffiliatedOrganisationRemoved) String() string {
+	return fmt.Sprintf("AffiliatedOrganisation removed: %s", e.AffiliatedOrganisationID)
+}
+
+func (e *AffiliatedOrganisationRemoved) Apply(project *projdomain.Project) {
+	for i, x := range project.AffiliatedOrganisationIDs {
+		if x == e.AffiliatedOrganisationID {
+			project.AffiliatedOrganisationIDs = append(project.AffiliatedOrganisationIDs[:i], project.AffiliatedOrganisationIDs[i+1:]...)
+			return
+		}
+	}
+}
+
+func (e *AffiliatedOrganisationRemoved) RelatedIDs() RelatedIDs {
+	return RelatedIDs{AffiliatedOrganisationID: &e.AffiliatedOrganisationID}
+}
+
+func (e *AffiliatedOrganisationRemoved) NotificationTemplate() string {
+	return "Affiliated organisation '{{affiliated_organisation.Name}}' was removed from project '{{project.Title}}'"
+}
+
+func (e *AffiliatedOrganisationRemoved) ApprovalRequestTemplate() string {
+	return "Request to remove affiliated organisation '{{affiliated_organisation.Name}}' requires approval"
+}
+
+func (e *AffiliatedOrganisationRemoved) ApprovedTemplate() string {
+	return "Removal of affiliated organisation '{{affiliated_organisation.Name}}' approved"
+}
+
+func (e *AffiliatedOrganisationRemoved) RejectedTemplate() string {
+	return "Removal of affiliated organisation '{{affiliated_organisation.Name}}' rejected"
+}
+
+func (e *AffiliatedOrganisationRemoved) NotificationVariables() map[string]string {
+	return map[string]string{
+		"event.AffiliatedOrganisationID": e.AffiliatedOrganisationID.String(),
+	}
+}
+
+type AffiliatedOrganisationRemovedInput struct {
+	AffiliatedOrganisationID uuid.UUID `json:"affiliated_organisation_id"`
+}
+
+func DecideAffiliatedOrganisationRemoved(
+	projectID uuid.UUID,
+	actor uuid.UUID,
+	cur *projdomain.Project,
+	in AffiliatedOrganisationRemovedInput,
+	status Status,
+) (Event, error) {
+	if projectID == uuid.Nil {
+		return nil, errors.New("project id is required")
+	}
+	if in.AffiliatedOrganisationID == uuid.Nil {
+		return nil, errors.New("affiliated_organisation_id is required")
+	}
+	if cur == nil {
+		return nil, errors.New("current project is required")
+	}
+	found := false
+	for _, x := range cur.AffiliatedOrganisationIDs {
+		if x == in.AffiliatedOrganisationID {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return nil, fmt.Errorf("affiliatedorganisation %s not found", in.AffiliatedOrganisationID)
+	}
+	base := NewBase(projectID, actor, status)
+	base.FriendlyNameStr = AffiliatedOrganisationRemovedMeta.FriendlyName
+
+	return &AffiliatedOrganisationRemoved{
+		Base:                     base,
+		AffiliatedOrganisationID: in.AffiliatedOrganisationID,
+	}, nil
+}
+
+var AffiliatedOrganisationRemovedMeta = EventMeta{
+	Type:         AffiliatedOrganisationRemovedType,
+	FriendlyName: "Affiliated Organisation Removal",
+}
+
 func init() {
 	RegisterMeta(ProductAddedMeta, func() Event {
 		return &ProductAdded{Base: Base{FriendlyNameStr: ProductAddedMeta.FriendlyName}}
@@ -206,4 +383,21 @@ func init() {
 			return DecideProductRemoved(projectID, actor, cur, in, status)
 		})
 	RegisterInputType(ProductRemovedType, ProductRemovedInput{})
+	RegisterMeta(AffiliatedOrganisationAddedMeta, func() Event {
+		return &AffiliatedOrganisationAdded{Base: Base{FriendlyNameStr: AffiliatedOrganisationAddedMeta.FriendlyName}}
+	})
+	RegisterDecider[AffiliatedOrganisationAddedInput](AffiliatedOrganisationAddedType,
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *projdomain.Project, in AffiliatedOrganisationAddedInput, status Status) (Event, error) {
+			return DecideAffiliatedOrganisationAdded(projectID, actor, cur, in, status)
+		})
+	RegisterInputType(AffiliatedOrganisationAddedType, AffiliatedOrganisationAddedInput{})
+
+	RegisterMeta(AffiliatedOrganisationRemovedMeta, func() Event {
+		return &AffiliatedOrganisationRemoved{Base: Base{FriendlyNameStr: AffiliatedOrganisationRemovedMeta.FriendlyName}}
+	})
+	RegisterDecider[AffiliatedOrganisationRemovedInput](AffiliatedOrganisationRemovedType,
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *projdomain.Project, in AffiliatedOrganisationRemovedInput, status Status) (Event, error) {
+			return DecideAffiliatedOrganisationRemoved(projectID, actor, cur, in, status)
+		})
+	RegisterInputType(AffiliatedOrganisationRemovedType, AffiliatedOrganisationRemovedInput{})
 }

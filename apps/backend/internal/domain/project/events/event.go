@@ -50,10 +50,11 @@ type HasRelatedIDs interface {
 
 // RelatedIDs contains optional references to related entities
 type RelatedIDs struct {
-	PersonID      *uuid.UUID
-	ProductID     *uuid.UUID
-	ProjectRoleID *uuid.UUID
-	OrgNodeID     *uuid.UUID
+	PersonID                 *uuid.UUID
+	ProductID                *uuid.UUID
+	ProjectRoleID            *uuid.UUID
+	OrgNodeID                *uuid.UUID
+	AffiliatedOrganisationID *uuid.UUID
 }
 
 // EventMeta contains metadata about an event type.

@@ -113,15 +113,15 @@ func (e *DescriptionChanged) NotificationTemplate() string {
 }
 
 func (e *DescriptionChanged) ApprovalRequestTemplate() string {
-	return "Changing project description requires approval."
+	return "Changing project description change requires approval."
 }
 
 func (e *DescriptionChanged) ApprovedTemplate() string {
-	return "Project description change has been approved."
+	return "Project description change change has been approved."
 }
 
 func (e *DescriptionChanged) RejectedTemplate() string {
-	return "Project description change has been rejected."
+	return "Project description change change has been rejected."
 }
 
 func (e *DescriptionChanged) NotificationVariables() map[string]string {

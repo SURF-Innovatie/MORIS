@@ -9,6 +9,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/event"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/load"
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/affiliatedorganisation"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/product"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
@@ -172,11 +173,22 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *project.Project
 		return nil, err
 	}
 
+	// Load affiliated organisations
+	affiliatedOrgsMap, err := s.repo.GetAffiliatedOrganisationsByIDs(ctx, proj.AffiliatedOrganisationIDs)
+	if err != nil {
+		return nil, err
+	}
+	affiliatedOrgs := make([]affiliatedorganisation.AffiliatedOrganisation, 0, len(affiliatedOrgsMap))
+	for _, org := range affiliatedOrgsMap {
+		affiliatedOrgs = append(affiliatedOrgs, org)
+	}
+
 	return &ProjectDetails{
-		Project:       *proj,
-		OwningOrgNode: org,
-		Members:       members,
-		Products:      products,
+		Project:                 *proj,
+		OwningOrgNode:           org,
+		Members:                 members,
+		Products:                products,
+		AffiliatedOrganisations: affiliatedOrgs,
 	}, nil
 }
 
