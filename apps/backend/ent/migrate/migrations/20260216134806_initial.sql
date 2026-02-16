@@ -1,3 +1,12 @@
+-- Squashed migration combining the following migrations:
+-- 20260110215341_initial_schema.sql
+-- 20260110222105_zenodo_fields.sql
+-- 20260111223807_event_policies.sql
+-- 20260114100638_add_zenodo_access_token.sql
+-- 20260114135829_make_password_optional.sql
+-- 20260120185442_add_portfolio.sql
+
+-- === From: 20260110215341_initial_schema.sql ===
 -- Create "error_logs" table
 CREATE TABLE "error_logs"
 (
@@ -184,3 +193,56 @@ CREATE TABLE "project_roles"
 );
 -- Create index "projectrole_key_organisation_node_id" to table: "project_roles"
 CREATE UNIQUE INDEX "projectrole_key_organisation_node_id" ON "project_roles" ("key", "organisation_node_id");
+
+-- === From: 20260110222105_zenodo_fields.sql ===
+-- Modify "persons" table
+ALTER TABLE "persons"
+    ADD COLUMN "zenodo_access_token" character varying NULL, ADD COLUMN "zenodo_refresh_token" character varying NULL;
+-- Modify "products" table
+ALTER TABLE "products"
+    ADD COLUMN "zenodo_deposition_id" bigint NULL;
+
+-- === From: 20260111223807_event_policies.sql ===
+-- Create "event_policies" table
+CREATE TABLE "event_policies"
+(
+    "id"                         uuid              NOT NULL,
+    "name"                       character varying NOT NULL,
+    "description"                character varying NULL,
+    "event_types"                jsonb             NOT NULL,
+    "conditions"                 jsonb NULL,
+    "action_type"                character varying NOT NULL,
+    "message_template"           character varying NULL,
+    "recipient_user_ids"         jsonb NULL,
+    "recipient_project_role_ids" jsonb NULL,
+    "recipient_org_role_ids"     jsonb NULL,
+    "recipient_dynamic"          jsonb NULL,
+    "project_id"                 uuid NULL,
+    "enabled"                    boolean           NOT NULL DEFAULT true,
+    "created_at"                 timestamptz       NOT NULL,
+    "updated_at"                 timestamptz       NOT NULL,
+    "org_node_id"                uuid NULL,
+    PRIMARY KEY ("id"),
+    CONSTRAINT "event_policies_organisation_nodes_org_node" FOREIGN KEY ("org_node_id") REFERENCES "organisation_nodes" ("id") ON DELETE SET NULL
+);
+-- Create index "eventpolicy_org_node_id" to table: "event_policies"
+CREATE INDEX "eventpolicy_org_node_id" ON "event_policies" ("org_node_id");
+-- Create index "eventpolicy_project_id" to table: "event_policies"
+CREATE INDEX "eventpolicy_project_id" ON "event_policies" ("project_id");
+
+-- === From: 20260114100638_add_zenodo_access_token.sql ===
+-- Modify "persons" table
+ALTER TABLE "persons" DROP COLUMN "zenodo_access_token", DROP COLUMN "zenodo_refresh_token";
+-- Modify "users" table
+ALTER TABLE "users" ADD COLUMN "zenodo_access_token" character varying NULL, ADD COLUMN "zenodo_refresh_token" character varying NULL;
+
+-- === From: 20260114135829_make_password_optional.sql ===
+-- Modify "users" table
+ALTER TABLE "users" ALTER COLUMN "password" DROP NOT NULL;
+
+-- === From: 20260120185442_add_portfolio.sql ===
+-- Create "portfolios" table
+CREATE TABLE "portfolios" ("id" uuid NOT NULL, "headline" character varying NULL, "summary" character varying NULL, "website" character varying NULL, "show_email" boolean NOT NULL DEFAULT true, "show_orcid" boolean NOT NULL DEFAULT true, "pinned_project_ids" jsonb NULL, "pinned_product_ids" jsonb NULL, "person_id" uuid NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "portfolios_persons_portfolio" FOREIGN KEY ("person_id") REFERENCES "persons" ("id") ON DELETE NO ACTION);
+-- Create index "portfolios_person_id_key" to table: "portfolios"
+CREATE UNIQUE INDEX "portfolios_person_id_key" ON "portfolios" ("person_id");
+
