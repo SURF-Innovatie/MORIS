@@ -251,7 +251,6 @@ func (s *service) findPermissiveRole(ctx context.Context, orgID uuid.UUID) (*rol
 	allEvents := events2.GetRegisteredEventTypes()
 
 	for _, r := range roles {
-
 		// Let's check if it has all events.
 		missing := lo.Filter(allEvents, func(t string, _ int) bool {
 			return !r.CanUseEventType(t)

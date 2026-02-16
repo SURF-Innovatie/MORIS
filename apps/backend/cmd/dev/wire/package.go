@@ -50,6 +50,7 @@ import (
 	eventpublisherinfradi "github.com/SURF-Innovatie/MORIS/internal/infra/eventdispatch/di"
 	eventinfrahandlerdi "github.com/SURF-Innovatie/MORIS/internal/infra/handlers/events/di"
 	identityinfradi "github.com/SURF-Innovatie/MORIS/internal/infra/identity/di"
+	affiliatedorganisationrepodi "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/affiliatedorganisation/di"
 	authrepodi "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/auth/di"
 	customfieldrepodi "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/customfield/di"
 	errorlogrepodi "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/errorlog/di"
@@ -73,6 +74,7 @@ var Package = do.Package(
 
 	affiliatedorganisationappdi.Package,
 	affiliatedorganisationhandlerdi.Package,
+	affiliatedorganisationrepodi.Package,
 
 	authappdi.Package,
 	authhandlerdi.Package,

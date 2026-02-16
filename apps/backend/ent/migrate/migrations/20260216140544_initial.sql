@@ -1,12 +1,3 @@
--- Squashed migration combining the following migrations:
--- 20260110215341_initial_schema.sql
--- 20260110222105_zenodo_fields.sql
--- 20260111223807_event_policies.sql
--- 20260114100638_add_zenodo_access_token.sql
--- 20260114135829_make_password_optional.sql
--- 20260120185442_add_portfolio.sql
-
--- === From: 20260110215341_initial_schema.sql ===
 -- Create "error_logs" table
 CREATE TABLE "error_logs"
 (
@@ -194,7 +185,6 @@ CREATE TABLE "project_roles"
 -- Create index "projectrole_key_organisation_node_id" to table: "project_roles"
 CREATE UNIQUE INDEX "projectrole_key_organisation_node_id" ON "project_roles" ("key", "organisation_node_id");
 
--- === From: 20260110222105_zenodo_fields.sql ===
 -- Modify "persons" table
 ALTER TABLE "persons"
     ADD COLUMN "zenodo_access_token" character varying NULL, ADD COLUMN "zenodo_refresh_token" character varying NULL;
@@ -202,7 +192,6 @@ ALTER TABLE "persons"
 ALTER TABLE "products"
     ADD COLUMN "zenodo_deposition_id" bigint NULL;
 
--- === From: 20260111223807_event_policies.sql ===
 -- Create "event_policies" table
 CREATE TABLE "event_policies"
 (
@@ -230,19 +219,18 @@ CREATE INDEX "eventpolicy_org_node_id" ON "event_policies" ("org_node_id");
 -- Create index "eventpolicy_project_id" to table: "event_policies"
 CREATE INDEX "eventpolicy_project_id" ON "event_policies" ("project_id");
 
--- === From: 20260114100638_add_zenodo_access_token.sql ===
 -- Modify "persons" table
 ALTER TABLE "persons" DROP COLUMN "zenodo_access_token", DROP COLUMN "zenodo_refresh_token";
 -- Modify "users" table
 ALTER TABLE "users" ADD COLUMN "zenodo_access_token" character varying NULL, ADD COLUMN "zenodo_refresh_token" character varying NULL;
 
--- === From: 20260114135829_make_password_optional.sql ===
 -- Modify "users" table
 ALTER TABLE "users" ALTER COLUMN "password" DROP NOT NULL;
 
--- === From: 20260120185442_add_portfolio.sql ===
 -- Create "portfolios" table
 CREATE TABLE "portfolios" ("id" uuid NOT NULL, "headline" character varying NULL, "summary" character varying NULL, "website" character varying NULL, "show_email" boolean NOT NULL DEFAULT true, "show_orcid" boolean NOT NULL DEFAULT true, "pinned_project_ids" jsonb NULL, "pinned_product_ids" jsonb NULL, "person_id" uuid NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "portfolios_persons_portfolio" FOREIGN KEY ("person_id") REFERENCES "persons" ("id") ON DELETE NO ACTION);
 -- Create index "portfolios_person_id_key" to table: "portfolios"
 CREATE UNIQUE INDEX "portfolios_person_id_key" ON "portfolios" ("person_id");
 
+-- Create "affiliated_organisations" table
+CREATE TABLE "affiliated_organisations" ("id" uuid NOT NULL, "name" character varying NOT NULL, "kvk_number" character varying NULL, "ror_id" character varying NULL, "vat_number" character varying NULL, "city" character varying NULL, "country" character varying NULL, PRIMARY KEY ("id"));

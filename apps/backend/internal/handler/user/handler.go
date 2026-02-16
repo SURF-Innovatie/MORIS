@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/SURF-Innovatie/MORIS/internal/api/dto"
+	"github.com/SURF-Innovatie/MORIS/internal/app/event"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
@@ -19,11 +20,12 @@ import (
 type Handler struct {
 	svc      user.Service
 	projSvc  queries.Service
+	eventSvc event.Service
 	hydrator *hydrator.Hydrator
 }
 
-func NewHandler(svc user.Service, projSvc queries.Service, h *hydrator.Hydrator) *Handler {
-	return &Handler{svc: svc, projSvc: projSvc, hydrator: h}
+func NewHandler(svc user.Service, projSvc queries.Service, eventSvc event.Service, h *hydrator.Hydrator) *Handler {
+	return &Handler{svc: svc, projSvc: projSvc, eventSvc: eventSvc, hydrator: h}
 }
 
 // CreateUser godoc
@@ -271,7 +273,7 @@ func (h *Handler) GetApprovedEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apprEvents, err := h.svc.GetApprovedEvents(r.Context(), id)
+	apprEvents, err := h.eventSvc.LoadUserApprovedEvents(r.Context(), id)
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return

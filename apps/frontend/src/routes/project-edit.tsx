@@ -27,7 +27,7 @@ import { AffiliatedOrganisationsTab } from "@/components/project-edit/Affiliated
 import { ProjectEventPoliciesTab } from "@/components/project-edit/ProjectEventPoliciesTab";
 import { projectFormSchema } from "@/lib/schemas/project";
 import { EMPTY_UUID } from "@/lib/constants";
-import { ProjectAccessProvider } from "@/context/ProjectAccessContext";
+import { ProjectAccessProvider } from "@/contexts/ProjectAccessContext";
 
 export default function ProjectEditRoute() {
   return (
@@ -143,7 +143,7 @@ function ProjectEditForm() {
       if (values.startDate.toISOString() !== currentStartDate) {
         promises.push(
           createStartDateChangedEvent(id!, {
-            start_date: values.startDate.toISOString(),
+            startDate: values.startDate.toISOString(),
           }),
         );
       }
@@ -154,7 +154,7 @@ function ProjectEditForm() {
       if (values.endDate.toISOString() !== currentEndDate) {
         promises.push(
           createEndDateChangedEvent(id!, {
-            end_date: values.endDate.toISOString(),
+            endDate: values.endDate.toISOString(),
           }),
         );
       }

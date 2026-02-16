@@ -56,7 +56,7 @@ import {
 import { AffiliatedOrganisationResponse } from "@api/model";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Allowed } from "@/components/auth/Allowed";
-import { useAccess } from "@/context/AccessContext";
+import { useAccess } from "@/contexts/AccessContext";
 
 // Schema for manual organisation entry
 const manualOrgSchema = z.object({

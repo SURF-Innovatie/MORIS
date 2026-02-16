@@ -1,38 +1,106 @@
+version: "2"
 linters:
   enable:
     - govet
     - errcheck
     - staticcheck
     - unused
-    - gosimple
     - ineffassign
-    - typecheck
     - depguard
-    - gofmt
-    - goimports
     - misspell
     - unparam
     - nakedret
     - prealloc
     - forbidigo
+    - revive
+    - gosec
+    - gocritic
+    - bodyclose
+    - noctx
+    - goconst
+    - nilerr
+    - goprintffuncname
+    - whitespace
+    - gocyclo
 
 linters-settings:
-  forbidigo:
-    analyze-types: true
-    forbid:
-      - p: EventClient
-        msg: "Direct access to the Event table is restricted. Use the EventStore or mark as okay with //nolint:forbidigo."
-
-  # depguard:
-  #   rules:
-  #     main:
-  #       deny:
-  #         - pkg: "github.com/SURF-Innovatie/MORIS/ent/event"
-  #           desc: "Usage of the event table is restricted. Explicitly mark as okay with //nolint:depguard if necessary."
-  #         - pkg: "log"
-  #           desc: "Use the logrus package instead of the standard library log package."
   goimports:
     local-prefixes: github.com/SURF-Innovatie/MORIS
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - dupImport # handled by goimports
+      - ifElseChain
+      - octalLiteral
+      - whyNoLint
+      - wrapperFunc
+      - unnamedResult
+
+  gocyclo:
+    min-complexity: 15
+
+  gosec:
+    excludes:
+      - G104 # Duplicated errcheck
+
+  revive:
+    rules:
+      - name: exported
+        severity: warning
+      - name: unexported-return
+        severity: warning
+      - name: blank-imports
+        severity: warning
+      - name: context-as-argument
+        severity: warning
+      - name: context-keys-type
+        severity: warning
+      - name: dot-imports
+        severity: warning
+      - name: error-return
+        severity: warning
+      - name: error-strings
+        severity: warning
+      - name: error-naming
+        severity: warning
+      - name: if-return
+        severity: warning
+      - name: increment-decrement
+        severity: warning
+      - name: var-naming
+        severity: warning
+      - name: var-declaration
+        severity: warning
+      - name: package-comments
+        severity: warning
+      - name: range
+        severity: warning
+      - name: receiver-naming
+        severity: warning
+      - name: time-naming
+        severity: warning
+      - name: unexported-return
+        severity: warning
+      - name: indent-error-flow
+        severity: warning
+      - name: errorf
+        severity: warning
+      - name: empty-block
+        severity: warning
+      - name: superfluous-else
+        severity: warning
+      - name: unused-parameter
+        severity: warning
+      - name: unreachable-code
+        severity: warning
+      - name: redefines-builtin-id
+        severity: warning
 
 run:
   concurrency: 4
