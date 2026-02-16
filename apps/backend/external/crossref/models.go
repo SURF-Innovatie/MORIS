@@ -256,28 +256,28 @@ type Primary struct {
 // DateParts represents a date with parts
 type DateParts struct {
 	DateParts [][]int   `json:"date-parts,omitempty"`
-	DateTime  time.Time `json:"date-time,omitempty"`
+	DateTime  time.Time `json:"date-time"`
 	Timestamp int64     `json:"timestamp,omitempty"`
 }
 
 // Indexed represents indexed date
 type Indexed struct {
 	DateParts [][]int   `json:"date-parts,omitempty"`
-	DateTime  time.Time `json:"date-time,omitempty"`
+	DateTime  time.Time `json:"date-time"`
 	Timestamp int64     `json:"timestamp,omitempty"`
 }
 
 // Created represents created date
 type Created struct {
 	DateParts [][]int   `json:"date-parts,omitempty"`
-	DateTime  time.Time `json:"date-time,omitempty"`
+	DateTime  time.Time `json:"date-time"`
 	Timestamp int64     `json:"timestamp,omitempty"`
 }
 
 // Deposited represents deposited date
 type Deposited struct {
 	DateParts [][]int   `json:"date-parts,omitempty"`
-	DateTime  time.Time `json:"date-time,omitempty"`
+	DateTime  time.Time `json:"date-time"`
 	Timestamp int64     `json:"timestamp,omitempty"`
 }
 

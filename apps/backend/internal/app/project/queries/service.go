@@ -9,10 +9,12 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/event"
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/load"
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/affiliatedorganisation"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/product"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
 	events2 "github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events/hydrator"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/project/role"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -42,6 +44,7 @@ type service struct {
 	currentUser appauth.CurrentUserProvider
 	roleRepo    ProjectRoleRepository
 	userSvc     user.Service
+	hydrator    *hydrator.Hydrator
 }
 
 func NewService(
@@ -51,6 +54,7 @@ func NewService(
 	roleRepo ProjectRoleRepository,
 	currentUser appauth.CurrentUserProvider,
 	userSvc user.Service,
+	h *hydrator.Hydrator,
 ) Service {
 	return &service{
 		eventSvc:    eventSvc,
@@ -59,6 +63,7 @@ func NewService(
 		roleRepo:    roleRepo,
 		currentUser: currentUser,
 		userSvc:     userSvc,
+		hydrator:    h,
 	}
 }
 
@@ -121,91 +126,7 @@ func (s *service) GetPendingEvents(ctx context.Context, projectID uuid.UUID) ([]
 		return e.GetStatus() == "pending"
 	})
 
-	// Hydration
-	var personIDs []uuid.UUID
-	var roleIDs []uuid.UUID
-	var productIDs []uuid.UUID
-	var creatorUserIDs []uuid.UUID
-
-	for _, e := range pendingEvts {
-		if r, ok := e.(events2.HasRelatedIDs); ok {
-			ids := r.RelatedIDs()
-			if ids.PersonID != nil {
-				personIDs = append(personIDs, *ids.PersonID)
-			}
-			if ids.ProjectRoleID != nil {
-				roleIDs = append(roleIDs, *ids.ProjectRoleID)
-			}
-			if ids.ProductID != nil {
-				productIDs = append(productIDs, *ids.ProductID)
-			}
-		}
-		creatorUserIDs = append(creatorUserIDs, e.CreatedByID())
-	}
-
-	personMap := make(map[uuid.UUID]identity.Person)
-	if len(personIDs) > 0 {
-		pm, err := s.repo.PeopleByIDs(ctx, personIDs)
-		if err == nil {
-			personMap = pm
-		}
-	}
-
-	roleMap := make(map[uuid.UUID]role.ProjectRole)
-	if len(roleIDs) > 0 {
-		rm, err := s.repo.ProjectRolesByIDs(ctx, roleIDs)
-		if err == nil {
-			roleMap = rm
-		}
-	}
-
-	productMap := make(map[uuid.UUID]product.Product)
-	if len(productIDs) > 0 {
-		pm, err := s.repo.ProductsByIDs(ctx, productIDs)
-		if err == nil {
-			productMap = make(map[uuid.UUID]product.Product)
-			for _, p := range pm {
-				productMap[p.Id] = p
-			}
-		}
-	}
-
-	creatorMap := make(map[uuid.UUID]identity.Person)
-	if len(creatorUserIDs) > 0 {
-		cm, err := s.userSvc.GetPeopleByUserIDs(ctx, lo.Uniq(creatorUserIDs))
-		if err == nil {
-			creatorMap = cm
-		}
-	}
-
-	return lo.Map(pendingEvts, func(e events2.Event, _ int) events2.DetailedEvent {
-		de := events2.DetailedEvent{Event: e}
-
-		if r, ok := e.(events2.HasRelatedIDs); ok {
-			ids := r.RelatedIDs()
-			if ids.PersonID != nil {
-				if p, ok := personMap[*ids.PersonID]; ok {
-					de.Person = &p
-				}
-			}
-			if ids.ProjectRoleID != nil {
-				if r, ok := roleMap[*ids.ProjectRoleID]; ok {
-					de.ProjectRole = &r
-				}
-			}
-			if ids.ProductID != nil {
-				if p, ok := productMap[*ids.ProductID]; ok {
-					de.Product = &p
-				}
-			}
-		}
-
-		if p, ok := creatorMap[e.CreatedByID()]; ok {
-			de.Creator = &p
-		}
-
-		return de
-	}), nil
+	return s.hydrator.HydrateMany(ctx, pendingEvts), nil
 }
 
 func (s *service) buildProjectDetails(ctx context.Context, proj *project.Project) (*ProjectDetails, error) {
@@ -252,11 +173,22 @@ func (s *service) buildProjectDetails(ctx context.Context, proj *project.Project
 		return nil, err
 	}
 
+	// Load affiliated organisations
+	affiliatedOrgsMap, err := s.repo.GetAffiliatedOrganisationsByIDs(ctx, proj.AffiliatedOrganisationIDs)
+	if err != nil {
+		return nil, err
+	}
+	affiliatedOrgs := make([]affiliatedorganisation.AffiliatedOrganisation, 0, len(affiliatedOrgsMap))
+	for _, org := range affiliatedOrgsMap {
+		affiliatedOrgs = append(affiliatedOrgs, org)
+	}
+
 	return &ProjectDetails{
-		Project:       *proj,
-		OwningOrgNode: org,
-		Members:       members,
-		Products:      products,
+		Project:                 *proj,
+		OwningOrgNode:           org,
+		Members:                 members,
+		Products:                products,
+		AffiliatedOrganisations: affiliatedOrgs,
 	}, nil
 }
 
@@ -274,91 +206,7 @@ func (s *service) GetChangeLog(ctx context.Context, id uuid.UUID) ([]events2.Det
 		return e.GetStatus() == "approved"
 	})
 
-	// Hydration - collect IDs
-	var personIDs []uuid.UUID
-	var roleIDs []uuid.UUID
-	var productIDs []uuid.UUID
-	var creatorUserIDs []uuid.UUID
-
-	for _, e := range approvedEvts {
-		if r, ok := e.(events2.HasRelatedIDs); ok {
-			ids := r.RelatedIDs()
-			if ids.PersonID != nil {
-				personIDs = append(personIDs, *ids.PersonID)
-			}
-			if ids.ProjectRoleID != nil {
-				roleIDs = append(roleIDs, *ids.ProjectRoleID)
-			}
-			if ids.ProductID != nil {
-				productIDs = append(productIDs, *ids.ProductID)
-			}
-		}
-		creatorUserIDs = append(creatorUserIDs, e.CreatedByID())
-	}
-
-	personMap := make(map[uuid.UUID]identity.Person)
-	if len(personIDs) > 0 {
-		pm, err := s.repo.PeopleByIDs(ctx, personIDs)
-		if err == nil {
-			personMap = pm
-		}
-	}
-
-	roleMap := make(map[uuid.UUID]role.ProjectRole)
-	if len(roleIDs) > 0 {
-		rm, err := s.repo.ProjectRolesByIDs(ctx, roleIDs)
-		if err == nil {
-			roleMap = rm
-		}
-	}
-
-	productMap := make(map[uuid.UUID]product.Product)
-	if len(productIDs) > 0 {
-		pm, err := s.repo.ProductsByIDs(ctx, productIDs)
-		if err == nil {
-			productMap = make(map[uuid.UUID]product.Product)
-			for _, p := range pm {
-				productMap[p.Id] = p
-			}
-		}
-	}
-
-	creatorMap := make(map[uuid.UUID]identity.Person)
-	if len(creatorUserIDs) > 0 {
-		cm, err := s.userSvc.GetPeopleByUserIDs(ctx, lo.Uniq(creatorUserIDs))
-		if err == nil {
-			creatorMap = cm
-		}
-	}
-
-	detailedEvents := lo.Map(approvedEvts, func(e events2.Event, _ int) events2.DetailedEvent {
-		de := events2.DetailedEvent{Event: e}
-
-		if r, ok := e.(events2.HasRelatedIDs); ok {
-			ids := r.RelatedIDs()
-			if ids.PersonID != nil {
-				if p, ok := personMap[*ids.PersonID]; ok {
-					de.Person = &p
-				}
-			}
-			if ids.ProjectRoleID != nil {
-				if r, ok := roleMap[*ids.ProjectRoleID]; ok {
-					de.ProjectRole = &r
-				}
-			}
-			if ids.ProductID != nil {
-				if p, ok := productMap[*ids.ProductID]; ok {
-					de.Product = &p
-				}
-			}
-		}
-
-		if p, ok := creatorMap[e.CreatedByID()]; ok {
-			de.Creator = &p
-		}
-
-		return de
-	})
+	detailedEvents := s.hydrator.HydrateMany(ctx, approvedEvts)
 
 	// Sort by time descending (most recent first)
 	sort.Slice(detailedEvents, func(i, j int) bool {

@@ -115,7 +115,7 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*p
 
 	if req.Type == events2.ProjectStartedType {
 		// Parse input safely using json encoding
-		var inputMap map[string]interface{}
+		var inputMap map[string]any
 		if err := json.Unmarshal(req.Input, &inputMap); err == nil {
 			if strID, ok := inputMap["owning_org_node_id"].(string); ok {
 				orgID, err := uuid.Parse(strID)
@@ -205,19 +205,6 @@ func (s *service) ExecuteEvent(ctx context.Context, req ExecuteEventRequest) (*p
 				FriendlyNameStr: e.FriendlyName(),
 			}
 			e.SetBase(base)
-		} else {
-			// Check legacy approval mechanism if no policy triggered it
-			if meta.NeedsApproval(ctx, e, cli) {
-				base := events2.Base{
-					ID:              e.GetID(),
-					ProjectID:       e.AggregateID(),
-					At:              e.OccurredAt(),
-					CreatedBy:       e.CreatedByID(),
-					Status:          events2.StatusPending,
-					FriendlyNameStr: e.FriendlyName(),
-				}
-				e.SetBase(base)
-			}
 		}
 
 		return []events2.Event{e}, nil
@@ -264,7 +251,6 @@ func (s *service) findPermissiveRole(ctx context.Context, orgID uuid.UUID) (*rol
 	allEvents := events2.GetRegisteredEventTypes()
 
 	for _, r := range roles {
-
 		// Let's check if it has all events.
 		missing := lo.Filter(allEvents, func(t string, _ int) bool {
 			return !r.CanUseEventType(t)

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { z } from "zod";
 import { Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,7 @@ export const createFieldSchema = z.object({
   type: z.enum(["TEXT", "NUMBER", "BOOLEAN", "DATE"]),
   category: z.enum(["PROJECT", "PERSON"]),
   description: z.string().optional(),
-  required: z.boolean().default(false),
+  required: z.boolean(),
   validation_regex: z.string().optional(),
   example_value: z.string().optional(),
 });
@@ -59,7 +59,7 @@ export const AddCustomFieldDialog = ({
     usePostOrganisationNodesIdCustomFields();
 
   const form = useForm<z.infer<typeof createFieldSchema>>({
-    resolver: zodResolver(createFieldSchema),
+    resolver: standardSchemaResolver(createFieldSchema),
     defaultValues: {
       name: "",
       type: "TEXT",

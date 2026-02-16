@@ -16,15 +16,10 @@ import (
 
 type EntRepo struct {
 	cli *ent.Client
-	tx  *ent.Tx
 }
 
 func NewEntRepo(cli *ent.Client) *EntRepo {
 	return &EntRepo{cli: cli}
-}
-
-func newTxRepo(tx *ent.Tx) *EntRepo {
-	return &EntRepo{tx: tx}
 }
 
 func (r *EntRepo) node(ctx context.Context) *ent.OrganisationNodeClient {

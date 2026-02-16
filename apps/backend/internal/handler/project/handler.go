@@ -59,7 +59,6 @@ func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "internal server error"
 // @Router /projects [get]
 func (h *Handler) GetAllProjects(w http.ResponseWriter, r *http.Request) {
-
 	projs, err := h.svc.GetAllProjects(r.Context())
 	if err != nil {
 		httputil.WriteError(w, r, http.StatusInternalServerError, err.Error(), nil)

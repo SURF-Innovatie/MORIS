@@ -15,6 +15,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/app/project/queries"
 	projectrole2 "github.com/SURF-Innovatie/MORIS/internal/app/project/role"
 	"github.com/SURF-Innovatie/MORIS/internal/app/user"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events/hydrator"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/persistence/enttx"
 	projectrepo "github.com/SURF-Innovatie/MORIS/internal/infra/persistence/project"
@@ -24,6 +25,7 @@ import (
 var Package = do.Package(
 	do.Lazy(provideProjectRoleService),
 	do.Lazy(provideProjectLoader),
+	do.Lazy(provideEventHydrator),
 	do.Lazy(provideProjectQueryService),
 	do.Lazy(provideProjectCommandService),
 	do.Lazy(provideCacheWarmupService),
@@ -43,6 +45,12 @@ func provideProjectLoader(i do.Injector) (*load.Loader, error) {
 	return load.New(eventSvc, pc), nil
 }
 
+func provideEventHydrator(i do.Injector) (*hydrator.Hydrator, error) {
+	repo := do.MustInvoke[*projectrepo.EntRepo](i)
+	userSvc := do.MustInvoke[user.Service](i)
+	return hydrator.New(repo, repo, repo, repo, userSvc), nil
+}
+
 func provideProjectQueryService(i do.Injector) (queries.Service, error) {
 	eventSvc := do.MustInvoke[event.Service](i)
 	ldr := do.MustInvoke[*load.Loader](i)
@@ -50,7 +58,8 @@ func provideProjectQueryService(i do.Injector) (queries.Service, error) {
 	roleRepo := do.MustInvoke[projectrole2.Repository](i)
 	curUser := do.MustInvoke[coreauth.CurrentUserProvider](i)
 	userSvc := do.MustInvoke[user.Service](i)
-	return queries.NewService(eventSvc, ldr, repo, roleRepo, curUser, userSvc), nil
+	h := do.MustInvoke[*hydrator.Hydrator](i)
+	return queries.NewService(eventSvc, ldr, repo, roleRepo, curUser, userSvc, h), nil
 }
 
 func provideProjectCommandService(i do.Injector) (command.Service, error) {

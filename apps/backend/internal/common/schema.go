@@ -34,8 +34,8 @@ func StructToInputSchema(v any) map[string]any {
 		}
 
 		name := tag
-		if comma := strings.IndexByte(tag, ','); comma >= 0 {
-			name = tag[:comma]
+		if before, _, ok := strings.Cut(tag, ","); ok {
+			name = before
 		}
 		if name == "" {
 			continue

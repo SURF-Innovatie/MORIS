@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 	"time"
 
@@ -282,13 +283,7 @@ func main() {
 
 	// Ensure each project includes the test user
 	for i := range projects {
-		hasTestUser := false
-		for _, person := range projects[i].People {
-			if person == testUserName {
-				hasTestUser = true
-				break
-			}
-		}
+		hasTestUser := slices.Contains(projects[i].People, testUserName)
 		if !hasTestUser {
 			projects[i].People = append(projects[i].People, testUserName)
 		}

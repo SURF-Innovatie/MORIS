@@ -15,7 +15,7 @@ type Person struct {
 	Email           string
 	AvatarUrl       *string
 	Description     *string
-	OrgCustomFields map[string]interface{} `json:"org_custom_fields"`
+	OrgCustomFields map[string]any `json:"org_custom_fields"`
 }
 
 func (p *Person) FromEnt(row *ent.Person) *Person {

@@ -115,7 +115,7 @@ func (c *client) doSearchRequest(req *http.Request) (*SearchResponse, error) {
 	return &out, nil
 }
 
-func (c *client) doRequest(req *http.Request, out interface{}) error {
+func (c *client) doRequest(req *http.Request, out any) error {
 	if c.config.APIKey != "" {
 		req.Header.Set("apikey", c.config.APIKey)
 	}

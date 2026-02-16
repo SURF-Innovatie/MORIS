@@ -833,39 +833,10 @@ func (h *Handler) buildTree(nodes []organisation.OrganisationNode) []dto.Organis
 		}
 	}
 
-	// Re-assign children in parents (because we appended to *entry in map, but we need to ensure the slice in map is updated correctly if we were appending to a copy,
-	// but here we appended to the slice field of the pointer, so it should be fine.
-	// HOWEVER, appending to a slice *header* inside a struct pointer works for the slice header in that struct,
-	// but wait:
-	// parent.Children = append(parent.Children, *child)
-	// 'parent' is a pointer to the struct in map. 'parent.Children' is the slice header.
-	// We are updating the slice header in the struct in the map.
-	// So subsequent lookups of 'parent' WILL see the new child.
-	// BUT, 'child' itself (the one we appended) is a COPY of the struct at that moment.
-	// If 'child' later gets its own children, 'parent' will have a copy of 'child' WITHOUT those new children.
-	// This is a common pitfall. We need to do this in two passes or use pointers in children slice then convert.
-	// Or, more simply, use pointers for children during build.
-
 	return h.buildTreeCorrectly(nodes)
 }
 
 func (h *Handler) buildTreeCorrectly(nodes []organisation.OrganisationNode) []dto.OrganisationTreeNode {
-	// 1. Create a map of ID -> *DTO (using pointers for children to allow updates)
-	type info struct {
-		node     dto.OrganisationTreeNode
-		parentID *uuid.UUID
-		ptr      *dto.OrganisationTreeNode
-	}
-
-	// We'll use a slightly different approach:
-	// Map of ID -> *dto.OrganisationTreeNode
-	// But dto.Children is []dto.OrganisationTreeNode (values).
-	// Modifying a value in a slice is hard if we don't have the index.
-
-	// Better approach:
-	// 1. Group by ParentID
-	// 2. Recursively build tree
-
 	childrenMap := make(map[uuid.UUID][]organisation.OrganisationNode)
 	var roots []organisation.OrganisationNode
 

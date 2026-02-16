@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -37,8 +37,8 @@ const userSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   password: z.string().optional(),
-  is_sys_admin: z.boolean().default(false),
-  is_active: z.boolean().default(true),
+  is_sys_admin: z.boolean(),
+  is_active: z.boolean(),
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
@@ -63,7 +63,7 @@ export function UserDialog({ open, onOpenChange, user }: UserDialogProps) {
     usePutUsersId();
 
   const form = useForm<UserFormValues>({
-    resolver: zodResolver(userSchema),
+    resolver: standardSchemaResolver(userSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -207,13 +207,17 @@ export function UserDialog({ open, onOpenChange, user }: UserDialogProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {isEditMode ? "New Password (Optional)" : "Password (Optional)"}
+                    {isEditMode
+                      ? "New Password (Optional)"
+                      : "Password (Optional)"}
                   </FormLabel>
                   <FormControl>
                     <Input
                       type="password"
                       placeholder={
-                        isEditMode ? "Leave blank to keep current" : "Leave blank for OAuth-only user"
+                        isEditMode
+                          ? "Leave blank to keep current"
+                          : "Leave blank for OAuth-only user"
                       }
                       {...field}
                     />

@@ -22,7 +22,7 @@ import {
 import { AddPersonDialog } from "./AddPersonDialog";
 import { EditRoleDialog } from "@/components/project-edit/EditRoleDialog";
 import { ProjectMemberResponse } from "@/api/generated-orval/model";
-import { useAccess } from "@/context/AccessContext";
+import { useAccess } from "@/contexts/AccessContext";
 import { Allowed } from "@/components/auth/Allowed";
 import { ProjectEventType } from "@/api/events";
 

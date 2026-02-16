@@ -10,8 +10,8 @@ type Deposition struct {
 	DOIURL    string              `json:"doi_url,omitempty"`
 	RecordID  int                 `json:"record_id,omitempty"`
 	RecordURL string              `json:"record_url,omitempty"`
-	Created   time.Time           `json:"created,omitempty"`
-	Modified  time.Time           `json:"modified,omitempty"`
+	Created   time.Time           `json:"created"`
+	Modified  time.Time           `json:"modified"`
 	Owner     int                 `json:"owner,omitempty"`
 	State     DepositionState     `json:"state,omitempty"`
 	Submitted bool                `json:"submitted,omitempty"`

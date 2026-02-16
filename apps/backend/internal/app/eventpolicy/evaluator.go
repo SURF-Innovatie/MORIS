@@ -13,6 +13,7 @@ import (
 	"github.com/SURF-Innovatie/MORIS/internal/domain/policy"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
 	internalevents "github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events/hydrator"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/samber/lo"
@@ -31,6 +32,7 @@ type evaluator struct {
 	orgHierarchySvc   organisationhierarchy.Service
 	recipientResolver RecipientResolver
 	notificationSvc   notification.Service
+	hydrator          *hydrator.Hydrator
 }
 
 // NewEvaluator creates a new policy evaluator
@@ -39,12 +41,14 @@ func NewEvaluator(
 	orgHierarchySvc organisationhierarchy.Service,
 	recipientResolver RecipientResolver,
 	notificationSvc notification.Service,
+	hydrator *hydrator.Hydrator,
 ) Evaluator {
 	return &evaluator{
 		repo:              repo,
 		orgHierarchySvc:   orgHierarchySvc,
 		recipientResolver: recipientResolver,
 		notificationSvc:   notificationSvc,
+		hydrator:          hydrator,
 	}
 }
 
@@ -258,7 +262,7 @@ func (e *evaluator) getFieldValue(obj any, fieldName string) any {
 	}
 
 	v := reflect.ValueOf(obj)
-	if v.Kind() == reflect.Ptr {
+	if v.Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 	if v.Kind() != reflect.Struct {
@@ -337,7 +341,7 @@ func (e *evaluator) executeAction(ctx context.Context, eventPolicy policy.EventP
 	log.Info().Msgf("executeAction: Resolved %d recipients for eventPolicy %s. Sending %s...", len(userIDs), eventPolicy.Name, eventPolicy.ActionType)
 
 	// Build message
-	message := e.buildMessage(eventPolicy, event, project)
+	message := e.buildMessage(ctx, eventPolicy, event, project)
 
 	switch eventPolicy.ActionType {
 	case policy.ActionTypeNotify:
@@ -405,15 +409,57 @@ func (e *evaluator) resolveAllRecipients(ctx context.Context, policy policy.Even
 }
 
 // buildMessage creates the notification message
-func (e *evaluator) buildMessage(eventPolicy policy.EventPolicy, event internalevents.Event, project *project.Project) string {
+func (e *evaluator) buildMessage(ctx context.Context, eventPolicy policy.EventPolicy, event internalevents.Event, proj *project.Project) string {
+	// Build template variables from event and project
+	vars := e.buildTemplateVariables(ctx, event, proj)
+
 	if eventPolicy.MessageTemplate != nil && *eventPolicy.MessageTemplate != "" {
-		// TODO: implement template substitution (e.g., {{project.title}})
-		return *eventPolicy.MessageTemplate
+		// Use policy's custom message template with variable substitution
+		return internalevents.ResolveTemplate(*eventPolicy.MessageTemplate, vars)
 	}
 
-	// Default message based on action type
-	if eventPolicy.ActionType == policy.ActionTypeRequestApproval {
-		return fmt.Sprintf("Approval requested for event '%s' on project '%s'", event.FriendlyName(), project.Title)
+	// Check if event implements Notifier for default templates
+	if n, ok := event.(internalevents.Notifier); ok {
+		var template string
+		if eventPolicy.ActionType == policy.ActionTypeRequestApproval {
+			template = n.ApprovalRequestTemplate()
+		} else {
+			template = n.NotificationTemplate()
+		}
+		if template != "" {
+			return internalevents.ResolveTemplate(template, vars)
+		}
 	}
-	return fmt.Sprintf("Event '%s' occurred on project '%s'", event.FriendlyName(), project.Title)
+
+	// Fallback default message based on action type
+	if eventPolicy.ActionType == policy.ActionTypeRequestApproval {
+		return fmt.Sprintf("Approval requested for event '%s' on project '%s'", event.FriendlyName(), proj.Title)
+	}
+	return fmt.Sprintf("Event '%s' occurred on project '%s'", event.FriendlyName(), proj.Title)
+}
+
+// buildTemplateVariables constructs a map of variables for template substitution
+func (e *evaluator) buildTemplateVariables(ctx context.Context, event internalevents.Event, proj *project.Project) map[string]string {
+	vars := make(map[string]string)
+
+	// Add project variables
+	if proj != nil {
+		vars["project.Title"] = proj.Title
+		vars["project.Description"] = proj.Description
+	}
+
+	// Add event variables from Notifier if available
+	if n, ok := event.(internalevents.Notifier); ok {
+		for k, v := range n.NotificationVariables() {
+			vars[k] = v
+		}
+	}
+
+	// Add hydrated entity variables from DetailedEvent
+	if e.hydrator != nil {
+		de := e.hydrator.HydrateOne(ctx, event)
+		vars = internalevents.AddDetailedEventVariables(vars, de)
+	}
+
+	return vars
 }

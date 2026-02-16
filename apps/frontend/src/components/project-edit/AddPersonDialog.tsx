@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { z } from "zod";
 import { Loader2, Plus, UserPlus, Users } from "lucide-react";
 
@@ -66,7 +66,7 @@ export function AddPersonDialog({
     useGetProjectsIdRoles(projectId);
 
   const form = useForm<z.infer<typeof addPersonSchema>>({
-    resolver: zodResolver(addPersonSchema),
+    resolver: standardSchemaResolver(addPersonSchema),
     defaultValues: {
       name: "",
       email: "",

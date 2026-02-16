@@ -28,8 +28,8 @@ func (Event) Fields() []ent.Field {
 			Optional(),
 		field.Time("occurred_at").
 			Default(time.Now),
-		field.JSON("data", map[string]interface{}{}).
-			Default(func() map[string]interface{} { return map[string]interface{}{} }).
+		field.JSON("data", map[string]any{}).
+			Default(func() map[string]any { return map[string]any{} }).
 			Annotations(entoas.Skip(true)),
 	}
 }

@@ -23,7 +23,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ProjectFields } from "@/components/project-form/ProjectFields";
 import { CustomFieldsRenderer } from "@/components/project-form/CustomFieldsRenderer";
-import { useAccess } from "@/context/AccessContext";
+import { useAccess } from "@/contexts/AccessContext";
 import { ProjectEventType, ProjectEvent } from "@/api/events";
 
 interface GeneralTabProps {

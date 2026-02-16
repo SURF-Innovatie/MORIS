@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/SURF-Innovatie/MORIS/internal/domain/project"
+	projdomain "github.com/SURF-Innovatie/MORIS/internal/domain/project"
 	"github.com/google/uuid"
 )
 
@@ -23,13 +23,13 @@ func (e ProjectRoleAssigned) String() string {
 	return fmt.Sprintf("Role assigned: %s to %s", e.ProjectRoleID, e.PersonID)
 }
 
-func (e *ProjectRoleAssigned) Apply(proj *project.Project) {
-	for _, m := range proj.Members {
+func (e *ProjectRoleAssigned) Apply(p *projdomain.Project) {
+	for _, m := range p.Members {
 		if m.PersonID == e.PersonID && m.ProjectRoleID == e.ProjectRoleID {
 			return // already assigned
 		}
 	}
-	proj.Members = append(proj.Members, project.Member{
+	p.Members = append(p.Members, projdomain.Member{
 		PersonID:      e.PersonID,
 		ProjectRoleID: e.ProjectRoleID,
 	})
@@ -51,7 +51,7 @@ type ProjectRoleAssignedInput struct {
 func DecideProjectRoleAssigned(
 	projectID uuid.UUID,
 	actor uuid.UUID,
-	cur *project.Project,
+	cur *projdomain.Project,
 	in ProjectRoleAssignedInput,
 	status Status,
 ) (Event, error) {
@@ -94,7 +94,7 @@ func init() {
 	})
 
 	RegisterDecider[ProjectRoleAssignedInput](ProjectRoleAssignedType,
-		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *project.Project, in ProjectRoleAssignedInput, status Status) (Event, error) {
+		func(ctx context.Context, projectID uuid.UUID, actor uuid.UUID, cur *projdomain.Project, in ProjectRoleAssignedInput, status Status) (Event, error) {
 			return DecideProjectRoleAssigned(projectID, actor, cur, in, status)
 		})
 

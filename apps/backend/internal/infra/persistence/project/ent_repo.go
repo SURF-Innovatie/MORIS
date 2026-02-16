@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 
 	"github.com/SURF-Innovatie/MORIS/ent"
+	affiliatedorgent "github.com/SURF-Innovatie/MORIS/ent/affiliatedorganisation"
 	en "github.com/SURF-Innovatie/MORIS/ent/event"
 	organisationent "github.com/SURF-Innovatie/MORIS/ent/organisationnode"
 	personent "github.com/SURF-Innovatie/MORIS/ent/person"
 	productent "github.com/SURF-Innovatie/MORIS/ent/product"
 	entprojectrole "github.com/SURF-Innovatie/MORIS/ent/projectrole"
 	"github.com/SURF-Innovatie/MORIS/internal/common/transform"
+	"github.com/SURF-Innovatie/MORIS/internal/domain/affiliatedorganisation"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/product"
@@ -94,6 +96,30 @@ func (r *EntRepo) OrganisationNodeByID(ctx context.Context, id uuid.UUID) (organ
 	return transform.ToEntity[organisation.OrganisationNode](row), nil
 }
 
+func (r *EntRepo) OrganisationNodesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]organisation.OrganisationNode, error) {
+	out := make(map[uuid.UUID]organisation.OrganisationNode)
+	if len(ids) == 0 {
+		return out, nil
+	}
+
+	rows, err := r.cli.OrganisationNode.
+		Query().
+		Where(organisationent.IDIn(ids...)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return lo.Associate(rows, func(o *ent.OrganisationNode) (uuid.UUID, organisation.OrganisationNode) {
+		return o.ID, transform.ToEntity[organisation.OrganisationNode](o)
+	}), nil
+}
+
+// GetPeopleByIDs is an alias for PeopleByIDs to satisfy the hydrator.PersonLoader interface
+func (r *EntRepo) GetPeopleByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]identity.Person, error) {
+	return r.PeopleByIDs(ctx, ids)
+}
+
 func (r *EntRepo) ProjectIDsForPerson(ctx context.Context, personID uuid.UUID) ([]uuid.UUID, error) {
 	evts, err := r.cli.Event.
 		Query().
@@ -142,5 +168,25 @@ func (r *EntRepo) ListAncestors(ctx context.Context, orgID uuid.UUID) ([]uuid.UU
 			return row.AncestorID, true
 		}
 		return uuid.Nil, false
+	}), nil
+}
+
+func (r *EntRepo) GetAffiliatedOrganisationsByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]affiliatedorganisation.AffiliatedOrganisation, error) {
+	out := make(map[uuid.UUID]affiliatedorganisation.AffiliatedOrganisation)
+	if len(ids) == 0 {
+		return out, nil
+	}
+
+	rows, err := r.cli.AffiliatedOrganisation.
+		Query().
+		Where(affiliatedorgent.IDIn(ids...)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return lo.Associate(rows, func(a *ent.AffiliatedOrganisation) (uuid.UUID, affiliatedorganisation.AffiliatedOrganisation) {
+		var entity affiliatedorganisation.AffiliatedOrganisation
+		return a.ID, *entity.FromEnt(a)
 	}), nil
 }

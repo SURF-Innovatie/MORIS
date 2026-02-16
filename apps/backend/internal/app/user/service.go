@@ -3,11 +3,9 @@ package user
 import (
 	"context"
 
-	"github.com/SURF-Innovatie/MORIS/internal/app/event"
 	"github.com/SURF-Innovatie/MORIS/internal/app/person"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/identity/readmodels"
-	"github.com/SURF-Innovatie/MORIS/internal/domain/project/events"
 	"github.com/SURF-Innovatie/MORIS/internal/infra/cache"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -21,7 +19,6 @@ type Service interface {
 
 	GetAccount(ctx context.Context, id uuid.UUID) (*readmodels.UserAccount, error)
 	GetAccountByEmail(ctx context.Context, email string) (*readmodels.UserAccount, error)
-	GetApprovedEvents(ctx context.Context, userID uuid.UUID) ([]events.Event, error)
 	ListAll(ctx context.Context, limit, offset int) ([]*readmodels.UserAccount, int, error)
 	ToggleActive(ctx context.Context, id uuid.UUID, isActive bool) error
 
@@ -33,7 +30,6 @@ type Service interface {
 type service struct {
 	users      Repository
 	people     person.Service
-	eventSvc   event.Service
 	membership ProjectMembershipRepository
 	cache      cache.UserCache
 }
@@ -41,11 +37,10 @@ type service struct {
 func NewService(
 	users Repository,
 	people person.Service,
-	eventSvc event.Service,
 	membership ProjectMembershipRepository,
 	cache cache.UserCache,
 ) Service {
-	return &service{users: users, people: people, eventSvc: eventSvc, membership: membership, cache: cache}
+	return &service{users: users, people: people, membership: membership, cache: cache}
 }
 
 func (s *service) Get(ctx context.Context, id uuid.UUID) (*identity.User, error) {
@@ -114,10 +109,6 @@ func (s *service) GetAccountByEmail(ctx context.Context, email string) (*readmod
 		return nil, err
 	}
 	return &readmodels.UserAccount{User: *u, Person: *p}, nil
-}
-
-func (s *service) GetApprovedEvents(ctx context.Context, userID uuid.UUID) ([]events.Event, error) {
-	return s.eventSvc.LoadUserApprovedEvents(ctx, userID)
 }
 
 func (s *service) ListAll(ctx context.Context, limit, offset int) ([]*readmodels.UserAccount, int, error) {

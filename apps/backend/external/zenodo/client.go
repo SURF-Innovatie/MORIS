@@ -127,7 +127,7 @@ func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*TokenR
 }
 
 // doRequest performs an authenticated request to the Zenodo API
-func (c *Client) doRequest(ctx context.Context, method, path, accessToken string, body interface{}) (*http.Response, error) {
+func (c *Client) doRequest(ctx context.Context, method, path, accessToken string, body any) (*http.Response, error) {
 	var bodyReader io.Reader
 	if body != nil {
 		jsonBody, err := json.Marshal(body)
@@ -205,7 +205,7 @@ func (c *Client) GetDeposition(ctx context.Context, accessToken string, depositi
 // UpdateDeposition updates the metadata of a deposition
 func (c *Client) UpdateDeposition(ctx context.Context, accessToken string, depositionID int, metadata *DepositionMetadata) (*Deposition, error) {
 	path := fmt.Sprintf("/deposit/depositions/%d", depositionID)
-	body := map[string]interface{}{
+	body := map[string]any{
 		"metadata": metadata,
 	}
 	resp, err := c.doRequest(ctx, "PUT", path, accessToken, body)

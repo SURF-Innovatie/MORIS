@@ -26,7 +26,7 @@ type Service interface {
 	ListAll(ctx context.Context) ([]organisation.OrganisationNode, error)
 	Search(ctx context.Context, query string) ([]organisation.OrganisationNode, error)
 	SearchForProjectCreation(ctx context.Context, query string, actorID uuid.UUID) ([]organisation.OrganisationNode, error)
-	UpdateMemberCustomFields(ctx context.Context, orgID uuid.UUID, personID uuid.UUID, values map[string]interface{}) error
+	UpdateMemberCustomFields(ctx context.Context, orgID uuid.UUID, personID uuid.UUID, values map[string]any) error
 }
 
 type service struct {
@@ -136,14 +136,14 @@ func (s *service) SearchForProjectCreation(ctx context.Context, query string, ac
 	return filtered, nil
 }
 
-func (s *service) UpdateMemberCustomFields(ctx context.Context, orgID uuid.UUID, personID uuid.UUID, values map[string]interface{}) error {
+func (s *service) UpdateMemberCustomFields(ctx context.Context, orgID uuid.UUID, personID uuid.UUID, values map[string]any) error {
 	p, err := s.personSvc.Get(ctx, personID)
 	if err != nil {
 		return err
 	}
 
 	if p.OrgCustomFields == nil {
-		p.OrgCustomFields = make(map[string]interface{})
+		p.OrgCustomFields = make(map[string]any)
 	}
 
 	p.OrgCustomFields[orgID.String()] = values

@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 
+	"github.com/SURF-Innovatie/MORIS/internal/domain/affiliatedorganisation"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/identity"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/organisation"
 	"github.com/SURF-Innovatie/MORIS/internal/domain/product"
@@ -16,6 +17,7 @@ type ProjectReadRepository interface {
 	ProjectRolesByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]role.ProjectRole, error)
 	ProductsByIDs(ctx context.Context, ids []uuid.UUID) ([]product.Product, error)
 	OrganisationNodeByID(ctx context.Context, id uuid.UUID) (organisation.OrganisationNode, error)
+	GetAffiliatedOrganisationsByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]affiliatedorganisation.AffiliatedOrganisation, error)
 
 	ProjectIDsForPerson(ctx context.Context, personID uuid.UUID) ([]uuid.UUID, error)
 

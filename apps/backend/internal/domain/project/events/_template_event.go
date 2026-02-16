@@ -56,13 +56,27 @@ func (e *TemplateEvent) Apply(project *project.Project) {
 }
 
 // Notifier - implement if event should notify project members
-func (e *TemplateEvent) NotificationMessage() string {
-	return fmt.Sprintf("Something happened: %s", e.SomeStringField)
+// All five methods must be implemented together
+func (e *TemplateEvent) NotificationTemplate() string {
+	return "Something happened: {{event.SomeStringField}}"
 }
 
-// ApprovalNotifier - implement if event requires approval workflow
-func (e *TemplateEvent) ApprovalMessage(projectTitle string) string {
-	return fmt.Sprintf("Approval needed for action in project '%s'.", projectTitle)
+func (e *TemplateEvent) ApprovalRequestTemplate() string {
+	return "Approval needed for action: {{event.SomeStringField}}"
+}
+
+func (e *TemplateEvent) ApprovedTemplate() string {
+	return "Action '{{event.SomeStringField}}' has been approved."
+}
+
+func (e *TemplateEvent) RejectedTemplate() string {
+	return "Action '{{event.SomeStringField}}' has been rejected."
+}
+
+func (e *TemplateEvent) NotificationVariables() map[string]string {
+	return map[string]string{
+		"event.SomeStringField": e.SomeStringField,
+	}
 }
 
 // HasRelatedIDs - implement if event references related entities
@@ -119,15 +133,7 @@ func init() {
 		Type:         "project.template", // Must match Type() return value
 		FriendlyName: "Template Event",   // Human-readable name for UI
 
-		// Optional: Define when approval is required (nil = never)
-		CheckApproval: func(ctx context.Context, event Event, client *ent.Client) bool {
-			return false // or add custom logic
-		},
-
-		// Optional: Define when notifications should be sent (nil = never)
-		// CheckNotification: func(ctx context.Context, event Event, client *ent.Client) bool {
-		// 	return true // or add custom logic
-		// },
+		// CheckApproval and CheckNotification removed - now handled via policy evaluator
 
 		// Optional: Define who can trigger this event (nil = everyone)
 		CheckAllowed: func(ctx context.Context, event Event, client *ent.Client) bool {

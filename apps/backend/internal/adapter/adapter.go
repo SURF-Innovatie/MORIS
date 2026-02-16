@@ -58,6 +58,6 @@ type UserContext struct {
 
 // FetchOptions configures how data is fetched from a source
 type FetchOptions struct {
-	BatchSize int                    // Number of records per batch
-	Filters   map[string]interface{} // Optional filters
+	BatchSize int            // Number of records per batch
+	Filters   map[string]any // Optional filters
 }

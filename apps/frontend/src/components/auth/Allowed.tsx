@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { useAccess } from "@/context/AccessContext";
+import { useAccess } from "@/contexts/AccessContext";
 
 interface AllowedProps {
   event: string;
